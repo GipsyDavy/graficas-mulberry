@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:www.instagram.com)",
+      "WebSearch",
+      "WebFetch(domain:graficasmulberry.com)",
+      "Bash(curl -L \"https://graficasmulberry.com/wp-content/uploads/go-x/u/a17de807-db9f-4643-84a9-8eec0ba0b354/image-256x271.jpg\" -o \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/resources/org/gipsybuho/img/logo.jpg\")",
+      "Bash(curl -L --insecure \"https://graficasmulberry.com/wp-content/uploads/go-x/u/a17de807-db9f-4643-84a9-8eec0ba0b354/image-256x271.jpg\" -o \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/resources/org/gipsybuho/img/logo.jpg\")",
+      "Bash(mvn compile *)",
+      "PowerShell(Get-ChildItem \"C:\\\\Program Files\\\\JetBrains\\\\\" -ErrorAction SilentlyContinue | Select Name; $mvnPath = Get-ChildItem \"C:\\\\Program Files\\\\JetBrains\\\\\" -Recurse -Filter \"mvn.cmd\" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName; Write-Output \"MVN: $mvnPath\")",
+      "PowerShell(Test-Path *)"
+    ]
+  }
+}

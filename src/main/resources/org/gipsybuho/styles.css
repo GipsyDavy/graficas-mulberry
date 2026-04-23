@@ -1,0 +1,280 @@
+/* ============================================================
+   Gráficas Mulberry — Estilos de la aplicación
+   Color principal: Mulberry #6B2D5E
+   ============================================================ */
+
+/* ── BASE ─────────────────────────────────────────────────── */
+.root {
+    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 13px;
+    -fx-background-color: #F5F0F4;
+}
+
+/* ── VENTANA PRINCIPAL ───────────────────────────────────── */
+.main-view {
+    -fx-background-color: #F5F0F4;
+}
+
+/* ── BARRA LATERAL ───────────────────────────────────────── */
+.sidebar {
+    -fx-background-color: #2D1A28;
+    -fx-padding: 0;
+    -fx-min-width: 210px;
+    -fx-pref-width: 210px;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 6, 0, 2, 0);
+}
+
+.sidebar-logo {
+    -fx-padding: 18 12 14 12;
+    -fx-alignment: CENTER;
+    -fx-background-color: #1A0F18;
+}
+
+.sidebar-empresa {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #D4B8CC;
+    -fx-padding: 2 0 0 0;
+}
+
+.sidebar-sep {
+    -fx-background-color: #4A2A42;
+    -fx-min-height: 1;
+    -fx-pref-height: 1;
+}
+
+.sidebar-version {
+    -fx-font-size: 10px;
+    -fx-text-fill: #7A5A72;
+    -fx-alignment: CENTER;
+    -fx-padding: 4 0;
+}
+
+/* ── BOTONES DE NAVEGACIÓN ───────────────────────────────── */
+.nav-btn-pane {
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+
+.nav-btn {
+    -fx-text-fill: #C4A8BC;
+    -fx-font-size: 13px;
+    -fx-padding: 12 18;
+    -fx-max-width: infinity;
+    -fx-alignment: CENTER-LEFT;
+    -fx-background-color: transparent;
+    -fx-border-width: 0;
+}
+
+.nav-btn-pane:hover .nav-btn {
+    -fx-text-fill: #FFFFFF;
+    -fx-background-color: #3D2038;
+}
+
+.nav-btn-active .nav-btn {
+    -fx-text-fill: #FFFFFF;
+    -fx-font-weight: bold;
+    -fx-background-color: #6B2D5E;
+}
+
+.nav-btn-active {
+    -fx-border-color: transparent transparent transparent #E891D0;
+    -fx-border-width: 0 0 0 3;
+}
+
+/* ── ÁREA DE CONTENIDO ───────────────────────────────────── */
+.content-view {
+    -fx-background-color: #F5F0F4;
+    -fx-padding: 0;
+}
+
+/* ── TÍTULOS ─────────────────────────────────────────────── */
+.view-title {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D1A28;
+}
+
+.view-subtitle {
+    -fx-font-size: 12px;
+    -fx-text-fill: #7A5A72;
+    -fx-padding: -6 0 4 0;
+}
+
+/* ── TARJETAS DASHBOARD ──────────────────────────────────── */
+.dashboard-card {
+    -fx-background-color: white;
+    -fx-padding: 16;
+    -fx-background-radius: 8;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.08), 4, 0, 0, 2);
+    -fx-cursor: default;
+}
+
+.dashboard-card:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(107,45,94,0.18), 8, 0, 0, 3);
+}
+
+.card-title {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7A5A72;
+    -fx-font-weight: normal;
+}
+
+.card-value {
+    -fx-font-size: 28px;
+    -fx-font-weight: bold;
+}
+
+/* ── TABLAS ──────────────────────────────────────────────── */
+.data-table {
+    -fx-background-color: white;
+    -fx-border-color: #E8DDE6;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+}
+
+.data-table .column-header {
+    -fx-background-color: #6B2D5E;
+    -fx-padding: 8 10;
+}
+
+.data-table .column-header .label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+}
+
+.data-table .column-header-background {
+    -fx-background-color: #6B2D5E;
+}
+
+.data-table .table-row-cell {
+    -fx-background-color: white;
+    -fx-border-color: transparent transparent #F0E8EE transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+.data-table .table-row-cell:odd {
+    -fx-background-color: #FBF6FA;
+}
+
+.data-table .table-row-cell:selected {
+    -fx-background-color: #F0E6EF;
+}
+
+.data-table .table-row-cell:selected .text {
+    -fx-fill: #2D1A28;
+}
+
+.data-table .table-row-cell:hover {
+    -fx-background-color: #F8EEF6;
+}
+
+/* ── FORMULARIOS ─────────────────────────────────────────── */
+.text-field, .text-area, .combo-box {
+    -fx-background-color: white;
+    -fx-border-color: #D4B8CC;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 6 10;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-border-color: #6B2D5E;
+    -fx-effect: dropshadow(three-pass-box, rgba(107,45,94,0.2), 4, 0, 0, 0);
+}
+
+.combo-box .arrow-button {
+    -fx-background-color: transparent;
+}
+
+/* ── BOTONES ─────────────────────────────────────────────── */
+.button {
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-font-size: 12px;
+}
+
+.button:hover {
+    -fx-opacity: 0.88;
+}
+
+.button:pressed {
+    -fx-opacity: 0.75;
+}
+
+/* ── DIÁLOGOS ────────────────────────────────────────────── */
+.dialog-pane {
+    -fx-background-color: white;
+}
+
+.dialog-pane .header-panel {
+    -fx-background-color: #F5F0F4;
+}
+
+.dialog-pane .button-bar .button {
+    -fx-padding: 6 18;
+}
+
+.dialog-pane > .button-bar > .container > .details-button {
+    -fx-alignment: CENTER;
+}
+
+/* ── TABS ────────────────────────────────────────────────── */
+.tab-pane .tab-header-area .tab {
+    -fx-background-color: #EDE3EB;
+    -fx-padding: 6 16;
+}
+
+.tab-pane .tab-header-area .tab:selected {
+    -fx-background-color: #6B2D5E;
+}
+
+.tab-pane .tab-header-area .tab:selected .tab-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: #EDE3EB;
+}
+
+/* ── SEPARADORES ─────────────────────────────────────────── */
+.separator .line {
+    -fx-border-color: #D4B8CC;
+}
+
+/* ── SCROLLBAR ───────────────────────────────────────────── */
+.scroll-bar:vertical .thumb {
+    -fx-background-color: #C4A8BC;
+    -fx-background-radius: 4;
+}
+
+.scroll-bar:vertical .track {
+    -fx-background-color: #F0E8EE;
+}
+
+/* ── ALERTAS ─────────────────────────────────────────────── */
+.alert .header-panel {
+    -fx-background-color: #6B2D5E;
+}
+
+.alert .header-panel .label {
+    -fx-text-fill: white;
+}
+
+/* ── CHECKBOX ────────────────────────────────────────────── */
+.check-box .box {
+    -fx-background-color: white;
+    -fx-border-color: #D4B8CC;
+    -fx-border-radius: 3;
+}
+
+.check-box:selected .box {
+    -fx-background-color: #6B2D5E;
+    -fx-border-color: #6B2D5E;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: white;
+}
