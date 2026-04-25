@@ -8,9 +8,8 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
-
-import java.util.List;
 
 import java.util.List;
 
@@ -71,7 +70,7 @@ public class IAView extends VBox {
         scroll.setPrefHeight(400);
 
         // Mensaje de bienvenida
-        addMensajeSistema("¡Hola! Soy el asistente IA de Gráficas Mulberry. Puedo ayudarte con presupuestos, precios, materiales, nóminas y mucho más.\n\nEscribe tu pregunta abajo para comenzar.\n\nNOTA: Necesita Ollama instalado en el equipo con al menos un modelo descargado.");
+        addMensajeSistema("¡Hola! Soy el asistente IA de Gráficas Mulberry. Puedo ayudarte con presupuestos, precios, materiales, nóminas y mucho más.\n\nEscribe tu pregunta abajo para comenzar.");
 
         return scroll;
     }
@@ -215,23 +214,47 @@ public class IAView extends VBox {
 
     private void verificarOllama() {
         Thread.ofVirtual().start(() -> {
-            boolean disponible = ia.isDisponible();
-            List<String> modelos = disponible ? ia.getModelosDisponibles() : List.of();
             Platform.runLater(() -> {
-                if (disponible) {
-                    lblEstado.setText("🟢 Ollama conectado — Modelo: " + ia.getModeloActual());
-                    lblEstado.setStyle("-fx-text-fill: #27AE60; -fx-font-weight: bold;");
+                lblEstado.setText("⏳ Iniciando Ollama...");
+                lblEstado.setStyle("-fx-text-fill: #E67E22; -fx-font-weight: bold;");
+            });
+
+            // Reintentar hasta 12 s para dar tiempo al arranque de OllamaManager
+            boolean disponible = false;
+            for (int intento = 0; intento < 12 && !disponible; intento++) {
+                disponible = ia.isDisponible();
+                if (!disponible) {
+                    try { Thread.sleep(1000); } catch (InterruptedException ignored) {}
+                }
+            }
+
+            final boolean ok = disponible;
+            final List<String> modelos = ok ? ia.getModelosDisponibles() : List.of();
+
+            Platform.runLater(() -> {
+                if (ok) {
+                    cbModelo.getItems().setAll(modelos);
                     if (!modelos.isEmpty()) {
-                        cbModelo.getItems().setAll(modelos);
                         String modelo = modelos.stream()
                             .filter(m -> m.contains("llama") || m.contains("phi") || m.contains("mistral"))
                             .findFirst().orElse(modelos.get(0));
                         cbModelo.setValue(modelo);
                         ia.setModeloActual(modelo);
+                        lblEstado.setText("🟢 Ollama listo — " + modelo);
+                    } else {
+                        lblEstado.setText("🟡 Ollama conectado — Descarga un modelo: ollama pull llama3.2");
                     }
+                    lblEstado.setStyle("-fx-text-fill: #27AE60; -fx-font-weight: bold;");
                 } else {
-                    lblEstado.setText("🔴 Ollama no disponible — Instálalo en ollama.com");
-                    lblEstado.setStyle("-fx-text-fill: #E74C3C; -fx-font-weight: bold;");
+                    boolean instalado = OllamaManager.isInstalled();
+                    if (instalado) {
+                        lblEstado.setText("🟡 Ollama instalado pero no responde — reiniciando...");
+                        lblEstado.setStyle("-fx-text-fill: #E67E22; -fx-font-weight: bold;");
+                        Thread.ofVirtual().start(() -> { OllamaManager.startIfNeeded(); verificarOllama(); });
+                    } else {
+                        lblEstado.setText("🔴 Ollama no instalado — descárgalo en ollama.com");
+                        lblEstado.setStyle("-fx-text-fill: #E74C3C; -fx-font-weight: bold;");
+                    }
                 }
             });
         });

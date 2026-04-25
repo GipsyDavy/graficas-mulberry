@@ -78,17 +78,18 @@ public class DashboardView extends VBox {
             String[] ids = {"c1","c2","c3","c4","c5"};
             for (int i = 0; i < ids.length; i++) {
                 final String v = valores[i];
+                final String id = ids[i];
                 tarjetas.getChildren().stream()
                     .filter(n -> n instanceof VBox)
                     .map(n -> (VBox) n)
                     .flatMap(vb -> vb.getChildren().stream())
-                    .filter(n -> n instanceof Label && ids[i].equals(n.getUserData()))
+                    .filter(n -> n instanceof Label && id.equals(n.getUserData()))
                     .map(n -> (Label) n)
                     .findFirst()
                     .ifPresent(lbl -> lbl.setText(v));
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("Error al cargar datos del dashboard: " + e.getMessage());
         }
     }
 }

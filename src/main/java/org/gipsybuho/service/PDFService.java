@@ -8,6 +8,7 @@ import com.lowagie.text.pdf.*;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 
+import javax.swing.filechooser.FileSystemView;
 import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -32,10 +33,14 @@ public class PDFService {
         fontPequeno   = new Font(bf, 8, Font.NORMAL, Color.GRAY);
     }
 
+    private static Path getDocumentosPath() {
+        return FileSystemView.getFileSystemView().getDefaultDirectory().toPath();
+    }
+
     public Path generarPresupuesto(Presupuesto p, Cliente c) throws Exception {
         initFonts();
-        Path path = Path.of(System.getProperty("user.home"), "Documentos",
-            "Mulberry", "Presupuestos", p.getNumero() + ".pdf");
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Presupuestos")
+            .resolve(p.getNumero() + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -73,8 +78,8 @@ public class PDFService {
 
     public Path generarFactura(Factura f, Cliente c) throws Exception {
         initFonts();
-        Path path = Path.of(System.getProperty("user.home"), "Documentos",
-            "Mulberry", "Facturas", f.getNumero() + ".pdf");
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Facturas")
+            .resolve(f.getNumero() + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -108,9 +113,8 @@ public class PDFService {
 
     public Path generarNomina(Nomina n, Empleado e) throws Exception {
         initFonts();
-        Path path = Path.of(System.getProperty("user.home"), "Documentos",
-            "Mulberry", "Nominas",
-            n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombre().replace(" ", "_") + ".pdf");
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Nominas")
+            .resolve(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombre().replace(" ", "_") + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);

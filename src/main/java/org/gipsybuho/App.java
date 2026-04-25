@@ -5,6 +5,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.ui.MainView;
 
 import java.util.Objects;
@@ -13,6 +14,7 @@ public class App extends Application {
 
     @Override
     public void start(Stage primaryStage) throws Exception {
+        OllamaManager.startAsync();   // arranca Ollama en background si está instalado
         DatabaseManager.initialize();
 
         MainView mainView = new MainView(primaryStage);
@@ -29,7 +31,9 @@ public class App extends Application {
             Image icon = new Image(Objects.requireNonNull(
                 getClass().getResourceAsStream("/org/gipsybuho/img/logo.jpg")));
             primaryStage.getIcons().add(icon);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("Advertencia: no se pudo cargar el icono de la aplicación: " + e.getMessage());
+        }
 
         primaryStage.show();
     }
@@ -37,5 +41,6 @@ public class App extends Application {
     @Override
     public void stop() {
         DatabaseManager.closeConnection();
+        OllamaManager.stop();
     }
 }

@@ -15,7 +15,6 @@ public class MainView extends BorderPane {
 
     private final StackPane contentArea = new StackPane();
     private VBox sidebar;
-    private Node vistaActual;
 
     public MainView(Stage stage) {
         setLeft(buildSidebar());
@@ -92,6 +91,5 @@ public class MainView extends BorderPane {
 
     private void mostrarVista(Node vista) {
         contentArea.getChildren().setAll(vista);
-        vistaActual = vista;
     }
 }
