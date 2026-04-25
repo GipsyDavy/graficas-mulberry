@@ -7,8 +7,18 @@ import java.sql.Statement;
 
 public class DatabaseManager {
 
-    private static final String DB_URL = "jdbc:sqlite:graficas_mulberry.db";
+    private static final String DB_URL = buildDbUrl();
     private static Connection connection;
+
+    private static String buildDbUrl() {
+        String appData = System.getenv("LOCALAPPDATA");
+        java.io.File dir = new java.io.File(
+            (appData != null && !appData.isEmpty()) ? appData : System.getProperty("user.home"),
+            "GraficasMulberry"
+        );
+        dir.mkdirs();
+        return "jdbc:sqlite:" + new java.io.File(dir, "graficas_mulberry.db").getAbsolutePath();
+    }
 
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
@@ -29,7 +39,9 @@ public class DatabaseManager {
             if (connection != null && !connection.isClosed()) {
                 connection.close();
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("Error al cerrar la conexión con la base de datos: " + e.getMessage());
+        }
     }
 
     private static void createTables(Connection conn) throws SQLException {
@@ -204,7 +216,7 @@ public class DatabaseManager {
             st.execute("""
                 INSERT OR IGNORE INTO config (clave, valor) VALUES
                 ('empresa_nombre', 'Gráficas Mulberry'),
-                ('empresa_nif', 'B04XXXXXX'),
+                ('empresa_nif', 'PENDIENTE-CONFIGURAR'),
                 ('empresa_direccion', 'Calle Río Miño, 54 - 3F'),
                 ('empresa_ciudad', 'Huercal de Almería'),
                 ('empresa_cp', '04230'),
@@ -266,7 +278,9 @@ public class DatabaseManager {
             st.setString(1, clave);
             st.setString(2, valor);
             st.executeUpdate();
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("Error al guardar configuración '" + clave + "': " + e.getMessage());
+        }
     }
 
     public static String generarNumeroPresupuesto() {

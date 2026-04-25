@@ -112,4 +112,67 @@
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>package-windows</id>
+            <!-- Descarga las variantes Windows de JavaFX que incluyen las DLLs nativas -->
+            <dependencies>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-base</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-graphics</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-controls</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-fxml</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-swing</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <!-- Copia todas las dependencias resueltas a target/lib/ -->
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-dependency-plugin</artifactId>
+                        <version>3.6.0</version>
+                        <executions>
+                            <execution>
+                                <id>copy-all-dependencies</id>
+                                <phase>package</phase>
+                                <goals>
+                                    <goal>copy-dependencies</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                                    <overWriteReleases>false</overWriteReleases>
+                                    <overWriteIfNewer>true</overWriteIfNewer>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

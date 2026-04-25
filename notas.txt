@@ -1,0 +1,4 @@
+- ventana progreso descarga e instalación de ollama y de llama3.2 1b
+- Logo en el icono del programa una vez instalado (acceso directo).
+- Opción de configuración y ajustes de la interfaz de la aplicación y posibilidad de añadir mas campos o modificar los existentes
+- evitar que salte en antivirus

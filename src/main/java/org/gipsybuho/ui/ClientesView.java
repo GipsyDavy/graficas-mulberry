@@ -3,6 +3,7 @@ package org.gipsybuho.ui;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
@@ -16,7 +17,6 @@ public class ClientesView extends VBox {
     private final ClienteDAO dao = new ClienteDAO();
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
-    private TextField txtBuscar;
 
     public ClientesView() {
         getStyleClass().add("content-view");
@@ -32,7 +32,7 @@ public class ClientesView extends VBox {
     }
 
     private HBox buildToolbar() {
-        txtBuscar = new TextField();
+        TextField txtBuscar = new TextField();
         txtBuscar.setPromptText("Buscar por nombre, NIF o email...");
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
@@ -48,9 +48,10 @@ public class ClientesView extends VBox {
         return bar;
     }
 
+    @SuppressWarnings("unchecked")
     private TableView<Cliente> buildTabla() {
         tabla.getStyleClass().add("data-table");
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         tabla.getColumns().addAll(
             col("Nombre", "nombre", 250),
@@ -153,7 +154,6 @@ public class ClientesView extends VBox {
         return dlg.showAndWait();
     }
 
-    @SuppressWarnings("unchecked")
     private <T> TableColumn<Cliente, T> col(String titulo, String campo, double ancho) {
         TableColumn<Cliente, T> c = new TableColumn<>(titulo);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
