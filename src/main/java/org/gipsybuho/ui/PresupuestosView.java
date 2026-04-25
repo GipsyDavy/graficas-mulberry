@@ -217,7 +217,7 @@ public class PresupuestosView extends VBox {
             if (bt != ButtonType.OK) return null;
             if (fCliente.getValue() == null) { alerta("Selecciona un cliente."); return null; }
             p.setClienteId(fCliente.getValue().getId());
-            p.setClienteNombre(fCliente.getValue().getNombre());
+            p.setClienteNombre(fCliente.getValue().getNombreCompleto());
             p.setFecha(fFecha.getText().trim());
             p.setFechaValidez(fValidez.getText().trim());
             p.setEstado(fEstado.getValue());

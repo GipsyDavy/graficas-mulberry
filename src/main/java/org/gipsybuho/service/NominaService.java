@@ -24,7 +24,7 @@ public class NominaService {
                            double percepcionesNoSalariales) {
         Nomina n = new Nomina();
         n.setEmpleadoId(empleado.getId());
-        n.setEmpleadoNombre(empleado.getNombre());
+        n.setEmpleadoNombre(empleado.getNombreCompleto());
         n.setMes(mes);
         n.setAnio(anio);
         n.setSalarioBase(empleado.getSalarioBase());

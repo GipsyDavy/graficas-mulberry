@@ -33,7 +33,7 @@ public class ClientesView extends VBox {
 
     private HBox buildToolbar() {
         TextField txtBuscar = new TextField();
-        txtBuscar.setPromptText("Buscar por nombre, NIF o email...");
+        txtBuscar.setPromptText("Buscar por nombre, apellido, NIF o email...");
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
@@ -54,7 +54,8 @@ public class ClientesView extends VBox {
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
 
         tabla.getColumns().addAll(
-            col("Nombre", "nombre", 250),
+            col("Nombre", "nombre", 160),
+            col("Apellido", "apellido", 160),
             col("Tipo", "tipo", 80),
             col("NIF/CIF", "nif", 100),
             col("Teléfono", "telefono", 110),
@@ -106,11 +107,13 @@ public class ClientesView extends VBox {
         dlg.setTitle(c.getId() == 0 ? "Nuevo cliente" : "Editar cliente");
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().getStylesheets().addAll(getScene() != null ? getScene().getStylesheets() : java.util.List.of());
+        dlg.getDialogPane().setPrefWidth(520);
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
 
         TextField fNombre    = tf(c.getNombre());
+        TextField fApellido  = tf(c.getApellido());
         ComboBox<String> fTipo = new ComboBox<>(FXCollections.observableArrayList("empresa", "particular"));
         fTipo.setValue(c.getTipo() != null ? c.getTipo() : "empresa");
         TextField fNif       = tf(c.getNif());
@@ -123,10 +126,12 @@ public class ClientesView extends VBox {
         fNotas.setPrefRowCount(3);
 
         int r = 0;
-        grid.addRow(r++, lbl("Nombre *"), fNombre, lbl("Tipo"), fTipo);
-        grid.addRow(r++, lbl("NIF/CIF"), fNif, lbl("Teléfono"), fTelefono);
-        grid.addRow(r++, lbl("Email"), fEmail, lbl("Ciudad"), fCiudad);
-        grid.addRow(r++, lbl("Dirección"), fDireccion, lbl("C.P."), fCp);
+        grid.addRow(r++, lbl("Nombre *"), fNombre, lbl("Apellido"), fApellido);
+        grid.addRow(r++, lbl("Tipo"), fTipo, lbl("NIF/CIF"), fNif);
+        grid.addRow(r++, lbl("Teléfono"), fTelefono, lbl("Email"), fEmail);
+        grid.addRow(r++, lbl("Ciudad"), fCiudad, lbl("C.P."), fCp);
+        grid.add(lbl("Dirección"), 0, r); grid.add(fDireccion, 1, r, 3, 1);
+        r++;
         grid.add(lbl("Notas"), 0, r);
         grid.add(fNotas, 1, r, 3, 1);
 
@@ -139,6 +144,7 @@ public class ClientesView extends VBox {
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK) {
                 c.setNombre(fNombre.getText().trim());
+                c.setApellido(fApellido.getText().trim());
                 c.setTipo(fTipo.getValue());
                 c.setNif(fNif.getText().trim());
                 c.setDireccion(fDireccion.getText().trim());

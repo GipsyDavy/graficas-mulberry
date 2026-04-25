@@ -12,7 +12,7 @@ public class NominaDAO {
     public List<Nomina> findAll() throws SQLException {
         List<Nomina> list = new ArrayList<>();
         String sql = """
-            SELECT n.*, e.nombre as empleado_nombre
+            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellido, ''), '')) as empleado_nombre
             FROM nominas n
             JOIN empleados e ON n.empleado_id = e.id
             ORDER BY n.anio DESC, n.mes DESC, e.nombre
@@ -27,7 +27,7 @@ public class NominaDAO {
     public List<Nomina> findByPeriodo(int mes, int anio) throws SQLException {
         List<Nomina> list = new ArrayList<>();
         String sql = """
-            SELECT n.*, e.nombre as empleado_nombre
+            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellido, ''), '')) as empleado_nombre
             FROM nominas n
             JOIN empleados e ON n.empleado_id = e.id
             WHERE n.mes=? AND n.anio=?
@@ -43,7 +43,7 @@ public class NominaDAO {
 
     public Nomina findById(int id) throws SQLException {
         String sql = """
-            SELECT n.*, e.nombre as empleado_nombre
+            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellido, ''), '')) as empleado_nombre
             FROM nominas n
             JOIN empleados e ON n.empleado_id = e.id
             WHERE n.id=?

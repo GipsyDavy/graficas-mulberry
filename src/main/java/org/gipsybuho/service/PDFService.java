@@ -114,7 +114,7 @@ public class PDFService {
     public Path generarNomina(Nomina n, Empleado e) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Nominas")
-            .resolve(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombre().replace(" ", "_") + ".pdf");
+            .resolve(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombreCompleto().replace(" ", "_") + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -128,7 +128,7 @@ public class PDFService {
         PdfPTable tPeriodo = new PdfPTable(2);
         tPeriodo.setWidthPercentage(100);
         addCeldaTabla(tPeriodo, "Período: " + n.getPeriodo(), fontNegrita, Color.WHITE, 1);
-        addCeldaTabla(tPeriodo, "Empleado: " + e.getNombre(), fontNegrita, Color.WHITE, 1);
+        addCeldaTabla(tPeriodo, "Empleado: " + e.getNombreCompleto(), fontNegrita, Color.WHITE, 1);
         addCeldaTabla(tPeriodo, "NIF: " + nvl(e.getNif()), fontNormal, Color.WHITE, 1);
         addCeldaTabla(tPeriodo, "Categoría: " + nvl(e.getCategoria()), fontNormal, Color.WHITE, 1);
         doc.add(tPeriodo);
@@ -250,7 +250,7 @@ public class PDFService {
         PdfPCell datos = new PdfPCell();
         datos.setBorderColor(COLOR_GRIS_BORDE);
         datos.setPadding(6);
-        datos.addElement(new Phrase(nvl(c.getNombre()), fontNegrita));
+        datos.addElement(new Phrase(nvl(c.getNombreCompleto()), fontNegrita));
         if (c.getNif() != null) datos.addElement(new Phrase("NIF/CIF: " + c.getNif(), fontNormal));
         if (c.getDireccion() != null) datos.addElement(new Phrase(c.getDireccion(), fontNormal));
         if (c.getCiudad() != null) datos.addElement(new Phrase(nvl(c.getCp()) + " " + c.getCiudad(), fontNormal));

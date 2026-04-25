@@ -3,6 +3,7 @@ package org.gipsybuho.model;
 public class Empleado {
     private int id;
     private String nombre;
+    private String apellido;
     private String nif;
     private String categoria;
     private double salarioBase;
@@ -33,6 +34,12 @@ public class Empleado {
     public void setId(int id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
+    public String getNombreCompleto() {
+        if (apellido == null || apellido.isBlank()) return nombre != null ? nombre : "";
+        return nombre + " " + apellido;
+    }
     public String getNif() { return nif; }
     public void setNif(String nif) { this.nif = nif; }
     public String getCategoria() { return categoria; }
@@ -57,5 +64,5 @@ public class Empleado {
     public void setDireccion(String direccion) { this.direccion = direccion; }
 
     @Override
-    public String toString() { return nombre != null ? nombre : ""; }
+    public String toString() { return getNombreCompleto(); }
 }

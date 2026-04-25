@@ -3,6 +3,7 @@ package org.gipsybuho.model;
 public class Cliente {
     private int id;
     private String nombre;
+    private String apellido;
     private String tipo; // empresa, particular
     private String nif;
     private String direccion;
@@ -32,6 +33,12 @@ public class Cliente {
     public void setId(int id) { this.id = id; }
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
+    public String getApellido() { return apellido; }
+    public void setApellido(String apellido) { this.apellido = apellido; }
+    public String getNombreCompleto() {
+        if (apellido == null || apellido.isBlank()) return nombre != null ? nombre : "";
+        return nombre + " " + apellido;
+    }
     public String getTipo() { return tipo; }
     public void setTipo(String tipo) { this.tipo = tipo; }
     public String getNif() { return nif; }
@@ -52,5 +59,5 @@ public class Cliente {
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 
     @Override
-    public String toString() { return nombre != null ? nombre : ""; }
+    public String toString() { return getNombreCompleto(); }
 }

@@ -9,17 +9,26 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.util.StringConverter;
+import org.gipsybuho.dao.ConsumoMaterialDAO;
 import org.gipsybuho.dao.MaterialDAO;
+import org.gipsybuho.model.ConsumoMaterial;
 import org.gipsybuho.model.Material;
 
+import java.util.List;
 import java.util.Optional;
 
 public class MaterialesView extends VBox {
 
     private static final String[] CATEGORIAS = {"tintas", "pantallas", "sustratos", "vinilos", "consumibles", "bordado", "gran formato"};
+    private static final String[] TECNICAS    = {"Serigrafía", "DTF", "Bordado", "Vinilo", "Sublimación", "Gran Formato"};
+
     private final MaterialDAO dao = new MaterialDAO();
+    private final ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO();
     private final ObservableList<Material> datos = FXCollections.observableArrayList();
     private final TableView<Material> tabla = new TableView<>(datos);
+    private final ObservableList<ConsumoMaterial> datosConsumo = FXCollections.observableArrayList();
+    private final TableView<ConsumoMaterial> tablaConsumo = new TableView<>(datosConsumo);
     private CheckBox chkSoloAlerta;
 
     public MaterialesView() {
@@ -30,20 +39,32 @@ public class MaterialesView extends VBox {
         Label titulo = new Label("Control de Materiales");
         titulo.getStyleClass().add("view-title");
 
-        getChildren().addAll(titulo, buildToolbar(), buildTabla());
+        TabPane tabs = new TabPane();
+        tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        VBox stockBox = new VBox(12, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
+        VBox.setVgrow(stockBox, Priority.ALWAYS);
+        tabs.getTabs().add(new Tab("📦 Stock", stockBox));
+        tabs.getTabs().add(new Tab("⚙ Consumo por técnica", buildTabConsumo()));
+
+        VBox.setVgrow(tabs, Priority.ALWAYS);
+        getChildren().addAll(titulo, tabs);
         cargar();
+        cargarConsumo();
     }
+
+    // ── Tab Stock ────────────────────────────────────────────────────────────
 
     private HBox buildToolbar() {
         chkSoloAlerta = new CheckBox("Solo materiales con stock bajo");
         chkSoloAlerta.setOnAction(e -> cargar());
 
-        Button btnNuevo    = btn("+ Nuevo",         "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
-        Button btnEntrada  = btn("📥 Entrada",       "#27AE60", this::ajustarEntrada);
-        Button btnSalida   = btn("📤 Salida",        "#E67E22", this::ajustarSalida);
+        Button btnNuevo   = btn("+ Nuevo",    "#4C9BE8", this::nuevo);
+        Button btnEditar  = btn("✏ Editar",   "#F39C12", this::editar);
+        Button btnBorrar  = btn("🗑 Borrar",  "#E74C3C", this::borrar);
+        Button btnEntrada = btn("📥 Entrada", "#27AE60", this::ajustarEntrada);
+        Button btnSalida  = btn("📤 Salida",  "#E67E22", this::ajustarSalida);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar);
@@ -213,9 +234,147 @@ public class MaterialesView extends VBox {
         return dlg.showAndWait();
     }
 
+    // ── Tab Consumo por técnica ───────────────────────────────────────────────
+
+    private Node buildTabConsumo() {
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(12));
+
+        Label info = new Label("Define cuánto material se consume por unidad de cada técnica. El stock se descuenta automáticamente al crear una factura.");
+        info.setStyle("-fx-text-fill: #666; -fx-font-size: 12;");
+        info.setWrapText(true);
+
+        tablaConsumo.getStyleClass().add("data-table");
+        tablaConsumo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        TableColumn<ConsumoMaterial, Double> colCant = new TableColumn<>("Cant./unidad");
+        colCant.setCellValueFactory(new PropertyValueFactory<>("cantidadPorUnidad"));
+        colCant.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                if (empty || v == null) { setText(null); return; }
+                ConsumoMaterial cm = getTableRow().getItem();
+                setText(v + (cm != null && cm.getUnidad() != null ? " " + cm.getUnidad() : ""));
+            }
+        });
+
+        tablaConsumo.getColumns().addAll(
+            colConsumo("Técnica", "tecnica", 150),
+            colConsumo("Material", "materialNombre", 220),
+            colCant,
+            colConsumo("Unidad", "unidad", 80)
+        );
+        tablaConsumo.setPlaceholder(new Label("Sin reglas de consumo. Añade reglas para el descuento automático de stock."));
+        VBox.setVgrow(tablaConsumo, Priority.ALWAYS);
+
+        Button btnAdd  = btn("+ Añadir regla", "#4C9BE8", this::nuevaRegla);
+        Button btnEdit = btn("✏ Editar",        "#F39C12", this::editarRegla);
+        Button btnDel  = btn("🗑 Eliminar",      "#E74C3C", this::eliminarRegla);
+        HBox buttons = new HBox(8, btnAdd, btnEdit, btnDel);
+
+        box.getChildren().addAll(info, tablaConsumo, buttons);
+        return box;
+    }
+
+    private void cargarConsumo() {
+        try { datosConsumo.setAll(consumoDao.findAll()); } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void nuevaRegla() {
+        dialogoConsumo(new ConsumoMaterial()).ifPresent(c -> {
+            try { consumoDao.save(c); cargarConsumo(); } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    private void editarRegla() {
+        ConsumoMaterial sel = tablaConsumo.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona una regla para editar."); return; }
+        dialogoConsumo(sel).ifPresent(c -> {
+            try { consumoDao.save(c); cargarConsumo(); } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    private void eliminarRegla() {
+        ConsumoMaterial sel = tablaConsumo.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona una regla para eliminar."); return; }
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+            "¿Eliminar la regla: " + sel.getTecnica() + " → " + sel.getMaterialNombre() + "?",
+            ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+            try { consumoDao.delete(sel.getId()); cargarConsumo(); } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    private Optional<ConsumoMaterial> dialogoConsumo(ConsumoMaterial c) {
+        Dialog<ConsumoMaterial> dlg = new Dialog<>();
+        dlg.setTitle(c.getId() == 0 ? "Nueva regla de consumo" : "Editar regla de consumo");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dlg.getDialogPane().setPrefWidth(440);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(12); grid.setVgap(10); grid.setPadding(new Insets(16));
+
+        ComboBox<String> fTecnica = new ComboBox<>(FXCollections.observableArrayList(TECNICAS));
+        fTecnica.setValue(c.getTecnica() != null ? c.getTecnica() : TECNICAS[0]);
+        fTecnica.setMaxWidth(Double.MAX_VALUE);
+
+        List<Material> materiales;
+        try { materiales = dao.findAll(); } catch (Exception ex) { materiales = List.of(); }
+
+        ComboBox<Material> fMaterial = new ComboBox<>(FXCollections.observableArrayList(materiales));
+        fMaterial.setConverter(new StringConverter<>() {
+            @Override public String toString(Material m) { return m == null ? "" : m.getNombre() + " (" + m.getUnidad() + ")"; }
+            @Override public Material fromString(String s) { return null; }
+        });
+        materiales.stream().filter(m -> m.getId() == c.getMaterialId()).findFirst().ifPresent(fMaterial::setValue);
+        fMaterial.setMaxWidth(Double.MAX_VALUE);
+
+        TextField fCantidad = tf(c.getCantidadPorUnidad() > 0 ? String.valueOf(c.getCantidadPorUnidad()) : "");
+
+        grid.addRow(0, lbl("Técnica *"), fTecnica);
+        grid.addRow(1, lbl("Material *"), fMaterial);
+        grid.addRow(2, lbl("Cant. por unidad *"), fCantidad);
+        GridPane.setHgrow(fTecnica, Priority.ALWAYS);
+        GridPane.setHgrow(fMaterial, Priority.ALWAYS);
+        GridPane.setHgrow(fCantidad, Priority.ALWAYS);
+
+        dlg.getDialogPane().setContent(grid);
+
+        Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
+        okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
+            if (fMaterial.getValue() == null) {
+                alerta("Selecciona un material."); event.consume();
+            } else if (parseDouble(fCantidad.getText()) <= 0) {
+                alerta("La cantidad por unidad debe ser mayor que 0."); event.consume();
+            }
+        });
+
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) return null;
+            c.setTecnica(fTecnica.getValue());
+            c.setMaterialId(fMaterial.getValue().getId());
+            c.setMaterialNombre(fMaterial.getValue().getNombre());
+            c.setUnidad(fMaterial.getValue().getUnidad());
+            c.setCantidadPorUnidad(parseDouble(fCantidad.getText()));
+            return c;
+        });
+
+        return dlg.showAndWait();
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────────
+
     @SuppressWarnings("unchecked")
     private <T> TableColumn<Material, T> col(String t, String campo, double ancho) {
         TableColumn<Material, T> c = new TableColumn<>(t);
+        c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setPrefWidth(ancho); return c;
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> TableColumn<ConsumoMaterial, T> colConsumo(String t, String campo, double ancho) {
+        TableColumn<ConsumoMaterial, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
     }

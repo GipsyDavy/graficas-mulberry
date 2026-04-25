@@ -41,7 +41,7 @@ public class EmpleadoDAO {
     }
 
     private void insert(Empleado e) throws SQLException {
-        String sql = "INSERT INTO empleados (nombre,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO empleados (nombre,apellido,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, e);
             ps.executeUpdate();
@@ -51,17 +51,25 @@ public class EmpleadoDAO {
     }
 
     private void update(Empleado e) throws SQLException {
-        String sql = "UPDATE empleados SET nombre=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
+        String sql = "UPDATE empleados SET nombre=?,apellido=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
             set(ps, e);
-            ps.setInt(12, e.getId());
+            ps.setInt(13, e.getId());
             ps.executeUpdate();
         }
     }
 
     public void delete(int id) throws SQLException {
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
-                "UPDATE empleados SET activo=0 WHERE id=?")) {
+                "UPDATE empleados SET activo=0, fecha_baja=date('now') WHERE id=?")) {
+            ps.setInt(1, id);
+            ps.executeUpdate();
+        }
+    }
+
+    public void reactivar(int id) throws SQLException {
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                "UPDATE empleados SET activo=1, fecha_baja=NULL WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
         }
@@ -76,22 +84,24 @@ public class EmpleadoDAO {
 
     private void set(PreparedStatement ps, Empleado e) throws SQLException {
         ps.setString(1, e.getNombre());
-        ps.setString(2, e.getNif());
-        ps.setString(3, e.getCategoria());
-        ps.setDouble(4, e.getSalarioBase());
-        ps.setString(5, e.getFechaAlta());
-        ps.setString(6, e.getIban());
-        ps.setDouble(7, e.getIrpf());
-        ps.setInt(8, e.isActivo() ? 1 : 0);
-        ps.setString(9, e.getTelefono());
-        ps.setString(10, e.getEmail());
-        ps.setString(11, e.getDireccion());
+        ps.setString(2, e.getApellido());
+        ps.setString(3, e.getNif());
+        ps.setString(4, e.getCategoria());
+        ps.setDouble(5, e.getSalarioBase());
+        ps.setString(6, e.getFechaAlta());
+        ps.setString(7, e.getIban());
+        ps.setDouble(8, e.getIrpf());
+        ps.setInt(9, e.isActivo() ? 1 : 0);
+        ps.setString(10, e.getTelefono());
+        ps.setString(11, e.getEmail());
+        ps.setString(12, e.getDireccion());
     }
 
     private Empleado map(ResultSet rs) throws SQLException {
         Empleado e = new Empleado();
         e.setId(rs.getInt("id"));
         e.setNombre(rs.getString("nombre"));
+        e.setApellido(rs.getString("apellido"));
         e.setNif(rs.getString("nif"));
         e.setCategoria(rs.getString("categoria"));
         e.setSalarioBase(rs.getDouble("salario_base"));

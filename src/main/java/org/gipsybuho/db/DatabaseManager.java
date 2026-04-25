@@ -31,7 +31,18 @@ public class DatabaseManager {
     public static void initialize() throws SQLException {
         Connection conn = getConnection();
         createTables(conn);
+        runMigrations(conn);
         insertDatosIniciales(conn);
+    }
+
+    private static void runMigrations(Connection conn) {
+        String[] migrations = {
+            "ALTER TABLE clientes ADD COLUMN apellido TEXT",
+            "ALTER TABLE empleados ADD COLUMN apellido TEXT"
+        };
+        for (String sql : migrations) {
+            try { conn.createStatement().execute(sql); } catch (SQLException ignored) {}
+        }
     }
 
     public static void closeConnection() {
@@ -175,6 +186,14 @@ public class DatabaseManager {
                     descuento REAL DEFAULT 0.0,
                     total REAL DEFAULT 0.0,
                     orden INTEGER DEFAULT 0
+                )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS consumo_material_tecnica (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tecnica TEXT NOT NULL,
+                    material_id INTEGER REFERENCES materiales(id) ON DELETE CASCADE,
+                    cantidad_por_unidad REAL NOT NULL DEFAULT 0
                 )""");
 
             st.execute("""

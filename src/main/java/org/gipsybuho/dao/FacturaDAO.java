@@ -13,7 +13,7 @@ public class FacturaDAO {
     public List<Factura> findAll() throws SQLException {
         List<Factura> list = new ArrayList<>();
         String sql = """
-            SELECT f.*, c.nombre as cliente_nombre
+            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             ORDER BY f.created_at DESC
@@ -27,7 +27,7 @@ public class FacturaDAO {
 
     public Factura findById(int id) throws SQLException {
         String sql = """
-            SELECT f.*, c.nombre as cliente_nombre
+            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
@@ -82,8 +82,24 @@ public class FacturaDAO {
             f.getLineas().add(lf);
         }
         save(f);
+        descontarMateriales(f);
         pDao.updateEstado(presupuestoId, "facturado");
         return f;
+    }
+
+    private void descontarMateriales(Factura f) throws SQLException {
+        ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO();
+        MaterialDAO matDao = new MaterialDAO();
+        for (LineaFactura linea : f.getLineas()) {
+            if (linea.getTecnica() == null || linea.getTecnica().isBlank()) continue;
+            List<org.gipsybuho.model.ConsumoMaterial> reglas = consumoDao.findByTecnica(linea.getTecnica());
+            for (var regla : reglas) {
+                double cantidad = regla.getCantidadPorUnidad() * linea.getCantidad();
+                if (cantidad > 0)
+                    matDao.ajustarStock(regla.getMaterialId(), cantidad, "salida",
+                        "Factura " + f.getNumero() + " - " + linea.getDescripcion());
+            }
+        }
     }
 
     public void save(Factura f) throws SQLException {

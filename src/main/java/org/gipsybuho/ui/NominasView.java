@@ -246,6 +246,7 @@ public class NominasView extends VBox {
             Empleado empCalc = new Empleado();
             empCalc.setId(emp.getId());
             empCalc.setNombre(emp.getNombre());
+            empCalc.setApellido(emp.getApellido());
             empCalc.setSalarioBase(parseDouble(fSalBase.getText()));
             empCalc.setIrpf(parseDouble(fIrpf.getText()));
             Nomina tmp = nominaService.calcular(empCalc,
@@ -306,7 +307,7 @@ public class NominasView extends VBox {
                 parseDouble(fNoSalarial.getText())
             );
             n.setEmpleadoId(emp.getId());
-            n.setEmpleadoNombre(emp.getNombre());
+            n.setEmpleadoNombre(emp.getNombreCompleto());
             if (nomina != null) n.setId(nomina.getId());
             return n;
         });

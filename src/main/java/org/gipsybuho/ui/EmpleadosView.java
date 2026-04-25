@@ -1,0 +1,277 @@
+package org.gipsybuho.ui;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.layout.*;
+import org.gipsybuho.dao.EmpleadoDAO;
+import org.gipsybuho.model.Empleado;
+
+import java.time.LocalDate;
+import java.util.Optional;
+
+public class EmpleadosView extends VBox {
+
+    private static final String[] CATEGORIAS = {
+        "Operario", "Oficial 1ª", "Oficial 2ª", "Auxiliar",
+        "Técnico", "Administrativo", "Encargado", "Gerente"
+    };
+
+    private final EmpleadoDAO dao = new EmpleadoDAO();
+    private final ObservableList<Empleado> datos = FXCollections.observableArrayList();
+    private final TableView<Empleado> tabla = new TableView<>(datos);
+    private CheckBox chkMostrarBajas;
+
+    public EmpleadosView() {
+        getStyleClass().add("content-view");
+        setPadding(new Insets(24));
+        setSpacing(12);
+
+        Label titulo = new Label("Empleados");
+        titulo.getStyleClass().add("view-title");
+
+        getChildren().addAll(titulo, buildToolbar(), buildTabla());
+        VBox.setVgrow(tabla, Priority.ALWAYS);
+        cargar();
+    }
+
+    private HBox buildToolbar() {
+        chkMostrarBajas = new CheckBox("Mostrar empleados dados de baja");
+        chkMostrarBajas.setOnAction(e -> cargar());
+
+        Button btnNuevo     = btn("+ Nuevo",        "#4C9BE8", this::nuevo);
+        Button btnEditar    = btn("✏ Editar",        "#F39C12", this::editar);
+        Button btnBaja      = btn("🚫 Dar de baja",  "#E74C3C", this::darDeBaja);
+        Button btnReactivar = btn("✅ Reactivar",    "#27AE60", this::reactivar);
+
+        Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo);
+        bar.setAlignment(Pos.CENTER_LEFT);
+        return bar;
+    }
+
+    private TableView<Empleado> buildTabla() {
+        tabla.getStyleClass().add("data-table");
+        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+
+        // Estado (activo / baja)
+        TableColumn<Empleado, Boolean> colEstado = new TableColumn<>("Estado");
+        colEstado.setCellValueFactory(new PropertyValueFactory<>("activo"));
+        colEstado.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Boolean v, boolean empty) {
+                super.updateItem(v, empty);
+                if (empty || v == null) { setText(null); setStyle(""); return; }
+                Empleado e = getTableRow().getItem();
+                if (v) {
+                    setText("ACTIVO");
+                    setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;");
+                } else {
+                    String baja = (e != null && e.getFechaBaja() != null) ? " · " + e.getFechaBaja() : "";
+                    setText("BAJA" + baja);
+                    setStyle("-fx-text-fill:#E74C3C;-fx-font-weight:bold;");
+                }
+            }
+        });
+        colEstado.setPrefWidth(140);
+
+        TableColumn<Empleado, Double> colSalario = new TableColumn<>("Salario base");
+        colSalario.setCellValueFactory(new PropertyValueFactory<>("salarioBase"));
+        colSalario.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+
+        TableColumn<Empleado, Double> colIrpf = new TableColumn<>("IRPF");
+        colIrpf.setCellValueFactory(new PropertyValueFactory<>("irpf"));
+        colIrpf.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : v + " %");
+            }
+        });
+
+        tabla.getColumns().addAll(
+            col("Nombre",    "nombre",    140),
+            col("Apellido",  "apellido",  140),
+            col("NIF",       "nif",        95),
+            col("Categoría", "categoria", 120),
+            colSalario,
+            colIrpf,
+            col("Fecha alta", "fechaAlta",  100),
+            col("Teléfono",   "telefono",   110),
+            col("Email",      "email",      170),
+            colEstado
+        );
+        tabla.setPlaceholder(new Label("No hay empleados registrados"));
+        return tabla;
+    }
+
+    private void cargar() {
+        try {
+            if (chkMostrarBajas != null && chkMostrarBajas.isSelected())
+                datos.setAll(dao.findAllIncluirBajas());
+            else
+                datos.setAll(dao.findAll());
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void nuevo() {
+        Empleado e = new Empleado();
+        e.setFechaAlta(LocalDate.now().toString());
+        e.setActivo(true);
+        e.setIrpf(15.0);
+        e.setSalarioBase(1200.0);
+        dialogo(e).ifPresent(emp -> {
+            try { dao.save(emp); cargar(); } catch (Exception ex) { mostrarError(ex); }
+        });
+    }
+
+    private void editar() {
+        Empleado sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un empleado para editar."); return; }
+        try {
+            Empleado e = dao.findById(sel.getId());
+            dialogo(e).ifPresent(emp -> {
+                try { dao.save(emp); cargar(); } catch (Exception ex) { mostrarError(ex); }
+            });
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void darDeBaja() {
+        Empleado sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un empleado."); return; }
+        if (!sel.isActivo()) { alerta("El empleado ya está dado de baja."); return; }
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+            "¿Dar de baja a " + sel.getNombreCompleto() + "?\nSe registrará la fecha de hoy como fecha de baja.",
+            ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    private void reactivar() {
+        Empleado sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un empleado."); return; }
+        if (sel.isActivo()) { alerta("El empleado ya está activo."); return; }
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+            "¿Reactivar a " + sel.getNombreCompleto() + "?", ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+            try { dao.reactivar(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    private Optional<Empleado> dialogo(Empleado e) {
+        Dialog<Empleado> dlg = new Dialog<>();
+        dlg.setTitle(e.getId() == 0 ? "Nuevo empleado" : "Editar empleado — " + e.getNombreCompleto());
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dlg.getDialogPane().setPrefWidth(540);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(12); grid.setVgap(10); grid.setPadding(new Insets(16));
+
+        TextField fNombre    = tf(e.getNombre());
+        TextField fApellido  = tf(e.getApellido());
+        TextField fNif       = tf(e.getNif());
+        ComboBox<String> fCat = new ComboBox<>(FXCollections.observableArrayList(CATEGORIAS));
+        fCat.setValue(e.getCategoria() != null ? e.getCategoria() : CATEGORIAS[0]);
+        fCat.setMaxWidth(Double.MAX_VALUE);
+        TextField fFechaAlta = tf(e.getFechaAlta());
+        TextField fSalario   = tf(e.getSalarioBase() > 0 ? String.valueOf(e.getSalarioBase()) : "1200");
+        TextField fIrpf      = tf(e.getIrpf() > 0 ? String.valueOf(e.getIrpf()) : "15");
+        TextField fTelefono  = tf(e.getTelefono());
+        TextField fEmail     = tf(e.getEmail());
+        TextField fIban      = tf(e.getIban());
+        TextField fDireccion = tf(e.getDireccion());
+        CheckBox  chkActivo  = new CheckBox("Activo");
+        chkActivo.setSelected(e.isActivo());
+
+        // Fila 0: Nombre, Apellido
+        grid.addRow(0, lbl("Nombre *"), fNombre, lbl("Apellido"), fApellido);
+        // Fila 1: NIF, Categoría → reubicado abajo
+        // Fila 1: NIF, Categoría
+        grid.addRow(1, lbl("NIF"), fNif, lbl("Categoría"), fCat);
+        // Fila 2: Fecha alta desplazada
+        // Fila 2: Fecha alta + Salario + IRPF
+        grid.addRow(2, lbl("Fecha alta"), fFechaAlta, lbl("Salario base (€)"), fSalario);
+        // Fila 3: IRPF + Teléfono
+        grid.addRow(3, lbl("IRPF (%)"), fIrpf, lbl("Teléfono"), fTelefono);
+        // Fila 4: Email (completo)
+        grid.add(lbl("Email"), 0, 4); grid.add(fEmail, 1, 4, 3, 1);
+        // Fila 5: IBAN (completo)
+        grid.add(lbl("IBAN"), 0, 5); grid.add(fIban, 1, 5, 3, 1);
+        // Fila 6: Dirección (completo)
+        grid.add(lbl("Dirección"), 0, 6); grid.add(fDireccion, 1, 6, 3, 1);
+        // Fila 7: Activo
+        grid.add(chkActivo, 1, 7);
+
+        // Hacer que los campos de texto se expandan
+        for (int col : new int[]{1, 3}) {
+            ColumnConstraints cc = new ColumnConstraints();
+            cc.setHgrow(Priority.ALWAYS);
+            cc.setFillWidth(true);
+        }
+        GridPane.setHgrow(fNombre,    Priority.ALWAYS);
+        GridPane.setHgrow(fNif,       Priority.ALWAYS);
+        GridPane.setHgrow(fCat,       Priority.ALWAYS);
+        GridPane.setHgrow(fFechaAlta, Priority.ALWAYS);
+        GridPane.setHgrow(fSalario,   Priority.ALWAYS);
+        GridPane.setHgrow(fIrpf,      Priority.ALWAYS);
+        GridPane.setHgrow(fTelefono,  Priority.ALWAYS);
+        GridPane.setHgrow(fEmail,     Priority.ALWAYS);
+        GridPane.setHgrow(fIban,      Priority.ALWAYS);
+        GridPane.setHgrow(fDireccion, Priority.ALWAYS);
+
+        dlg.getDialogPane().setContent(grid);
+
+        // Validar nombre obligatorio
+        Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
+        okBtn.setDisable(fNombre.getText().isBlank());
+        fNombre.textProperty().addListener((o, a, b) -> okBtn.setDisable(b.isBlank()));
+
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) return null;
+            e.setNombre(fNombre.getText().trim());
+            e.setApellido(fApellido.getText().trim());
+            e.setNif(fNif.getText().trim());
+            e.setCategoria(fCat.getValue());
+            e.setFechaAlta(fFechaAlta.getText().trim());
+            e.setSalarioBase(parseDouble(fSalario.getText()));
+            e.setIrpf(parseDouble(fIrpf.getText()));
+            e.setTelefono(fTelefono.getText().trim());
+            e.setEmail(fEmail.getText().trim());
+            e.setIban(fIban.getText().trim());
+            e.setDireccion(fDireccion.getText().trim());
+            e.setActivo(chkActivo.isSelected());
+            return e;
+        });
+
+        return dlg.showAndWait();
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> TableColumn<Empleado, T> col(String t, String campo, double ancho) {
+        TableColumn<Empleado, T> c = new TableColumn<>(t);
+        c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setPrefWidth(ancho); return c;
+    }
+
+    private Button btn(String t, String color, Runnable r) {
+        Button b = new Button(t);
+        b.setStyle("-fx-background-color:" + color + ";-fx-text-fill:white;-fx-font-weight:bold;-fx-padding:6 14;");
+        b.setOnAction(e -> r.run()); return b;
+    }
+
+    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private Label lbl(String t) { return new Label(t); }
+    private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
+    private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+}
