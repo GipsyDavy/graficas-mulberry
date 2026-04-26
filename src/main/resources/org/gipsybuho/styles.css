@@ -263,6 +263,189 @@
     -fx-text-fill: white;
 }
 
+/* ── CALENDARIO ──────────────────────────────────────────── */
+.cal-mes-label {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D1A28;
+}
+
+.btn-cal-nav {
+    -fx-background-color: #6B2D5E;
+    -fx-text-fill: white;
+    -fx-font-size: 14px;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+    -fx-padding: 4 12;
+}
+
+.btn-cal-nav:hover {
+    -fx-background-color: #8A3B78;
+}
+
+.btn-cal-hoy {
+    -fx-background-color: transparent;
+    -fx-border-color: #6B2D5E;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-text-fill: #6B2D5E;
+    -fx-font-size: 12px;
+    -fx-cursor: hand;
+    -fx-padding: 4 14;
+}
+
+.btn-cal-hoy:hover {
+    -fx-background-color: #F0E6EF;
+}
+
+.cal-header-dia {
+    -fx-background-color: #6B2D5E;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 12px;
+    -fx-padding: 6 0;
+    -fx-background-radius: 4;
+    -fx-alignment: CENTER;
+}
+
+.cal-dia-cell {
+    -fx-background-color: white;
+    -fx-background-radius: 6;
+    -fx-border-color: #EBE0E9;
+    -fx-border-radius: 6;
+    -fx-border-width: 1;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.04), 2, 0, 0, 1);
+}
+
+.cal-dia-cell:hover {
+    -fx-background-color: #F8EEF6;
+    -fx-border-color: #6B2D5E;
+    -fx-effect: dropshadow(three-pass-box, rgba(107,45,94,0.15), 4, 0, 0, 2);
+}
+
+.cal-dia-hoy {
+    -fx-background-color: #6B2D5E;
+    -fx-border-color: #6B2D5E;
+}
+
+.cal-dia-hoy:hover {
+    -fx-background-color: #7D3570;
+    -fx-border-color: #7D3570;
+}
+
+.cal-dia-pasado {
+    -fx-background-color: #FAF7FA;
+    -fx-border-color: #F0EAF0;
+}
+
+.cal-dia-con-nota {
+    -fx-border-color: #C850A8;
+    -fx-border-width: 2;
+}
+
+.cal-dia-hoy.cal-dia-con-nota {
+    -fx-border-color: #E891D0;
+}
+
+.cal-dia-num {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D1A28;
+}
+
+.cal-dia-num-hoy {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.cal-dia-pasado .cal-dia-num {
+    -fx-text-fill: #B0A0AE;
+}
+
+.cal-nota-punto {
+    -fx-text-fill: #C850A8;
+    -fx-font-size: 10px;
+}
+
+.cal-dia-hoy .cal-nota-punto {
+    -fx-text-fill: #F8C8F0;
+}
+
+.cal-dia-vacio {
+    -fx-background-color: transparent;
+}
+
+/* ── AVISOS DASHBOARD ────────────────────────────────────── */
+.avisos-panel {
+    -fx-background-color: white;
+    -fx-background-radius: 8;
+    -fx-border-color: #E8DDE6;
+    -fx-border-radius: 8;
+    -fx-border-width: 1;
+    -fx-padding: 16;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.06), 4, 0, 0, 2);
+}
+
+.avisos-titulo {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #2D1A28;
+}
+
+.avisos-vacio {
+    -fx-font-size: 12px;
+    -fx-text-fill: #A090A0;
+    -fx-font-style: italic;
+}
+
+.aviso-fila {
+    -fx-padding: 10 12;
+    -fx-background-radius: 5;
+    -fx-border-radius: 5;
+    -fx-border-width: 1;
+}
+
+.aviso-hoy {
+    -fx-background-color: #FEF0EF;
+    -fx-border-color: #E74C3C;
+}
+
+.aviso-urgente {
+    -fx-background-color: #FEF7EE;
+    -fx-border-color: #F39C12;
+}
+
+.aviso-proximo {
+    -fx-background-color: #F8EEF6;
+    -fx-border-color: #C850A8;
+}
+
+.aviso-badge {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-padding: 3 8;
+    -fx-background-radius: 10;
+    -fx-background-color: rgba(0,0,0,0.08);
+    -fx-min-width: 40;
+    -fx-alignment: CENTER;
+}
+
+.aviso-hoy .aviso-badge    { -fx-text-fill: #C0392B; }
+.aviso-urgente .aviso-badge { -fx-text-fill: #D35400; }
+.aviso-proximo .aviso-badge { -fx-text-fill: #6B2D5E; }
+
+.aviso-titulo-nota {
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+    -fx-text-fill: #2D1A28;
+}
+
+.aviso-fecha-nota {
+    -fx-font-size: 11px;
+    -fx-text-fill: #7A5A72;
+}
+
 /* ── CHECKBOX ────────────────────────────────────────────── */
 .check-box .box {
     -fx-background-color: white;

@@ -5,8 +5,13 @@ import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.*;
+import org.gipsybuho.model.NotaCalendario;
 
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
+import java.util.Locale;
 
 public class DashboardView extends VBox {
 
@@ -22,7 +27,8 @@ public class DashboardView extends VBox {
         subtitulo.getStyleClass().add("view-subtitle");
 
         HBox tarjetas = buildTarjetas();
-        getChildren().addAll(titulo, subtitulo, tarjetas);
+        VBox avisos   = buildAvisosCalendario();
+        getChildren().addAll(titulo, subtitulo, tarjetas, avisos);
         cargarDatos(tarjetas);
     }
 
@@ -60,6 +66,56 @@ public class DashboardView extends VBox {
 
         card.getChildren().addAll(header, val);
         return card;
+    }
+
+    private VBox buildAvisosCalendario() {
+        VBox panel = new VBox(8);
+        panel.getStyleClass().add("avisos-panel");
+
+        Label titulo = new Label("📅  Próximos recordatorios");
+        titulo.getStyleClass().add("avisos-titulo");
+        panel.getChildren().add(titulo);
+
+        try {
+            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(7);
+            LocalDate hoy = LocalDate.now();
+            DateTimeFormatter fmt = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", new Locale("es", "ES"));
+
+            if (proximas.isEmpty()) {
+                Label vacio = new Label("No hay recordatorios en los próximos 7 días");
+                vacio.getStyleClass().add("avisos-vacio");
+                panel.getChildren().add(vacio);
+            } else {
+                for (NotaCalendario nota : proximas) {
+                    long dias = ChronoUnit.DAYS.between(hoy, nota.getFecha());
+                    String urgenciaClass = dias == 0 ? "aviso-hoy"
+                        : dias <= 2 ? "aviso-urgente" : "aviso-proximo";
+
+                    HBox fila = new HBox(12);
+                    fila.getStyleClass().addAll("aviso-fila", urgenciaClass);
+                    fila.setAlignment(Pos.CENTER_LEFT);
+
+                    Label lblDias = new Label(dias == 0 ? "HOY" : "+" + dias + "d");
+                    lblDias.getStyleClass().add("aviso-badge");
+
+                    VBox textos = new VBox(2);
+                    Label lblTit = new Label(nota.getTitulo());
+                    lblTit.getStyleClass().add("aviso-titulo-nota");
+                    String capFecha = nota.getFecha().format(fmt);
+                    capFecha = Character.toUpperCase(capFecha.charAt(0)) + capFecha.substring(1);
+                    Label lblFecha = new Label(capFecha);
+                    lblFecha.getStyleClass().add("aviso-fecha-nota");
+                    textos.getChildren().addAll(lblTit, lblFecha);
+
+                    fila.getChildren().addAll(lblDias, textos);
+                    panel.getChildren().add(fila);
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error al cargar avisos del calendario: " + e.getMessage());
+        }
+
+        return panel;
     }
 
     private void cargarDatos(HBox tarjetas) {

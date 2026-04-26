@@ -226,6 +226,15 @@ public class DatabaseManager {
                     clave TEXT PRIMARY KEY,
                     valor TEXT
                 )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS notas_calendario (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    fecha TEXT NOT NULL,
+                    titulo TEXT NOT NULL,
+                    nota TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )""");
         }
     }
 

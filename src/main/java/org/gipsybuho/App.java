@@ -1,13 +1,20 @@
 package org.gipsybuho;
 
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.scene.Scene;
+import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
+import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.ui.MainView;
 
+import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
+import java.util.List;
 import java.util.Objects;
 
 public class App extends Application {
@@ -36,6 +43,31 @@ public class App extends Application {
         }
 
         primaryStage.show();
+        Platform.runLater(this::notificarRecordatoriosProximos);
+    }
+
+    private void notificarRecordatoriosProximos() {
+        try {
+            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(3);
+            if (proximas.isEmpty()) return;
+
+            StringBuilder sb = new StringBuilder();
+            LocalDate hoy = LocalDate.now();
+            for (NotaCalendario n : proximas) {
+                long dias = ChronoUnit.DAYS.between(hoy, n.getFecha());
+                String cuando = dias == 0 ? "HOY" : dias == 1 ? "mañana" : "en " + dias + " días";
+                sb.append("• ").append(n.getTitulo()).append("  (").append(cuando).append(")\n");
+            }
+
+            Alert alert = new Alert(Alert.AlertType.WARNING);
+            alert.setTitle("Recordatorios próximos");
+            alert.setHeaderText("Tienes " + proximas.size()
+                + " recordatorio(s) en los próximos 3 días");
+            alert.setContentText(sb.toString().stripTrailing());
+            alert.show();
+        } catch (Exception e) {
+            System.err.println("Error al comprobar recordatorios: " + e.getMessage());
+        }
     }
 
     @Override

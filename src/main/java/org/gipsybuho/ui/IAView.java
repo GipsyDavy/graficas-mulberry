@@ -8,6 +8,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
 
@@ -22,6 +23,7 @@ public class IAView extends VBox {
     private Button btnEnviar;
     private Label lblEstado;
     private ComboBox<String> cbModelo;
+    private Button btnInstalarOllama;
 
     public IAView() {
         getStyleClass().add("content-view");
@@ -48,15 +50,36 @@ public class IAView extends VBox {
             if (cbModelo.getValue() != null) ia.setModeloActual(cbModelo.getValue());
         });
 
+        btnInstalarOllama = new Button("⬇  Instalar Ollama");
+        btnInstalarOllama.setStyle(
+            "-fx-background-color: #6B2D5E; -fx-text-fill: white; -fx-font-weight: bold; " +
+            "-fx-padding: 5 14; -fx-background-radius: 4; -fx-cursor: hand;");
+        btnInstalarOllama.setVisible(false);
+        btnInstalarOllama.setManaged(false);
+        btnInstalarOllama.setOnAction(e -> abrirInstalador());
+
         Button btnLimpiar = new Button("🗑 Limpiar chat");
         btnLimpiar.setOnAction(e -> chatBox.getChildren().clear());
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(12, lblEstado, sp, new Label("Modelo:"), cbModelo, btnLimpiar);
+        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle("-fx-background-color:#F0F4F8; -fx-border-radius:6; -fx-background-radius:6;");
         return bar;
+    }
+
+    private void abrirInstalador() {
+        Stage owner = getScene() != null ? (Stage) getScene().getWindow() : null;
+        OllamaInstallerDialog dlg = new OllamaInstallerDialog(owner);
+        dlg.showAndWait();
+        if (dlg.isInstalacionCompleta()) {
+            btnInstalarOllama.setVisible(false);
+            btnInstalarOllama.setManaged(false);
+            lblEstado.setText("⏳ Verificando Ollama...");
+            lblEstado.setStyle("-fx-text-fill: #E67E22; -fx-font-weight: bold;");
+            verificarOllama();
+        }
     }
 
     private ScrollPane buildChat() {
@@ -252,8 +275,15 @@ public class IAView extends VBox {
                         lblEstado.setStyle("-fx-text-fill: #E67E22; -fx-font-weight: bold;");
                         Thread.ofVirtual().start(() -> { OllamaManager.startIfNeeded(); verificarOllama(); });
                     } else {
-                        lblEstado.setText("🔴 Ollama no instalado — descárgalo en ollama.com");
+                        lblEstado.setText("🔴 Ollama no instalado");
                         lblEstado.setStyle("-fx-text-fill: #E74C3C; -fx-font-weight: bold;");
+                        btnInstalarOllama.setVisible(true);
+                        btnInstalarOllama.setManaged(true);
+                        addMensajeSistema(
+                            "⚠  Ollama no está instalado en este equipo.\n\n" +
+                            "Haz clic en «⬇ Instalar Ollama» en la barra superior para instalarlo " +
+                            "automáticamente. El proceso descargará el instalador oficial y el modelo " +
+                            "de IA. Solo necesitas conexión a Internet.");
                     }
                 }
             });
