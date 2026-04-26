@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 $JAVA_HOME = "C:\Program Files\Java\jdk-26.0.1"
 $MVN       = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
 $JPACKAGE  = "$JAVA_HOME\bin\jpackage.exe"
-$ISCC      = "C:\Users\david\AppData\Local\Programs\Inno Setup 6\ISCC.exe"
+$ISCC      = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
 $PROJECT   = $PSScriptRoot
 
 # ── 1. Compilar con Maven ───────────────────────────────────────────────────
@@ -45,12 +45,17 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "1.0.0" `
-    --vendor "Graficas Mulberry" `
+    --app-version "3.1.0" `
+    --vendor "Graficas Mulberry S.L." `
+    --description "Sistema de gestion para Graficas Mulberry" `
+    --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
     --icon "$PROJECT\installer\logo.ico" `
     --input $InputDir `
     --main-jar "GraficasMulberry.jar" `
     --main-class "org.gipsybuho.Main" `
+    --win-menu `
+    --win-shortcut `
+    --win-dir-chooser `
     --java-options "--module-path `$APPDIR/mods" `
     --java-options "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics" `
     --dest "$PROJECT\output"
@@ -69,3 +74,31 @@ Get-ChildItem "$PROJECT\output\*.exe" | ForEach-Object {
 }
 Write-Host ""
 Write-Host "Ruta: $PROJECT\output\" -ForegroundColor Yellow
+
+# ── 5. Firma de codigo (opcional — requiere certificado .pfx) ───────────────
+# Para eliminar falsos positivos de antivirus y Windows SmartScreen, descomenta
+# este bloque y proporciona tu certificado de firma de codigo (OV o EV).
+#
+# NUNCA hardcodees la contrasena — pásala como variable de entorno:
+#   $env:SIGN_CERT_PASSWORD = "tu_contrasena"
+#
+# $SIGNTOOL  = "C:\Program Files (x86)\Windows Kits\10\bin\10.0.22621.0\x64\signtool.exe"
+# $CERT_PFX  = "C:\ruta\certificado_firma.pfx"
+# $TIMESTAMP = "http://timestamp.sectigo.com"
+#
+# if (Test-Path $CERT_PFX) {
+#     Write-Host "`n=== Firmando ejecutables ===" -ForegroundColor Cyan
+#     $signArgs = @("sign", "/fd", "SHA256", "/tr", $TIMESTAMP, "/td", "SHA256",
+#                   "/f", $CERT_PFX, "/p", $env:SIGN_CERT_PASSWORD)
+#
+#     # Firmar el launcher principal
+#     & $SIGNTOOL @signArgs "$PROJECT\output\GraficasMulberry\GraficasMulberry.exe"
+#
+#     # Firmar el instalador
+#     Get-ChildItem "$PROJECT\output\*.exe" | ForEach-Object {
+#         & $SIGNTOOL @signArgs $_.FullName
+#         Write-Host "   Firmado: $($_.Name)" -ForegroundColor Green
+#     }
+# } else {
+#     Write-Host "`n[AVISO] Certificado no encontrado — ejecutables sin firmar" -ForegroundColor Yellow
+# }

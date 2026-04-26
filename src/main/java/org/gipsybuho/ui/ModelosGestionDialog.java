@@ -258,9 +258,18 @@ public class ModelosGestionDialog extends Stage {
 
     // ── Descargar ─────────────────────────────────────────────────────────────
 
+    private static boolean modeloNombreValido(String nombre) {
+        return nombre.matches("[a-zA-Z0-9][a-zA-Z0-9._:\\-]*");
+    }
+
     private void iniciarDescarga() {
         String nombre = txtModelo.getText().trim();
         if (nombre.isBlank()) return;
+        if (!modeloNombreValido(nombre)) {
+            lblProgreso.setText("❌ Nombre de modelo no válido. Solo se permiten letras, números, puntos, guiones y ':'");
+            mostrarProgreso(true);
+            return;
+        }
 
         btnDescargar.setDisable(true);
         progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);

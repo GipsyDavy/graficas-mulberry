@@ -38,10 +38,14 @@ public class PDFService {
         return FileSystemView.getFileSystemView().getDefaultDirectory().toPath();
     }
 
+    private static String safeFilename(String name) {
+        return name.replaceAll("[/\\\\:*?\"<>|]", "_").replaceAll("\\.{2,}", "_");
+    }
+
     public Path generarPresupuesto(Presupuesto p, Cliente c) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Presupuestos")
-            .resolve(p.getNumero() + ".pdf");
+            .resolve(safeFilename(p.getNumero()) + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -80,7 +84,7 @@ public class PDFService {
     public Path generarFactura(Factura f, Cliente c) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Facturas")
-            .resolve(f.getNumero() + ".pdf");
+            .resolve(safeFilename(f.getNumero()) + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -115,7 +119,7 @@ public class PDFService {
     public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Albaranes")
-            .resolve(a.getNumero() + ".pdf");
+            .resolve(safeFilename(a.getNumero()) + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -213,7 +217,7 @@ public class PDFService {
     public Path generarNomina(Nomina n, Empleado e) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Nominas")
-            .resolve(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombreCompleto().replace(" ", "_") + ".pdf");
+            .resolve(safeFilename(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombreCompleto()) + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
@@ -482,7 +486,7 @@ public class PDFService {
     public Path generarEstadisticas(int anio) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Estadisticas")
-            .resolve("Estadisticas_" + anio + ".pdf");
+            .resolve(safeFilename("Estadisticas_" + anio) + ".pdf");
         path.getParent().toFile().mkdirs();
 
         Document doc = new Document(PageSize.A4, 40, 40, 60, 40);

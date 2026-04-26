@@ -18,8 +18,9 @@ import java.time.Duration;
 
 public class OllamaInstallerDialog extends Stage {
 
-    private static final String INSTALLER_URL = "https://ollama.com/download/OllamaSetup.exe";
-    private static final String DEFAULT_MODEL  = "llama3.2";
+    private static final String INSTALLER_URL    = "https://ollama.com/download/OllamaSetup.exe";
+    private static final String DEFAULT_MODEL    = "llama3.2";
+    private static final long   MAX_INSTALLER_MB = 200;   // límite razonable para el .exe de Ollama
 
     private final ProgressBar progressBar = new ProgressBar(0);
     private final Label       lblProgreso = new Label(" ");
@@ -203,9 +204,10 @@ public class OllamaInstallerDialog extends Stage {
     private Path descargarInstalador() throws Exception {
         log("  Conectando con ollama.com...");
 
+        // NORMAL: sigue redirecciones pero nunca degrada de HTTPS a HTTP
         HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(20))
-            .followRedirects(HttpClient.Redirect.ALWAYS)
+            .followRedirects(HttpClient.Redirect.NORMAL)
             .build();
 
         // Obtener tamaño total (HEAD)
@@ -220,27 +222,40 @@ public class OllamaInstallerDialog extends Stage {
         } catch (Exception ignored) {}
 
         if (total > 0) {
+            if (total > MAX_INSTALLER_MB * 1_048_576) {
+                throw new Exception("El instalador declarado supera el límite de " + MAX_INSTALLER_MB + " MB — descarga cancelada");
+            }
             log("  Tamaño del instalador: " + (total / 1_048_576) + " MB");
         }
 
         log("  Descargando OllamaSetup.exe...");
-        Path dest = Files.createTempFile("OllamaSetup", ".exe");
+        // Guardar en directorio temporal del sistema; después verificamos que el path no fue manipulado
+        Path tmpDir = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
+        Path dest = Files.createTempFile(tmpDir, "OllamaSetup", ".exe");
+
         HttpRequest req = HttpRequest.newBuilder()
             .uri(URI.create(INSTALLER_URL))
             .timeout(Duration.ofMinutes(10))
             .GET().build();
 
         HttpResponse<InputStream> resp = client.send(req, HttpResponse.BodyHandlers.ofInputStream());
+        if (resp.statusCode() != 200) {
+            throw new Exception("El servidor devolvió HTTP " + resp.statusCode() + " al descargar el instalador");
+        }
 
         long[] descargado = {0};
         final long totalFinal = total;
+        final long maxBytes = MAX_INSTALLER_MB * 1_048_576;
         try (InputStream in = resp.body();
              OutputStream out = Files.newOutputStream(dest)) {
             byte[] buf = new byte[65536];
             int n;
             while ((n = in.read(buf)) != -1) {
-                out.write(buf, 0, n);
                 descargado[0] += n;
+                if (descargado[0] > maxBytes) {
+                    throw new Exception("La descarga superó el límite de " + MAX_INSTALLER_MB + " MB — cancelada");
+                }
+                out.write(buf, 0, n);
                 final long d = descargado[0];
                 Platform.runLater(() -> {
                     if (totalFinal > 0) {
@@ -255,14 +270,31 @@ public class OllamaInstallerDialog extends Stage {
                 });
             }
         }
-        log("  Descarga completada → " + dest.toAbsolutePath());
+
+        // Verificar que el archivo resultante tiene un tamaño mínimo razonable (>1 MB)
+        long fileSize = Files.size(dest);
+        if (fileSize < 1_048_576) {
+            Files.deleteIfExists(dest);
+            throw new Exception("El archivo descargado es demasiado pequeño (" + fileSize + " bytes) — posible descarga corrupta");
+        }
+
+        log("  Descarga completada (" + (fileSize / 1_048_576) + " MB) → " + dest.getFileName());
         return dest;
     }
 
     // ── Paso 2: Ejecutar instalador ───────────────────────────────────────────
 
     private void ejecutarInstalador(Path installer) throws Exception {
-        Process proc = new ProcessBuilder(installer.toString())
+        // Verificar que el ejecutable está dentro del directorio temporal del sistema
+        Path tmpDir  = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
+        Path realExe = installer.toRealPath();
+        if (!realExe.startsWith(tmpDir)) {
+            throw new SecurityException("Ruta del instalador fuera del directorio temporal — ejecución cancelada");
+        }
+        if (!Files.isRegularFile(realExe)) {
+            throw new SecurityException("El instalador no es un archivo regular — ejecución cancelada");
+        }
+        Process proc = new ProcessBuilder(realExe.toString())
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
             .start();

@@ -156,7 +156,9 @@ public class OllamaService {
 
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
             JsonNode root = mapper.readTree(response.body());
-            return root.get("message").get("content").asText();
+            JsonNode msg = root.get("message");
+            if (msg == null || msg.get("content") == null) return "";
+            return msg.get("content").asText();
         } catch (Exception e) {
             return "Error: " + e.getMessage();
         }

@@ -89,7 +89,9 @@ public class App extends Application {
     private void notificarRecordatoriosProximos() {
         try {
             String rawDias = DatabaseManager.getConfig("cal_dias_aviso");
-            int diasAviso = rawDias.isBlank() ? 3 : Integer.parseInt(rawDias);
+            int diasAviso;
+            try { diasAviso = rawDias.isBlank() ? 3 : Integer.parseInt(rawDias); }
+            catch (NumberFormatException ignored) { diasAviso = 3; }
             List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(diasAviso);
             if (proximas.isEmpty()) return;
 

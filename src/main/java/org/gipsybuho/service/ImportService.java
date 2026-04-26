@@ -78,7 +78,8 @@ public class ImportService {
         List<String> headers = new ArrayList<>();
         List<Map<String, String>> rows = new ArrayList<>();
 
-        byte[] raw = new FileInputStream(file).readAllBytes();
+        byte[] raw;
+        try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
         String content;
         // Strip BOM if present
         if (raw.length >= 3 && raw[0] == (byte) 0xEF && raw[1] == (byte) 0xBB && raw[2] == (byte) 0xBF) {
@@ -482,7 +483,10 @@ public class ImportService {
             .build();
 
         HttpResponse<String> resp = client.send(req, HttpResponse.BodyHandlers.ofString());
-        return mapper.readTree(resp.body()).get("message").get("content").asText();
+        JsonNode root = mapper.readTree(resp.body());
+        JsonNode msg = root.get("message");
+        if (msg == null || msg.get("content") == null) return "";
+        return msg.get("content").asText();
     }
 
     public boolean isOllamaDisponible() {

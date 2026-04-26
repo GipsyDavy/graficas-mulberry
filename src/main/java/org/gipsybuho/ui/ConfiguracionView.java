@@ -410,10 +410,8 @@ public class ConfiguracionView extends VBox {
 
         String rawAviso = DatabaseManager.getConfig("cal_dias_aviso");
         String rawPanel = DatabaseManager.getConfig("cal_dias_panel");
-        Spinner<Integer> spAviso = new Spinner<>(1, 30,
-            rawAviso.isBlank() ? 3 : Integer.parseInt(rawAviso));
-        Spinner<Integer> spPanel = new Spinner<>(1, 60,
-            rawPanel.isBlank() ? 7 : Integer.parseInt(rawPanel));
+        Spinner<Integer> spAviso = new Spinner<>(1, 30, parseIntSafe(rawAviso, 3));
+        Spinner<Integer> spPanel = new Spinner<>(1, 60, parseIntSafe(rawPanel, 7));
         spAviso.setEditable(true);
         spPanel.setEditable(true);
         spAviso.setPrefWidth(100);

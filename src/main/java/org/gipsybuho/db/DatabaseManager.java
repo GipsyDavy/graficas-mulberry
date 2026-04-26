@@ -23,7 +23,9 @@ public class DatabaseManager {
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
             connection = DriverManager.getConnection(DB_URL);
-            connection.createStatement().execute("PRAGMA foreign_keys = ON");
+            try (Statement st = connection.createStatement()) {
+                st.execute("PRAGMA foreign_keys = ON");
+            }
         }
         return connection;
     }
@@ -68,7 +70,9 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_autoplay', '0')"
         };
         for (String sql : migrations) {
-            try { conn.createStatement().execute(sql); } catch (SQLException ignored) {}
+            try (Statement st = conn.createStatement()) {
+                st.execute(sql);
+            } catch (SQLException ignored) {}
         }
     }
 
@@ -419,7 +423,7 @@ public class DatabaseManager {
     }
 
     public static String generarNumeroPresupuesto() {
-        int sig = Integer.parseInt(getConfig("siguiente_presupuesto"));
+        int sig = parseConfigInt("siguiente_presupuesto", 1);
         String prefijo = getConfig("prefijo_presupuesto");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_presupuesto", String.valueOf(sig + 1));
@@ -427,7 +431,7 @@ public class DatabaseManager {
     }
 
     public static String generarNumeroFactura() {
-        int sig = Integer.parseInt(getConfig("siguiente_factura"));
+        int sig = parseConfigInt("siguiente_factura", 1);
         String prefijo = getConfig("prefijo_factura");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_factura", String.valueOf(sig + 1));
@@ -435,7 +439,7 @@ public class DatabaseManager {
     }
 
     public static String generarNumeroPedido() {
-        int sig = Integer.parseInt(getConfig("siguiente_pedido"));
+        int sig = parseConfigInt("siguiente_pedido", 1);
         String prefijo = getConfig("prefijo_pedido");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_pedido", String.valueOf(sig + 1));
@@ -443,10 +447,14 @@ public class DatabaseManager {
     }
 
     public static String generarNumeroAlbaran() {
-        int sig = Integer.parseInt(getConfig("siguiente_albaran"));
+        int sig = parseConfigInt("siguiente_albaran", 1);
         String prefijo = getConfig("prefijo_albaran");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_albaran", String.valueOf(sig + 1));
         return String.format("%s-%s-%04d", prefijo, anio, sig);
+    }
+
+    private static int parseConfigInt(String clave, int defecto) {
+        try { return Integer.parseInt(getConfig(clave)); } catch (NumberFormatException e) { return defecto; }
     }
 }

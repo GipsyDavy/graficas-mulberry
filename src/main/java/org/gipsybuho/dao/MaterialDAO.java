@@ -71,19 +71,29 @@ public class MaterialDAO {
         Material m = findById(id);
         if (m == null) return;
         double nuevoStock = tipo.equals("entrada") ? m.getStockActual() + cantidad : m.getStockActual() - cantidad;
-        try (PreparedStatement ps = conn.prepareStatement(
-                "UPDATE materiales SET stock_actual=?, updated_at=datetime('now') WHERE id=?")) {
-            ps.setDouble(1, nuevoStock);
-            ps.setInt(2, id);
-            ps.executeUpdate();
-        }
-        try (PreparedStatement ps = conn.prepareStatement(
-                "INSERT INTO movimientos_material (material_id,tipo,cantidad,fecha,descripcion) VALUES (?,?,?,date('now'),?)")) {
-            ps.setInt(1, id);
-            ps.setString(2, tipo);
-            ps.setDouble(3, cantidad);
-            ps.setString(4, descripcion);
-            ps.executeUpdate();
+        boolean prevAutoCommit = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try {
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "UPDATE materiales SET stock_actual=?, updated_at=datetime('now') WHERE id=?")) {
+                ps.setDouble(1, nuevoStock);
+                ps.setInt(2, id);
+                ps.executeUpdate();
+            }
+            try (PreparedStatement ps = conn.prepareStatement(
+                    "INSERT INTO movimientos_material (material_id,tipo,cantidad,fecha,descripcion) VALUES (?,?,?,date('now'),?)")) {
+                ps.setInt(1, id);
+                ps.setString(2, tipo);
+                ps.setDouble(3, cantidad);
+                ps.setString(4, descripcion);
+                ps.executeUpdate();
+            }
+            conn.commit();
+        } catch (SQLException e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(prevAutoCommit);
         }
     }
 
