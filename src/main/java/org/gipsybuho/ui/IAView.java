@@ -58,11 +58,17 @@ public class IAView extends VBox {
         btnInstalarOllama.setManaged(false);
         btnInstalarOllama.setOnAction(e -> abrirInstalador());
 
+        Button btnModelos = new Button("⚙  Modelos");
+        btnModelos.setStyle(
+            "-fx-background-color:#5D4A7A; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-padding:5 12; -fx-background-radius:4; -fx-cursor:hand;");
+        btnModelos.setOnAction(e -> abrirGestionModelos());
+
         Button btnLimpiar = new Button("🗑 Limpiar chat");
         btnLimpiar.setOnAction(e -> chatBox.getChildren().clear());
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnLimpiar);
+        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnModelos, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle("-fx-background-color:#F0F4F8; -fx-border-radius:6; -fx-background-radius:6;");
@@ -233,6 +239,28 @@ public class IAView extends VBox {
         HBox row = new HBox(tf);
         row.setPadding(new Insets(4));
         chatBox.getChildren().add(row);
+    }
+
+    private void abrirGestionModelos() {
+        Stage owner = getScene() != null ? (Stage) getScene().getWindow() : null;
+        ModelosGestionDialog dlg = new ModelosGestionDialog(owner, ia);
+        dlg.showAndWait();
+        if (dlg.isHuboCambios()) {
+            // Refrescar la lista de modelos en el ComboBox
+            Thread.ofVirtual().start(() -> {
+                java.util.List<String> modelos = ia.getModelosDisponibles();
+                Platform.runLater(() -> {
+                    String actual = cbModelo.getValue();
+                    cbModelo.getItems().setAll(modelos);
+                    if (actual != null && modelos.contains(actual)) {
+                        cbModelo.setValue(actual);
+                    } else if (!modelos.isEmpty()) {
+                        cbModelo.setValue(modelos.get(0));
+                        ia.setModeloActual(modelos.get(0));
+                    }
+                });
+            });
+        }
     }
 
     private void verificarOllama() {

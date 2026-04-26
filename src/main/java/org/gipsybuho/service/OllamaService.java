@@ -4,11 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
+import java.io.BufferedReader;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Consumer;
 
 public class OllamaService {
@@ -157,6 +162,106 @@ public class OllamaService {
         }
     }
 
+    public List<ModelInfo> getModelosConDetalles() {
+        List<ModelInfo> lista = new ArrayList<>();
+        try {
+            HttpRequest req = HttpRequest.newBuilder()
+                .uri(URI.create(BASE_URL + "/api/tags"))
+                .timeout(Duration.ofSeconds(5))
+                .GET().build();
+            HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+            JsonNode root = mapper.readTree(resp.body());
+            JsonNode models = root.get("models");
+            if (models != null && models.isArray()) {
+                for (JsonNode m : models) {
+                    String nombre = m.get("name").asText();
+                    long size = m.has("size") ? m.get("size").asLong() : 0;
+                    lista.add(new ModelInfo(nombre, size));
+                }
+            }
+        } catch (Exception ignored) {}
+        return lista;
+    }
+
+    public void eliminarModelo(String nombre) throws Exception {
+        ObjectNode body = mapper.createObjectNode();
+        body.put("model", nombre);
+        HttpRequest req = HttpRequest.newBuilder()
+            .uri(URI.create(BASE_URL + "/api/delete"))
+            .timeout(Duration.ofSeconds(30))
+            .header("Content-Type", "application/json")
+            .method("DELETE", HttpRequest.BodyPublishers.ofString(body.toString()))
+            .build();
+        HttpResponse<String> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofString());
+        if (resp.statusCode() != 200) {
+            throw new Exception("HTTP " + resp.statusCode() + ": " + resp.body());
+        }
+    }
+
+    public void pullModeloStreaming(String nombre, Consumer<String> onEstado,
+            Consumer<double[]> onProgreso, Runnable onComplete, Consumer<String> onError) {
+        Thread.ofVirtual().start(() -> {
+            try {
+                ObjectNode body = mapper.createObjectNode();
+                body.put("name", nombre);
+                body.put("stream", true);
+
+                HttpRequest req = HttpRequest.newBuilder()
+                    .uri(URI.create(BASE_URL + "/api/pull"))
+                    .timeout(Duration.ofMinutes(60))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+                    .build();
+
+                HttpResponse<InputStream> resp = httpClient.send(req, HttpResponse.BodyHandlers.ofInputStream());
+
+                try (BufferedReader br = new BufferedReader(new InputStreamReader(resp.body()))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        if (line.isBlank()) continue;
+                        JsonNode node = mapper.readTree(line);
+                        String estado = node.has("status") ? node.get("status").asText() : "";
+                        long total     = node.has("total")     ? node.get("total").asLong()     : 0;
+                        long completado = node.has("completed") ? node.get("completed").asLong() : 0;
+
+                        final String est = estado;
+                        final long tot = total, comp = completado;
+                        javafx.application.Platform.runLater(() -> {
+                            onEstado.accept(est);
+                            if (tot > 0) onProgreso.accept(new double[]{(double) comp / tot, comp, tot});
+                        });
+
+                        if ("success".equals(estado)) break;
+                    }
+                }
+                javafx.application.Platform.runLater(onComplete);
+            } catch (Exception e) {
+                javafx.application.Platform.runLater(() -> onError.accept(e.getMessage()));
+            }
+        });
+    }
+
     public void setModeloActual(String modelo) { this.modeloActual = modelo; }
     public String getModeloActual() { return modeloActual; }
+
+    // ── ModelInfo ─────────────────────────────────────────────────────────────
+
+    public static class ModelInfo {
+        public final String nombre;
+        public final long bytes;
+
+        public ModelInfo(String nombre, long bytes) {
+            this.nombre = nombre;
+            this.bytes  = bytes;
+        }
+
+        public String tamano() {
+            if (bytes < 1024) return bytes + " B";
+            if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+            if (bytes < 1024L * 1024 * 1024) return String.format("%.0f MB", bytes / (1024.0 * 1024));
+            return String.format("%.1f GB", bytes / (1024.0 * 1024 * 1024));
+        }
+
+        @Override public String toString() { return nombre; }
+    }
 }
