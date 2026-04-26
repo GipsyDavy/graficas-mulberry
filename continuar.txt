@@ -3,3 +3,12 @@
   formatos mas comunes para poder cargarla en otro          
   otrdenador o programa, y sirva tambien como copia de      
   seguridad de la base de datos completa 
+
+
+genera un manual/guia de la aplicacion explicando   
+  el funcionamiento de cada uno de los apartados y    
+  modulos del programa para el usuario final y que    
+  pueda añadir, editar, eliminar..en general, poder   
+  hacer uso de todas las opciones de la aplicacion y  
+  sacarle el maximo partido y rendimiento, exportalo  
+  a formato .pdf que sea la version v3          
