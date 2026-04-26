@@ -1,0 +1,21 @@
+/* Tema Mulberry — morado vino, colores corporativos de Gráficas Mulberry */
+.root {
+    -c-primary:         #6B2D5E;
+    -c-primary-dark:    #2D1A28;
+    -c-sidebar-logo:    #1A0F18;
+    -c-sidebar-sep:     #4A2A42;
+    -c-accent:          #E891D0;
+    -c-muted:           #C4A8BC;
+    -c-sidebar-text:    #D4B8CC;
+    -c-bg:              #F5F0F4;
+    -c-border:          #D4B8CC;
+    -c-text-secondary:  #7A5A72;
+    -c-text:            #2D1A28;
+    -c-nav-hover:       #3D2038;
+    -c-row-hover:       #F8EEF6;
+    -c-row-selected:    #F0E6EF;
+    -c-row-alt:         #FBF6FA;
+    -c-row-border:      #F0E8EE;
+    -c-tab-bg:          #EDE3EB;
+    -c-card-bg:         white;
+}

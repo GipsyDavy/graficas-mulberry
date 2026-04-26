@@ -62,7 +62,8 @@ public class MainView extends BorderPane {
             navBtn("👤  Empleados",          () -> mostrarVista(new EmpleadosView())),
             navBtn("💼  Nóminas",            () -> mostrarVista(new NominasView())),
             navBtn("🤖  Asistente IA",       () -> mostrarVista(new IAView())),
-            navBtn("📅  Calendario",          () -> mostrarVista(new CalendarioView()))
+            navBtn("📅  Calendario",          () -> mostrarVista(new CalendarioView())),
+            navBtn("⚙  Configuración",        () -> mostrarVista(new ConfiguracionView()))
         );
 
         Region spacer = new Region();

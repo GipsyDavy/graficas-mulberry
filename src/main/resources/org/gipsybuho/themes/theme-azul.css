@@ -1,0 +1,21 @@
+/* Tema Azul Marino — profesional, corporativo */
+.root {
+    -c-primary:         #1A56A6;
+    -c-primary-dark:    #0D2845;
+    -c-sidebar-logo:    #081828;
+    -c-sidebar-sep:     #1A3055;
+    -c-accent:          #64AFFF;
+    -c-muted:           #8AADCC;
+    -c-sidebar-text:    #A8C4E0;
+    -c-bg:              #EFF4FB;
+    -c-border:          #B8CEEA;
+    -c-text-secondary:  #4A6A8A;
+    -c-text:            #0D2845;
+    -c-nav-hover:       #153A70;
+    -c-row-hover:       #E8F1FB;
+    -c-row-selected:    #D8EAF9;
+    -c-row-alt:         #F5F9FF;
+    -c-row-border:      #DDE8F5;
+    -c-tab-bg:          #D5E5F6;
+    -c-card-bg:         white;
+}

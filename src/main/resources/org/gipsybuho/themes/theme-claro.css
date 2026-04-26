@@ -1,0 +1,21 @@
+/* Tema Claro — minimalista, neutro gris azulado */
+.root {
+    -c-primary:         #4A5568;
+    -c-primary-dark:    #2D3748;
+    -c-sidebar-logo:    #1A202C;
+    -c-sidebar-sep:     #3A4558;
+    -c-accent:          #90CDF4;
+    -c-muted:           #8090A8;
+    -c-sidebar-text:    #A8B8CC;
+    -c-bg:              #F7F8FA;
+    -c-border:          #CBD5E0;
+    -c-text-secondary:  #606878;
+    -c-text:            #2D3748;
+    -c-nav-hover:       #3A4558;
+    -c-row-hover:       #EDF2F7;
+    -c-row-selected:    #E2E8F0;
+    -c-row-alt:         #F8F9FA;
+    -c-row-border:      #E8EDF2;
+    -c-tab-bg:          #DDE3EB;
+    -c-card-bg:         white;
+}

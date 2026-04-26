@@ -1,0 +1,21 @@
+/* Tema Oscuro — modo noche, fondo azul marino profundo */
+.root {
+    -c-primary:         #7B93D0;
+    -c-primary-dark:    #1A1D2E;
+    -c-sidebar-logo:    #0F1120;
+    -c-sidebar-sep:     #262940;
+    -c-accent:          #A8BEFF;
+    -c-muted:           #7B8DB0;
+    -c-sidebar-text:    #9BAAC8;
+    -c-bg:              #242638;
+    -c-border:          #3A3D55;
+    -c-text-secondary:  #8892B0;
+    -c-text:            #CCD6F6;
+    -c-nav-hover:       #2A2D42;
+    -c-row-hover:       #2E3150;
+    -c-row-selected:    #303358;
+    -c-row-alt:         #272A3E;
+    -c-row-border:      #2E3050;
+    -c-tab-bg:          #2E3150;
+    -c-card-bg:         #1E2030;
+}

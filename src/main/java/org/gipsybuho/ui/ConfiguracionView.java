@@ -1,0 +1,467 @@
+package org.gipsybuho.ui;
+
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Cursor;
+import javafx.scene.control.*;
+import javafx.scene.layout.*;
+import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.service.TemaManager;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+
+public class ConfiguracionView extends VBox {
+
+    // ── Datos de cada tema ─────────────────────────────────────────────────────
+    private record Tema(String id, String nombre,
+                        String primary, String sidebar, String bg, String accent) {}
+
+    private static final List<Tema> TEMAS = List.of(
+        new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
+        new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
+        new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
+        new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
+        new Tema("rojo",     "Rojo",        "#A03030", "#4A1010", "#FBF3F3", "#FF8888"),
+        new Tema("claro",    "Claro",       "#4A5568", "#2D3748", "#F7F8FA", "#90CDF4")
+    );
+
+    private static final List<String> FUENTES = List.of(
+        "Segoe UI", "Arial", "Calibri", "Georgia", "Consolas", "Trebuchet MS", "Verdana"
+    );
+
+    private record TamanoFuente(String etiqueta, String px) {}
+    private static final List<TamanoFuente> TAMANIOS = List.of(
+        new TamanoFuente("Pequeño",     "11"),
+        new TamanoFuente("Normal",      "13"),
+        new TamanoFuente("Grande",      "15"),
+        new TamanoFuente("Muy grande",  "17")
+    );
+
+    // ── Constructor ───────────────────────────────────────────────────────────
+
+    public ConfiguracionView() {
+        getStyleClass().add("content-view");
+        setPadding(new Insets(24));
+        setSpacing(16);
+
+        Label titulo = new Label("Configuración");
+        titulo.getStyleClass().add("view-title");
+
+        TabPane tabs = new TabPane();
+        tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+        VBox.setVgrow(tabs, Priority.ALWAYS);
+
+        Tab tabApariencia  = new Tab("🎨  Apariencia",  buildTabApariencia());
+        Tab tabEmpresa     = new Tab("🏢  Mi empresa",  buildTabEmpresa());
+        Tab tabPreferencias = new Tab("⚙  Preferencias", buildTabPreferencias());
+
+        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias);
+        getChildren().addAll(titulo, tabs);
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 1 — APARIENCIA
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabApariencia() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        // ── Sección: tema de color ────────────────────────────────────────────
+        VBox seccionTema = new VBox(10);
+        Label tituloTema = new Label("Tema de color");
+        tituloTema.getStyleClass().add("config-section-title");
+        Label descTema = new Label("Cambia al instante el aspecto visual completo de la aplicación.");
+        descTema.getStyleClass().add("config-section-desc");
+
+        FlowPane temaCards = new FlowPane(12, 12);
+        String temaActual = TemaManager.getTemaActual();
+        for (Tema t : TEMAS) {
+            temaCards.getChildren().add(buildTemaCard(t, t.id().equals(temaActual)));
+        }
+
+        seccionTema.getChildren().addAll(tituloTema, descTema, temaCards);
+
+        // ── Sección: tipografía ───────────────────────────────────────────────
+        VBox seccionFuente = new VBox(10);
+        Label tituloFuente = new Label("Tipografía");
+        tituloFuente.getStyleClass().add("config-section-title");
+        Label descFuente = new Label("La fuente y el tamaño se aplican al guardar. El título y algunos elementos fijos mantienen su tamaño relativo.");
+        descFuente.getStyleClass().add("config-section-desc");
+        descFuente.setWrapText(true);
+
+        // Fuente
+        GridPane gridFuente = new GridPane();
+        gridFuente.setHgap(12);
+        gridFuente.setVgap(14);
+
+        Label lblFuente = new Label("Fuente:");
+        lblFuente.getStyleClass().add("config-form-label");
+        ComboBox<String> cbFuente = new ComboBox<>();
+        cbFuente.getItems().addAll(FUENTES);
+        String fuenteActual = TemaManager.getFuenteActual();
+        cbFuente.setValue(fuenteActual.isBlank() ? "Segoe UI" : fuenteActual);
+        cbFuente.setPrefWidth(220);
+
+        Label lblTamano = new Label("Tamaño:");
+        lblTamano.getStyleClass().add("config-form-label");
+        HBox tamanosBox = buildSelectorTamano();
+
+        gridFuente.add(lblFuente, 0, 0);  gridFuente.add(cbFuente, 1, 0);
+        gridFuente.add(lblTamano, 0, 1);  gridFuente.add(tamanosBox, 1, 1);
+
+        Button btnAplicarFuente = new Button("Aplicar tipografía");
+        btnAplicarFuente.getStyleClass().add("config-save-btn");
+        btnAplicarFuente.setOnAction(e -> {
+            if (getScene() != null) {
+                TemaManager.aplicarFuente(getScene(), cbFuente.getValue(), tamanoSeleccionado);
+                mostrarToast("Tipografía aplicada correctamente");
+            }
+        });
+
+        seccionFuente.getChildren().addAll(tituloFuente, descFuente, gridFuente, btnAplicarFuente);
+
+        // ── Separador visual ──────────────────────────────────────────────────
+        contenido.getChildren().addAll(
+            seccionTema,
+            new Separator(),
+            seccionFuente
+        );
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    private String tamanoSeleccionado = "";
+    private final List<Button> botonesSize = new java.util.ArrayList<>();
+
+    private HBox buildSelectorTamano() {
+        HBox box = new HBox(8);
+        String actual = TemaManager.getTamanoFuenteActual();
+
+        for (TamanoFuente t : TAMANIOS) {
+            Button btn = new Button(t.etiqueta());
+            btn.getStyleClass().add("font-size-btn");
+            if (t.px().equals(actual) || (actual.isBlank() && t.px().equals("13"))) {
+                btn.getStyleClass().add("font-size-btn-selected");
+                tamanoSeleccionado = t.px();
+            }
+            btn.setOnAction(e -> {
+                botonesSize.forEach(b -> b.getStyleClass().remove("font-size-btn-selected"));
+                btn.getStyleClass().add("font-size-btn-selected");
+                tamanoSeleccionado = t.px();
+            });
+            botonesSize.add(btn);
+            box.getChildren().add(btn);
+        }
+        return box;
+    }
+
+    private VBox buildTemaCard(Tema t, boolean activo) {
+        VBox card = new VBox(0);
+        card.getStyleClass().add("tema-card");
+        if (activo) card.getStyleClass().add("tema-card-activa");
+        card.setPrefWidth(148);
+        card.setCursor(Cursor.HAND);
+
+        // Preview de colores
+        HBox preview = new HBox(0);
+        preview.setPrefHeight(60);
+        preview.setStyle("-fx-background-radius: 6 6 0 0;");
+
+        // Franja sidebar
+        VBox sidebarMini = new VBox();
+        sidebarMini.setPrefWidth(44);
+        sidebarMini.setStyle("-fx-background-color: " + t.sidebar() + "; -fx-background-radius: 6 0 0 0;");
+        sidebarMini.setPadding(new Insets(6));
+        for (int i = 0; i < 4; i++) {
+            Region linea = new Region();
+            linea.setPrefHeight(4);
+            linea.setPrefWidth(32);
+            linea.setStyle("-fx-background-color: rgba(255,255,255,0.25); -fx-background-radius: 2;");
+            VBox.setMargin(linea, new Insets(0, 0, 4, 0));
+            sidebarMini.getChildren().add(linea);
+        }
+
+        // Área de contenido
+        VBox contentMini = new VBox(4);
+        HBox.setHgrow(contentMini, Priority.ALWAYS);
+        contentMini.setStyle("-fx-background-color: " + t.bg() + "; -fx-background-radius: 0 6 0 0;");
+        contentMini.setPadding(new Insets(6, 6, 6, 6));
+
+        Region barPrimary = new Region();
+        barPrimary.setPrefHeight(5);
+        barPrimary.setStyle("-fx-background-color: " + t.primary() + "; -fx-background-radius: 2;");
+
+        Region barAccent = new Region();
+        barAccent.setPrefHeight(3);
+        barAccent.setPrefWidth(28);
+        barAccent.setStyle("-fx-background-color: " + t.accent() + "; -fx-background-radius: 2;");
+
+        Region barGray = new Region();
+        barGray.setPrefHeight(3);
+        barGray.setStyle("-fx-background-color: rgba(0,0,0,0.1); -fx-background-radius: 2;");
+
+        contentMini.getChildren().addAll(barPrimary, barAccent, barGray);
+        preview.getChildren().addAll(sidebarMini, contentMini);
+
+        // Nombre
+        Label nombre = new Label(activo ? t.nombre() + "  ✓" : t.nombre());
+        nombre.getStyleClass().add("tema-nombre");
+        nombre.setMaxWidth(Double.MAX_VALUE);
+
+        card.getChildren().addAll(preview, nombre);
+        card.setOnMouseClicked(e -> seleccionarTema(t));
+        return card;
+    }
+
+    private void seleccionarTema(Tema t) {
+        if (getScene() == null) return;
+        TemaManager.aplicarTema(getScene(), t.id());
+        // Refrescar la propia vista para actualizar el marcador ✓
+        // (la vista ya está en la escena, el CSS cambia automáticamente,
+        //  pero el texto del nombre del card no, así que la recargamos)
+        getScene().getRoot().applyCss();
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 2 — MI EMPRESA
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabEmpresa() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        Label titulo = new Label("Datos de la empresa");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label("Esta información aparece en presupuestos, facturas y nóminas.");
+        desc.getStyleClass().add("config-section-desc");
+
+        // Formulario
+        Map<String, String[]> campos = new LinkedHashMap<>();
+        campos.put("empresa_nombre",    new String[]{"Nombre / Razón social", "Gráficas Mulberry S.L."});
+        campos.put("empresa_nif",       new String[]{"NIF / CIF",             "B12345678"});
+        campos.put("empresa_direccion", new String[]{"Dirección",             "Calle Río Miño, 54 - 3F"});
+        campos.put("empresa_ciudad",    new String[]{"Ciudad",                "Huercal de Almería"});
+        campos.put("empresa_cp",        new String[]{"Código postal",         "04230"});
+        campos.put("empresa_telefono",  new String[]{"Teléfono",              "950 30 61 64"});
+        campos.put("empresa_email",     new String[]{"Email",                 "info@graficasmulberry.com"});
+        campos.put("empresa_web",       new String[]{"Página web",            "www.graficasmulberry.com"});
+        campos.put("empresa_iban",      new String[]{"IBAN",                  "ES00 0000 0000 0000 0000 0000"});
+        campos.put("empresa_actividad", new String[]{"Actividad / CNAE",      "Serigrafía y artes gráficas"});
+
+        Map<String, TextField> fields = new LinkedHashMap<>();
+        GridPane grid = buildFormGrid(campos, fields);
+
+        Button btnGuardar = new Button("Guardar cambios");
+        btnGuardar.getStyleClass().add("config-save-btn");
+        btnGuardar.setOnAction(e -> {
+            fields.forEach((clave, tf) -> DatabaseManager.setConfig(clave, tf.getText().trim()));
+            mostrarToast("Datos de la empresa guardados");
+        });
+
+        HBox footer = new HBox(btnGuardar);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox panel = new VBox(12, titulo, desc, new Separator(), grid, footer);
+        panel.getStyleClass().add("config-panel");
+        contenido.getChildren().add(panel);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    private GridPane buildFormGrid(Map<String, String[]> campos, Map<String, TextField> fields) {
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(12);
+
+        ColumnConstraints cc0 = new ColumnConstraints();
+        cc0.setMinWidth(160);
+        cc0.setHalignment(javafx.geometry.HPos.RIGHT);
+
+        ColumnConstraints cc1 = new ColumnConstraints();
+        cc1.setHgrow(Priority.ALWAYS);
+        cc1.setFillWidth(true);
+
+        grid.getColumnConstraints().addAll(cc0, cc1);
+
+        int row = 0;
+        for (Map.Entry<String, String[]> entry : campos.entrySet()) {
+            String clave = entry.getKey();
+            String label = entry.getValue()[0];
+            String placeholder = entry.getValue()[1];
+
+            Label lbl = new Label(label + ":");
+            lbl.getStyleClass().add("config-form-label");
+
+            TextField tf = new TextField(DatabaseManager.getConfig(clave));
+            tf.setPromptText(placeholder);
+            tf.setMaxWidth(Double.MAX_VALUE);
+            fields.put(clave, tf);
+
+            grid.add(lbl, 0, row);
+            grid.add(tf,  1, row);
+            row++;
+        }
+        return grid;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 3 — PREFERENCIAS
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabPreferencias() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        contenido.getChildren().addAll(
+            buildPanelFacturacion(),
+            buildPanelRecordatorios()
+        );
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    private VBox buildPanelFacturacion() {
+        Label titulo = new Label("Facturación y presupuestos");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label("Valores por defecto usados al crear nuevos documentos.");
+        desc.getStyleClass().add("config-section-desc");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgap(12);
+        ColumnConstraints cc0 = new ColumnConstraints();
+        cc0.setMinWidth(200);
+        cc0.setHalignment(javafx.geometry.HPos.RIGHT);
+        ColumnConstraints cc1 = new ColumnConstraints();
+        cc1.setHgrow(Priority.ALWAYS);
+        grid.getColumnConstraints().addAll(cc0, cc1);
+
+        // IVA
+        TextField tfIva = fieldFor("iva_defecto", "21");
+        // Prefijos
+        TextField tfPrePres = fieldFor("prefijo_presupuesto", "PRE");
+        TextField tfPreFact = fieldFor("prefijo_factura",     "FAC");
+        // Condiciones
+        TextArea taCondiciones = new TextArea(DatabaseManager.getConfig("condiciones_defecto"));
+        taCondiciones.setPromptText("Texto de condiciones que aparece en presupuestos");
+        taCondiciones.setPrefRowCount(3);
+        taCondiciones.setWrapText(true);
+
+        addRow(grid, 0, "IVA por defecto (%):", tfIva);
+        addRow(grid, 1, "Prefijo presupuesto:", tfPrePres);
+        addRow(grid, 2, "Prefijo factura:",     tfPreFact);
+        addRow(grid, 3, "Condiciones defecto:", taCondiciones);
+
+        Button btnGuardar = new Button("Guardar preferencias de facturación");
+        btnGuardar.getStyleClass().add("config-save-btn");
+        btnGuardar.setOnAction(e -> {
+            DatabaseManager.setConfig("iva_defecto",          tfIva.getText().trim());
+            DatabaseManager.setConfig("prefijo_presupuesto",  tfPrePres.getText().trim());
+            DatabaseManager.setConfig("prefijo_factura",      tfPreFact.getText().trim());
+            DatabaseManager.setConfig("condiciones_defecto",  taCondiciones.getText().trim());
+            mostrarToast("Preferencias de facturación guardadas");
+        });
+
+        HBox footer = new HBox(btnGuardar);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox panel = new VBox(12, titulo, desc, new Separator(), grid, footer);
+        panel.getStyleClass().add("config-panel");
+        return panel;
+    }
+
+    private VBox buildPanelRecordatorios() {
+        Label titulo = new Label("Recordatorios del calendario");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label("Controla con cuánta antelación se muestran avisos de eventos próximos.");
+        desc.getStyleClass().add("config-section-desc");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(14);
+        grid.setVgrow(grid, Priority.NEVER);
+        grid.setHgap(14);
+        grid.setVgap(12);
+        ColumnConstraints cc0 = new ColumnConstraints();
+        cc0.setMinWidth(200);
+        cc0.setHalignment(javafx.geometry.HPos.RIGHT);
+        ColumnConstraints cc1 = new ColumnConstraints();
+        cc1.setHgrow(Priority.ALWAYS);
+        grid.getColumnConstraints().addAll(cc0, cc1);
+
+        String rawAviso = DatabaseManager.getConfig("cal_dias_aviso");
+        String rawPanel = DatabaseManager.getConfig("cal_dias_panel");
+        Spinner<Integer> spAviso = new Spinner<>(1, 30,
+            rawAviso.isBlank() ? 3 : Integer.parseInt(rawAviso));
+        Spinner<Integer> spPanel = new Spinner<>(1, 60,
+            rawPanel.isBlank() ? 7 : Integer.parseInt(rawPanel));
+        spAviso.setEditable(true);
+        spPanel.setEditable(true);
+        spAviso.setPrefWidth(100);
+        spPanel.setPrefWidth(100);
+
+        addRow(grid, 0, "Alerta emergente al iniciar (días):", spAviso);
+        addRow(grid, 1, "Panel dashboard — mostrar eventos (días):", spPanel);
+
+        Button btnGuardar = new Button("Guardar preferencias de recordatorios");
+        btnGuardar.getStyleClass().add("config-save-btn");
+        btnGuardar.setOnAction(e -> {
+            DatabaseManager.setConfig("cal_dias_aviso", String.valueOf(spAviso.getValue()));
+            DatabaseManager.setConfig("cal_dias_panel", String.valueOf(spPanel.getValue()));
+            mostrarToast("Preferencias de recordatorios guardadas");
+        });
+
+        HBox footer = new HBox(btnGuardar);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox panel = new VBox(12, titulo, desc, new Separator(), grid, footer);
+        panel.getStyleClass().add("config-panel");
+        return panel;
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private TextField fieldFor(String clave, String placeholder) {
+        TextField tf = new TextField(DatabaseManager.getConfig(clave));
+        tf.setPromptText(placeholder);
+        tf.setMaxWidth(240);
+        return tf;
+    }
+
+    private void addRow(GridPane grid, int row, String label, javafx.scene.Node field) {
+        Label lbl = new Label(label);
+        lbl.getStyleClass().add("config-form-label");
+        grid.add(lbl, 0, row);
+        grid.add(field, 1, row);
+    }
+
+    private void mostrarToast(String mensaje) {
+        Alert info = new Alert(Alert.AlertType.INFORMATION);
+        info.setTitle("Configuración");
+        info.setHeaderText(null);
+        info.setContentText("✅  " + mensaje);
+        if (getScene() != null) {
+            info.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        info.show();
+        // Auto-cerrar el toast después de 2 segundos
+        javafx.animation.PauseTransition pausa = new javafx.animation.PauseTransition(
+            javafx.util.Duration.seconds(2));
+        pausa.setOnFinished(ev -> info.close());
+        pausa.play();
+    }
+}

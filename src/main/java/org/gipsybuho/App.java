@@ -10,6 +10,7 @@ import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.service.OllamaManager;
+import org.gipsybuho.service.TemaManager;
 import org.gipsybuho.ui.MainView;
 
 import java.time.LocalDate;
@@ -28,6 +29,9 @@ public class App extends Application {
         Scene scene = new Scene(mainView, 1280, 800);
         scene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
+
+        // Aplicar tema y tipografía guardados por el usuario
+        TemaManager.aplicarTodo(scene);
 
         primaryStage.setTitle("Gráficas Mulberry — Sistema de Gestión");
         primaryStage.setScene(scene);
@@ -48,7 +52,9 @@ public class App extends Application {
 
     private void notificarRecordatoriosProximos() {
         try {
-            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(3);
+            String rawDias = DatabaseManager.getConfig("cal_dias_aviso");
+            int diasAviso = rawDias.isBlank() ? 3 : Integer.parseInt(rawDias);
+            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(diasAviso);
             if (proximas.isEmpty()) return;
 
             StringBuilder sb = new StringBuilder();

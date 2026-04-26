@@ -1,0 +1,21 @@
+/* Tema Rojo Ladrillo — elegante y enérgico */
+.root {
+    -c-primary:         #A03030;
+    -c-primary-dark:    #4A1010;
+    -c-sidebar-logo:    #300808;
+    -c-sidebar-sep:     #602020;
+    -c-accent:          #FF8888;
+    -c-muted:           #C08888;
+    -c-sidebar-text:    #D8A8A8;
+    -c-bg:              #FBF3F3;
+    -c-border:          #E0B8B8;
+    -c-text-secondary:  #8A5050;
+    -c-text:            #4A1010;
+    -c-nav-hover:       #701818;
+    -c-row-hover:       #FAEAEA;
+    -c-row-selected:    #F5D8D8;
+    -c-row-alt:         #FDF8F8;
+    -c-row-border:      #F5E0E0;
+    -c-tab-bg:          #EDD5D5;
+    -c-card-bg:         white;
+}
