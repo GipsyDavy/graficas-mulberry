@@ -27,7 +27,8 @@
       "Bash(pip install *)",
       "Bash(python3 -m pip install fpdf2)",
       "Bash(python -m pip install fpdf2)",
-      "PowerShell(python --version; python -m pip install fpdf2 2>&1 | Select-Object -Last 5)"
+      "PowerShell(python --version; python -m pip install fpdf2 2>&1 | Select-Object -Last 5)",
+      "Bash(python generar_manual.py)"
     ]
   }
 }

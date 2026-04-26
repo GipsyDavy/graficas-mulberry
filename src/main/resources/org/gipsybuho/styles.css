@@ -612,6 +612,37 @@
     -fx-background-color: -c-row-hover;
 }
 
+/* ── GRÁFICAS (CHARTS) ───────────────────────────────────── */
+.chart-title {
+    -fx-text-fill: -c-text;
+    -fx-font-weight: bold;
+    -fx-font-size: 13px;
+}
+
+.chart-legend {
+    -fx-background-color: transparent;
+}
+
+.chart-legend-item {
+    -fx-text-fill: -c-text;
+    -fx-font-size: 12px;
+}
+
+.axis {
+    -fx-tick-label-fill: -c-text;
+    -fx-tick-label-font-size: 11px;
+}
+
+.axis .axis-label {
+    -fx-text-fill: -c-text;
+    -fx-font-size: 12px;
+}
+
+.chart-pie-label {
+    -fx-fill: -c-text;
+    -fx-font-size: 11px;
+}
+
 .config-panel {
     -fx-background-color: -c-card-bg;
     -fx-background-radius: 8;

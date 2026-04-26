@@ -8,7 +8,10 @@ import javafx.scene.chart.*;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.gipsybuho.service.EstadisticasService;
+import org.gipsybuho.service.PDFService;
 
+import java.awt.Desktop;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.*;
 
@@ -28,6 +31,7 @@ public class EstadisticasView extends VBox {
 
     private int anio = LocalDate.now().getYear();
     private ComboBox<Integer> cbAnio;
+    private Button btnExportarPDF;
 
     private final StackPane areaFinanciero  = new StackPane();
     private final StackPane areaMateriales  = new StackPane();
@@ -75,7 +79,11 @@ public class EstadisticasView extends VBox {
         btnRefrescar.setStyle("-fx-padding:5 14; -fx-background-radius:4;");
         btnRefrescar.setOnAction(e -> refrescar());
 
-        HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnRefrescar);
+        btnExportarPDF = new Button("📄  Exportar PDF");
+        btnExportarPDF.setStyle("-fx-padding:5 14; -fx-background-radius:4;");
+        btnExportarPDF.setOnAction(e -> exportarPDF());
+
+        HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnRefrescar, btnExportarPDF);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(6, 10, 6, 10));
         bar.setStyle("-fx-background-color:-c-tab-bg; -fx-background-radius:6;");
@@ -421,7 +429,7 @@ public class EstadisticasView extends VBox {
 
     private VBox kpi(String titulo, String valor, String color) {
         Label lTit = new Label(titulo);
-        lTit.setStyle("-fx-font-size:11px; -fx-text-fill:#777;");
+        lTit.setStyle("-fx-font-size:11px; -fx-text-fill:#444;");
         Label lVal = new Label(valor);
         lVal.setStyle("-fx-font-size:22px; -fx-font-weight:bold; -fx-text-fill:" + color + ";");
         VBox card = new VBox(4, lTit, lVal);
@@ -446,5 +454,42 @@ public class EstadisticasView extends VBox {
 
     private String primeraClave(Map<String, Double> map) {
         return map.isEmpty() ? "—" : map.keySet().iterator().next();
+    }
+
+    private void exportarPDF() {
+        btnExportarPDF.setDisable(true);
+        btnExportarPDF.setText("Generando…");
+        int a = anio;
+        Thread.ofVirtual().start(() -> {
+            try {
+                Path path = new PDFService().generarEstadisticas(a);
+                Platform.runLater(() -> {
+                    btnExportarPDF.setDisable(false);
+                    btnExportarPDF.setText("📄  Exportar PDF");
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("PDF generado");
+                    alert.setHeaderText("Informe de estadísticas exportado");
+                    alert.setContentText("Guardado en:\n" + path.toAbsolutePath());
+                    ButtonType btnAbrir = new ButtonType("Abrir archivo");
+                    alert.getButtonTypes().setAll(btnAbrir, ButtonType.OK);
+                    alert.showAndWait().ifPresent(bt -> {
+                        if (bt == btnAbrir && Desktop.isDesktopSupported()) {
+                            try { Desktop.getDesktop().open(path.toFile()); }
+                            catch (Exception ex) { /* sin app PDF disponible */ }
+                        }
+                    });
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    btnExportarPDF.setDisable(false);
+                    btnExportarPDF.setText("📄  Exportar PDF");
+                    Alert err = new Alert(Alert.AlertType.ERROR);
+                    err.setTitle("Error al generar PDF");
+                    err.setHeaderText("No se pudo generar el informe");
+                    err.setContentText(ex.getMessage());
+                    err.showAndWait();
+                });
+            }
+        });
     }
 }

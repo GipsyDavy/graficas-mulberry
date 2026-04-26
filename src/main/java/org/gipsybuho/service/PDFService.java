@@ -13,6 +13,7 @@ import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.Map;
 import java.util.Objects;
 
 public class PDFService {
@@ -474,6 +475,257 @@ public class PDFService {
         PdfPCell c2 = new PdfPCell(new Phrase(valor, f));
         c2.setBackgroundColor(bg); c2.setPadding(4); c2.setHorizontalAlignment(Element.ALIGN_RIGHT); c2.setBorderColor(COLOR_GRIS_BORDE);
         t.addCell(c1); t.addCell(c2);
+    }
+
+    // ── Estadísticas ──────────────────────────────────────────────────────────
+
+    public Path generarEstadisticas(int anio) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Estadisticas")
+            .resolve("Estadisticas_" + anio + ".pdf");
+        path.getParent().toFile().mkdirs();
+
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "INFORME DE ESTADÍSTICAS " + anio);
+
+        double totIng    = EstadisticasService.totalIngresosAnio(anio);
+        double totGMat   = EstadisticasService.totalGastosMaterialAnio(anio);
+        double totNom    = EstadisticasService.totalNominasAnio(anio);
+        double beneficio = totIng - totGMat - totNom;
+
+        addTituloSeccion(doc, "FINANCIERO");
+        addTablaKpisFinanciero(doc, anio, totIng, totGMat, totNom, beneficio);
+        doc.add(Chunk.NEWLINE);
+        addTablaMensual(doc, anio,
+            EstadisticasService.ingresosPorMes(anio),
+            EstadisticasService.gastosMaterialPorMes(anio),
+            EstadisticasService.gastosNominasPorMes(anio));
+        doc.add(Chunk.NEWLINE);
+        addTablaEstados(doc,
+            EstadisticasService.facturasPorEstado(),
+            EstadisticasService.presupuestosPorEstado());
+
+        doc.newPage();
+        addTituloSeccion(doc, "MATERIALES");
+        addTablaSimpleEst(doc, "Top 10 materiales más consumidos",
+            EstadisticasService.materialesMasUsados(10), "Material", "Uds. consumidas");
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Materiales por categoría",
+            EstadisticasService.materialesPorCategoria(), "Categoría", "Artículos");
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Stock actual (top 12)",
+            EstadisticasService.stockMateriales(12), "Material", "Stock");
+
+        doc.newPage();
+        addTituloSeccion(doc, "CLIENTES");
+        addTablaKpisClientes(doc, anio,
+            EstadisticasService.totalClientesAcumulado(),
+            EstadisticasService.totalClientesAnio(anio));
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Top 8 clientes por facturación",
+            EstadisticasService.topClientesPorFacturacion(8), "Cliente", "Facturación €");
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Clientes por tipo",
+            EstadisticasService.clientesPorTipo(), "Tipo", "Cantidad");
+
+        doc.newPage();
+        addTituloSeccion(doc, "PRODUCCIÓN");
+        addTablaSimpleEst(doc, "Ingresos por técnica",
+            EstadisticasService.tecnicasPorIngresos(), "Técnica", "Ingresos €");
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Volumen por técnica (líneas)",
+            EstadisticasService.tecnicasPorVolumen(), "Técnica", "Líneas");
+        doc.add(Chunk.NEWLINE);
+        addTablaSimpleEst(doc, "Pedidos por estado",
+            EstadisticasService.pedidosPorEstado(), "Estado", "Pedidos");
+
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
+
+    private void addTituloSeccion(Document doc, String texto) throws Exception {
+        PdfPTable t = new PdfPTable(1);
+        t.setWidthPercentage(100);
+        PdfPCell c = new PdfPCell(new Phrase(texto,
+            new Font(fontNegrita.getBaseFont(), 13, Font.BOLD, Color.WHITE)));
+        c.setBackgroundColor(COLOR_MULBERRY);
+        c.setPadding(7);
+        c.setBorder(Rectangle.NO_BORDER);
+        t.addCell(c);
+        doc.add(t);
+        doc.add(Chunk.NEWLINE);
+    }
+
+    private void addTablaKpisFinanciero(Document doc, int anio,
+            double ingresos, double gastosMat, double gastosNom, double beneficio) throws Exception {
+        PdfPTable t = new PdfPTable(4);
+        t.setWidthPercentage(100);
+
+        for (String h : new String[]{"Ingresos " + anio, "Gastos materiales", "Gastos nóminas", "Beneficio estimado"}) {
+            PdfPCell c = new PdfPCell(new Phrase(h,
+                new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+            c.setBackgroundColor(COLOR_MULBERRY);
+            c.setPadding(5);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            t.addCell(c);
+        }
+        Color cVerde   = new Color(39, 174, 96);
+        Color cRojo    = new Color(231, 76, 60);
+        Color cNaranja = new Color(243, 156, 18);
+        double[] vals  = {ingresos, gastosMat, gastosNom, beneficio};
+        Color[]  cols  = {cVerde, cRojo, cNaranja, beneficio >= 0 ? cVerde : cRojo};
+        for (int i = 0; i < vals.length; i++) {
+            PdfPCell c = new PdfPCell(new Phrase(String.format("%.2f €", vals[i]),
+                new Font(fontNegrita.getBaseFont(), 13, Font.BOLD, cols[i])));
+            c.setPadding(10);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            c.setBorderColor(COLOR_GRIS_BORDE);
+            t.addCell(c);
+        }
+        doc.add(t);
+    }
+
+    private void addTablaMensual(Document doc, int anio,
+            Map<String, Double> ingresos, Map<String, Double> gastosMat,
+            Map<String, Double> gastosNom) throws Exception {
+        doc.add(new Phrase("Ingresos vs Gastos por mes (" + anio + ")\n", fontSubtitulo));
+        doc.add(Chunk.NEWLINE);
+        PdfPTable t = new PdfPTable(5);
+        t.setWidthPercentage(100);
+        t.setWidths(new float[]{1.2f, 2f, 2f, 2f, 2f});
+        for (String h : new String[]{"Mes", "Ingresos €", "Gastos mat. €", "Nóminas €", "Balance €"}) {
+            PdfPCell c = new PdfPCell(new Phrase(h,
+                new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+            c.setBackgroundColor(COLOR_MULBERRY);
+            c.setPadding(5);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            t.addCell(c);
+        }
+        boolean par = false;
+        for (String mes : ingresos.keySet()) {
+            double ing = ingresos.getOrDefault(mes, 0.0);
+            double gm  = gastosMat.getOrDefault(mes, 0.0);
+            double gn  = gastosNom.getOrDefault(mes, 0.0);
+            double bal = ing - gm - gn;
+            Color bg   = par ? COLOR_GRIS_CLARO : Color.WHITE;
+            Color cBal = bal >= 0 ? new Color(39, 174, 96) : new Color(231, 76, 60);
+            addCeldaEst(t, mes, bg, fontNormal, Element.ALIGN_LEFT);
+            addCeldaEst(t, String.format("%.2f", ing), bg, fontNormal, Element.ALIGN_RIGHT);
+            addCeldaEst(t, String.format("%.2f", gm),  bg, fontNormal, Element.ALIGN_RIGHT);
+            addCeldaEst(t, String.format("%.2f", gn),  bg, fontNormal, Element.ALIGN_RIGHT);
+            addCeldaEst(t, String.format("%.2f", bal), bg,
+                new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, cBal), Element.ALIGN_RIGHT);
+            par = !par;
+        }
+        doc.add(t);
+    }
+
+    private void addTablaEstados(Document doc,
+            Map<String, Double> estFacturas, Map<String, Double> estPresup) throws Exception {
+        PdfPTable outer = new PdfPTable(2);
+        outer.setWidthPercentage(100);
+        PdfPCell cF = new PdfPCell();
+        cF.setBorder(Rectangle.NO_BORDER);
+        cF.setPadding(4);
+        cF.addElement(subtablaEstados("Estado de facturas", estFacturas));
+        outer.addCell(cF);
+        PdfPCell cP = new PdfPCell();
+        cP.setBorder(Rectangle.NO_BORDER);
+        cP.setPadding(4);
+        cP.addElement(subtablaEstados("Estado de presupuestos", estPresup));
+        outer.addCell(cP);
+        doc.add(outer);
+    }
+
+    private PdfPTable subtablaEstados(String titulo, Map<String, Double> datos) {
+        PdfPTable t = new PdfPTable(2);
+        t.setWidthPercentage(100);
+        PdfPCell hdr = new PdfPCell(new Phrase(titulo,
+            new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+        hdr.setBackgroundColor(new Color(130, 80, 115));
+        hdr.setColspan(2);
+        hdr.setPadding(5);
+        t.addCell(hdr);
+        boolean par = false;
+        for (Map.Entry<String, Double> e : datos.entrySet()) {
+            Color bg = par ? COLOR_GRIS_CLARO : Color.WHITE;
+            PdfPCell c1 = new PdfPCell(new Phrase(e.getKey(), fontNormal));
+            c1.setBackgroundColor(bg); c1.setPadding(3); c1.setBorderColor(COLOR_GRIS_BORDE);
+            PdfPCell c2 = new PdfPCell(new Phrase(String.format("%.0f", e.getValue()), fontNormal));
+            c2.setBackgroundColor(bg); c2.setPadding(3);
+            c2.setHorizontalAlignment(Element.ALIGN_RIGHT); c2.setBorderColor(COLOR_GRIS_BORDE);
+            t.addCell(c1); t.addCell(c2);
+            par = !par;
+        }
+        return t;
+    }
+
+    private void addTablaSimpleEst(Document doc, String titulo,
+            Map<String, Double> datos, String col1, String col2) throws Exception {
+        doc.add(new Phrase(titulo + "\n", fontSubtitulo));
+        doc.add(Chunk.NEWLINE);
+        PdfPTable t = new PdfPTable(2);
+        t.setWidthPercentage(100);
+        t.setWidths(new float[]{3.5f, 1.5f});
+        for (String h : new String[]{col1, col2}) {
+            PdfPCell c = new PdfPCell(new Phrase(h,
+                new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+            c.setBackgroundColor(COLOR_MULBERRY);
+            c.setPadding(5);
+            t.addCell(c);
+        }
+        boolean par = false;
+        for (Map.Entry<String, Double> e : datos.entrySet()) {
+            Color bg = par ? COLOR_GRIS_CLARO : Color.WHITE;
+            PdfPCell c1 = new PdfPCell(new Phrase(e.getKey(), fontNormal));
+            c1.setBackgroundColor(bg); c1.setPadding(4); c1.setBorderColor(COLOR_GRIS_BORDE);
+            PdfPCell c2 = new PdfPCell(new Phrase(fmtEstNum(e.getValue()), fontNormal));
+            c2.setBackgroundColor(bg); c2.setPadding(4);
+            c2.setHorizontalAlignment(Element.ALIGN_RIGHT); c2.setBorderColor(COLOR_GRIS_BORDE);
+            t.addCell(c1); t.addCell(c2);
+            par = !par;
+        }
+        doc.add(t);
+    }
+
+    private void addTablaKpisClientes(Document doc, int anio, int total, int nuevos) throws Exception {
+        PdfPTable t = new PdfPTable(2);
+        t.setWidthPercentage(60);
+        for (String h : new String[]{"Total clientes acumulado", "Nuevos en " + anio}) {
+            PdfPCell c = new PdfPCell(new Phrase(h,
+                new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+            c.setBackgroundColor(COLOR_MULBERRY);
+            c.setPadding(5);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            t.addCell(c);
+        }
+        for (int v : new int[]{total, nuevos}) {
+            PdfPCell c = new PdfPCell(new Phrase(String.valueOf(v),
+                new Font(fontNegrita.getBaseFont(), 16, Font.BOLD, COLOR_MULBERRY)));
+            c.setPadding(10);
+            c.setHorizontalAlignment(Element.ALIGN_CENTER);
+            c.setBorderColor(COLOR_GRIS_BORDE);
+            t.addCell(c);
+        }
+        doc.add(t);
+    }
+
+    private void addCeldaEst(PdfPTable t, String texto, Color bg, Font font, int align) {
+        PdfPCell c = new PdfPCell(new Phrase(texto, font));
+        c.setBackgroundColor(bg);
+        c.setPadding(4);
+        c.setBorderColor(COLOR_GRIS_BORDE);
+        c.setHorizontalAlignment(align);
+        t.addCell(c);
+    }
+
+    private String fmtEstNum(double v) {
+        return (v == Math.floor(v) && !Double.isInfinite(v))
+            ? String.format("%.0f", v)
+            : String.format("%.2f", v);
     }
 
     private String nvl(String s) { return s != null ? s : ""; }
