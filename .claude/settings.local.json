@@ -28,7 +28,12 @@
       "Bash(python3 -m pip install fpdf2)",
       "Bash(python -m pip install fpdf2)",
       "PowerShell(python --version; python -m pip install fpdf2 2>&1 | Select-Object -Last 5)",
-      "Bash(python generar_manual.py)"
+      "Bash(python generar_manual.py)",
+      "PowerShell(Set-Location \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; powershell.exe -ExecutionPolicy Bypass -File \".\\\\build-installer.ps1\" 2>&1)",
+      "PowerShell(cmd /c \"where ISCC.exe 2>nul\")",
+      "PowerShell(cmd /c \"dir /s /b \"\"C:\\\\Users\\\\david\\\\AppData\\\\Local\\\\Programs\"\" 2>nul\")",
+      "PowerShell(cmd /c \"dir /s /b \"\"C:\\\\Users\"\" /a 2>nul | findstr /i ISCC\")",
+      "PowerShell(cmd /c \"dir /s /b \"\"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\output\"\"\")"
     ]
   }
 }

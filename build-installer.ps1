@@ -1,10 +1,16 @@
 $ErrorActionPreference = "Stop"
 
 # ── Rutas ──────────────────────────────────────────────────────────────────
-$JAVA_HOME = "C:\Program Files\Java\jdk-26.0.1"
+$JAVA_HOME = "C:\Program Files\Java\jdk-26"
 $MVN       = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
 $JPACKAGE  = "$JAVA_HOME\bin\jpackage.exe"
-$ISCC      = "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe"
+$ISCC_candidatos = @(
+    "$env:LOCALAPPDATA\Programs\Inno Setup 6\ISCC.exe",
+    "C:\Program Files (x86)\Inno Setup 6\ISCC.exe",
+    "C:\Program Files\Inno Setup 6\ISCC.exe"
+)
+$ISCC = ($ISCC_candidatos | Where-Object { Test-Path $_ } | Select-Object -First 1)
+if (-not $ISCC) { Write-Error "Inno Setup no encontrado. Instálalo con: winget install JRSoftware.InnoSetup"; exit 1 }
 $PROJECT   = $PSScriptRoot
 
 # ── 1. Compilar con Maven ───────────────────────────────────────────────────
@@ -45,7 +51,7 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "3.1.0" `
+    --app-version "3.2.0" `
     --vendor "Graficas Mulberry S.L." `
     --description "Sistema de gestion para Graficas Mulberry" `
     --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
@@ -53,9 +59,6 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
     --input $InputDir `
     --main-jar "GraficasMulberry.jar" `
     --main-class "org.gipsybuho.Main" `
-    --win-menu `
-    --win-shortcut `
-    --win-dir-chooser `
     --java-options "--module-path `$APPDIR/mods" `
     --java-options "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics" `
     --dest "$PROJECT\output"

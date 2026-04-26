@@ -1,4 +1,4 @@
-## libpng v1.6.54
+## libpng v1.6.51
 
 ### libpng License
 <pre>
@@ -9,8 +9,8 @@ COPYRIGHT NOTICE, DISCLAIMER, and LICENSE
 PNG Reference Library License version 2
 ---------------------------------------
 
-Copyright (C) 1995-2026 The PNG Reference Library Authors.
-Copyright (C) 2018-2026 Cosmin Truta
+Copyright (C) 1995-2025 The PNG Reference Library Authors.
+Copyright (C) 2018-2025 Cosmin Truta
 Copyright (C) 1998-2018 Glenn Randers-Pehrson
 Copyright (C) 1996-1997 Andreas Dilger
 Copyright (C) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
@@ -158,7 +158,6 @@ This is the list of PNG Reference Library ("libpng") Contributing
 Authors, for copyright and licensing purposes.
 
  * Adam Richter
- * Alexander Smorkalov
  * Andreas Dilger
  * Chris Blume
  * Cosmin Truta
@@ -180,7 +179,6 @@ Authors, for copyright and licensing purposes.
  * Mike Klein
  * Pascal Massimino
  * Paul Schmidt
- * Petr Simecek
  * Philippe Antoine
  * Qiang Zhou
  * Sam Bushell
@@ -211,8 +209,6 @@ Authors, for copyright and licensing purposes.
     - ZhangLixia (张利霞)
  * Samsung Group
     - Filip Wasil
- * SpacemiT Hangzhou Technology, Co.
-    - Liang Junzhao (梁俊钊)
 
 The build projects, the build scripts, the test scripts, and other
 files in the "projects", "scripts" and "tests" directories, have
