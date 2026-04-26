@@ -1,0 +1,5 @@
+ una opcion para poder exportar toda la base de datos de   
+  clientes, pedidos, pagos, materiales, stock...a los       
+  formatos mas comunes para poder cargarla en otro          
+  otrdenador o programa, y sirva tambien como copia de      
+  seguridad de la base de datos completa 
