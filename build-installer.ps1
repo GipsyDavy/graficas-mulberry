@@ -28,8 +28,12 @@ Remove-Item $InputDir -Recurse -Force -ErrorAction SilentlyContinue
 New-Item $InputDir, $ModsDir -ItemType Directory | Out-Null
 
 # JAR de la aplicacion (sin dependencias embebidas - el "original" previo al shade)
-Copy-Item "$PROJECT\target\original-GraficasMulberry-1.0-SNAPSHOT.jar" `
-          "$InputDir\GraficasMulberry.jar"
+$OriginalJar = Get-ChildItem "$PROJECT\target\original-GraficasMulberry-*.jar" |
+               Sort-Object LastWriteTime -Descending |
+               Select-Object -First 1
+if (-not $OriginalJar) { Write-Error "No se encontro el JAR original en target\"; exit 1 }
+Write-Host "   JAR original: $($OriginalJar.Name)" -ForegroundColor Gray
+Copy-Item $OriginalJar.FullName "$InputDir\GraficasMulberry.jar"
 
 Write-Host "   Clasificando dependencias..." -ForegroundColor Gray
 Get-ChildItem "$PROJECT\target\lib\*.jar" | ForEach-Object {
@@ -51,7 +55,7 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "3.2.0" `
+    --app-version "3.3.0" `
     --vendor "Graficas Mulberry S.L." `
     --description "Sistema de gestion para Graficas Mulberry" `
     --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
