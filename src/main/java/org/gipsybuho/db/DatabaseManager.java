@@ -38,7 +38,34 @@ public class DatabaseManager {
     private static void runMigrations(Connection conn) {
         String[] migrations = {
             "ALTER TABLE clientes ADD COLUMN apellido TEXT",
-            "ALTER TABLE empleados ADD COLUMN apellido TEXT"
+            "ALTER TABLE empleados ADD COLUMN apellido TEXT",
+            """
+            CREATE TABLE IF NOT EXISTS albaranes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                numero TEXT UNIQUE NOT NULL,
+                cliente_id INTEGER REFERENCES clientes(id),
+                fecha TEXT NOT NULL,
+                factura_id INTEGER REFERENCES facturas(id) ON DELETE SET NULL,
+                pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+                estado TEXT DEFAULT 'pendiente',
+                observaciones TEXT,
+                created_at TEXT DEFAULT (datetime('now'))
+            )""",
+            """
+            CREATE TABLE IF NOT EXISTS lineas_albaran (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                albaran_id INTEGER REFERENCES albaranes(id) ON DELETE CASCADE,
+                descripcion TEXT NOT NULL,
+                cantidad INTEGER DEFAULT 1,
+                unidad TEXT DEFAULT 'ud',
+                orden INTEGER DEFAULT 0
+            )""",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('prefijo_albaran', 'ALB')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('siguiente_albaran', '1')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_playlist', '')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_volumen', '50')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_loop', '1')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_autoplay', '0')"
         };
         for (String sql : migrations) {
             try { conn.createStatement().execute(sql); } catch (SQLException ignored) {}
@@ -284,6 +311,29 @@ public class DatabaseManager {
                     notas TEXT,
                     created_at TEXT DEFAULT (datetime('now'))
                 )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS albaranes (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    numero TEXT UNIQUE NOT NULL,
+                    cliente_id INTEGER REFERENCES clientes(id),
+                    fecha TEXT NOT NULL,
+                    factura_id INTEGER REFERENCES facturas(id) ON DELETE SET NULL,
+                    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+                    estado TEXT DEFAULT 'pendiente',
+                    observaciones TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS lineas_albaran (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    albaran_id INTEGER REFERENCES albaranes(id) ON DELETE CASCADE,
+                    descripcion TEXT NOT NULL,
+                    cantidad INTEGER DEFAULT 1,
+                    unidad TEXT DEFAULT 'ud',
+                    orden INTEGER DEFAULT 0
+                )""");
         }
     }
 
@@ -304,9 +354,15 @@ public class DatabaseManager {
                 ('prefijo_presupuesto', 'PRE'),
                 ('prefijo_factura', 'FAC'),
                 ('prefijo_pedido', 'PED'),
+                ('prefijo_albaran', 'ALB'),
                 ('siguiente_presupuesto', '1'),
                 ('siguiente_factura', '1'),
-                ('siguiente_pedido', '1')
+                ('siguiente_pedido', '1'),
+                ('siguiente_albaran', '1'),
+                ('musica_playlist', ''),
+                ('musica_volumen', '50'),
+                ('musica_loop', '1'),
+                ('musica_autoplay', '0')
                 """);
 
             // Tarifas de ejemplo para serigrafía
@@ -383,6 +439,14 @@ public class DatabaseManager {
         String prefijo = getConfig("prefijo_pedido");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_pedido", String.valueOf(sig + 1));
+        return String.format("%s-%s-%04d", prefijo, anio, sig);
+    }
+
+    public static String generarNumeroAlbaran() {
+        int sig = Integer.parseInt(getConfig("siguiente_albaran"));
+        String prefijo = getConfig("prefijo_albaran");
+        String anio = String.valueOf(java.time.LocalDate.now().getYear());
+        setConfig("siguiente_albaran", String.valueOf(sig + 1));
         return String.format("%s-%s-%04d", prefijo, anio, sig);
     }
 }

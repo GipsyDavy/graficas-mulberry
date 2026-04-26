@@ -14,6 +14,7 @@ import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
 import java.nio.file.Path;
@@ -149,6 +150,7 @@ public class PresupuestosView extends VBox {
             Presupuesto p = dao.findById(sel.getId());
             Cliente c = clienteDAO.findById(p.getClienteId());
             Path pdf = new PDFService().generarPresupuesto(p, c);
+            SoundService.play(SoundService.Sound.SUCCESS);
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(pdf.toFile());
             new Alert(Alert.AlertType.INFORMATION, "PDF generado:\n" + pdf, ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
@@ -375,5 +377,5 @@ public class PresupuestosView extends VBox {
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) { SoundService.play(SoundService.Sound.ERROR); new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
 }

@@ -111,6 +111,104 @@ public class PDFService {
         return path;
     }
 
+    public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Albaranes")
+            .resolve(a.getNumero() + ".pdf");
+        path.getParent().toFile().mkdirs();
+
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+
+        addCabecera(doc, null, "ALBARÁN DE ENTREGA");
+
+        // Datos del albarán
+        PdfPTable tDatos = new PdfPTable(4);
+        tDatos.setWidthPercentage(100);
+        tDatos.setWidths(new float[]{1.2f, 2f, 1.2f, 2f});
+        addCeldaInfo(tDatos, "Número:", a.getNumero());
+        addCeldaInfo(tDatos, "Fecha entrega:", nvl(a.getFecha()));
+        if (a.getFacturaNumero() != null && !a.getFacturaNumero().isBlank()) {
+            addCeldaInfo(tDatos, "Factura ref.:", a.getFacturaNumero());
+        } else {
+            addCeldaInfo(tDatos, "", "");
+        }
+        if (a.getPedidoNumero() != null && !a.getPedidoNumero().isBlank()) {
+            addCeldaInfo(tDatos, "Pedido ref.:", a.getPedidoNumero());
+        } else {
+            addCeldaInfo(tDatos, "", "");
+        }
+        doc.add(tDatos);
+
+        addDatosCliente(doc, c);
+        doc.add(Chunk.NEWLINE);
+
+        // Tabla de líneas sin precios
+        PdfPTable tLineas = new PdfPTable(3);
+        tLineas.setWidthPercentage(100);
+        tLineas.setWidths(new float[]{5f, 1.2f, 1.2f});
+
+        String[] cabeceras = {"Descripción", "Cantidad", "Unidad"};
+        for (String cab : cabeceras) {
+            PdfPCell cell = new PdfPCell(new Phrase(cab, new Font(fontNegrita.getBaseFont(), 9, Font.BOLD, Color.WHITE)));
+            cell.setBackgroundColor(COLOR_MULBERRY);
+            cell.setPadding(5);
+            cell.setBorderColor(COLOR_MULBERRY);
+            tLineas.addCell(cell);
+        }
+
+        boolean par = false;
+        for (var linea : a.getLineas()) {
+            Color bg = par ? COLOR_GRIS_CLARO : Color.WHITE;
+            PdfPCell cDesc = new PdfPCell(new Phrase(nvl(linea.getDescripcion()), fontNormal));
+            cDesc.setBackgroundColor(bg); cDesc.setBorderColor(COLOR_GRIS_BORDE); cDesc.setPadding(4);
+            PdfPCell cCant = new PdfPCell(new Phrase(String.valueOf(linea.getCantidad()), fontNormal));
+            cCant.setBackgroundColor(bg); cCant.setBorderColor(COLOR_GRIS_BORDE); cCant.setPadding(4);
+            cCant.setHorizontalAlignment(Element.ALIGN_CENTER);
+            PdfPCell cUnid = new PdfPCell(new Phrase(nvl(linea.getUnidad()), fontNormal));
+            cUnid.setBackgroundColor(bg); cUnid.setBorderColor(COLOR_GRIS_BORDE); cUnid.setPadding(4);
+            cUnid.setHorizontalAlignment(Element.ALIGN_CENTER);
+            tLineas.addCell(cDesc);
+            tLineas.addCell(cCant);
+            tLineas.addCell(cUnid);
+            par = !par;
+        }
+        doc.add(tLineas);
+
+        if (a.getObservaciones() != null && !a.getObservaciones().isBlank()) {
+            doc.add(Chunk.NEWLINE);
+            addSeccion(doc, "Observaciones", a.getObservaciones());
+        }
+
+        // Bloque de firma
+        doc.add(Chunk.NEWLINE);
+        doc.add(Chunk.NEWLINE);
+        PdfPTable tFirma = new PdfPTable(2);
+        tFirma.setWidthPercentage(100);
+        tFirma.setWidths(new float[]{1, 1});
+
+        PdfPCell cFirmaEmpresa = new PdfPCell();
+        cFirmaEmpresa.setBorder(Rectangle.NO_BORDER);
+        cFirmaEmpresa.addElement(new Phrase("Entregado por:", fontNegrita));
+        cFirmaEmpresa.addElement(new Phrase("\n\n\n", fontNormal));
+        cFirmaEmpresa.addElement(new Phrase(DatabaseManager.getConfig("empresa_nombre"), fontNormal));
+        tFirma.addCell(cFirmaEmpresa);
+
+        PdfPCell cFirmaCliente = new PdfPCell();
+        cFirmaCliente.setBorder(Rectangle.NO_BORDER);
+        cFirmaCliente.addElement(new Phrase("Recibido conforme:", fontNegrita));
+        cFirmaCliente.addElement(new Phrase("\n\n\n", fontNormal));
+        cFirmaCliente.addElement(new Phrase("Firma y fecha: ___________________________", fontNormal));
+        tFirma.addCell(cFirmaCliente);
+
+        doc.add(tFirma);
+
+        addPiePagina(doc, null);
+        doc.close();
+        return path;
+    }
+
     public Path generarNomina(Nomina n, Empleado e) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Nominas")

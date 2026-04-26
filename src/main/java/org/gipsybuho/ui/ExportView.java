@@ -8,6 +8,7 @@ import javafx.scene.layout.*;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
 import java.io.File;
@@ -212,6 +213,7 @@ public class ExportView extends VBox {
 
         Path destino = f.toPath();
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         log("⏳ Iniciando exportación: " + titulo + "…");
 
         Thread.ofVirtual().start(() -> {
@@ -222,12 +224,14 @@ public class ExportView extends VBox {
                     ? String.format("%.1f KB", bytes / 1024.0)
                     : String.format("%.2f MB", bytes / (1024.0 * 1024.0));
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
                     log("✅ Completado (" + tamano + "): " + destino.getFileName());
                     setDisable(false);
                     mostrarExito(destino);
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
                     log("❌ Error al exportar: " + e.getMessage());
                     setDisable(false);
                     mostrarError(e);

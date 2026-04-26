@@ -6,11 +6,13 @@ import javafx.geometry.Insets;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.Factura;
 import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
 import java.nio.file.Path;
@@ -36,13 +38,14 @@ public class FacturasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnPDF     = btn("📄 Exportar PDF",  "#27AE60", this::exportarPDF);
-        Button btnPagada  = btn("✅ Marcar pagada", "#4C9BE8", this::marcarPagada);
-        Button btnAnular  = btn("❌ Anular",         "#E74C3C", this::anular);
-        Button btnBorrar  = btn("🗑 Borrar",         "#95A5A6", this::borrar);
+        Button btnPDF      = btn("📄 Exportar PDF",    "#27AE60", this::exportarPDF);
+        Button btnAlbaran  = btn("📋 Crear Albarán",   "#F39C12", this::crearAlbaran);
+        Button btnPagada   = btn("✅ Marcar pagada",   "#4C9BE8", this::marcarPagada);
+        Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
+        Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnPDF, btnPagada, btnAnular, btnBorrar);
+        HBox bar = new HBox(8, sp, btnPDF, btnAlbaran, btnPagada, btnAnular, btnBorrar);
         bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
         return bar;
     }
@@ -101,9 +104,28 @@ public class FacturasView extends VBox {
             Factura f = dao.findById(sel.getId());
             Cliente c = clienteDAO.findById(f.getClienteId());
             Path pdf = new PDFService().generarFactura(f, c);
+            SoundService.play(SoundService.Sound.SUCCESS);
             if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(pdf.toFile());
             new Alert(Alert.AlertType.INFORMATION, "PDF generado:\n" + pdf, ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void crearAlbaran() {
+        Factura sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona una factura."); return; }
+        if ("anulada".equals(sel.getEstado())) { alerta("No se puede crear un albarán para una factura anulada."); return; }
+        Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+            "¿Crear albarán de entrega para la factura " + sel.getNumero() + "?",
+            ButtonType.YES, ButtonType.NO);
+        conf.setHeaderText(null);
+        conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+            try {
+                var albaran = new AlbaranDAO().crearDesdeFactura(sel.getId());
+                new Alert(Alert.AlertType.INFORMATION,
+                    "Albarán " + albaran.getNumero() + " creado correctamente.\nPuedes verlo en la sección Albaranes.",
+                    ButtonType.OK).showAndWait();
+            } catch (Exception e) { mostrarError(e); }
+        });
     }
 
     private void marcarPagada() {
@@ -148,5 +170,5 @@ public class FacturasView extends VBox {
     }
 
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) { SoundService.play(SoundService.Sound.ERROR); new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
 }

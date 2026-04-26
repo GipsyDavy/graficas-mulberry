@@ -9,7 +9,9 @@ import javafx.stage.Stage;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
+import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaManager;
+import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
 import org.gipsybuho.ui.MainView;
 
@@ -24,6 +26,29 @@ public class App extends Application {
     public void start(Stage primaryStage) throws Exception {
         OllamaManager.startAsync();   // arranca Ollama en background si está instalado
         DatabaseManager.initialize();
+
+        // Restaurar volumen de efectos de sonido
+        String volStr = DatabaseManager.getConfig("audio_volumen");
+        if (!volStr.isBlank()) {
+            try { SoundService.setVolume(Integer.parseInt(volStr) / 100f); }
+            catch (NumberFormatException ignored) {}
+        }
+        String mutedStr = DatabaseManager.getConfig("audio_muted");
+        SoundService.setMuted("1".equals(mutedStr));
+
+        // Restaurar configuración de música de fondo
+        String musicaPlaylist = DatabaseManager.getConfig("musica_playlist");
+        if (!musicaPlaylist.isBlank()) {
+            MusicService.setPlaylist(java.util.Arrays.asList(musicaPlaylist.split("\\|")));
+        }
+        String musicaVolStr = DatabaseManager.getConfig("musica_volumen");
+        if (!musicaVolStr.isBlank()) {
+            try { MusicService.setVolumen(Integer.parseInt(musicaVolStr) / 100f); }
+            catch (NumberFormatException ignored) {}
+        }
+        String musicaLoop = DatabaseManager.getConfig("musica_loop");
+        MusicService.setLoop(!"0".equals(musicaLoop));
+        boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
         MainView mainView = new MainView(primaryStage);
         Scene scene = new Scene(mainView, 1280, 800);
@@ -46,8 +71,19 @@ public class App extends Application {
             System.err.println("Advertencia: no se pudo cargar el icono de la aplicación: " + e.getMessage());
         }
 
+        // Filtro global: cualquier Button reproduce CLICK
+        scene.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
+            if (ev.getSource() instanceof javafx.scene.control.Button) {
+                SoundService.play(SoundService.Sound.CLICK);
+            }
+        });
+
         primaryStage.show();
+        SoundService.play(SoundService.Sound.NOTIFICATION); // sonido de bienvenida
         Platform.runLater(this::notificarRecordatoriosProximos);
+        if (musicaAutoplay && !MusicService.getPlaylist().isEmpty()) {
+            Platform.runLater(MusicService::play);
+        }
     }
 
     private void notificarRecordatoriosProximos() {
@@ -78,6 +114,7 @@ public class App extends Application {
 
     @Override
     public void stop() {
+        MusicService.dispose();
         DatabaseManager.closeConnection();
         OllamaManager.stop();
     }

@@ -67,7 +67,7 @@ Write-Host "[3/4] Creando app-image con jpackage v$VERSION..." -ForegroundColor 
     --main-jar      "GraficasMulberry.jar" `
     --main-class    "org.gipsybuho.Main" `
     --java-options  "--module-path `$APPDIR/mods" `
-    --java-options  "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics" `
+    --java-options  "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics,javafx.media" `
     --java-options  "-Xmx512m" `
     --java-options  "-Dfile.encoding=UTF-8" `
     --dest          "$PROJECT\output"

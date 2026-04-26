@@ -1,13 +1,18 @@
 package org.gipsybuho.ui;
 
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.TemaManager;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,11 +58,12 @@ public class ConfiguracionView extends VBox {
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         VBox.setVgrow(tabs, Priority.ALWAYS);
 
-        Tab tabApariencia  = new Tab("🎨  Apariencia",  buildTabApariencia());
-        Tab tabEmpresa     = new Tab("🏢  Mi empresa",  buildTabEmpresa());
+        Tab tabApariencia   = new Tab("🎨  Apariencia",  buildTabApariencia());
+        Tab tabEmpresa      = new Tab("🏢  Mi empresa",  buildTabEmpresa());
         Tab tabPreferencias = new Tab("⚙  Preferencias", buildTabPreferencias());
+        Tab tabMusica       = new Tab("🎵  Música",       buildTabMusica());
 
-        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias);
+        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica);
         getChildren().addAll(titulo, tabs);
     }
 
@@ -431,6 +437,181 @@ public class ConfiguracionView extends VBox {
         VBox panel = new VBox(12, titulo, desc, new Separator(), grid, footer);
         panel.getStyleClass().add("config-panel");
         return panel;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 4 — MÚSICA
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabMusica() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        // ── Playlist ──────────────────────────────────────────────────────────
+        Label tituloPlaylist = new Label("Lista de reproducción");
+        tituloPlaylist.getStyleClass().add("config-section-title");
+        Label descPlaylist = new Label("Añade archivos MP3. Doble clic en una pista para reproducirla directamente.");
+        descPlaylist.getStyleClass().add("config-section-desc");
+
+        ObservableList<String> paths = FXCollections.observableArrayList(MusicService.getPlaylist());
+
+        ListView<String> lista = new ListView<>(paths);
+        lista.setPrefHeight(200);
+        lista.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(String path, boolean empty) {
+                super.updateItem(path, empty);
+                setText(empty || path == null ? null : new File(path).getName());
+            }
+        });
+        lista.setOnMouseClicked(e -> {
+            if (e.getClickCount() == 2) {
+                int idx = lista.getSelectionModel().getSelectedIndex();
+                if (idx >= 0) MusicService.play(idx);
+            }
+        });
+
+        Button btnAnadir = new Button("+ Añadir MP3");
+        btnAnadir.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Seleccionar archivos MP3");
+            fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Audio MP3", "*.mp3", "*.MP3"));
+            List<File> files = fc.showOpenMultipleDialog(
+                getScene() != null ? getScene().getWindow() : null);
+            if (files != null) {
+                for (File f : files) {
+                    String abs = f.getAbsolutePath();
+                    if (!paths.contains(abs)) {
+                        paths.add(abs);
+                        MusicService.addTrack(abs);
+                    }
+                }
+            }
+        });
+
+        Button btnQuitar = new Button("🗑 Quitar seleccionado");
+        btnQuitar.setOnAction(e -> {
+            int idx = lista.getSelectionModel().getSelectedIndex();
+            if (idx >= 0) {
+                MusicService.removeTrack(idx);
+                paths.remove(idx);
+            }
+        });
+
+        HBox listButtons = new HBox(8, btnAnadir, btnQuitar);
+
+        // ── Reproductor ───────────────────────────────────────────────────────
+        Label tituloReproductor = new Label("Reproductor");
+        tituloReproductor.getStyleClass().add("config-section-title");
+
+        Label lblNowPlaying = new Label(
+            MusicService.isReproduciendo() && !MusicService.getNombreActual().isEmpty()
+                ? "♪ " + MusicService.getNombreActual()
+                : "Sin reproducción");
+        lblNowPlaying.getStyleClass().add("config-section-desc");
+
+        Button btnAnterior  = controlBtn("⏮");
+        Button btnPlayPause = controlBtn(MusicService.isReproduciendo() ? "⏸" : "⏯");
+        Button btnStop      = controlBtn("⏹");
+        Button btnSiguiente = controlBtn("⏭");
+
+        MusicService.setOnTrackChange(nombre ->
+            lblNowPlaying.setText("♪ " + nombre));
+        MusicService.setOnEstadoChange(est -> {
+            lblNowPlaying.setText(est == MusicService.Estado.PARADO
+                ? "Sin reproducción" : lblNowPlaying.getText());
+            btnPlayPause.setText(est == MusicService.Estado.REPRODUCIENDO ? "⏸" : "⏯");
+        });
+
+        btnAnterior.setOnAction(e  -> MusicService.anterior());
+        btnPlayPause.setOnAction(e -> {
+            if (MusicService.isReproduciendo()) MusicService.pause();
+            else MusicService.play();
+        });
+        btnStop.setOnAction(e      -> MusicService.stop());
+        btnSiguiente.setOnAction(e -> MusicService.siguiente());
+
+        HBox controls = new HBox(6, btnAnterior, btnPlayPause, btnStop, btnSiguiente, lblNowPlaying);
+        controls.setAlignment(Pos.CENTER_LEFT);
+
+        // ── Opciones ──────────────────────────────────────────────────────────
+        Label tituloOpciones = new Label("Opciones");
+        tituloOpciones.getStyleClass().add("config-section-title");
+
+        String volStr = DatabaseManager.getConfig("musica_volumen");
+        int volInt = volStr.isBlank() ? 50 : parseIntSafe(volStr, 50);
+        Slider sliderVol = new Slider(0, 100, volInt);
+        sliderVol.setPrefWidth(200);
+        sliderVol.setMajorTickUnit(25);
+        sliderVol.setShowTickMarks(true);
+        MusicService.setVolumen(volInt / 100f);
+
+        Label lblVolVal = new Label(volInt + "%");
+        sliderVol.valueProperty().addListener((obs, ov, nv) -> {
+            MusicService.setVolumen(nv.floatValue() / 100f);
+            lblVolVal.setText((int) Math.round(nv.doubleValue()) + "%");
+        });
+
+        HBox volBox = new HBox(10,
+            new Label("Volumen música:"), sliderVol, lblVolVal);
+        volBox.setAlignment(Pos.CENTER_LEFT);
+
+        String loopStr = DatabaseManager.getConfig("musica_loop");
+        CheckBox chkLoop = new CheckBox("Repetir lista en bucle");
+        chkLoop.setSelected(!"0".equals(loopStr));
+        chkLoop.selectedProperty().addListener((obs, ov, nv) -> MusicService.setLoop(nv));
+        MusicService.setLoop(chkLoop.isSelected());
+
+        String autoStr = DatabaseManager.getConfig("musica_autoplay");
+        CheckBox chkAutoplay = new CheckBox("Reproducir automáticamente al iniciar la aplicación");
+        chkAutoplay.setSelected("1".equals(autoStr));
+
+        // ── Guardar ───────────────────────────────────────────────────────────
+        Button btnGuardar = new Button("Guardar configuración de música");
+        btnGuardar.getStyleClass().add("config-save-btn");
+        btnGuardar.setOnAction(e -> {
+            DatabaseManager.setConfig("musica_playlist",
+                String.join("|", paths));
+            DatabaseManager.setConfig("musica_volumen",
+                String.valueOf((int) sliderVol.getValue()));
+            DatabaseManager.setConfig("musica_loop",
+                chkLoop.isSelected() ? "1" : "0");
+            DatabaseManager.setConfig("musica_autoplay",
+                chkAutoplay.isSelected() ? "1" : "0");
+            mostrarToast("Configuración de música guardada");
+        });
+
+        HBox footer = new HBox(btnGuardar);
+        footer.setAlignment(Pos.CENTER_RIGHT);
+        footer.setPadding(new Insets(8, 0, 0, 0));
+
+        VBox panel = new VBox(12,
+            tituloPlaylist, descPlaylist,
+            lista, listButtons,
+            new Separator(),
+            tituloReproductor, controls,
+            new Separator(),
+            tituloOpciones, volBox, chkLoop, chkAutoplay,
+            new Separator(),
+            footer
+        );
+        panel.getStyleClass().add("config-panel");
+        contenido.getChildren().add(panel);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    private Button controlBtn(String texto) {
+        Button b = new Button(texto);
+        b.setStyle("-fx-font-size:16; -fx-padding:4 10;");
+        return b;
+    }
+
+    private int parseIntSafe(String s, int def) {
+        try { return Integer.parseInt(s); } catch (Exception e) { return def; }
     }
 
     // ── Helpers ───────────────────────────────────────────────────────────────
