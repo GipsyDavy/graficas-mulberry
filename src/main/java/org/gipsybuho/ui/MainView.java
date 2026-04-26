@@ -57,6 +57,7 @@ public class MainView extends BorderPane {
             navBtn("👥  Clientes",           () -> mostrarVista(new ClientesView())),
             navBtn("📋  Presupuestos",       () -> mostrarVista(new PresupuestosView())),
             navBtn("🧾  Facturas",           () -> mostrarVista(new FacturasView())),
+            navBtn("📦  Pedidos",            () -> mostrarVista(new PedidosView())),
             navBtn("💰  Tarifas",            () -> mostrarVista(new TarifasView())),
             navBtn("📦  Materiales",         () -> mostrarVista(new MaterialesView())),
             navBtn("👤  Empleados",          () -> mostrarVista(new EmpleadosView())),

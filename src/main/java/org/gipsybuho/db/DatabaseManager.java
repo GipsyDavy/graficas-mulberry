@@ -235,6 +235,55 @@ public class DatabaseManager {
                     nota TEXT,
                     created_at TEXT DEFAULT (datetime('now'))
                 )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS pedidos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    numero TEXT UNIQUE NOT NULL,
+                    cliente_id INTEGER REFERENCES clientes(id),
+                    fecha TEXT NOT NULL,
+                    fecha_entrega_prevista TEXT,
+                    fecha_entrega_real TEXT,
+                    estado TEXT DEFAULT 'pendiente',
+                    descripcion TEXT,
+                    importe_total REAL DEFAULT 0.0,
+                    iva_porcentaje REAL DEFAULT 21.0,
+                    notas TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS pagos_pedido (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE CASCADE,
+                    concepto TEXT DEFAULT 'Pago',
+                    importe REAL DEFAULT 0.0,
+                    fecha_emision TEXT,
+                    fecha_vencimiento TEXT NOT NULL,
+                    forma_pago TEXT DEFAULT 'Transferencia bancaria',
+                    estado TEXT DEFAULT 'pendiente',
+                    fecha_pago TEXT,
+                    notas TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS pagos_material (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    material_id INTEGER REFERENCES materiales(id) ON DELETE SET NULL,
+                    proveedor TEXT,
+                    numero_factura TEXT,
+                    fecha_compra TEXT NOT NULL,
+                    cantidad_comprada REAL DEFAULT 0,
+                    unidad TEXT,
+                    importe_total REAL DEFAULT 0,
+                    forma_pago TEXT DEFAULT 'Contado',
+                    fecha_vencimiento TEXT NOT NULL,
+                    estado TEXT DEFAULT 'pendiente',
+                    fecha_pago TEXT,
+                    notas TEXT,
+                    created_at TEXT DEFAULT (datetime('now'))
+                )""");
         }
     }
 
@@ -254,8 +303,10 @@ public class DatabaseManager {
                 ('iva_defecto', '21'),
                 ('prefijo_presupuesto', 'PRE'),
                 ('prefijo_factura', 'FAC'),
+                ('prefijo_pedido', 'PED'),
                 ('siguiente_presupuesto', '1'),
-                ('siguiente_factura', '1')
+                ('siguiente_factura', '1'),
+                ('siguiente_pedido', '1')
                 """);
 
             // Tarifas de ejemplo para serigrafía
@@ -324,6 +375,14 @@ public class DatabaseManager {
         String prefijo = getConfig("prefijo_factura");
         String anio = String.valueOf(java.time.LocalDate.now().getYear());
         setConfig("siguiente_factura", String.valueOf(sig + 1));
+        return String.format("%s-%s-%04d", prefijo, anio, sig);
+    }
+
+    public static String generarNumeroPedido() {
+        int sig = Integer.parseInt(getConfig("siguiente_pedido"));
+        String prefijo = getConfig("prefijo_pedido");
+        String anio = String.valueOf(java.time.LocalDate.now().getYear());
+        setConfig("siguiente_pedido", String.valueOf(sig + 1));
         return String.format("%s-%s-%04d", prefijo, anio, sig);
     }
 }
