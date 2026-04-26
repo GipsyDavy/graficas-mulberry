@@ -3,19 +3,24 @@ package org.gipsybuho.ui;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
+import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
-import org.gipsybuho.model.Cliente;
-import org.gipsybuho.model.Factura;
+import org.gipsybuho.dao.MaterialDAO;
+import org.gipsybuho.dao.TarifaDAO;
+import org.gipsybuho.model.*;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.Optional;
 
 public class FacturasView extends VBox {
 
@@ -38,15 +43,16 @@ public class FacturasView extends VBox {
     }
 
     private HBox buildToolbar() {
+        Button btnEditar   = btn("✏ Editar",           "#F39C12", this::editar);
         Button btnPDF      = btn("📄 Exportar PDF",    "#27AE60", this::exportarPDF);
-        Button btnAlbaran  = btn("📋 Crear Albarán",   "#F39C12", this::crearAlbaran);
+        Button btnAlbaran  = btn("📋 Crear Albarán",   "#9B59B6", this::crearAlbaran);
         Button btnPagada   = btn("✅ Marcar pagada",   "#4C9BE8", this::marcarPagada);
         Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
         Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnPDF, btnAlbaran, btnPagada, btnAnular, btnBorrar);
-        bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, sp, btnEditar, btnPDF, btnAlbaran, btnPagada, btnAnular, btnBorrar);
+        bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
@@ -95,6 +101,294 @@ public class FacturasView extends VBox {
 
     private void cargar() {
         try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void editar() {
+        Factura sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona una factura para editar."); return; }
+        try {
+            Factura f = dao.findById(sel.getId());
+            dialogoFactura(f).ifPresent(actualizada -> {
+                try { dao.save(actualizada); cargar(); } catch (Exception e) { mostrarError(e); }
+            });
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private Optional<Factura> dialogoFactura(Factura f) {
+        Dialog<Factura> dlg = new Dialog<>();
+        dlg.setTitle("Editar factura " + f.getNumero());
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dlg.getDialogPane().setPrefWidth(820);
+        dlg.getDialogPane().setPrefHeight(600);
+
+        TabPane tabs = new TabPane();
+        tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
+
+        // Tab 1 — Datos generales
+        GridPane gDatos = new GridPane();
+        gDatos.setHgap(10); gDatos.setVgap(10); gDatos.setPadding(new Insets(16));
+
+        TextField fNumero = tf(f.getNumero()); fNumero.setEditable(false);
+        TextField fFecha = tf(f.getFecha());
+        TextField fVto = tf(f.getFechaVencimiento());
+        ComboBox<String> fFormaPago = new ComboBox<>(FXCollections.observableArrayList(
+            "Transferencia bancaria", "Efectivo", "Tarjeta", "Cheque", "Domiciliación bancaria"));
+        fFormaPago.setEditable(true);
+        fFormaPago.setValue(f.getFormaPago() != null ? f.getFormaPago() : "Transferencia bancaria");
+        ComboBox<String> fEstado = new ComboBox<>(FXCollections.observableArrayList(
+            "pendiente", "pagada", "vencida", "anulada"));
+        fEstado.setValue(f.getEstado());
+        TextField fIva = tf(String.valueOf(f.getIvaPorcentaje()));
+        TextArea fNotas = new TextArea(f.getNotas() != null ? f.getNotas() : ""); fNotas.setPrefRowCount(3);
+
+        gDatos.addRow(0, lbl("Número"),       fNumero,    lbl("Estado"),      fEstado);
+        gDatos.addRow(1, lbl("Fecha"),         fFecha,     lbl("Vencimiento"), fVto);
+        gDatos.addRow(2, lbl("Forma de pago"), fFormaPago, lbl("IVA (%)"),     fIva);
+        gDatos.add(lbl("Notas"), 0, 3); gDatos.add(fNotas, 1, 3, 3, 1);
+        tabs.getTabs().add(new Tab("Datos generales", gDatos));
+
+        // Tab 2 — Servicios / Técnicas
+        ObservableList<LineaFactura> lineasServ = FXCollections.observableArrayList(
+            f.getLineas().stream().filter(l -> !"📦 Material".equals(l.getTecnica())).toList());
+
+        // Tab 3 — Materiales del stock
+        ObservableList<LineaFactura> lineasMat = FXCollections.observableArrayList(
+            f.getLineas().stream().filter(l -> "📦 Material".equals(l.getTecnica())).toList());
+
+        tabs.getTabs().add(new Tab("Servicios / Técnicas",    buildTablaLineasFactura(lineasServ)));
+        tabs.getTabs().add(new Tab("📦 Materiales del stock", buildTabMaterialesFactura(lineasMat)));
+
+        dlg.getDialogPane().setContent(tabs);
+
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) return null;
+            f.setFecha(fFecha.getText().trim());
+            f.setFechaVencimiento(fVto.getText().trim());
+            f.setFormaPago(fFormaPago.getValue());
+            f.setEstado(fEstado.getValue());
+            f.setIvaPorcentaje(parseDouble(fIva.getText()));
+            f.setNotas(fNotas.getText().trim());
+            List<LineaFactura> todas = new java.util.ArrayList<>(lineasServ);
+            todas.addAll(lineasMat);
+            f.setLineas(todas);
+            f.calcularTotales();
+            return f;
+        });
+        return dlg.showAndWait();
+    }
+
+    private Node buildTablaLineasFactura(ObservableList<LineaFactura> lineas) {
+        VBox box = new VBox(8);
+        box.setPadding(new Insets(12));
+
+        TableView<LineaFactura> t = new TableView<>(lineas);
+        t.setEditable(true);
+        t.setPrefHeight(280);
+        t.setPlaceholder(new Label("No hay servicios en esta factura"));
+
+        TableColumn<LineaFactura, String> cDesc = new TableColumn<>("Descripción");
+        cDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion")); cDesc.setPrefWidth(250);
+        TableColumn<LineaFactura, String> cTec = new TableColumn<>("Técnica");
+        cTec.setCellValueFactory(new PropertyValueFactory<>("tecnica")); cTec.setPrefWidth(100);
+        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>("Cant.");
+        cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad")); cCant.setPrefWidth(60);
+        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>("Precio ud.");
+        cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
+        cPrecio.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cPrecio.setPrefWidth(90);
+        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>("Total");
+        cTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
+        cTotal.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cTotal.setPrefWidth(90);
+
+        t.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cTotal);
+
+        Button btnAdd  = btn("+ Añadir",  "#4C9BE8", () -> dialogoLineaFactura(null, lineas, t));
+        Button btnEdit = btn("✏ Editar",  "#F39C12", () -> {
+            LineaFactura sel = t.getSelectionModel().getSelectedItem();
+            if (sel != null) dialogoLineaFactura(sel, lineas, t);
+        });
+        Button btnDel  = btn("🗑 Quitar", "#E74C3C", () -> {
+            LineaFactura sel = t.getSelectionModel().getSelectedItem();
+            if (sel != null) lineas.remove(sel);
+        });
+
+        box.getChildren().addAll(t, new HBox(8, btnAdd, btnEdit, btnDel));
+        return box;
+    }
+
+    private void dialogoLineaFactura(LineaFactura linea, ObservableList<LineaFactura> lista,
+                                     TableView<LineaFactura> tabla) {
+        boolean esNueva = linea == null;
+        if (esNueva) linea = new LineaFactura();
+        LineaFactura l = linea;
+
+        Dialog<LineaFactura> dlg = new Dialog<>();
+        dlg.setTitle(esNueva ? "Nueva línea de servicio" : "Editar línea");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
+
+        TextArea fDesc = new TextArea(l.getDescripcion() != null ? l.getDescripcion() : "");
+        fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
+        TextField fTec   = tf(l.getTecnica());
+        TextField fCant  = tf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
+        TextField fPrecio = tf(l.getPrecioUnit() > 0 ? String.valueOf(l.getPrecioUnit()) : "");
+        TextField fDto   = tf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
+
+        try {
+            List<Tarifa> tarifas = new TarifaDAO().findAll();
+            ComboBox<Tarifa> cbTarifa = new ComboBox<>(FXCollections.observableArrayList(tarifas));
+            cbTarifa.setPromptText("Seleccionar tarifa...");
+            cbTarifa.setOnAction(e -> {
+                Tarifa tar = cbTarifa.getValue();
+                if (tar != null) {
+                    if (fDesc.getText().isBlank())
+                        fDesc.setText(tar.getNombre() + (tar.getDescripcion() != null ? " - " + tar.getDescripcion() : ""));
+                    fTec.setText(tar.getTecnica());
+                    fPrecio.setText(String.valueOf(tar.getPrecioUnit()));
+                }
+            });
+            grid.add(lbl("Tarifa:"), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
+        } catch (Exception ignored) {}
+
+        grid.addRow(1, lbl("Descripción *"), fDesc);
+        GridPane.setColumnSpan(fDesc, 3);
+        grid.addRow(2, lbl("Técnica"), fTec, lbl("Cantidad"), fCant);
+        grid.addRow(3, lbl("Precio ud. (€)"), fPrecio, lbl("Descuento (%)"), fDto);
+
+        dlg.getDialogPane().setContent(grid);
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) return null;
+            l.setDescripcion(fDesc.getText().trim());
+            l.setTecnica(fTec.getText().trim());
+            l.setCantidad(parseInt(fCant.getText(), 1));
+            l.setPrecioUnit(parseDouble(fPrecio.getText()));
+            l.setDescuento(parseDouble(fDto.getText()));
+            l.calcularTotal();
+            return l;
+        });
+
+        dlg.showAndWait().ifPresent(result -> {
+            if (esNueva) lista.add(result);
+            tabla.refresh();
+        });
+    }
+
+    private Node buildTabMaterialesFactura(ObservableList<LineaFactura> lineasMat) {
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(12));
+
+        TableView<LineaFactura> tablaMat = new TableView<>(lineasMat);
+        tablaMat.setPrefHeight(200);
+        tablaMat.setPlaceholder(new Label("No hay materiales añadidos a esta factura"));
+
+        TableColumn<LineaFactura, String> cNom = new TableColumn<>("Material");
+        cNom.setCellValueFactory(new PropertyValueFactory<>("descripcion")); cNom.setPrefWidth(260);
+        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>("Cantidad");
+        cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad")); cCant.setPrefWidth(80);
+        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>("Precio ud.");
+        cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
+        cPrecio.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cPrecio.setPrefWidth(100);
+        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>("Total");
+        cTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
+        cTotal.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cTotal.setPrefWidth(100);
+
+        tablaMat.getColumns().addAll(cNom, cCant, cPrecio, cTotal);
+
+        Label lblPicker = new Label("Añadir material del stock:");
+        lblPicker.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
+
+        List<Material> materiales;
+        try { materiales = new MaterialDAO().findAll(); }
+        catch (Exception e) { materiales = new java.util.ArrayList<>(); }
+
+        ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
+        cbMat.setPromptText("Seleccionar material...");
+        cbMat.setPrefWidth(290);
+
+        Label lblInfo = new Label("Selecciona un material para ver disponibilidad y precio");
+        lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
+
+        Spinner<Integer> spCant = new Spinner<>(1, 999999, 1);
+        spCant.setEditable(true);
+        spCant.setPrefWidth(100);
+
+        cbMat.setOnAction(e -> {
+            Material m = cbMat.getValue();
+            if (m != null) lblInfo.setText(String.format(
+                "Stock disponible: %.2f %s  |  Precio unitario: %.2f €/ud.",
+                m.getStockActual(),
+                m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
+                m.getPrecioUnidad()));
+        });
+
+        Button btnAnadir = new Button("➕ Añadir a la factura");
+        btnAnadir.setStyle(
+            "-fx-background-color:#27AE60; -fx-text-fill:white; " +
+            "-fx-font-weight:bold; -fx-padding:6 16; -fx-background-radius:4;");
+        btnAnadir.setOnAction(e -> {
+            Material m = cbMat.getValue();
+            if (m == null) { alerta("Selecciona un material del desplegable."); return; }
+            LineaFactura lf = new LineaFactura();
+            lf.setDescripcion(m.getNombre() +
+                (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
+            lf.setTecnica("📦 Material");
+            lf.setCantidad(spCant.getValue());
+            lf.setPrecioUnit(m.getPrecioUnidad());
+            lf.setDescuento(0);
+            lf.calcularTotal();
+            lineasMat.add(lf);
+        });
+
+        Button btnQuitar = btn("🗑 Quitar", "#E74C3C", () -> {
+            LineaFactura sel = tablaMat.getSelectionModel().getSelectedItem();
+            if (sel != null) lineasMat.remove(sel);
+        });
+
+        Label lblTotal = new Label("Total materiales: 0.00 €");
+        lblTotal.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
+        lineasMat.addListener((javafx.collections.ListChangeListener<LineaFactura>) c -> {
+            double tot = lineasMat.stream().mapToDouble(LineaFactura::getTotal).sum();
+            lblTotal.setText(String.format("Total materiales: %.2f €", tot));
+        });
+        double totInicial = lineasMat.stream().mapToDouble(LineaFactura::getTotal).sum();
+        lblTotal.setText(String.format("Total materiales: %.2f €", totInicial));
+
+        HBox pickerRow = new HBox(8, cbMat, new Label("Cantidad:"), spCant, btnAnadir);
+        pickerRow.setAlignment(Pos.CENTER_LEFT);
+
+        box.getChildren().addAll(
+            lblPicker, pickerRow, lblInfo,
+            new Separator(),
+            tablaMat, new HBox(8, btnQuitar),
+            new Separator(),
+            lblTotal
+        );
+        return box;
     }
 
     private void exportarPDF() {
@@ -169,6 +463,10 @@ public class FacturasView extends VBox {
         b.setOnAction(e -> r.run()); return b;
     }
 
+    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private Label lbl(String t) { return new Label(t); }
+    private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
+    private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) { SoundService.play(SoundService.Sound.ERROR); new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
 }

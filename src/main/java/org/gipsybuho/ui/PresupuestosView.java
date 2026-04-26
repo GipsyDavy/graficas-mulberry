@@ -9,6 +9,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
+import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.db.DatabaseManager;
@@ -182,6 +183,7 @@ public class PresupuestosView extends VBox {
         dlg.getDialogPane().setPrefHeight(600);
 
         TabPane tabs = new TabPane();
+        tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         // Tab 1: Datos generales
         GridPane gGeneral = new GridPane();
@@ -209,9 +211,16 @@ public class PresupuestosView extends VBox {
         gGeneral.add(lbl("Condiciones"), 0, 4); gGeneral.add(fCondiciones, 1, 4, 3, 1);
         tabs.getTabs().add(new Tab("Datos generales", gGeneral));
 
-        // Tab 2: Líneas
-        ObservableList<LineaPresupuesto> lineas = FXCollections.observableArrayList(p.getLineas());
-        tabs.getTabs().add(new Tab("Líneas", buildTablaLineas(lineas)));
+        // Tab 2: Servicios / Técnicas (líneas de trabajo)
+        ObservableList<LineaPresupuesto> lineasServ = FXCollections.observableArrayList(
+            p.getLineas().stream().filter(l -> !"📦 Material".equals(l.getTecnica())).toList());
+
+        // Tab 3: Materiales del stock
+        ObservableList<LineaPresupuesto> lineasMat = FXCollections.observableArrayList(
+            p.getLineas().stream().filter(l -> "📦 Material".equals(l.getTecnica())).toList());
+
+        tabs.getTabs().add(new Tab("Servicios / Técnicas", buildTablaLineas(lineasServ)));
+        tabs.getTabs().add(new Tab("📦 Materiales del stock", buildTabMateriales(lineasMat)));
 
         dlg.getDialogPane().setContent(tabs);
 
@@ -226,7 +235,9 @@ public class PresupuestosView extends VBox {
             p.setIvaPorcentaje(parseDouble(fIva.getText()));
             p.setNotas(fNotas.getText().trim());
             p.setCondiciones(fCondiciones.getText().trim());
-            p.setLineas(new java.util.ArrayList<>(lineas));
+            java.util.List<LineaPresupuesto> todasLineas = new java.util.ArrayList<>(lineasServ);
+            todasLineas.addAll(lineasMat);
+            p.setLineas(todasLineas);
             p.calcularTotales();
             return p;
         });
@@ -356,6 +367,120 @@ public class PresupuestosView extends VBox {
         dlg.showAndWait().ifPresent(result -> {
             if (esNueva) lista.add(result);
         });
+    }
+
+    private javafx.scene.Node buildTabMateriales(ObservableList<LineaPresupuesto> lineasMat) {
+        VBox box = new VBox(10);
+        box.setPadding(new Insets(12));
+
+        // Tabla de materiales seleccionados
+        TableView<LineaPresupuesto> tablaMat = new TableView<>(lineasMat);
+        tablaMat.setPrefHeight(200);
+        tablaMat.setPlaceholder(new Label("No hay materiales añadidos al presupuesto"));
+
+        TableColumn<LineaPresupuesto, String> cNom = new TableColumn<>("Material");
+        cNom.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("descripcion"));
+        cNom.setPrefWidth(260);
+
+        TableColumn<LineaPresupuesto, Integer> cCant = new TableColumn<>("Cantidad");
+        cCant.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("cantidad"));
+        cCant.setPrefWidth(80);
+
+        TableColumn<LineaPresupuesto, Double> cPrecio = new TableColumn<>("Precio ud.");
+        cPrecio.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("precioUnit"));
+        cPrecio.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cPrecio.setPrefWidth(100);
+
+        TableColumn<LineaPresupuesto, Double> cTotal = new TableColumn<>("Total");
+        cTotal.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("total"));
+        cTotal.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+        cTotal.setPrefWidth(100);
+
+        tablaMat.getColumns().addAll(cNom, cCant, cPrecio, cTotal);
+
+        // Selector de material del stock
+        Label lblPicker = new Label("Añadir material del stock:");
+        lblPicker.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
+
+        List<Material> materiales;
+        try { materiales = new MaterialDAO().findAll(); }
+        catch (Exception e) { materiales = new java.util.ArrayList<>(); }
+
+        ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
+        cbMat.setPromptText("Seleccionar material...");
+        cbMat.setPrefWidth(290);
+
+        Label lblInfo = new Label("Selecciona un material para ver disponibilidad y precio");
+        lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
+
+        Spinner<Integer> spCant = new Spinner<>(1, 999999, 1);
+        spCant.setEditable(true);
+        spCant.setPrefWidth(100);
+
+        cbMat.setOnAction(e -> {
+            Material m = cbMat.getValue();
+            if (m != null) lblInfo.setText(String.format(
+                "Stock disponible: %.2f %s  |  Precio unitario: %.2f €/ud.",
+                m.getStockActual(),
+                m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
+                m.getPrecioUnidad()));
+        });
+
+        Button btnAnadir = new Button("➕ Añadir al presupuesto");
+        btnAnadir.setStyle(
+            "-fx-background-color:#27AE60; -fx-text-fill:white; " +
+            "-fx-font-weight:bold; -fx-padding:6 16; -fx-background-radius:4;");
+        btnAnadir.setOnAction(e -> {
+            Material m = cbMat.getValue();
+            if (m == null) { alerta("Selecciona un material del desplegable."); return; }
+            LineaPresupuesto lm = new LineaPresupuesto();
+            lm.setDescripcion(m.getNombre() +
+                (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
+            lm.setTecnica("📦 Material");
+            lm.setCantidad(spCant.getValue());
+            lm.setPrecioUnit(m.getPrecioUnidad());
+            lm.setDescuento(0);
+            lm.calcularTotal();
+            lineasMat.add(lm);
+        });
+
+        Button btnQuitar = btn("🗑 Quitar seleccionado", "#E74C3C", () -> {
+            LineaPresupuesto sel = tablaMat.getSelectionModel().getSelectedItem();
+            if (sel != null) lineasMat.remove(sel);
+        });
+
+        Label lblTotalMat = new Label("Total materiales: 0.00 €");
+        lblTotalMat.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
+        lineasMat.addListener((javafx.collections.ListChangeListener<LineaPresupuesto>) c -> {
+            double tot = lineasMat.stream().mapToDouble(LineaPresupuesto::getTotal).sum();
+            lblTotalMat.setText(String.format("Total materiales: %.2f €", tot));
+        });
+        // Calcular total inicial si ya había líneas
+        double totInicial = lineasMat.stream().mapToDouble(LineaPresupuesto::getTotal).sum();
+        lblTotalMat.setText(String.format("Total materiales: %.2f €", totInicial));
+
+        HBox pickerRow = new HBox(8, cbMat, new Label("Cantidad:"), spCant, btnAnadir);
+        pickerRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
+
+        box.getChildren().addAll(
+            lblPicker, pickerRow, lblInfo,
+            new Separator(),
+            tablaMat,
+            new HBox(8, btnQuitar),
+            new Separator(),
+            lblTotalMat
+        );
+        return box;
     }
 
     @SuppressWarnings("unchecked")

@@ -1,5 +1,6 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -8,8 +9,10 @@ import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.MusicService;
+import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.TemaManager;
 
 import java.io.File;
@@ -62,8 +65,10 @@ public class ConfiguracionView extends VBox {
         Tab tabEmpresa      = new Tab("🏢  Mi empresa",  buildTabEmpresa());
         Tab tabPreferencias = new Tab("⚙  Preferencias", buildTabPreferencias());
         Tab tabMusica       = new Tab("🎵  Música",       buildTabMusica());
+        Tab tabModelosIA    = new Tab("🤖  Modelos IA",   buildTabModelosIA());
+        Tab tabAcercaDe     = new Tab("ℹ  Acerca de",     buildTabAcercaDe());
 
-        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica);
+        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabModelosIA, tabAcercaDe);
         getChildren().addAll(titulo, tabs);
     }
 
@@ -637,10 +642,195 @@ public class ConfiguracionView extends VBox {
             info.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         }
         info.show();
-        // Auto-cerrar el toast después de 2 segundos
         javafx.animation.PauseTransition pausa = new javafx.animation.PauseTransition(
             javafx.util.Duration.seconds(2));
         pausa.setOnFinished(ev -> info.close());
         pausa.play();
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 5 — MODELOS IA
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private static final String[][] MODELOS_INFO = {
+        {"llama4",      "~5.6 GB",  "Meta Llama 4 Scout — Multimodal, el más reciente"},
+        {"llama3.2",    "~2.0 GB",  "Meta Llama 3.2 — Rápido y equilibrado (recomendado)"},
+        {"llama3.1",    "~4.7 GB",  "Meta Llama 3.1 — Más preciso que 3.2"},
+        {"mistral",     "~4.1 GB",  "Mistral 7B — Muy eficiente en español"},
+        {"phi4",        "~9.1 GB",  "Microsoft Phi-4 — Excelente razonamiento"},
+        {"phi3.5",      "~2.2 GB",  "Microsoft Phi-3.5 — Ligero y rápido"},
+        {"qwen2.5",     "~4.7 GB",  "Qwen 2.5 — Multilingüe, muy bueno en español"},
+        {"gemma3",      "~3.3 GB",  "Google Gemma 3 — Eficiente"},
+        {"deepseek-r1", "~4.7 GB",  "DeepSeek R1 — Razonamiento avanzado"},
+    };
+
+    private ScrollPane buildTabModelosIA() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        Label titulo = new Label("Modelos de Inteligencia Artificial");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label(
+            "Gestiona los modelos de IA disponibles en Ollama. " +
+            "Puedes descargar nuevos modelos o eliminar los que ya no necesites para liberar espacio en disco.");
+        desc.getStyleClass().add("config-section-desc");
+        desc.setWrapText(true);
+
+        // Tabla de modelos disponibles con tamaños
+        Label lblTabla = new Label("Modelos disponibles:");
+        lblTabla.getStyleClass().add("config-section-title");
+
+        GridPane gridModelos = new GridPane();
+        gridModelos.setHgap(20);
+        gridModelos.setVgap(8);
+        gridModelos.setPadding(new Insets(10));
+        gridModelos.setStyle(
+            "-fx-background-color:#F8F8F8; -fx-border-color:#DDD; " +
+            "-fx-border-radius:6; -fx-background-radius:6;");
+
+        ColumnConstraints cMod = new ColumnConstraints(); cMod.setMinWidth(120);
+        ColumnConstraints cTam = new ColumnConstraints(); cTam.setMinWidth(80);
+        ColumnConstraints cDes = new ColumnConstraints(); cDes.setHgrow(Priority.ALWAYS);
+        gridModelos.getColumnConstraints().addAll(cMod, cTam, cDes);
+
+        Label hNombre = new Label("Modelo"); hNombre.setStyle("-fx-font-weight:bold;");
+        Label hTam    = new Label("Tamaño"); hTam.setStyle("-fx-font-weight:bold;");
+        Label hDesc   = new Label("Descripción"); hDesc.setStyle("-fx-font-weight:bold;");
+        gridModelos.addRow(0, hNombre, hTam, hDesc);
+
+        for (int i = 0; i < MODELOS_INFO.length; i++) {
+            Label lNom = new Label(MODELOS_INFO[i][0]);
+            lNom.setStyle("-fx-font-weight:bold; -fx-text-fill:#6B2D5E;");
+            Label lTam = new Label(MODELOS_INFO[i][1]);
+            lTam.setStyle("-fx-text-fill:#F39C12; -fx-font-weight:bold;");
+            Label lDes = new Label(MODELOS_INFO[i][2]);
+            gridModelos.addRow(i + 1, lNom, lTam, lDes);
+        }
+
+        Button btnGestionar = new Button("⬇  Gestionar y descargar modelos");
+        btnGestionar.getStyleClass().add("config-save-btn");
+        btnGestionar.setOnAction(e -> {
+            if (getScene() == null) return;
+            Stage owner = (Stage) getScene().getWindow();
+            new ModelosGestionDialog(owner, new OllamaService()).showAndWait();
+        });
+
+        VBox panel = new VBox(12, titulo, desc, new Separator(), lblTabla, gridModelos, new Separator(), btnGestionar);
+        panel.getStyleClass().add("config-panel");
+        contenido.getChildren().add(panel);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 6 — ACERCA DE
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabAcercaDe() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        // Tarjeta principal de la app
+        VBox cardApp = new VBox(10);
+        cardApp.setAlignment(Pos.CENTER);
+        cardApp.setPadding(new Insets(30, 20, 30, 20));
+        cardApp.setStyle("-fx-background-color:-c-primary; -fx-background-radius:12;");
+
+        Label lblNombreApp = new Label("Gráficas Mulberry");
+        lblNombreApp.setStyle("-fx-font-size:26px; -fx-font-weight:bold; -fx-text-fill:white;");
+
+        Label lblSubtitulo = new Label("Sistema de Gestión para Artes Gráficas y Serigrafía");
+        lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
+        lblSubtitulo.setWrapText(true);
+
+        Label lblVersion = new Label("Versión 3.2");
+        lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
+
+        cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);
+
+        // Información detallada
+        GridPane gridInfo = new GridPane();
+        gridInfo.setHgap(20);
+        gridInfo.setVgap(14);
+        gridInfo.setPadding(new Insets(16));
+
+        ColumnConstraints ccL = new ColumnConstraints(); ccL.setMinWidth(150);
+        ccL.setHalignment(javafx.geometry.HPos.RIGHT);
+        ColumnConstraints ccR = new ColumnConstraints(); ccR.setHgrow(Priority.ALWAYS);
+        gridInfo.getColumnConstraints().addAll(ccL, ccR);
+
+        addInfoRow(gridInfo, 0, "Creador:",        "Gipsybuho");
+        addInfoRow(gridInfo, 1, "Año:",            "2026");
+        addInfoRow(gridInfo, 2, "Tecnología:",     "Java 21 + JavaFX 21");
+        addInfoRow(gridInfo, 3, "Base de datos:",  "SQLite (datos 100% locales)");
+        addInfoRow(gridInfo, 4, "IA integrada:",   "Ollama (sin conexión a Internet)");
+
+        // Descripción
+        Label lblDescTitulo = new Label("Acerca de la aplicación");
+        lblDescTitulo.getStyleClass().add("config-section-title");
+
+        Label lblDesc = new Label(
+            "Gráficas Mulberry es un sistema de gestión integral diseñado para empresas de artes " +
+            "gráficas y serigrafía. Permite gestionar presupuestos, facturas, albaranes, materiales " +
+            "en stock, empleados, nóminas y estadísticas, con un asistente de inteligencia artificial " +
+            "totalmente local que protege la privacidad de tus datos.");
+        lblDesc.setWrapText(true);
+        lblDesc.getStyleClass().add("config-section-desc");
+
+        // Sección de cierre
+        Label lblSalirTitulo = new Label("Cerrar la aplicación");
+        lblSalirTitulo.getStyleClass().add("config-section-title");
+
+        Label lblSalirDesc = new Label(
+            "Al cerrar la aplicación se detendrá automáticamente el proceso de Ollama (IA) si está en ejecución.");
+        lblSalirDesc.getStyleClass().add("config-section-desc");
+        lblSalirDesc.setWrapText(true);
+
+        Button btnSalir = new Button("⏻  Cerrar Gráficas Mulberry");
+        btnSalir.setStyle(
+            "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-font-size:14px; -fx-padding:10 28; -fx-background-radius:6; -fx-cursor:hand;");
+        btnSalir.setOnAction(e -> {
+            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Deseas cerrar Gráficas Mulberry?\n" +
+                "Se detendrá también el proceso de Ollama si está activo.",
+                ButtonType.YES, ButtonType.NO);
+            conf.setTitle("Cerrar aplicación");
+            conf.setHeaderText(null);
+            if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> Platform.exit());
+        });
+
+        HBox footerSalir = new HBox(btnSalir);
+        footerSalir.setPadding(new Insets(4, 0, 0, 0));
+
+        VBox panel = new VBox(16,
+            cardApp,
+            new Separator(),
+            gridInfo,
+            new Separator(),
+            lblDescTitulo, lblDesc,
+            new Separator(),
+            lblSalirTitulo, lblSalirDesc, footerSalir
+        );
+        panel.getStyleClass().add("config-panel");
+        contenido.getChildren().add(panel);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    private void addInfoRow(GridPane grid, int row, String label, String valor) {
+        Label lbl = new Label(label);
+        lbl.getStyleClass().add("config-form-label");
+        Label val = new Label(valor);
+        val.setStyle("-fx-font-weight:bold;");
+        grid.add(lbl, 0, row);
+        grid.add(val, 1, row);
     }
 }

@@ -15,14 +15,15 @@ import java.util.List;
 public class ModelosGestionDialog extends Stage {
 
     private static final String[][] MODELOS_POPULARES = {
-        {"llama3.2",    "~2 GB — Rápido y equilibrado (recomendado)"},
-        {"llama3.1",    "~4.7 GB — Más preciso que llama3.2"},
-        {"mistral",     "~4.1 GB — Muy eficiente en español"},
-        {"phi4",        "~9.1 GB — Microsoft, excelente razonamiento"},
-        {"phi3.5",      "~2.2 GB — Microsoft, ligero y rápido"},
-        {"qwen2.5",     "~4.7 GB — Multilingüe, muy bueno en español"},
-        {"gemma3",      "~3.3 GB — Google, eficiente"},
-        {"deepseek-r1", "~4.7 GB — Razonamiento avanzado"},
+        {"llama4",      "~5.6 GB — Meta Llama 4 Scout, multimodal (más reciente)"},
+        {"llama3.2",    "~2.0 GB — Meta Llama 3.2, rápido y equilibrado (recomendado)"},
+        {"llama3.1",    "~4.7 GB — Meta Llama 3.1, más preciso que 3.2"},
+        {"mistral",     "~4.1 GB — Mistral 7B, muy eficiente en español"},
+        {"phi4",        "~9.1 GB — Microsoft Phi-4, excelente razonamiento"},
+        {"phi3.5",      "~2.2 GB — Microsoft Phi-3.5, ligero y rápido"},
+        {"qwen2.5",     "~4.7 GB — Qwen 2.5, multilingüe, muy bueno en español"},
+        {"gemma3",      "~3.3 GB — Google Gemma 3, eficiente"},
+        {"deepseek-r1", "~4.7 GB — DeepSeek R1, razonamiento avanzado"},
     };
 
     private final OllamaService ia;

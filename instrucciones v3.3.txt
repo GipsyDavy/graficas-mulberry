@@ -1,0 +1,18 @@
+
+❯ añade en configuracion la opcion acerca de 
+   indicando el creador (Gipsybuho en este   
+  caso) de la aplicacion la version v que    
+  corresponda, año de creacion (2026 en este 
+   caso) y otra opcion de cerrar o salir     
+  para cerrar la aplicacion y que a la vez   
+  que se cierra la aplicacion, se cierre     
+  ollama, incluye tambien la opcion de poder 
+   descargar el modelo llama4, e indica cada 
+   modelo que tamaño de gb tiene, añade      
+  tambien la opcion de poder incluir los     
+  materiales que hay es stock a la hora de   
+  hacer el presupuesto, factura y albaran,   
+  indicando por un lado el precio del tipo   
+  de metodo a utilizar y por otro los        
+  materiales que se van a usar               
+

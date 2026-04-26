@@ -9,10 +9,12 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
+import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.LineaAlbaran;
+import org.gipsybuho.model.Material;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.SoundService;
 
@@ -217,16 +219,17 @@ public class AlbaranesView extends VBox {
         t.getColumns().addAll(cDesc, cCant, cUnid);
 
         HBox buttons = new HBox(8);
-        Button btnAdd  = btn("+ Añadir",  "#4C9BE8", () -> dialogoLinea(null, lineas));
-        Button btnEdit = btn("✏ Editar",  "#F39C12", () -> {
+        Button btnAdd      = btn("+ Añadir",         "#4C9BE8", () -> dialogoLinea(null, lineas));
+        Button btnStock    = btn("📦 Desde stock",   "#9B59B6", () -> dialogoDesdeStock(lineas));
+        Button btnEdit     = btn("✏ Editar",          "#F39C12", () -> {
             LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLinea(sel, lineas);
         });
-        Button btnDel  = btn("🗑 Quitar", "#E74C3C", () -> {
+        Button btnDel      = btn("🗑 Quitar",         "#E74C3C", () -> {
             LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
-        buttons.getChildren().addAll(btnAdd, btnEdit, btnDel);
+        buttons.getChildren().addAll(btnAdd, btnStock, btnEdit, btnDel);
         box.getChildren().addAll(t, buttons);
         return box;
     }
@@ -266,6 +269,58 @@ public class AlbaranesView extends VBox {
         dlg.showAndWait().ifPresent(result -> {
             if (esNueva) lista.add(result);
         });
+    }
+
+    private void dialogoDesdeStock(ObservableList<LineaAlbaran> lineas) {
+        List<Material> materiales;
+        try { materiales = new MaterialDAO().findAll(); }
+        catch (Exception e) { mostrarError(e); return; }
+        if (materiales.isEmpty()) { alerta("No hay materiales registrados en el stock."); return; }
+
+        Dialog<LineaAlbaran> dlg = new Dialog<>();
+        dlg.setTitle("Añadir material del stock al albarán");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10); grid.setVgap(12); grid.setPadding(new Insets(16));
+
+        ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
+        cbMat.setPromptText("Seleccionar material del stock...");
+        cbMat.setPrefWidth(340);
+
+        Label lblInfo = new Label("Selecciona un material para ver su disponibilidad");
+        lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
+
+        cbMat.setOnAction(e -> {
+            Material m = cbMat.getValue();
+            if (m != null) lblInfo.setText(String.format(
+                "Stock disponible: %.2f %s  |  Categoría: %s",
+                m.getStockActual(),
+                m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
+                m.getCategoria() != null ? m.getCategoria() : "-"));
+        });
+
+        Spinner<Integer> spCant = new Spinner<>(1, 999999, 1);
+        spCant.setEditable(true);
+        spCant.setPrefWidth(100);
+
+        grid.addRow(0, lbl("Material:"), cbMat);
+        grid.add(lblInfo, 1, 1);
+        grid.addRow(2, lbl("Cantidad:"), spCant);
+
+        dlg.getDialogPane().setContent(grid);
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK || cbMat.getValue() == null) return null;
+            Material m = cbMat.getValue();
+            LineaAlbaran l = new LineaAlbaran();
+            l.setDescripcion(m.getNombre() +
+                (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
+            l.setCantidad(spCant.getValue());
+            l.setUnidad(m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud");
+            return l;
+        });
+
+        dlg.showAndWait().ifPresent(lineas::add);
     }
 
     @SuppressWarnings("unchecked")
