@@ -15,6 +15,9 @@ import java.net.URI;
 import java.net.http.*;
 import java.nio.file.*;
 import java.time.Duration;
+import java.util.concurrent.TimeUnit;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class OllamaInstallerDialog extends Stage {
 
@@ -285,7 +288,6 @@ public class OllamaInstallerDialog extends Stage {
     // ── Paso 2: Ejecutar instalador ───────────────────────────────────────────
 
     private void ejecutarInstalador(Path installer) throws Exception {
-        // Verificar que el ejecutable está dentro del directorio temporal del sistema
         Path tmpDir  = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
         Path realExe = installer.toRealPath();
         if (!realExe.startsWith(tmpDir)) {
@@ -294,22 +296,50 @@ public class OllamaInstallerDialog extends Stage {
         if (!Files.isRegularFile(realExe)) {
             throw new SecurityException("El instalador no es un archivo regular — ejecución cancelada");
         }
+
+        log("  Se abrirá el instalador de Ollama en una ventana separada.");
+        log("  Sigue las instrucciones en pantalla y espera a que finalice.");
+
         Process proc = new ProcessBuilder(realExe.toString())
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
             .redirectError(ProcessBuilder.Redirect.DISCARD)
             .start();
-        int code = proc.waitFor();
+
+        long startMs = System.currentTimeMillis();
+        boolean ollamaDetectado = false;
+
+        // Monitoriza cada 3 s mientras el instalador sigue en marcha
+        while (!proc.waitFor(3, TimeUnit.SECONDS)) {
+            long secs = (System.currentTimeMillis() - startMs) / 1000;
+            Path ollamaExe = findOllamaExe();
+            if (ollamaExe != null && !ollamaDetectado) {
+                ollamaDetectado = true;
+                log("  ✔ ollama.exe detectado — copiando archivos...");
+            }
+            final String estado = ollamaDetectado
+                ? "Instalando Ollama — copiando archivos... (" + secs + " s)"
+                : "Esperando que el instalador de Ollama finalice... (" + secs + " s)";
+            Platform.runLater(() -> {
+                progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+                lblProgreso.setText(estado);
+            });
+        }
+
+        int code = proc.exitValue();
         log("  Instalador finalizado (código de salida: " + code + ")");
     }
 
     // ── Paso 3: Descargar modelo ──────────────────────────────────────────────
 
+    private static final Pattern PAT_PCT  = Pattern.compile("(\\d+)%");
+    private static final Pattern PAT_SIZE = Pattern.compile("([\\d.]+)\\s*(B|KB|MB|GB)/([\\d.]+)\\s*(B|KB|MB|GB)");
+
     private void descargarModelo() throws Exception {
-        log("▶ Iniciando descarga del modelo " + DEFAULT_MODEL + " (~2 GB). Esto puede tardar varios minutos...");
+        log("▶ Descargando modelo " + DEFAULT_MODEL + " (~2 GB). Puede tardar varios minutos...");
 
         Platform.runLater(() -> {
-            progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
-            lblProgreso.setText("Descargando modelo IA " + DEFAULT_MODEL + "…");
+            progressBar.setProgress(0);
+            lblProgreso.setText("Preparando descarga del modelo IA " + DEFAULT_MODEL + "…");
         });
 
         Path ollamaExe = findOllamaExe();
@@ -323,11 +353,43 @@ public class OllamaInstallerDialog extends Stage {
             .redirectErrorStream(true)
             .start();
 
+        // 'ollama pull' usa \r para actualizar la misma línea de progreso.
+        // BufferedReader.readLine() trata \r como separador, así que cada
+        // actualización llega como una línea independiente.
+        // Solo logueamos hitos del 10 % y actualizamos la barra en cada línea.
+        String[] lastMilestone = {""};
         try (BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()))) {
             String line;
             while ((line = br.readLine()) != null) {
                 String trimmed = line.trim();
-                if (!trimmed.isBlank()) log("  " + trimmed);
+                if (trimmed.isEmpty()) continue;
+
+                Matcher mPct = PAT_PCT.matcher(trimmed);
+                if (mPct.find()) {
+                    int pct = Integer.parseInt(mPct.group(1));
+                    Matcher mSz = PAT_SIZE.matcher(trimmed);
+                    String sizeInfo = mSz.find()
+                        ? mSz.group(1) + " " + mSz.group(2) + " / " + mSz.group(3) + " " + mSz.group(4)
+                        : "";
+                    final int p = pct;
+                    final String si = sizeInfo;
+                    Platform.runLater(() -> {
+                        progressBar.setProgress(p / 100.0);
+                        lblProgreso.setText("Descargando modelo: " + p + "%" +
+                            (si.isEmpty() ? "" : "  (" + si + ")"));
+                    });
+                    // Log solo cada 10 %
+                    String hito = (pct / 10) * 10 + "%";
+                    if (!hito.equals(lastMilestone[0])) {
+                        lastMilestone[0] = hito;
+                        log("  Progreso modelo: " + pct + "%" + (sizeInfo.isEmpty() ? "" : "  " + sizeInfo));
+                    }
+                } else {
+                    // Líneas de estado: "pulling manifest", "verifying sha256", "success", etc.
+                    log("  " + trimmed);
+                    final String t = trimmed;
+                    Platform.runLater(() -> lblProgreso.setText("Modelo " + DEFAULT_MODEL + ": " + t));
+                }
             }
         }
 

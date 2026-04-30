@@ -1,0 +1,21 @@
+/* Tema Carmesí — negro profundo con acento rojo carmesí */
+.root {
+    -c-primary:         #B71C1C;
+    -c-primary-dark:    #1A0000;
+    -c-sidebar-logo:    #0D0000;
+    -c-sidebar-sep:     #3A0D0D;
+    -c-accent:          #FF5252;
+    -c-muted:           #8A6060;
+    -c-sidebar-text:    #C8A0A0;
+    -c-bg:              #1A0D0D;
+    -c-border:          #3D1515;
+    -c-text-secondary:  #A07070;
+    -c-text:            #F0E0E0;
+    -c-nav-hover:       #2D0A0A;
+    -c-row-hover:       #271010;
+    -c-row-selected:    #311414;
+    -c-row-alt:         #1D0E0E;
+    -c-row-border:      #2A1010;
+    -c-tab-bg:          #261010;
+    -c-card-bg:         #1E0F0F;
+}

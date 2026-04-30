@@ -158,7 +158,7 @@
 }
 
 .data-table .column-header .label {
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-weight: bold;
     -fx-font-size: 12px;
 }
@@ -270,7 +270,7 @@
 }
 
 .tab-pane .tab-header-area .tab:selected .tab-label {
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-weight: bold;
 }
 
@@ -310,7 +310,7 @@
 }
 
 .alert .header-panel .label {
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
 }
 
 /* ── CHECKBOX ────────────────────────────────────────────── */
@@ -353,7 +353,7 @@
 
 .btn-cal-nav {
     -fx-background-color: -c-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-size: 14px;
     -fx-background-radius: 4;
     -fx-cursor: hand;
@@ -381,7 +381,7 @@
 
 .cal-header-dia {
     -fx-background-color: -c-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-weight: bold;
     -fx-font-size: 12px;
     -fx-padding: 6 0;
@@ -437,7 +437,7 @@
 .cal-dia-num-hoy {
     -fx-font-size: 14px;
     -fx-font-weight: bold;
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
 }
 
 .cal-dia-pasado .cal-dia-num {
@@ -579,7 +579,7 @@
 
 .config-save-btn {
     -fx-background-color: -c-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-weight: bold;
     -fx-padding: 9 28;
     -fx-background-radius: 5;
@@ -603,7 +603,7 @@
 
 .font-size-btn-selected {
     -fx-background-color: -c-primary;
-    -fx-text-fill: white;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-border-color: -c-primary;
     -fx-font-weight: bold;
 }

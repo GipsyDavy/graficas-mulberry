@@ -13,6 +13,7 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -46,14 +47,15 @@ public class ClientesView extends VBox {
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
-        Button btnNuevo    = btn("+ Nuevo",      "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",    "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",   "#E74C3C", this::borrar);
-        Button btnExportar = btn("📤 Exportar", "#8E44AD", this::exportar);
+        Button btnNuevo    = btn("+ Nuevo",       "#4C9BE8", this::nuevo);
+        Button btnEditar   = btn("✏ Editar",     "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",    "#E74C3C", this::borrar);
+        Button btnImportar = btn("📥 Importar",  "#27AE60", this::importar);
+        Button btnExportar = btn("📤 Exportar",  "#8E44AD", this::exportar);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnExportar);
+        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -175,6 +177,115 @@ public class ClientesView extends VBox {
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho);
         return c;
+    }
+
+    private void importar() {
+        String[][] formatos = {
+            {"csv",  "📊  CSV (Excel / LibreOffice)",
+                "Archivo .csv generado por la exportación de clientes de esta aplicación.", "csv"},
+            {"sql",  "🗄️  Volcado SQL",
+                "Script .sql generado por la exportación SQL de clientes.", "sql"},
+            {"json", "{ }  JSON",
+                "Archivo .json generado por la exportación JSON de clientes o por el backup completo.", "json"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila  = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label aviso = new Label(
+            "ℹ  Los clientes importados se añaden o actualizan. " +
+            "Los clientes con el mismo ID serán sobreescritos.");
+        aviso.setWrapText(true);
+        aviso.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+        Label lblSelecciona = new Label("Selecciona el formato del archivo:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox, aviso);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Importar clientes");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarImportacion);
+    }
+
+    private void lanzarImportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Seleccionar archivo de clientes — " + fmt[1]);
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Clientes", "*." + fmt[3]),
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+        );
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path origen = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                int importados = switch (fmt[0]) {
+                    case "csv"  -> ImportBackupService.importarClientesCSV(origen);
+                    case "sql"  -> ImportBackupService.importarClientesSQL(origen);
+                    case "json" -> ImportBackupService.importarClientesJSON(origen);
+                    default     -> throw new Exception("Formato desconocido: " + fmt[0]);
+                };
+                final int n = importados;
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    cargar();
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Se han importado o actualizado " + n + " cliente(s) correctamente.",
+                        ButtonType.OK);
+                    ok.setTitle("Importación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private void exportar() {

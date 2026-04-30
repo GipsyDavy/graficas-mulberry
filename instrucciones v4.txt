@@ -1,0 +1,6 @@
+ añade una opcion de exportar en el apartado de clientes, debe poderse elegir el formato de exportacion entre los que deben estar, copia de seguridad SQLite, Exportar a CSV (Excel/LibreOffice), Volcado SQL completo, Exportar a JSON, Exportar a PDF y exportar a word   
+
+
+el boton importar datos del panel de la izquierda que esta debajo de calendario y encima de exportar / backup, renombralo para que se llame Importar Backup y que su funcion sea la de importar el backup que se haya hecho en cualquiera de los 4 formatos en los que se realiza el backup de la aplicación
+
+añade una opcion de importar en el apartado de clientes, debe poder importar cualquiera de los formatos en los que hace la exportación.

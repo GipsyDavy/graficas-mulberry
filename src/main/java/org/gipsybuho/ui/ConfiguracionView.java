@@ -29,6 +29,7 @@ public class ConfiguracionView extends VBox {
     private static final List<Tema> TEMAS = List.of(
         new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
         new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
+        new Tema("carmesi",  "Carmesí",     "#B71C1C", "#1A0000", "#1A0D0D", "#FF5252"),
         new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
         new Tema("rojo",     "Rojo",        "#A03030", "#4A1010", "#FBF3F3", "#FF8888"),
@@ -737,7 +738,7 @@ public class ConfiguracionView extends VBox {
         VBox cardApp = new VBox(10);
         cardApp.setAlignment(Pos.CENTER);
         cardApp.setPadding(new Insets(30, 20, 30, 20));
-        cardApp.setStyle("-fx-background-color:-c-primary; -fx-background-radius:12;");
+        cardApp.setStyle("-fx-background-color:-c-primary-dark; -fx-background-radius:12;");
 
         Label lblNombreApp = new Label("Gráficas Mulberry");
         lblNombreApp.setStyle("-fx-font-size:26px; -fx-font-weight:bold; -fx-text-fill:white;");
@@ -800,7 +801,7 @@ public class ConfiguracionView extends VBox {
         Label lbl = new Label(label);
         lbl.getStyleClass().add("config-form-label");
         Label val = new Label(valor);
-        val.setStyle("-fx-font-weight:bold;");
+        val.setStyle("-fx-font-weight:bold; -fx-text-fill:-c-text;");
         grid.add(lbl, 0, row);
         grid.add(val, 1, row);
     }

@@ -74,7 +74,7 @@ public class MainView extends BorderPane {
             navBtn("📊  Estadísticas",       () -> mostrarVista(new EstadisticasView())),
             navBtn("🤖  Asistente IA",       () -> mostrarVista(new IAView())),
             navBtn("📅  Calendario",          () -> mostrarVista(new CalendarioView())),
-            navBtn("📥  Importar datos",        () -> mostrarVista(new ImportView())),
+            navBtn("📥  Importar Backup",        () -> mostrarVista(new ImportBackupView())),
             navBtn("💾  Exportar / Backup",   () -> mostrarVista(new ExportView())),
             navBtn("⚙  Configuración",        () -> mostrarVista(new ConfiguracionView()))
         );

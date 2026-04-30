@@ -13,6 +13,7 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -55,10 +56,11 @@ public class EmpleadosView extends VBox {
         Button btnEditar    = btn("✏ Editar",        "#F39C12", this::editar);
         Button btnBaja      = btn("🚫 Dar de baja",  "#E74C3C", this::darDeBaja);
         Button btnReactivar = btn("✅ Reactivar",    "#27AE60", this::reactivar);
+        Button btnImportar  = btn("📥 Importar",     "#2980B9", this::importar);
         Button btnExportar  = btn("📤 Exportar",     "#8E44AD", this::exportar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnExportar);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -263,6 +265,95 @@ public class EmpleadosView extends VBox {
         });
 
         return dlg.showAndWait();
+    }
+
+    private void importar() {
+        String[][] formatos = {
+            {"csv",  "📊  Importar desde CSV",
+                "Importa empleados desde un archivo CSV (solo tabla empleados).", "csv"},
+            {"sql",  "🗄️  Importar desde SQL",
+                "Importa empleados y nóminas desde un volcado SQL.", "sql"},
+            {"json", "{ }  Importar desde JSON",
+                "Importa empleados y nóminas desde un archivo JSON.", "json"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lbl = new Label("Selecciona el formato a importar:");
+        lbl.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lbl, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Importar empleados");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(440);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarImportacion);
+    }
+
+    private void lanzarImportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Importar empleados — " + fmt[1]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]));
+        File archivo = fc.showOpenDialog(getScene().getWindow());
+        if (archivo == null) return;
+
+        Path origen = archivo.toPath();
+        String tipo = fmt[0];
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                int n = switch (tipo) {
+                    case "csv"  -> ImportBackupService.importarEmpleadosCSV(origen);
+                    case "sql"  -> ImportBackupService.importarEmpleadosSQL(origen);
+                    case "json" -> ImportBackupService.importarEmpleadosJSON(origen);
+                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                };
+                int filas = n;
+                Platform.runLater(() -> {
+                    cargar();
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    alerta("Importación completada: " + filas + " registro(s) importado(s).");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private void exportar() {

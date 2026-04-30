@@ -13,6 +13,7 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.Tarifa;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -47,9 +48,10 @@ public class TarifasView extends VBox {
         Button btnNuevo    = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
         Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
         Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
+        Button btnImportar = btn("📥 Importar",      "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",      "#8E44AD", this::exportar);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnExportar);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -164,6 +166,95 @@ public class TarifasView extends VBox {
             return null;
         });
         return dlg.showAndWait();
+    }
+
+    private void importar() {
+        String[][] formatos = {
+            {"csv",  "📊  Importar desde CSV",
+                "Importa tarifas desde un archivo CSV.", "csv"},
+            {"sql",  "🗄️  Importar desde SQL",
+                "Importa tarifas desde un volcado SQL.", "sql"},
+            {"json", "{ }  Importar desde JSON",
+                "Importa tarifas desde un archivo JSON.", "json"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lbl = new Label("Selecciona el formato a importar:");
+        lbl.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lbl, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Importar tarifas");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(440);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarImportacion);
+    }
+
+    private void lanzarImportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Importar tarifas — " + fmt[1]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Tarifas", "*." + fmt[3]));
+        File archivo = fc.showOpenDialog(getScene().getWindow());
+        if (archivo == null) return;
+
+        Path origen = archivo.toPath();
+        String tipo = fmt[0];
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                int n = switch (tipo) {
+                    case "csv"  -> ImportBackupService.importarTarifasCSV(origen);
+                    case "sql"  -> ImportBackupService.importarTarifasSQL(origen);
+                    case "json" -> ImportBackupService.importarTarifasJSON(origen);
+                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                };
+                int filas = n;
+                Platform.runLater(() -> {
+                    cargar();
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    alerta("Importación completada: " + filas + " registro(s) importado(s).");
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private void exportar() {

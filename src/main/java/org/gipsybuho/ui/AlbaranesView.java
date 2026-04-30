@@ -19,6 +19,7 @@ import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.LineaAlbaran;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -53,11 +54,12 @@ public class AlbaranesView extends VBox {
         Button btnNuevo    = btn("+ Nuevo",            "#4C9BE8", this::nuevo);
         Button btnEditar   = btn("✏ Editar",            "#F39C12", this::editar);
         Button btnFirmado  = btn("✅ Marcar firmado",   "#27AE60", this::marcarFirmado);
+        Button btnImportar = btn("📥 Importar",         "#16A085", this::importar);
         Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnExportar, btnBorrar);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -320,6 +322,113 @@ public class AlbaranesView extends VBox {
         TableColumn<Albaran, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
+    }
+
+    private void importar() {
+        String[][] formatos = {
+            {"csv",  "📊  CSV (Excel / LibreOffice)",
+                "Archivo .csv generado por la exportación de albaranes (solo cabecera, sin líneas).", "csv"},
+            {"sql",  "🗄️  Volcado SQL",
+                "Script .sql con albaranes y sus líneas generado por la exportación SQL.", "sql"},
+            {"json", "{ }  JSON",
+                "Archivo .json con albaranes y líneas generado por la exportación JSON o por el backup completo.", "json"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila  = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label aviso = new Label(
+            "ℹ  Los albaranes importados se añaden o actualizan. " +
+            "Los registros con el mismo ID serán sobreescritos.");
+        aviso.setWrapText(true);
+        aviso.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+        Label lblSelecciona = new Label("Selecciona el formato del archivo:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox, aviso);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Importar albaranes");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarImportacion);
+    }
+
+    private void lanzarImportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Seleccionar archivo de albaranes — " + fmt[1]);
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Albaranes", "*." + fmt[3]),
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+        );
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path origen = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                int importados = switch (fmt[0]) {
+                    case "csv"  -> ImportBackupService.importarAlbaranesCSV(origen);
+                    case "sql"  -> ImportBackupService.importarAlbaranesSQL(origen);
+                    case "json" -> ImportBackupService.importarAlbaranesJSON(origen);
+                    default     -> throw new Exception("Formato desconocido: " + fmt[0]);
+                };
+                final int n = importados;
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    cargar();
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Se han importado o actualizado " + n + " registro(s) correctamente.",
+                        ButtonType.OK);
+                    ok.setTitle("Importación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private void exportar() {
