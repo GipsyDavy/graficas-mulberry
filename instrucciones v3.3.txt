@@ -1,4 +1,2 @@
-compila la aplicacion en un archivo .exe  
-  para instalarlo en cualquier pc con        
-  windows, esta es la version v3.3           
+compila la aplicacion en un archivo .exe para instalarlo en cualquier pc con windows, esta es la version v3.3           
 

@@ -34,7 +34,7 @@ public class Cliente {
     public String getNombre() { return nombre; }
     public void setNombre(String nombre) { this.nombre = nombre; }
     public String getApellidos() { return apellidos; }
-    public void setApellidos(String apellido) { this.apellidos = apellido; }
+    public void setApellidos(String apellidos) { this.apellidos = apellidos; }
     public String getNombreCompleto() {
         if (apellidos == null || apellidos.isBlank()) return nombre != null ? nombre : "";
         return nombre + " " + apellidos;
