@@ -1,5 +1,6 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -8,10 +9,17 @@ import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.model.Empleado;
+import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.SoundService;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class EmpleadosView extends VBox {
@@ -47,9 +55,10 @@ public class EmpleadosView extends VBox {
         Button btnEditar    = btn("✏ Editar",        "#F39C12", this::editar);
         Button btnBaja      = btn("🚫 Dar de baja",  "#E74C3C", this::darDeBaja);
         Button btnReactivar = btn("✅ Reactivar",    "#27AE60", this::reactivar);
+        Button btnExportar  = btn("📤 Exportar",     "#8E44AD", this::exportar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnExportar);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -254,6 +263,114 @@ public class EmpleadosView extends VBox {
         });
 
         return dlg.showAndWait();
+    }
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de empleados como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con la estructura y los datos de empleados y nóminas.", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Datos de todos los empleados (con nóminas) en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de empleados como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de empleados en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar empleados");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Empleados_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarEmpleadosCSV(destino);
+                    case "sql"    -> ExportService.exportarEmpleadosSQL(destino);
+                    case "json"   -> ExportService.exportarEmpleadosJSON(destino);
+                    case "pdf"    -> ExportService.exportarEmpleadosPDF(destino, dao.findAllIncluirBajas());
+                    case "word"   -> ExportService.exportarEmpleadosWord(destino, dao.findAllIncluirBajas());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     @SuppressWarnings("unchecked")

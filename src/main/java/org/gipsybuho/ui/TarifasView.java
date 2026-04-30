@@ -1,15 +1,24 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.Tarifa;
+import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.SoundService;
 
+import java.io.File;
+import java.nio.file.Path;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 
 public class TarifasView extends VBox {
@@ -35,12 +44,13 @@ public class TarifasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo  = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
-        Button btnEditar = btn("✏ Editar",         "#F39C12", this::editar);
-        Button btnBorrar = btn("🗑 Borrar",        "#E74C3C", this::borrar);
+        Button btnNuevo    = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
+        Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
+        Button btnExportar = btn("📤 Exportar",      "#8E44AD", this::exportar);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar);
-        bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnExportar);
+        bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
@@ -154,6 +164,114 @@ public class TarifasView extends VBox {
             return null;
         });
         return dlg.showAndWait();
+    }
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de tarifas como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con la estructura y los datos de la tabla tarifas.", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Datos de todas las tarifas en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de tarifas como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de tarifas en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar tarifas");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Tarifas_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Tarifas", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarTarifasCSV(destino);
+                    case "sql"    -> ExportService.exportarTarifasSQL(destino);
+                    case "json"   -> ExportService.exportarTarifasJSON(destino);
+                    case "pdf"    -> ExportService.exportarTarifasPDF(destino, dao.findAll());
+                    case "word"   -> ExportService.exportarTarifasWord(destino, dao.findAll());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private Button btn(String texto, String color, Runnable r) {

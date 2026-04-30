@@ -1,5 +1,6 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -11,6 +12,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
+import javafx.stage.FileChooser;
 import javafx.util.StringConverter;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.PagoPedidoDAO;
@@ -19,8 +21,13 @@ import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.PagoPedido;
 import org.gipsybuho.model.Pedido;
+import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.SoundService;
 
+import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -179,11 +186,12 @@ public class PedidosView extends VBox {
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo  = btn("+ Nuevo pedido", "#4C9BE8", this::nuevoPedido);
-        Button btnEditar = btn("✏ Editar",        "#F39C12", this::editarPedido);
-        Button btnBorrar = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
+        Button btnNuevo    = btn("+ Nuevo pedido", "#4C9BE8", this::nuevoPedido);
+        Button btnEditar   = btn("✏ Editar",        "#F39C12", this::editarPedido);
+        Button btnExportar = btn("📤 Exportar",     "#8E44AD", this::exportar);
+        Button btnBorrar   = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
 
-        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnBorrar);
+        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnExportar, btnBorrar);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -575,6 +583,118 @@ public class PedidosView extends VBox {
                 cargarPedidos();
                 cargarTodosPagos();
             } catch (Exception e) { mostrarError(e); }
+        });
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // EXPORTAR
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de pedidos como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con la estructura y los datos de la tabla pedidos.", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Datos de todos los pedidos en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de pedidos como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de pedidos en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar pedidos");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Pedidos_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarPedidosCSV(destino);
+                    case "sql"    -> ExportService.exportarPedidosSQL(destino);
+                    case "json"   -> ExportService.exportarPedidosJSON(destino);
+                    case "pdf"    -> ExportService.exportarPedidosPDF(destino, pedidoDao.findAll());
+                    case "word"   -> ExportService.exportarPedidosWord(destino, pedidoDao.findAll());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
         });
     }
 

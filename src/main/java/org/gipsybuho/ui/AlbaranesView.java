@@ -1,12 +1,15 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.MaterialDAO;
@@ -15,12 +18,14 @@ import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.LineaAlbaran;
 import org.gipsybuho.model.Material;
-import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.SoundService;
 
-import java.awt.Desktop;
+import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -48,12 +53,12 @@ public class AlbaranesView extends VBox {
         Button btnNuevo    = btn("+ Nuevo",            "#4C9BE8", this::nuevo);
         Button btnEditar   = btn("✏ Editar",            "#F39C12", this::editar);
         Button btnFirmado  = btn("✅ Marcar firmado",   "#27AE60", this::marcarFirmado);
-        Button btnPDF      = btn("📄 Exportar PDF",     "#9B59B6", this::exportarPDF);
+        Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnPDF, btnBorrar);
-        bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnExportar, btnBorrar);
+        bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
@@ -123,19 +128,6 @@ public class AlbaranesView extends VBox {
         Albaran sel = tabla.getSelectionModel().getSelectedItem();
         if (sel == null) { alerta("Selecciona un albarán."); return; }
         try { dao.updateEstado(sel.getId(), "firmado"); cargar(); } catch (Exception e) { mostrarError(e); }
-    }
-
-    private void exportarPDF() {
-        Albaran sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un albarán para exportar."); return; }
-        try {
-            Albaran a = dao.findById(sel.getId());
-            Cliente c = clienteDAO.findById(a.getClienteId());
-            Path pdf = new PDFService().generarAlbaran(a, c);
-            SoundService.play(SoundService.Sound.SUCCESS);
-            if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(pdf.toFile());
-            new Alert(Alert.AlertType.INFORMATION, "PDF generado:\n" + pdf, ButtonType.OK).showAndWait();
-        } catch (Exception e) { mostrarError(e); }
     }
 
     private void borrar() {
@@ -328,6 +320,114 @@ public class AlbaranesView extends VBox {
         TableColumn<Albaran, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
+    }
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de albaranes como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con albaranes y sus líneas (tabla completa).", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Albaranes y líneas en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de albaranes como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de albaranes en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar albaranes");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Albaranes_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Albaranes", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarAlbaranesCSV(destino);
+                    case "sql"    -> ExportService.exportarAlbaranesSQL(destino);
+                    case "json"   -> ExportService.exportarAlbaranesJSON(destino);
+                    case "pdf"    -> ExportService.exportarAlbaranesPDF(destino, dao.findAll());
+                    case "word"   -> ExportService.exportarAlbaranesWord(destino, dao.findAll());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {

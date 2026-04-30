@@ -1,21 +1,27 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.dao.NominaDAO;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.model.Nomina;
+import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.NominaService;
-import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.SoundService;
 
-import java.awt.Desktop;
+import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 public class NominasView extends VBox {
@@ -42,15 +48,15 @@ public class NominasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNueva  = btn("+ Nueva nómina",    "#4C9BE8", this::nueva);
-        Button btnEditar = btn("✏ Editar",            "#F39C12", this::editar);
-        Button btnBorrar = btn("🗑 Borrar",           "#E74C3C", this::borrar);
-        Button btnPDF    = btn("📄 Exportar PDF",     "#27AE60", this::exportarPDF);
-        Button btnGenMes = btn("⚡ Generar mes para todos", "#9B59B6", this::generarMesCompleto);
+        Button btnNueva    = btn("+ Nueva nómina",    "#4C9BE8", this::nueva);
+        Button btnEditar   = btn("✏ Editar",            "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
+        Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
+        Button btnGenMes   = btn("⚡ Generar mes para todos", "#9B59B6", this::generarMesCompleto);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnPDF, btnGenMes);
-        bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnExportar, btnGenMes);
+        bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
@@ -132,18 +138,6 @@ public class NominasView extends VBox {
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
         });
-    }
-
-    private void exportarPDF() {
-        Nomina sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una nómina para exportar."); return; }
-        try {
-            Nomina n = dao.findById(sel.getId());
-            Empleado e = empleadoDAO.findById(n.getEmpleadoId());
-            Path pdf = new PDFService().generarNomina(n, e);
-            if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(pdf.toFile());
-            new Alert(Alert.AlertType.INFORMATION, "PDF generado:\n" + pdf, ButtonType.OK).showAndWait();
-        } catch (Exception e) { mostrarError(e); }
     }
 
     private void generarMesCompleto() {
@@ -311,6 +305,114 @@ public class NominasView extends VBox {
             return n;
         });
         return dlg.showAndWait();
+    }
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de nóminas como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con la estructura y los datos de la tabla nóminas.", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Datos de todas las nóminas en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de nóminas como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de nóminas en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar nóminas");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Nominas_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Nóminas", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarNominasCSV(destino);
+                    case "sql"    -> ExportService.exportarNominasSQL(destino);
+                    case "json"   -> ExportService.exportarNominasJSON(destino);
+                    case "pdf"    -> ExportService.exportarNominasPDF(destino, dao.findAll());
+                    case "word"   -> ExportService.exportarNominasWord(destino, dao.findAll());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private HBox row2(String label, Label valor) {

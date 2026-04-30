@@ -1,12 +1,15 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
+import javafx.stage.FileChooser;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
@@ -14,12 +17,14 @@ import org.gipsybuho.dao.PresupuestoDAO;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
-import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.SoundService;
 
-import java.awt.Desktop;
+import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 
@@ -47,12 +52,12 @@ public class PresupuestosView extends VBox {
         Button btnNuevo    = btn("+ Nuevo",           "#4C9BE8", this::nuevo);
         Button btnEditar   = btn("✏ Editar",           "#F39C12", this::editar);
         Button btnBorrar   = btn("🗑 Borrar",          "#E74C3C", this::borrar);
-        Button btnPDF      = btn("📄 Exportar PDF",    "#27AE60", this::exportarPDF);
+        Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
         Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnPDF, btnFacturar);
-        bar.setAlignment(javafx.geometry.Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnExportar, btnFacturar);
+        bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
@@ -142,19 +147,6 @@ public class PresupuestosView extends VBox {
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
         });
-    }
-
-    private void exportarPDF() {
-        Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto para exportar."); return; }
-        try {
-            Presupuesto p = dao.findById(sel.getId());
-            Cliente c = clienteDAO.findById(p.getClienteId());
-            Path pdf = new PDFService().generarPresupuesto(p, c);
-            SoundService.play(SoundService.Sound.SUCCESS);
-            if (Desktop.isDesktopSupported()) Desktop.getDesktop().open(pdf.toFile());
-            new Alert(Alert.AlertType.INFORMATION, "PDF generado:\n" + pdf, ButtonType.OK).showAndWait();
-        } catch (Exception e) { mostrarError(e); }
     }
 
     private void crearFactura() {
@@ -488,6 +480,114 @@ public class PresupuestosView extends VBox {
         TableColumn<Presupuesto, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
+    }
+
+    private void exportar() {
+        String[][] formatos = {
+            {"sqlite", "💾  Copia de seguridad SQLite",
+                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
+                "Tabla de presupuestos como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+            {"sql",    "🗄️  Volcado SQL",
+                "Script SQL con presupuestos y sus líneas (tabla completa).", "sql"},
+            {"json",   "{ }  Exportar a JSON",
+                "Presupuestos y líneas en formato JSON estructurado.", "json"},
+            {"pdf",    "📄  Exportar a PDF",
+                "Listado de presupuestos como tabla en un documento PDF.", "pdf"},
+            {"word",   "📝  Exportar a Word",
+                "Tabla de presupuestos en documento Word (.docx), editable.", "docx"}
+        };
+
+        ToggleGroup grupo = new ToggleGroup();
+        VBox opBox = new VBox(4);
+        for (String[] f : formatos) {
+            RadioButton rb = new RadioButton();
+            rb.setToggleGroup(grupo);
+            rb.setUserData(f);
+
+            Label nombre = new Label(f[1]);
+            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label desc = new Label(f[2]);
+            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+
+            VBox texto = new VBox(2, nombre, desc);
+            HBox fila = new HBox(10, rb, texto);
+            fila.setAlignment(Pos.CENTER_LEFT);
+            fila.setPadding(new Insets(7, 12, 7, 12));
+            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
+            fila.setOnMouseClicked(e -> rb.setSelected(true));
+            opBox.getChildren().add(fila);
+        }
+        grupo.getToggles().get(0).setSelected(true);
+
+        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        contenido.setPadding(new Insets(16));
+
+        Dialog<String[]> dlg = new Dialog<>();
+        dlg.setTitle("Exportar presupuestos");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setContent(contenido);
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+
+        dlg.setResultConverter(bt -> {
+            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
+                return (String[]) grupo.getSelectedToggle().getUserData();
+            return null;
+        });
+
+        dlg.showAndWait().ifPresent(this::lanzarExportacion);
+    }
+
+    private void lanzarExportacion(String[] fmt) {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setInitialFileName("Presupuestos_" +
+            LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
+        fc.getExtensionFilters().add(
+            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Presupuestos", "*." + fmt[3]));
+        File docs = new File(System.getProperty("user.home"), "Documents");
+        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+        fc.setInitialDirectory(docs);
+
+        File archivo = fc.showSaveDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        Path destino = archivo.toPath();
+        setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
+        Thread.ofVirtual().start(() -> {
+            try {
+                switch (fmt[0]) {
+                    case "sqlite" -> ExportService.backupSQLite(destino);
+                    case "csv"    -> ExportService.exportarPresupuestosCSV(destino);
+                    case "sql"    -> ExportService.exportarPresupuestosSQL(destino);
+                    case "json"   -> ExportService.exportarPresupuestosJSON(destino);
+                    case "pdf"    -> ExportService.exportarPresupuestosPDF(destino, dao.findAll());
+                    case "word"   -> ExportService.exportarPresupuestosWord(destino, dao.findAll());
+                }
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    setDisable(false);
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
+                        "Exportación completada:\n" + destino, ButtonType.OK);
+                    ok.setTitle("Exportación completada");
+                    ok.setHeaderText(null);
+                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    ok.showAndWait();
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(e);
+                });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {
