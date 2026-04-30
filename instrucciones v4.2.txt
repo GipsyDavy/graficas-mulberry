@@ -4,3 +4,5 @@
 el boton importar datos del panel de la izquierda que esta debajo de calendario y encima de exportar / backup, renombralo para que se llame Importar Backup y que su funcion sea la de importar el backup que se haya hecho en cualquiera de los 4 formatos en los que se realiza el backup de la aplicación
 
 añade una opcion de importar en el apartado de clientes, debe poder importar cualquiera de los formatos en los que hace la exportación.
+
+añade en el apartado acerca de, informacion sobre el sistema operativo que usa el pc en el que esta isntalado el programa y las caracteristicas del pc tales como cpu, ram, disco duro, almacenamiento, espacio libre...   

@@ -8,14 +8,12 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
-import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
-import org.gipsybuho.service.SoundService;
 
 import java.util.Objects;
 
@@ -83,13 +81,12 @@ public class MainView extends BorderPane {
         VBox.setVgrow(spacer, Priority.ALWAYS);
         sidebar.getChildren().add(spacer);
 
-        sidebar.getChildren().add(buildVolumenControl());
 
-        Button btnSalir = new Button("⏻  Cerrar Gráficas Mulberry");
+        Button btnSalir = new Button("⏻  Cerrar");
         btnSalir.setMaxWidth(Double.MAX_VALUE);
         btnSalir.setStyle(
             "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
-            "-fx-font-size:12px; -fx-padding:8 12; -fx-background-radius:0; -fx-cursor:hand;");
+            "-fx-font-size:10px; -fx-padding:5 10; -fx-background-radius:0; -fx-cursor:hand;");
         btnSalir.setOnAction(e -> {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
                 "¿Deseas cerrar Gráficas Mulberry?\n" +
@@ -110,68 +107,6 @@ public class MainView extends BorderPane {
         return sidebar;
     }
 
-    private VBox buildVolumenControl() {
-        VBox box = new VBox(4);
-        box.setPadding(new Insets(6, 12, 4, 12));
-
-        // Estado actual del mute para el icono
-        final boolean[] mutedState = {SoundService.isMuted()};
-
-        Label lblIcono = new Label(mutedState[0] ? "🔇" : iconoVolumen(SoundService.getVolume()));
-        lblIcono.setStyle("-fx-font-size:16px;-fx-cursor:hand;");
-        lblIcono.setTooltip(new Tooltip("Clic para silenciar/activar sonido"));
-
-        Slider slider = new Slider(0, 100, SoundService.getVolume() * 100);
-        slider.setMaxWidth(Double.MAX_VALUE);
-        slider.setShowTickLabels(false);
-        slider.setShowTickMarks(false);
-        slider.setStyle("-fx-padding:0;");
-        slider.setTooltip(new Tooltip("Volumen de sonido"));
-
-        // Actualizar volumen en tiempo real al mover el slider
-        slider.valueProperty().addListener((obs, oldV, newV) -> {
-            float vol = newV.floatValue() / 100f;
-            SoundService.setVolume(vol);
-            if (!mutedState[0]) lblIcono.setText(iconoVolumen(vol));
-            DatabaseManager.setConfig("audio_volumen", String.valueOf(newV.intValue()));
-        });
-
-        // Clic en el icono → toggle mute
-        lblIcono.setOnMouseClicked(e -> {
-            mutedState[0] = !mutedState[0];
-            SoundService.setMuted(mutedState[0]);
-            DatabaseManager.setConfig("audio_muted", mutedState[0] ? "1" : "0");
-            if (mutedState[0]) {
-                lblIcono.setText("🔇");
-                lblIcono.setStyle("-fx-font-size:16px;-fx-cursor:hand;-fx-opacity:0.5;");
-            } else {
-                lblIcono.setText(iconoVolumen(SoundService.getVolume()));
-                lblIcono.setStyle("-fx-font-size:16px;-fx-cursor:hand;");
-                SoundService.play(SoundService.Sound.CLICK); // confirmación al desmutearse
-            }
-        });
-
-        Label lblVolLabel = new Label("Sonido");
-        lblVolLabel.setStyle("-fx-font-size:10px;-fx-text-fill:-c-text-muted;");
-
-        HBox iconRow = new HBox(6, lblIcono, slider);
-        iconRow.setAlignment(Pos.CENTER_LEFT);
-        HBox.setHgrow(slider, Priority.ALWAYS);
-
-        Region sepVol = new Region();
-        sepVol.setPrefHeight(1);
-        sepVol.setStyle("-fx-background-color:-c-tab-bg;");
-
-        box.getChildren().addAll(sepVol, lblVolLabel, iconRow);
-        return box;
-    }
-
-    private String iconoVolumen(float vol) {
-        if (vol <= 0.01f) return "🔇";
-        if (vol < 0.35f)  return "🔈";
-        if (vol < 0.70f)  return "🔉";
-        return "🔊";
-    }
 
     private StackPane navBtn(String texto, Runnable accion) {
         Label lbl = new Label(texto);

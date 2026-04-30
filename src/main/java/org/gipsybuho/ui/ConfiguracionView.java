@@ -16,6 +16,9 @@ import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.TemaManager;
 
 import java.io.File;
+import java.lang.management.ManagementFactory;
+import java.nio.file.FileSystems;
+import java.nio.file.FileStore;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,8 +32,7 @@ public class ConfiguracionView extends VBox {
     private static final List<Tema> TEMAS = List.of(
         new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
         new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
-        new Tema("carmesi",  "Carmesí",     "#B71C1C", "#1A0000", "#1A0D0D", "#FF5252"),
-        new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
+new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
         new Tema("rojo",     "Rojo",        "#A03030", "#4A1010", "#FBF3F3", "#FF8888"),
         new Tema("claro",    "Claro",       "#4A5568", "#2D3748", "#F7F8FA", "#90CDF4")
@@ -551,23 +553,28 @@ public class ConfiguracionView extends VBox {
         MusicService.setVolumen(volInt / 100f);
 
         Label lblVolVal = new Label(volInt + "%");
+        lblVolVal.setStyle("-fx-text-fill: -c-text; -fx-font-weight: bold;");
         sliderVol.valueProperty().addListener((obs, ov, nv) -> {
             MusicService.setVolumen(nv.floatValue() / 100f);
             lblVolVal.setText((int) Math.round(nv.doubleValue()) + "%");
         });
 
-        HBox volBox = new HBox(10,
-            new Label("Volumen música:"), sliderVol, lblVolVal);
+        Label lblVolLabel = new Label("Volumen música:");
+        lblVolLabel.setStyle("-fx-text-fill: -c-text; -fx-font-weight: bold;");
+
+        HBox volBox = new HBox(10, lblVolLabel, sliderVol, lblVolVal);
         volBox.setAlignment(Pos.CENTER_LEFT);
 
         String loopStr = DatabaseManager.getConfig("musica_loop");
         CheckBox chkLoop = new CheckBox("Repetir lista en bucle");
+        chkLoop.setStyle("-fx-text-fill: -c-text;");
         chkLoop.setSelected(!"0".equals(loopStr));
         chkLoop.selectedProperty().addListener((obs, ov, nv) -> MusicService.setLoop(nv));
         MusicService.setLoop(chkLoop.isSelected());
 
         String autoStr = DatabaseManager.getConfig("musica_autoplay");
         CheckBox chkAutoplay = new CheckBox("Reproducir automáticamente al iniciar la aplicación");
+        chkAutoplay.setStyle("-fx-text-fill: -c-text;");
         chkAutoplay.setSelected("1".equals(autoStr));
 
         // ── Guardar ───────────────────────────────────────────────────────────
@@ -781,12 +788,76 @@ public class ConfiguracionView extends VBox {
         lblDesc.setWrapText(true);
         lblDesc.getStyleClass().add("config-section-desc");
 
+        // Tarjeta de información del sistema
+        Label lblSistemaTitulo = new Label("Información del sistema");
+        lblSistemaTitulo.getStyleClass().add("config-section-title");
+
+        GridPane gridSistema = new GridPane();
+        gridSistema.setHgap(20);
+        gridSistema.setVgap(12);
+        gridSistema.setPadding(new Insets(8, 16, 8, 16));
+        ColumnConstraints csL = new ColumnConstraints(); csL.setMinWidth(160);
+        csL.setHalignment(javafx.geometry.HPos.RIGHT);
+        ColumnConstraints csR = new ColumnConstraints(); csR.setHgrow(Priority.ALWAYS);
+        gridSistema.getColumnConstraints().addAll(csL, csR);
+
+        int sysRow = 0;
+
+        // Sistema operativo
+        String osNombre  = System.getProperty("os.name",    "Desconocido");
+        String osVersion = System.getProperty("os.version", "");
+        String osArch    = System.getProperty("os.arch",    "");
+        addInfoRow(gridSistema, sysRow++, "Sistema operativo:", osNombre + " " + osVersion + " (" + osArch + ")");
+
+        // CPU
+        String cpuId    = System.getenv("PROCESSOR_IDENTIFIER");
+        int    cpuCores = Runtime.getRuntime().availableProcessors();
+        String cpuMarca = System.getenv("PROCESSOR_ARCHITECTURE");
+        String cpuInfo  = (cpuId != null ? cpuId : (cpuMarca != null ? cpuMarca : osArch))
+                          + "  ·  " + cpuCores + " núcleos lógicos";
+        addInfoRow(gridSistema, sysRow++, "Procesador:", cpuInfo);
+
+        // RAM
+        try {
+            com.sun.management.OperatingSystemMXBean osMx =
+                (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
+            long ramTotal = osMx.getTotalMemorySize();
+            long ramLibre = osMx.getFreeMemorySize();
+            long ramUsada = ramTotal - ramLibre;
+            addInfoRow(gridSistema, sysRow++, "Memoria RAM total:", formatBytes(ramTotal));
+            addInfoRow(gridSistema, sysRow++, "RAM usada / libre:",
+                formatBytes(ramUsada) + " usada  /  " + formatBytes(ramLibre) + " libre");
+        } catch (Exception ignored) {}
+
+        // Discos
+        try {
+            for (FileStore store : FileSystems.getDefault().getFileStores()) {
+                long total  = store.getTotalSpace();
+                long libre  = store.getUsableSpace();
+                long usado  = total - libre;
+                if (total == 0) continue;
+                double pctUsado = (double) usado / total * 100;
+                addInfoRow(gridSistema, sysRow++,
+                    "Disco [" + store.name() + "]:",
+                    formatBytes(total) + " total  —  "
+                    + formatBytes(libre) + " libres  ("
+                    + String.format("%.1f%%", pctUsado) + " usado)");
+            }
+        } catch (Exception ignored) {}
+
+        // JVM
+        String javaVersion = System.getProperty("java.version",  "?");
+        String javaVendor  = System.getProperty("java.vendor",   "");
+        addInfoRow(gridSistema, sysRow++, "Java (JVM):", javaVersion + "  —  " + javaVendor);
+
         VBox panel = new VBox(16,
             cardApp,
             new Separator(),
             gridInfo,
             new Separator(),
-            lblDescTitulo, lblDesc
+            lblDescTitulo, lblDesc,
+            new Separator(),
+            lblSistemaTitulo, gridSistema
         );
         panel.getStyleClass().add("config-panel");
         contenido.getChildren().add(panel);

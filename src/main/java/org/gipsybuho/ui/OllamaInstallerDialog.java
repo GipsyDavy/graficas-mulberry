@@ -23,7 +23,6 @@ public class OllamaInstallerDialog extends Stage {
 
     private static final String INSTALLER_URL    = "https://ollama.com/download/OllamaSetup.exe";
     private static final String DEFAULT_MODEL    = "llama3.2";
-    private static final long   MAX_INSTALLER_MB = 200;   // límite razonable para el .exe de Ollama
 
     private final ProgressBar progressBar = new ProgressBar(0);
     private final Label       lblProgreso = new Label(" ");
@@ -225,9 +224,6 @@ public class OllamaInstallerDialog extends Stage {
         } catch (Exception ignored) {}
 
         if (total > 0) {
-            if (total > MAX_INSTALLER_MB * 1_048_576) {
-                throw new Exception("El instalador declarado supera el límite de " + MAX_INSTALLER_MB + " MB — descarga cancelada");
-            }
             log("  Tamaño del instalador: " + (total / 1_048_576) + " MB");
         }
 
@@ -248,16 +244,12 @@ public class OllamaInstallerDialog extends Stage {
 
         long[] descargado = {0};
         final long totalFinal = total;
-        final long maxBytes = MAX_INSTALLER_MB * 1_048_576;
         try (InputStream in = resp.body();
              OutputStream out = Files.newOutputStream(dest)) {
             byte[] buf = new byte[65536];
             int n;
             while ((n = in.read(buf)) != -1) {
                 descargado[0] += n;
-                if (descargado[0] > maxBytes) {
-                    throw new Exception("La descarga superó el límite de " + MAX_INSTALLER_MB + " MB — cancelada");
-                }
                 out.write(buf, 0, n);
                 final long d = descargado[0];
                 Platform.runLater(() -> {
