@@ -13,7 +13,7 @@ public class PresupuestoDAO {
     public List<Presupuesto> findAll() throws SQLException {
         List<Presupuesto> list = new ArrayList<>();
         String sql = """
-            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
+            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
             FROM presupuestos p
             LEFT JOIN clientes c ON p.cliente_id = c.id
             ORDER BY p.created_at DESC
@@ -27,7 +27,7 @@ public class PresupuestoDAO {
 
     public Presupuesto findById(int id) throws SQLException {
         String sql = """
-            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
+            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
             FROM presupuestos p
             LEFT JOIN clientes c ON p.cliente_id = c.id
             WHERE p.id = ?

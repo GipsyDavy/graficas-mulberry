@@ -13,7 +13,7 @@ public class AlbaranDAO {
     public List<Albaran> findAll() throws SQLException {
         List<Albaran> list = new ArrayList<>();
         String sql = """
-            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre,
+            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre,
                    f.numero as factura_numero, p.numero as pedido_numero
             FROM albaranes a
             LEFT JOIN clientes c ON a.cliente_id = c.id
@@ -30,7 +30,7 @@ public class AlbaranDAO {
 
     public Albaran findById(int id) throws SQLException {
         String sql = """
-            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre,
+            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre,
                    f.numero as factura_numero, p.numero as pedido_numero
             FROM albaranes a
             LEFT JOIN clientes c ON a.cliente_id = c.id

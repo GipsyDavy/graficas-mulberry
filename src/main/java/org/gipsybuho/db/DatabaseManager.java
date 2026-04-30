@@ -41,6 +41,10 @@ public class DatabaseManager {
         String[] migrations = {
             "ALTER TABLE clientes ADD COLUMN apellido TEXT",
             "ALTER TABLE empleados ADD COLUMN apellido TEXT",
+            "ALTER TABLE clientes ADD COLUMN apellidos TEXT",
+            "ALTER TABLE empleados ADD COLUMN apellidos TEXT",
+            "UPDATE clientes SET apellidos = apellido WHERE apellidos IS NULL AND apellido IS NOT NULL",
+            "UPDATE empleados SET apellidos = apellido WHERE apellidos IS NULL AND apellido IS NOT NULL",
             """
             CREATE TABLE IF NOT EXISTS albaranes (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -92,6 +96,7 @@ public class DatabaseManager {
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT NOT NULL,
+                    apellidos TEXT,
                     tipo TEXT DEFAULT 'empresa',
                     nif TEXT,
                     direccion TEXT,
@@ -107,6 +112,7 @@ public class DatabaseManager {
                 CREATE TABLE IF NOT EXISTS empleados (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT NOT NULL,
+                    apellidos TEXT,
                     nif TEXT,
                     categoria TEXT DEFAULT 'Operario',
                     salario_base REAL DEFAULT 1200.0,

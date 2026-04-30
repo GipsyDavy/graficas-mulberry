@@ -13,7 +13,7 @@ public class PagoPedidoDAO {
     private static final String SELECT_BASE = """
         SELECT pp.*,
             p.numero AS pedido_numero,
-            c.nombre || COALESCE(' ' || NULLIF(c.apellido,''), '') AS cliente_nombre
+            c.nombre || COALESCE(' ' || NULLIF(c.apellidos,''), '') AS cliente_nombre
         FROM pagos_pedido pp
         JOIN pedidos p ON pp.pedido_id = p.id
         LEFT JOIN clientes c ON p.cliente_id = c.id

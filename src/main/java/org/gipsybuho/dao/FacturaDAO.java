@@ -13,7 +13,7 @@ public class FacturaDAO {
     public List<Factura> findAll() throws SQLException {
         List<Factura> list = new ArrayList<>();
         String sql = """
-            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
+            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             ORDER BY f.created_at DESC
@@ -27,7 +27,7 @@ public class FacturaDAO {
 
     public Factura findById(int id) throws SQLException {
         String sql = """
-            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellido, ''), '')) as cliente_nombre
+            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
             FROM facturas f
             LEFT JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?

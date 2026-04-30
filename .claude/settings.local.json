@@ -37,7 +37,8 @@
       "Bash(\"C:/Program Files/Maven/bin/mvn.cmd\" compile -q)",
       "PowerShell(cd \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; & \"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2026.1\\\\plugins\\\\maven\\\\lib\\\\maven3\\\\bin\\\\mvn.cmd\" compile 2>&1 | Where-Object { $_ -match \"ERROR|error:|BUILD|WARN\" } | Select-Object -Last 30)",
       "PowerShell(pip show *)",
-      "PowerShell(& \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\build-installer.ps1\")"
+      "PowerShell(& \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\build-installer.ps1\")",
+      "mcp__ide__getDiagnostics"
     ]
   }
 }

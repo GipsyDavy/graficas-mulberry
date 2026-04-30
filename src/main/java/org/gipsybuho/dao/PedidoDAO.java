@@ -12,7 +12,7 @@ public class PedidoDAO {
 
     private static final String SELECT_BASE = """
         SELECT p.*,
-            c.nombre || COALESCE(' ' || NULLIF(c.apellido,''), '') AS cliente_nombre,
+            c.nombre || COALESCE(' ' || NULLIF(c.apellidos,''), '') AS cliente_nombre,
             COALESCE((SELECT SUM(pp.importe) FROM pagos_pedido pp
                       WHERE pp.pedido_id = p.id AND pp.estado = 'pagado'), 0.0) AS importe_pagado,
             COALESCE((SELECT COUNT(*) FROM pagos_pedido pp

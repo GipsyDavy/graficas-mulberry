@@ -118,7 +118,7 @@ public class EstadisticasService {
     public static Map<String, Double> topClientesPorFacturacion(int limite) {
         Map<String, Double> result = new LinkedHashMap<>();
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
-                "SELECT (c.nombre||COALESCE(' '||NULLIF(c.apellido,''),'')) as nombre, " +
+                "SELECT (c.nombre||COALESCE(' '||NULLIF(c.apellidos,''),'')) as nombre, " +
                 "COALESCE(SUM(f.total),0) " +
                 "FROM facturas f JOIN clientes c ON f.cliente_id=c.id " +
                 "WHERE f.estado!='anulada' " +
