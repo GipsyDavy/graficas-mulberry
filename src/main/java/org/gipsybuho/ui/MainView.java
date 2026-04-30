@@ -1,8 +1,12 @@
 package org.gipsybuho.ui;
 
+import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.control.Alert;
+import javafx.scene.control.Button;
+import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
 import javafx.scene.control.Slider;
 import javafx.scene.control.Tooltip;
@@ -80,6 +84,23 @@ public class MainView extends BorderPane {
         sidebar.getChildren().add(spacer);
 
         sidebar.getChildren().add(buildVolumenControl());
+
+        Button btnSalir = new Button("⏻  Cerrar Gráficas Mulberry");
+        btnSalir.setMaxWidth(Double.MAX_VALUE);
+        btnSalir.setStyle(
+            "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-font-size:12px; -fx-padding:8 12; -fx-background-radius:0; -fx-cursor:hand;");
+        btnSalir.setOnAction(e -> {
+            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Deseas cerrar Gráficas Mulberry?\n" +
+                "Se detendrá también el proceso de Ollama si está activo.",
+                ButtonType.YES, ButtonType.NO);
+            conf.setTitle("Cerrar aplicación");
+            conf.setHeaderText(null);
+            if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> Platform.exit());
+        });
+        sidebar.getChildren().add(btnSalir);
 
         Label version = new Label("v3.3 · Almería, España");
         version.getStyleClass().add("sidebar-version");

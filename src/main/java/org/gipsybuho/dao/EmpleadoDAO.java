@@ -41,7 +41,7 @@ public class EmpleadoDAO {
     }
 
     private void insert(Empleado e) throws SQLException {
-        String sql = "INSERT INTO empleados (nombre,apellido,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO empleados (nombre,apellidos,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, e);
             ps.executeUpdate();
@@ -51,7 +51,7 @@ public class EmpleadoDAO {
     }
 
     private void update(Empleado e) throws SQLException {
-        String sql = "UPDATE empleados SET nombre=?,apellido=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
+        String sql = "UPDATE empleados SET nombre=?,apellidos=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
             set(ps, e);
             ps.setInt(13, e.getId());
@@ -84,7 +84,7 @@ public class EmpleadoDAO {
 
     private void set(PreparedStatement ps, Empleado e) throws SQLException {
         ps.setString(1, e.getNombre());
-        ps.setString(2, e.getApellido());
+        ps.setString(2, e.getApellidos());
         ps.setString(3, e.getNif());
         ps.setString(4, e.getCategoria());
         ps.setDouble(5, e.getSalarioBase());
@@ -101,7 +101,7 @@ public class EmpleadoDAO {
         Empleado e = new Empleado();
         e.setId(rs.getInt("id"));
         e.setNombre(rs.getString("nombre"));
-        e.setApellido(rs.getString("apellido"));
+        e.setApellidos(rs.getString("apellidos"));
         e.setNif(rs.getString("nif"));
         e.setCategoria(rs.getString("categoria"));
         e.setSalarioBase(rs.getDouble("salario_base"));

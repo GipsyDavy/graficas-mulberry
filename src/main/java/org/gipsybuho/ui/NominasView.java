@@ -3,7 +3,6 @@ package org.gipsybuho.ui;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
-import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
@@ -246,7 +245,7 @@ public class NominasView extends VBox {
             Empleado empCalc = new Empleado();
             empCalc.setId(emp.getId());
             empCalc.setNombre(emp.getNombre());
-            empCalc.setApellido(emp.getApellido());
+            empCalc.setApellidos(emp.getApellidos());
             empCalc.setSalarioBase(parseDouble(fSalBase.getText()));
             empCalc.setIrpf(parseDouble(fIrpf.getText()));
             Nomina tmp = nominaService.calcular(empCalc,

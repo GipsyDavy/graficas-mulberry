@@ -349,7 +349,7 @@ public class ImportService {
                 String v = row.getOrDefault(e.getKey(), "").trim();
                 switch (e.getValue()) {
                     case "nombre"    -> c.setNombre(v);
-                    case "apellido"  -> c.setApellido(v);
+                    case "apellido"  -> c.setApellidos(v);
                     case "tipo"      -> { if (!v.isEmpty()) c.setTipo(v); }
                     case "nif"       -> c.setNif(v);
                     case "direccion" -> c.setDireccion(v);
@@ -409,7 +409,7 @@ public class ImportService {
                 String v = row.getOrDefault(e.getKey(), "").trim();
                 switch (e.getValue()) {
                     case "nombre"       -> emp.setNombre(v);
-                    case "apellido"     -> emp.setApellido(v);
+                    case "apellido"     -> emp.setApellidos(v);
                     case "nif"          -> emp.setNif(v);
                     case "categoria"    -> { if (!v.isEmpty()) emp.setCategoria(v); }
                     case "salario_base" -> { double d = toDouble(v); if (d > 0) emp.setSalarioBase(d); }

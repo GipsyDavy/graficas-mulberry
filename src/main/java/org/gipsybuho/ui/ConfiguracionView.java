@@ -780,41 +780,12 @@ public class ConfiguracionView extends VBox {
         lblDesc.setWrapText(true);
         lblDesc.getStyleClass().add("config-section-desc");
 
-        // Sección de cierre
-        Label lblSalirTitulo = new Label("Cerrar la aplicación");
-        lblSalirTitulo.getStyleClass().add("config-section-title");
-
-        Label lblSalirDesc = new Label(
-            "Al cerrar la aplicación se detendrá automáticamente el proceso de Ollama (IA) si está en ejecución.");
-        lblSalirDesc.getStyleClass().add("config-section-desc");
-        lblSalirDesc.setWrapText(true);
-
-        Button btnSalir = new Button("⏻  Cerrar Gráficas Mulberry");
-        btnSalir.setStyle(
-            "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
-            "-fx-font-size:14px; -fx-padding:10 28; -fx-background-radius:6; -fx-cursor:hand;");
-        btnSalir.setOnAction(e -> {
-            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Deseas cerrar Gráficas Mulberry?\n" +
-                "Se detendrá también el proceso de Ollama si está activo.",
-                ButtonType.YES, ButtonType.NO);
-            conf.setTitle("Cerrar aplicación");
-            conf.setHeaderText(null);
-            if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> Platform.exit());
-        });
-
-        HBox footerSalir = new HBox(btnSalir);
-        footerSalir.setPadding(new Insets(4, 0, 0, 0));
-
         VBox panel = new VBox(16,
             cardApp,
             new Separator(),
             gridInfo,
             new Separator(),
-            lblDescTitulo, lblDesc,
-            new Separator(),
-            lblSalirTitulo, lblSalirDesc, footerSalir
+            lblDescTitulo, lblDesc
         );
         panel.getStyleClass().add("config-panel");
         contenido.getChildren().add(panel);

@@ -1,0 +1,2 @@
+1. Ejecutar el programa GraficasMulberry-1.0 como administrador
+2. Ejecutar el programa Ollama

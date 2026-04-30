@@ -98,7 +98,7 @@ public class EmpleadosView extends VBox {
 
         tabla.getColumns().addAll(
             col("Nombre",    "nombre",    140),
-            col("Apellido",  "apellido",  140),
+            col("Apellidos",  "apellidos",  140),
             col("NIF",       "nif",        95),
             col("Categoría", "categoria", 120),
             colSalario,
@@ -178,7 +178,7 @@ public class EmpleadosView extends VBox {
         grid.setHgap(12); grid.setVgap(10); grid.setPadding(new Insets(16));
 
         TextField fNombre    = tf(e.getNombre());
-        TextField fApellido  = tf(e.getApellido());
+        TextField fApellido  = tf(e.getApellidos());
         TextField fNif       = tf(e.getNif());
         ComboBox<String> fCat = new ComboBox<>(FXCollections.observableArrayList(CATEGORIAS));
         fCat.setValue(e.getCategoria() != null ? e.getCategoria() : CATEGORIAS[0]);
@@ -194,7 +194,7 @@ public class EmpleadosView extends VBox {
         chkActivo.setSelected(e.isActivo());
 
         // Fila 0: Nombre, Apellido
-        grid.addRow(0, lbl("Nombre *"), fNombre, lbl("Apellido"), fApellido);
+        grid.addRow(0, lbl("Nombre *"), fNombre, lbl("Apellidos"), fApellido);
         // Fila 1: NIF, Categoría → reubicado abajo
         // Fila 1: NIF, Categoría
         grid.addRow(1, lbl("NIF"), fNif, lbl("Categoría"), fCat);
@@ -239,7 +239,7 @@ public class EmpleadosView extends VBox {
         dlg.setResultConverter(bt -> {
             if (bt != ButtonType.OK) return null;
             e.setNombre(fNombre.getText().trim());
-            e.setApellido(fApellido.getText().trim());
+            e.setApellidos(fApellido.getText().trim());
             e.setNif(fNif.getText().trim());
             e.setCategoria(fCat.getValue());
             e.setFechaAlta(fFechaAlta.getText().trim());

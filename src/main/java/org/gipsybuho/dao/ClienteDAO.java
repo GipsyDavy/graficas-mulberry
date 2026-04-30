@@ -21,7 +21,7 @@ public class ClienteDAO {
 
     public List<Cliente> search(String texto) throws SQLException {
         List<Cliente> list = new ArrayList<>();
-        String sql = "SELECT * FROM clientes WHERE nombre LIKE ? OR apellido LIKE ? OR nif LIKE ? OR email LIKE ? ORDER BY nombre";
+        String sql = "SELECT * FROM clientes WHERE nombre LIKE ? OR apellidos LIKE ? OR nif LIKE ? OR email LIKE ? ORDER BY nombre";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
             String q = "%" + texto + "%";
             ps.setString(1, q); ps.setString(2, q); ps.setString(3, q); ps.setString(4, q);
@@ -45,7 +45,7 @@ public class ClienteDAO {
     }
 
     private void insert(Cliente c) throws SQLException {
-        String sql = "INSERT INTO clientes (nombre,apellido,tipo,nif,direccion,ciudad,cp,telefono,email,notas) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO clientes (nombre,apellidos,tipo,nif,direccion,ciudad,cp,telefono,email,notas) VALUES (?,?,?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, c);
             ps.executeUpdate();
@@ -55,7 +55,7 @@ public class ClienteDAO {
     }
 
     private void update(Cliente c) throws SQLException {
-        String sql = "UPDATE clientes SET nombre=?,apellido=?,tipo=?,nif=?,direccion=?,ciudad=?,cp=?,telefono=?,email=?,notas=? WHERE id=?";
+        String sql = "UPDATE clientes SET nombre=?,apellidos=?,tipo=?,nif=?,direccion=?,ciudad=?,cp=?,telefono=?,email=?,notas=? WHERE id=?";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
             set(ps, c);
             ps.setInt(11, c.getId());
@@ -80,7 +80,7 @@ public class ClienteDAO {
 
     private void set(PreparedStatement ps, Cliente c) throws SQLException {
         ps.setString(1, c.getNombre());
-        ps.setString(2, c.getApellido());
+        ps.setString(2, c.getApellidos());
         ps.setString(3, c.getTipo());
         ps.setString(4, c.getNif());
         ps.setString(5, c.getDireccion());
@@ -95,7 +95,7 @@ public class ClienteDAO {
         Cliente c = new Cliente();
         c.setId(rs.getInt("id"));
         c.setNombre(rs.getString("nombre"));
-        c.setApellido(rs.getString("apellido"));
+        c.setApellidos(rs.getString("apellidos"));
         c.setTipo(rs.getString("tipo"));
         c.setNif(rs.getString("nif"));
         c.setDireccion(rs.getString("direccion"));

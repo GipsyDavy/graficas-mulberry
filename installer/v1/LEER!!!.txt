@@ -1,0 +1,1 @@
+ABRIR CMD Y PEGAR: ollama pull llama3.2
