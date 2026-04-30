@@ -67,7 +67,7 @@ public class ClientesView extends VBox {
 
         tabla.getColumns().addAll(
             col("Nombre", "nombre", 160),
-            col("Apellido", "apellidos", 160),
+            col("Apellidos", "apellidos", 160),
             col("Tipo", "tipo", 80),
             col("NIF/CIF", "nif", 100),
             col("Teléfono", "telefono", 110),
