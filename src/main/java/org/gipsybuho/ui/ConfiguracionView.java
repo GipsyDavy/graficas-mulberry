@@ -13,6 +13,7 @@ import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaService;
+import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
 
 import java.io.BufferedReader;
@@ -239,6 +240,7 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
 
     private void seleccionarTema(Tema t) {
         if (getScene() == null) return;
+        SoundService.play(SoundService.Sound.CLICK);
         TemaManager.aplicarTema(getScene(), t.id());
         // Refrescar la propia vista para actualizar el marcador ✓
         // (la vista ya está en la escena, el CSS cambia automáticamente,
@@ -646,6 +648,7 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
     }
 
     private void mostrarToast(String mensaje) {
+        SoundService.play(SoundService.Sound.SUCCESS);
         Alert info = new Alert(Alert.AlertType.INFORMATION);
         info.setTitle("Configuración");
         info.setHeaderText(null);
@@ -758,7 +761,7 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 4.2");
+        Label lblVersion = new Label("Versión 5.0");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);

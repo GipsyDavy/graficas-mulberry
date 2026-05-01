@@ -1,6 +1,6 @@
 <?xml version="1.0" ?>
 <jpackage-state version="26" platform="windows">
-  <app-version>4.2.0</app-version>
+  <app-version>5.0.0</app-version>
   <main-launcher name="GraficasMulberry">
     <description>Sistema de gestion para Graficas Mulberry</description>
   </main-launcher></jpackage-state>

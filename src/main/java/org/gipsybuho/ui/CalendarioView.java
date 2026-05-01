@@ -7,6 +7,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.model.NotaCalendario;
+import org.gipsybuho.service.SoundService;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -145,7 +146,10 @@ public class CalendarioView extends VBox {
             cell.getChildren().add(punto);
         }
 
-        cell.setOnMouseClicked(e -> abrirDialogoNota(fecha));
+        cell.setOnMouseClicked(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
+            abrirDialogoNota(fecha);
+        });
         return cell;
     }
 
@@ -249,8 +253,10 @@ public class CalendarioView extends VBox {
                 if (!tit.isEmpty()) {
                     try {
                         dao.guardar(new NotaCalendario(fecha, tit, taDetalle.getText().trim()));
+                        SoundService.play(SoundService.Sound.SUCCESS);
                         cargarMes();
                     } catch (Exception ex) {
+                        SoundService.play(SoundService.Sound.ERROR);
                         new Alert(Alert.AlertType.ERROR,
                             "No se pudo guardar la nota:\n" + ex.getMessage()).showAndWait();
                     }

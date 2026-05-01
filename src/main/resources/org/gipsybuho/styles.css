@@ -19,6 +19,7 @@
     -c-bg:              #F5F0F4;
     -c-border:          #D4B8CC;
     -c-text-secondary:  #7A5A72;
+    -c-text-muted:      #7A5A72;
     -c-text:            #2D1A28;
     -c-nav-hover:       #3D2038;
     -c-row-hover:       #F8EEF6;
@@ -131,6 +132,10 @@
 
 .dashboard-card:hover {
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.18), 8, 0, 0, 3);
+}
+
+.dashboard-card .label {
+    -fx-text-fill: -c-text;
 }
 
 .card-title {

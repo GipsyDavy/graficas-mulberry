@@ -8,11 +8,20 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.gipsybuho.service.ChatExportService;
+import org.gipsybuho.service.ChatExportService.MensajeChat;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
+import org.gipsybuho.service.SoundService;
 
+import java.io.File;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class IAView extends VBox {
 
@@ -64,11 +73,17 @@ public class IAView extends VBox {
             "-fx-padding:5 12; -fx-background-radius:4; -fx-cursor:hand;");
         btnModelos.setOnAction(e -> abrirGestionModelos());
 
+        Button btnExportar = new Button("💾 Exportar chat");
+        btnExportar.setStyle(
+            "-fx-background-color:#2C7A3C; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-padding:5 12; -fx-background-radius:4; -fx-cursor:hand;");
+        btnExportar.setOnAction(e -> exportarChat());
+
         Button btnLimpiar = new Button("🗑 Limpiar chat");
         btnLimpiar.setOnAction(e -> chatBox.getChildren().clear());
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnModelos, btnLimpiar);
+        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnModelos, btnExportar, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle("-fx-background-color:#F0F4F8; -fx-border-radius:6; -fx-background-radius:6;");
@@ -186,6 +201,7 @@ public class IAView extends VBox {
             () -> {
                 tf.getChildren().remove(cursor);
                 btnEnviar.setDisable(false);
+                SoundService.play(SoundService.Sound.NOTIFICATION);
                 scrollAbajo();
             },
             error -> {
@@ -193,6 +209,7 @@ public class IAView extends VBox {
                 Text errText = new Text("⚠ " + error + "\n\nAsegúrate de que Ollama esté en ejecución:\n  1. Descarga Ollama desde ollama.com\n  2. Ejecuta: ollama pull llama3.2\n  3. Ollama se inicia automáticamente al ejecutarse");
                 errText.setFill(Color.RED);
                 tf.getChildren().add(errText);
+                SoundService.play(SoundService.Sound.ERROR);
                 btnEnviar.setDisable(false);
                 scrollAbajo();
             }
@@ -316,6 +333,90 @@ public class IAView extends VBox {
                 }
             });
         });
+    }
+
+    private void exportarChat() {
+        List<MensajeChat> mensajes = extraerMensajesChat();
+        boolean tieneContenido = mensajes.stream().anyMatch(m -> m.rol().equals("usuario") || m.rol().equals("ia"));
+        if (!tieneContenido) {
+            Alert alerta = new Alert(Alert.AlertType.INFORMATION);
+            alerta.setHeaderText(null);
+            alerta.setContentText("No hay mensajes en el chat para exportar.");
+            alerta.showAndWait();
+            return;
+        }
+
+        ChoiceDialog<String> dialogo = new ChoiceDialog<>("PDF", "PDF", "Word (.docx)");
+        dialogo.setTitle("Exportar chat");
+        dialogo.setHeaderText("Selecciona el formato de exportación");
+        dialogo.setContentText("Formato:");
+        Optional<String> resultado = dialogo.showAndWait();
+        if (resultado.isEmpty()) return;
+
+        boolean esPDF = resultado.get().equals("PDF");
+
+        FileChooser chooser = new FileChooser();
+        chooser.setTitle("Guardar chat");
+        chooser.setInitialFileName("chat-asistente-ia-"
+            + LocalDate.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd")));
+        if (esPDF) {
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PDF (*.pdf)", "*.pdf"));
+        } else {
+            chooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Word (*.docx)", "*.docx"));
+        }
+
+        Stage owner = getScene() != null ? (Stage) getScene().getWindow() : null;
+        File archivo = chooser.showSaveDialog(owner);
+        if (archivo == null) return;
+
+        try {
+            if (esPDF) {
+                ChatExportService.exportarPDF(archivo, mensajes);
+            } else {
+                ChatExportService.exportarWord(archivo, mensajes);
+            }
+            Alert ok = new Alert(Alert.AlertType.INFORMATION);
+            ok.setHeaderText(null);
+            ok.setContentText("Chat exportado correctamente:\n" + archivo.getAbsolutePath());
+            ok.showAndWait();
+        } catch (Exception ex) {
+            Alert err = new Alert(Alert.AlertType.ERROR);
+            err.setHeaderText("Error al exportar");
+            err.setContentText(ex.getMessage());
+            err.showAndWait();
+        }
+    }
+
+    private List<MensajeChat> extraerMensajesChat() {
+        List<MensajeChat> lista = new ArrayList<>();
+        for (javafx.scene.Node nodo : chatBox.getChildren()) {
+            if (!(nodo instanceof HBox row)) continue;
+            if (row.getChildren().isEmpty()) continue;
+            javafx.scene.Node hijo = row.getChildren().get(0);
+
+            if (row.getAlignment() == Pos.CENTER_RIGHT && hijo instanceof TextFlow tf) {
+                String texto = extraerTextoDeTextFlow(tf);
+                if (!texto.isBlank()) lista.add(new MensajeChat("usuario", texto));
+
+            } else if (hijo instanceof VBox vbox && !vbox.getChildren().isEmpty()
+                       && vbox.getChildren().get(0) instanceof TextFlow tf) {
+                String texto = extraerTextoDeTextFlow(tf);
+                if (!texto.isBlank()) lista.add(new MensajeChat("ia", texto));
+
+            } else if (hijo instanceof TextFlow tf) {
+                String texto = extraerTextoDeTextFlow(tf);
+                if (!texto.isBlank()) lista.add(new MensajeChat("sistema", texto));
+            }
+        }
+        return lista;
+    }
+
+    private String extraerTextoDeTextFlow(TextFlow tf) {
+        StringBuilder sb = new StringBuilder();
+        for (javafx.scene.Node n : tf.getChildren()) {
+            if (n instanceof Text t) sb.append(t.getText());
+        }
+        return sb.toString().trim();
     }
 
     private void scrollAbajo() {

@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.gipsybuho.service.EstadisticasService;
 import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
 import java.nio.file.Path;
@@ -459,11 +460,13 @@ public class EstadisticasView extends VBox {
     private void exportarPDF() {
         btnExportarPDF.setDisable(true);
         btnExportarPDF.setText("Generando…");
+        SoundService.play(SoundService.Sound.START);
         int a = anio;
         Thread.ofVirtual().start(() -> {
             try {
                 Path path = new PDFService().generarEstadisticas(a);
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
                     btnExportarPDF.setDisable(false);
                     btnExportarPDF.setText("📄  Exportar PDF");
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -481,6 +484,7 @@ public class EstadisticasView extends VBox {
                 });
             } catch (Exception ex) {
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
                     btnExportarPDF.setDisable(false);
                     btnExportarPDF.setText("📄  Exportar PDF");
                     Alert err = new Alert(Alert.AlertType.ERROR);

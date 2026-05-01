@@ -1,5 +1,5 @@
 #define MyAppName "GraficasMulberry"
-#define MyAppVersion "4.2.0"
+#define MyAppVersion "5.0.0"
 #define MyAppPublisher "Graficas Mulberry"
 #define MyAppExeName "GraficasMulberry.exe"
 #define MyAppDir "output\GraficasMulberry"
@@ -13,7 +13,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=GraficasMulberry-Instalador-v4.2.0
+OutputBaseFilename=GraficasMulberry-Instalador-v5.0.0
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
@@ -29,7 +29,6 @@ Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
 
 [Tasks]
 Name: "desktopicon";  Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
-Name: "instolarollama"; Description: "Descargar e instalar Ollama (IA local — requiere ~1.8 GB de descarga)"; GroupDescription: "Componentes opcionales:"; Flags: unchecked
 
 [Files]
 Source: "{#MyAppDir}\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -40,20 +39,6 @@ Name: "{group}\{cm:UninstallProgram,{#MyAppName}}"; Filename: "{uninstallexe}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon
 
 [Run]
-; Instalar Ollama si el usuario lo seleccionó (descarga ~1.8 GB via PowerShell)
-Filename: "powershell.exe"; \
-  Parameters: "-ExecutionPolicy Bypass -WindowStyle Normal -Command ""irm https://ollama.com/install.ps1 | iex"""; \
-  Description: "Descargando e instalando Ollama (puede tardar varios minutos)..."; \
-  Flags: runhidden waituntilterminated; \
-  Tasks: instolarollama
-
-; Descargar el modelo llama3.2 (2 GB) si Ollama se instaló
-Filename: "powershell.exe"; \
-  Parameters: "-WindowStyle Hidden -Command ""Start-Sleep 5; & '$env:LOCALAPPDATA\Programs\Ollama\ollama.exe' pull llama3.2"""; \
-  Description: "Descargando modelo IA llama3.2 (~2 GB, proceso en segundo plano)..."; \
-  Flags: runhidden nowait; \
-  Tasks: instolarollama
-
 ; Arrancar la aplicación al finalizar
 Filename: "{app}\{#MyAppExeName}"; \
   Description: "{cm:LaunchProgram,{#StringChange(MyAppName, '&', '&&')}}"; \

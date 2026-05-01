@@ -173,10 +173,10 @@ public class ImportBackupView extends VBox {
 
     private VBox buildLog() {
         Label lblLog = new Label("Registro de importaciones");
-        lblLog.setStyle("-fx-font-weight:bold;-fx-font-size:13px;");
+        lblLog.setStyle("-fx-font-weight:bold;-fx-font-size:13px;-fx-text-fill:-c-text;");
 
         Button btnLimpiar = new Button("Limpiar");
-        btnLimpiar.setStyle("-fx-background-color:-c-tab-bg;-fx-padding:4 10;-fx-background-radius:4;");
+        btnLimpiar.setStyle("-fx-background-color:-c-tab-bg;-fx-padding:4 10;-fx-background-radius:4;-fx-text-fill:-c-text;");
         btnLimpiar.setOnAction(e -> logArea.clear());
 
         HBox header = new HBox(lblLog, new Region(), btnLimpiar);

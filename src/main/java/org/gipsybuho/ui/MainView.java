@@ -14,6 +14,7 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.service.SoundService;
 
 import java.util.Objects;
 
@@ -99,7 +100,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnSalir);
 
-        Label version = new Label("v4.2 · Almería, España");
+        Label version = new Label("v5.0 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -115,6 +116,7 @@ public class MainView extends BorderPane {
         StackPane pane = new StackPane(lbl);
         pane.getStyleClass().add("nav-btn-pane");
         pane.setOnMouseClicked(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
             sidebar.lookupAll(".nav-btn-pane").forEach(n -> n.getStyleClass().remove("nav-btn-active"));
             pane.getStyleClass().add("nav-btn-active");
             accion.run();
