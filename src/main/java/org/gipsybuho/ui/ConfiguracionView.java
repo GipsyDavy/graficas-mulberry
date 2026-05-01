@@ -15,13 +15,17 @@ import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.TemaManager;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.lang.management.ManagementFactory;
 import java.nio.file.FileSystems;
 import java.nio.file.FileStore;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import javafx.geometry.Rectangle2D;
+import javafx.stage.Screen;
 
 public class ConfiguracionView extends VBox {
 
@@ -754,7 +758,7 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 4.1");
+        Label lblVersion = new Label("Versión 4.2");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);
@@ -803,33 +807,54 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
 
         int sysRow = 0;
 
-        // Sistema operativo
-        String osNombre  = System.getProperty("os.name",    "Desconocido");
-        String osVersion = System.getProperty("os.version", "");
-        String osArch    = System.getProperty("os.arch",    "");
-        addInfoRow(gridSistema, sysRow++, "Sistema operativo:", osNombre + " " + osVersion + " (" + osArch + ")");
+        // --- Equipo ---
+        String computerName = System.getenv("COMPUTERNAME");
+        if (computerName != null && !computerName.isEmpty())
+            addInfoRow(gridSistema, sysRow++, "Nombre del equipo:", computerName);
 
-        // CPU
-        String cpuId    = System.getenv("PROCESSOR_IDENTIFIER");
-        int    cpuCores = Runtime.getRuntime().availableProcessors();
-        String cpuMarca = System.getenv("PROCESSOR_ARCHITECTURE");
-        String cpuInfo  = (cpuId != null ? cpuId : (cpuMarca != null ? cpuMarca : osArch))
-                          + "  ·  " + cpuCores + " núcleos lógicos";
-        addInfoRow(gridSistema, sysRow++, "Procesador:", cpuInfo);
+        // Sistema operativo — WMI para edición completa y número de build
+        String osArch = System.getProperty("os.arch", "");
+        Map<String, String> osWmi = wmicQuery("os", "get", "Caption,BuildNumber,OSArchitecture", "/format:value");
+        String osDisplay = osWmi.getOrDefault("Caption",
+            System.getProperty("os.name", "Desconocido") + " " + System.getProperty("os.version", "")).trim();
+        String osBuild = osWmi.get("BuildNumber");
+        if (osBuild != null && !osBuild.isEmpty()) osDisplay += "  (Build " + osBuild + ")";
+        addInfoRow(gridSistema, sysRow++, "Sistema operativo:", osDisplay);
+        addInfoRow(gridSistema, sysRow++, "Arquitectura:", osWmi.getOrDefault("OSArchitecture", osArch));
 
-        // RAM
+        // --- Procesador ---
+        Map<String, String> cpuWmi = wmicQuery("cpu", "get",
+            "Name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed", "/format:value");
+        String cpuNombre = cpuWmi.getOrDefault("Name",
+            System.getenv("PROCESSOR_IDENTIFIER") != null ? System.getenv("PROCESSOR_IDENTIFIER") : osArch);
+        addInfoRow(gridSistema, sysRow++, "Procesador:", cpuNombre.trim());
+        String nCores   = cpuWmi.getOrDefault("NumberOfCores", "?");
+        String nThreads = cpuWmi.getOrDefault("NumberOfLogicalProcessors",
+            String.valueOf(Runtime.getRuntime().availableProcessors()));
+        addInfoRow(gridSistema, sysRow++, "Núcleos:", nCores + " físicos  ·  " + nThreads + " lógicos");
+        String mhzStr = cpuWmi.get("MaxClockSpeed");
+        if (mhzStr != null && !mhzStr.isEmpty()) {
+            try {
+                double ghz = Integer.parseInt(mhzStr.trim()) / 1000.0;
+                addInfoRow(gridSistema, sysRow++, "Frecuencia máx.:", String.format("%.2f GHz", ghz));
+            } catch (NumberFormatException ignored) {}
+        }
+
+        // --- Memoria RAM ---
         try {
             com.sun.management.OperatingSystemMXBean osMx =
                 (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
             long ramTotal = osMx.getTotalMemorySize();
             long ramLibre = osMx.getFreeMemorySize();
             long ramUsada = ramTotal - ramLibre;
-            addInfoRow(gridSistema, sysRow++, "Memoria RAM total:", formatBytes(ramTotal));
+            double pctUsada = (double) ramUsada / ramTotal * 100;
+            addInfoRow(gridSistema, sysRow++, "RAM total:", formatBytes(ramTotal));
             addInfoRow(gridSistema, sysRow++, "RAM usada / libre:",
-                formatBytes(ramUsada) + " usada  /  " + formatBytes(ramLibre) + " libre");
+                formatBytes(ramUsada) + "  /  " + formatBytes(ramLibre)
+                + "  (" + String.format("%.1f%%", pctUsada) + " en uso)");
         } catch (Exception ignored) {}
 
-        // Discos
+        // --- Almacenamiento ---
         try {
             for (FileStore store : FileSystems.getDefault().getFileStores()) {
                 long total  = store.getTotalSpace();
@@ -837,17 +862,42 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
                 long usado  = total - libre;
                 if (total == 0) continue;
                 double pctUsado = (double) usado / total * 100;
+                String tipo = store.type() != null && !store.type().isEmpty()
+                    ? "  [" + store.type() + "]" : "";
                 addInfoRow(gridSistema, sysRow++,
-                    "Disco [" + store.name() + "]:",
+                    "Disco " + store.name() + tipo + ":",
                     formatBytes(total) + " total  —  "
                     + formatBytes(libre) + " libres  ("
                     + String.format("%.1f%%", pctUsado) + " usado)");
             }
         } catch (Exception ignored) {}
 
-        // JVM
-        String javaVersion = System.getProperty("java.version",  "?");
-        String javaVendor  = System.getProperty("java.vendor",   "");
+        // --- Tarjeta gráfica ---
+        Map<String, String> gpuWmi = wmicQuery("path", "win32_videocontroller", "get",
+            "Caption,AdapterRAM", "/format:value");
+        String gpuCaption = gpuWmi.get("Caption");
+        if (gpuCaption != null && !gpuCaption.isBlank()) {
+            addInfoRow(gridSistema, sysRow++, "Tarjeta gráfica:", gpuCaption.trim());
+            String vramStr = gpuWmi.get("AdapterRAM");
+            if (vramStr != null && !vramStr.isBlank()) {
+                try {
+                    long vram = Long.parseLong(vramStr.trim());
+                    if (vram > 0) addInfoRow(gridSistema, sysRow++, "Memoria GPU:", formatBytes(vram));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
+
+        // --- Pantalla ---
+        try {
+            Rectangle2D bounds = Screen.getPrimary().getBounds();
+            addInfoRow(gridSistema, sysRow++, "Resolución pantalla:",
+                (int) bounds.getWidth() + " × " + (int) bounds.getHeight() + " px"
+                + "  ·  " + String.format("%.0f", Screen.getPrimary().getDpi()) + " DPI");
+        } catch (Exception ignored) {}
+
+        // --- Java ---
+        String javaVersion = System.getProperty("java.version", "?");
+        String javaVendor  = System.getProperty("java.vendor",  "");
         addInfoRow(gridSistema, sysRow++, "Java (JVM):", javaVersion + "  —  " + javaVendor);
 
         VBox panel = new VBox(16,
@@ -866,6 +916,36 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         return scroll;
+    }
+
+    private Map<String, String> wmicQuery(String... args) {
+        Map<String, String> result = new LinkedHashMap<>();
+        try {
+            String[] cmd = new String[args.length + 1];
+            cmd[0] = "wmic";
+            System.arraycopy(args, 0, cmd, 1, args.length);
+            Process p = new ProcessBuilder(cmd).start();
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(p.getInputStream()))) {
+                String line;
+                while ((line = r.readLine()) != null) {
+                    int eq = line.indexOf('=');
+                    if (eq > 0) {
+                        String key = line.substring(0, eq).trim();
+                        String val = line.substring(eq + 1).trim();
+                        if (!val.isEmpty() && !result.containsKey(key)) result.put(key, val);
+                    }
+                }
+            }
+        } catch (Exception ignored) {}
+        return result;
+    }
+
+    private String formatBytes(long bytes) {
+        if (bytes < 1024L)                       return bytes + " B";
+        if (bytes < 1024L * 1024)                return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024L * 1024 * 1024)         return String.format("%.1f MB", bytes / (1024.0 * 1024));
+        if (bytes < 1024L * 1024 * 1024 * 1024)  return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
+        return String.format("%.2f TB", bytes / (1024.0 * 1024 * 1024 * 1024));
     }
 
     private void addInfoRow(GridPane grid, int row, String label, String valor) {
