@@ -1,0 +1,7 @@
+cuando se mantiene una conversacion de chat con el Asistente IA, si se cambia de apartado, al regresar al apartado de Asistente IA, la conversacion se ha borrado por completa, no borres esa conversacion hasta que no se le de al boton de limpiar chat, manten la conversacion siempre incluso cuando se cambie de apartado a otros como por ejemplo tarifas, clientes, presupuestos, al regresas al apartaddo de Asistente IA tiene que continuar completa la conversacio, solo se elimina cuando se le da a limpiar chat   
+
+
+en el cajon que indica dentro del apartado Asistente IA el modelo que esta en uso, las letras se ven demasiado oscuras, hazlas un poco mas clara ya que ese cajon es muy oscuro y no se puede leer bien    
+
+
+compila la aplicacion en un archivo .exe para instalarlo en cualquier pc con windows, esta es la version v5.1
