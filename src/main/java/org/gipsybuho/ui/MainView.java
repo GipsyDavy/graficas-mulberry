@@ -22,6 +22,7 @@ public class MainView extends BorderPane {
 
     private final StackPane contentArea = new StackPane();
     private VBox sidebar;
+    private final IAView iaView = new IAView();
 
     public MainView(Stage stage) {
         setLeft(buildSidebar());
@@ -71,7 +72,7 @@ public class MainView extends BorderPane {
             navBtn("👤  Empleados",          () -> mostrarVista(new EmpleadosView())),
             navBtn("💼  Nóminas",            () -> mostrarVista(new NominasView())),
             navBtn("📊  Estadísticas",       () -> mostrarVista(new EstadisticasView())),
-            navBtn("🤖  Asistente IA",       () -> mostrarVista(new IAView())),
+            navBtn("🤖  Asistente IA",       () -> mostrarVista(iaView)),
             navBtn("📅  Calendario",          () -> mostrarVista(new CalendarioView())),
             navBtn("📥  Importar Backup",        () -> mostrarVista(new ImportBackupView())),
             navBtn("💾  Exportar / Backup",   () -> mostrarVista(new ExportView())),

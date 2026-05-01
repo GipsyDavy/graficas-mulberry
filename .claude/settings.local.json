@@ -50,7 +50,8 @@
       "Bash(\"C:\\\\Program Files\\\\JetBrains\\\\IntelliJ IDEA 2026.1\\\\plugins\\\\maven\\\\lib\\\\maven3\\\\bin\\\\mvn.cmd\" compile -q)",
       "Bash(Get-ChildItem \"C:\\\\Program Files\\\\Java\\\\\" -ErrorAction SilentlyContinue | Select-Object Name *)",
       "PowerShell(New-Item *)",
-      "PowerShell(Copy-Item *)"
+      "PowerShell(Copy-Item *)",
+      "Bash(powershell -Command \"Get-ChildItem -Path . -Filter *.java -Recurse | Select-String -Pattern 'text-area|TextArea.*setStyle|txtInput.*setStyle' | Select-Object -Unique Path\")"
     ]
   }
 }

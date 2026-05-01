@@ -20,3 +20,8 @@
     -c-tab-bg:          #2E3150;
     -c-card-bg:         #1E2030;
 }
+
+.text-field,
+.text-area {
+    -fx-text-fill: #A8B8D6;
+}
