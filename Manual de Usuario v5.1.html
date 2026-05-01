@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de Usuario – Gráficas Mulberry v5.1</title>
+<style>
+  :root {
+    --mulberry: #6D2B6E;
+    --mulberry-dark: #4A1A4B;
+    --mulberry-light: #9B5C9C;
+    --mulberry-pale: #F3E8F3;
+    --accent: #D4A017;
+    --text: #1E1E1E;
+    --text-light: #555;
+    --border: #DDD;
+    --bg-section: #FAFAFA;
+    --note-bg: #EBF4FF;
+    --note-border: #2196F3;
+    --tip-bg: #E8F5E9;
+    --tip-border: #4CAF50;
+    --warn-bg: #FFF3E0;
+    --warn-border: #FF9800;
+    --danger-bg: #FFEBEE;
+    --danger-border: #F44336;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 14px;
+    color: var(--text);
+    background: #FFF;
+    line-height: 1.75;
+  }
+
+  /* ── PORTADA ── */
+  .cover {
+    background: linear-gradient(135deg, var(--mulberry-dark) 0%, var(--mulberry) 60%, var(--mulberry-light) 100%);
+    color: white;
+    text-align: center;
+    padding: 80px 40px 60px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    page-break-after: always;
+  }
+  .cover-logo {
+    width: 120px;
+    height: 120px;
+    background: white;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 56px;
+    margin-bottom: 32px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+  }
+  .cover h1 { font-size: 42px; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px; }
+  .cover h2 { font-size: 20px; font-weight: 300; opacity: 0.85; margin-bottom: 40px; }
+  .cover-version {
+    background: rgba(255,255,255,0.18);
+    border: 1px solid rgba(255,255,255,0.35);
+    border-radius: 40px;
+    padding: 8px 28px;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    margin-bottom: 60px;
+  }
+  .cover-meta { font-size: 13px; opacity: 0.65; line-height: 2; }
+  .cover-divider {
+    width: 60px; height: 3px;
+    background: rgba(255,255,255,0.4);
+    border-radius: 2px;
+    margin: 24px auto;
+  }
+
+  /* ── LAYOUT PRINCIPAL ── */
+  .container { max-width: 960px; margin: 0 auto; padding: 40px 32px; }
+
+  /* ── ÍNDICE ── */
+  .toc { background: var(--mulberry-pale); border-left: 4px solid var(--mulberry); border-radius: 0 8px 8px 0; padding: 28px 32px; margin: 40px 0; }
+  .toc h2 { color: var(--mulberry-dark); font-size: 18px; margin-bottom: 20px; }
+  .toc ol { padding-left: 20px; }
+  .toc li { margin: 4px 0; }
+  .toc a { color: var(--mulberry); text-decoration: none; font-size: 13px; }
+  .toc a:hover { text-decoration: underline; }
+  .toc .toc-sub { padding-left: 20px; list-style-type: lower-alpha; }
+  .toc .toc-sub li { margin: 2px 0; }
+  .toc .toc-sub a { font-size: 12px; color: var(--mulberry-light); }
+
+  /* ── HEADINGS ── */
+  h1.section-title {
+    font-size: 28px;
+    color: var(--mulberry-dark);
+    border-bottom: 3px solid var(--mulberry);
+    padding-bottom: 10px;
+    margin: 48px 0 20px;
+  }
+  h2.subsection-title {
+    font-size: 20px;
+    color: var(--mulberry);
+    border-left: 4px solid var(--mulberry-light);
+    padding-left: 12px;
+    margin: 32px 0 14px;
+  }
+  h3.sub3 {
+    font-size: 15px;
+    color: var(--mulberry-dark);
+    font-weight: 700;
+    margin: 22px 0 8px;
+  }
+  .section-number {
+    display: inline-block;
+    background: var(--mulberry);
+    color: white;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 2px 9px;
+    border-radius: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+
+  /* ── PÁRRAFOS Y LISTAS ── */
+  p { margin: 8px 0 12px; color: var(--text-light); }
+  ul, ol { padding-left: 22px; margin: 8px 0 14px; }
+  li { margin: 4px 0; color: var(--text-light); }
+  strong { color: var(--text); }
+
+  /* ── CALLOUTS ── */
+  .callout {
+    border-radius: 6px;
+    padding: 14px 18px;
+    margin: 16px 0;
+    font-size: 13px;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .callout-icon { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { flex: 1; }
+  .callout-body strong { display: block; margin-bottom: 4px; font-size: 13px; }
+  .note   { background: var(--note-bg);   border-left: 4px solid var(--note-border); }
+  .tip    { background: var(--tip-bg);    border-left: 4px solid var(--tip-border); }
+  .warn   { background: var(--warn-bg);   border-left: 4px solid var(--warn-border); }
+  .danger { background: var(--danger-bg); border-left: 4px solid var(--danger-border); }
+
+  /* ── SCREENSHOT PLACEHOLDER ── */
+  .screenshot {
+    background: #F0F2F5;
+    border: 2px dashed #C0C8D0;
+    border-radius: 10px;
+    padding: 28px 20px;
+    text-align: center;
+    margin: 20px 0;
+    color: #8090A0;
+    font-size: 13px;
+  }
+  .screenshot .sc-icon { font-size: 32px; display: block; margin-bottom: 8px; }
+  .screenshot .sc-label { font-weight: 600; color: #4A5568; display: block; margin-bottom: 4px; }
+
+  /* ── MOCKUP DE INTERFAZ ── */
+  .ui-mock {
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 20px 0;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+  }
+  .ui-mock-titlebar {
+    background: var(--mulberry-dark);
+    color: white;
+    padding: 8px 16px;
+    font-size: 12px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .ui-mock-body { display: flex; min-height: 200px; }
+  .ui-mock-sidebar {
+    background: #2D1A28;
+    width: 180px;
+    flex-shrink: 0;
+    padding: 12px 0;
+  }
+  .sidebar-item {
+    padding: 8px 16px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    cursor: pointer;
+  }
+  .sidebar-item.active {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    font-weight: 600;
+    border-left: 3px solid #E891D0;
+    padding-left: 13px;
+  }
+  .ui-mock-content {
+    flex: 1;
+    background: #F5F0F4;
+    padding: 16px;
+  }
+
+  /* ── TABLA DE DATOS ── */
+  table.data-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  table.data-table th {
+    background: var(--mulberry);
+    color: white;
+    padding: 10px 14px;
+    text-align: left;
+    font-weight: 600;
+  }
+  table.data-table td {
+    padding: 9px 14px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-light);
+  }
+  table.data-table tr:nth-child(even) td { background: #FAFAFA; }
+  table.data-table tr:hover td { background: var(--mulberry-pale); }
+
+  /* ── BADGES DE ESTADO ── */
+  .badge {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .badge-gray    { background: #E2E8F0; color: #4A5568; }
+  .badge-yellow  { background: #FEFCBF; color: #744210; }
+  .badge-green   { background: #C6F6D5; color: #22543D; }
+  .badge-red     { background: #FED7D7; color: #742A2A; }
+  .badge-blue    { background: #BEE3F8; color: #2A4365; }
+  .badge-purple  { background: #E9D8FD; color: #44337A; }
+
+  /* ── PASOS NUMERADOS ── */
+  .steps { counter-reset: steps; margin: 16px 0; }
+  .step {
+    display: flex;
+    gap: 14px;
+    margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    background: var(--mulberry);
+    color: white;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { color: var(--text); }
+
+  /* ── TARJETA KPI ── */
+  .kpi-row { display: flex; gap: 14px; margin: 16px 0; flex-wrap: wrap; }
+  .kpi-card {
+    flex: 1;
+    min-width: 130px;
+    border-radius: 8px;
+    padding: 14px 16px;
+    border-left: 4px solid #ccc;
+    background: white;
+    box-shadow: 0 1px 6px rgba(0,0,0,0.07);
+  }
+  .kpi-card .kpi-icon { font-size: 20px; margin-bottom: 4px; }
+  .kpi-card .kpi-label { font-size: 11px; color: var(--text-light); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-card .kpi-value { font-size: 22px; font-weight: 800; margin-top: 2px; }
+
+  /* ── FORMATO DE EXPORTACIÓN ── */
+  .format-grid { display: flex; gap: 12px; flex-wrap: wrap; margin: 14px 0; }
+  .format-card {
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    min-width: 140px;
+    text-align: center;
+  }
+  .format-card .fmt-icon { font-size: 24px; display: block; margin-bottom: 6px; }
+  .format-card .fmt-name { font-weight: 700; color: var(--text); display: block; }
+  .format-card .fmt-desc { color: var(--text-light); display: block; margin-top: 3px; }
+
+  /* ── SHORTCUTS ── */
+  kbd {
+    background: #F1F3F5;
+    border: 1px solid #CCC;
+    border-bottom: 2px solid #AAA;
+    border-radius: 4px;
+    padding: 2px 7px;
+    font-family: 'Consolas', monospace;
+    font-size: 12px;
+    color: #333;
+  }
+
+  /* ── SECCIÓN DE TÉCNICA ── */
+  .tech-grid { display: flex; gap: 10px; flex-wrap: wrap; margin: 14px 0; }
+  .tech-tag {
+    background: var(--mulberry-pale);
+    border: 1px solid var(--mulberry-light);
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--mulberry-dark);
+  }
+
+  /* ── PIE DE PÁGINA ── */
+  .page-footer {
+    margin-top: 60px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    font-size: 12px;
+    color: #999;
+    line-height: 2;
+  }
+
+  /* ── SEPARADOR ── */
+  .section-sep { height: 1px; background: var(--border); margin: 36px 0; }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    background: #F7F8FA;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 16px;
+    font-size: 12px;
+    color: var(--text-light);
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .breadcrumb span { color: var(--mulberry); font-weight: 600; }
+
+  @media print {
+    .cover { page-break-after: always; }
+    h1.section-title { page-break-before: always; }
+    .no-break { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════════════════ PORTADA -->
+<div class="cover">
+  <div class="cover-logo">🖨️</div>
+  <h1>Gráficas Mulberry</h1>
+  <h2>Sistema de Gestión Integral</h2>
+  <div class="cover-version">VERSIÓN 5.1</div>
+  <div class="cover-divider"></div>
+  <div class="cover-meta">
+    Manual de Usuario Final<br>
+    Almería, España · Mayo 2026<br>
+    gipsybuho@gmail.com
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════ CONTENIDO -->
+<div class="container">
+
+<!-- ── ÍNDICE ── -->
+<div class="toc">
+  <h2>📋 Índice de Contenidos</h2>
+  <ol>
+    <li><a href="#intro">Introducción y requisitos</a></li>
+    <li><a href="#interfaz">Estructura de la interfaz</a></li>
+    <li><a href="#dashboard">Panel Principal (Dashboard)</a></li>
+    <li><a href="#clientes">Clientes</a>
+      <ol class="toc-sub">
+        <li><a href="#cli-tabla">Tabla de clientes y búsqueda</a></li>
+        <li><a href="#cli-crud">Crear, editar y eliminar</a></li>
+        <li><a href="#cli-import">Importar y exportar</a></li>
+      </ol>
+    </li>
+    <li><a href="#presupuestos">Presupuestos</a>
+      <ol class="toc-sub">
+        <li><a href="#pre-crear">Crear un presupuesto</a></li>
+        <li><a href="#pre-lineas">Añadir líneas de concepto</a></li>
+        <li><a href="#pre-estados">Estados y ciclo de vida</a></li>
+        <li><a href="#pre-pdf">Generar PDF y convertir a factura</a></li>
+      </ol>
+    </li>
+    <li><a href="#facturas">Facturas</a>
+      <ol class="toc-sub">
+        <li><a href="#fac-crear">Crear una factura</a></li>
+        <li><a href="#fac-estados">Estados de factura</a></li>
+        <li><a href="#fac-albaran">Crear albarán desde factura</a></li>
+      </ol>
+    </li>
+    <li><a href="#albaranes">Albaranes</a></li>
+    <li><a href="#pedidos">Pedidos y control de pagos</a>
+      <ol class="toc-sub">
+        <li><a href="#ped-pedidos">Gestión de pedidos</a></li>
+        <li><a href="#ped-pagos">Control de pagos y fraccionamiento</a></li>
+      </ol>
+    </li>
+    <li><a href="#tarifas">Tarifas</a></li>
+    <li><a href="#materiales">Materiales</a>
+      <ol class="toc-sub">
+        <li><a href="#mat-stock">Stock</a></li>
+        <li><a href="#mat-consumo">Consumo por técnica</a></li>
+        <li><a href="#mat-pagos">Pagos a proveedores</a></li>
+      </ol>
+    </li>
+    <li><a href="#empleados">Empleados</a></li>
+    <li><a href="#nominas">Nóminas</a></li>
+    <li><a href="#estadisticas">Estadísticas</a></li>
+    <li><a href="#ia">Asistente IA</a></li>
+    <li><a href="#calendario">Calendario</a></li>
+    <li><a href="#importar">Importar Backup</a></li>
+    <li><a href="#exportar">Exportar / Backup</a></li>
+    <li><a href="#configuracion">Configuración</a>
+      <ol class="toc-sub">
+        <li><a href="#conf-apariencia">Apariencia y tipografía</a></li>
+        <li><a href="#conf-empresa">Mi empresa</a></li>
+        <li><a href="#conf-preferencias">Preferencias</a></li>
+        <li><a href="#conf-musica">Música</a></li>
+        <li><a href="#conf-ia">Modelos IA</a></li>
+        <li><a href="#conf-acerca">Acerca de</a></li>
+      </ol>
+    </li>
+  </ol>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 1. INTRODUCCIÓN -->
+<h1 class="section-title" id="intro"><span class="section-number">1</span> Introducción y requisitos</h1>
+
+<p><strong>Gráficas Mulberry</strong> es un sistema de gestión integral diseñado específicamente para talleres de artes gráficas e impresión. Centraliza en una sola aplicación de escritorio todo lo necesario para llevar el negocio: presupuestos, facturas, albaranes, pedidos, stock de materiales, empleados, nóminas, estadísticas y un asistente de inteligencia artificial local.</p>
+
+<p>La aplicación trabaja con una base de datos local SQLite — todos los datos permanecen en tu equipo, sin servidores externos ni suscripciones en la nube.</p>
+
+<h3 class="sub3">Requisitos del sistema</h3>
+<table class="data-table">
+  <thead><tr><th>Componente</th><th>Mínimo recomendado</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sistema operativo</strong></td><td>Windows 10 / 11 (64 bits)</td></tr>
+    <tr><td><strong>Procesador</strong></td><td>Intel Core i3 o equivalente</td></tr>
+    <tr><td><strong>Memoria RAM</strong></td><td>4 GB (8 GB recomendado para el módulo IA)</td></tr>
+    <tr><td><strong>Disco duro</strong></td><td>500 MB libres (más espacio para la base de datos y modelos IA)</td></tr>
+    <tr><td><strong>Java</strong></td><td>Incluido en el instalador (JDK 26)</td></tr>
+    <tr><td><strong>Ollama (IA)</strong></td><td>Opcional — se instala desde el propio programa</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub3">Instalación</h3>
+<p>Ejecuta el archivo <strong>GraficasMulberry-Instalador-v5.1.0.exe</strong> y sigue el asistente. El instalador crea un acceso directo en el escritorio y en el menú de inicio. No requiere privilegios de administrador para el uso diario.</p>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Primera ejecución</strong>
+  Al abrir por primera vez la aplicación, ve a <strong>Configuración → Mi empresa</strong> y rellena los datos de tu empresa. Esta información aparecerá automáticamente en todos los documentos PDF que generes.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 2. INTERFAZ -->
+<h1 class="section-title" id="interfaz"><span class="section-number">2</span> Estructura de la interfaz</h1>
+
+<p>La ventana principal se divide en dos zonas: la <strong>barra lateral de navegación</strong> a la izquierda y el <strong>área de contenido</strong> a la derecha.</p>
+
+<div class="ui-mock">
+  <div class="ui-mock-titlebar">🖨️ Gráficas Mulberry v5.1</div>
+  <div class="ui-mock-body">
+    <div class="ui-mock-sidebar">
+      <div class="sidebar-item active">🏠  Panel principal</div>
+      <div class="sidebar-item">👥  Clientes</div>
+      <div class="sidebar-item">📋  Presupuestos</div>
+      <div class="sidebar-item">🧾  Facturas</div>
+      <div class="sidebar-item">📋  Albaranes</div>
+      <div class="sidebar-item">📦  Pedidos</div>
+      <div class="sidebar-item">💰  Tarifas</div>
+      <div class="sidebar-item">📦  Materiales</div>
+      <div class="sidebar-item">👤  Empleados</div>
+      <div class="sidebar-item">💼  Nóminas</div>
+      <div class="sidebar-item">📊  Estadísticas</div>
+      <div class="sidebar-item">🤖  Asistente IA</div>
+      <div class="sidebar-item">📅  Calendario</div>
+      <div class="sidebar-item">📥  Importar Backup</div>
+      <div class="sidebar-item">💾  Exportar / Backup</div>
+      <div class="sidebar-item">⚙  Configuración</div>
+    </div>
+    <div class="ui-mock-content" style="display:flex;align-items:center;justify-content:center;color:#8090A0;font-size:13px;">
+      ← Haz clic en cualquier sección del menú lateral para cargar esa vista aquí
+    </div>
+  </div>
+</div>
+
+<h2 class="subsection-title">Barra lateral de navegación</h2>
+<p>La barra lateral izquierda contiene todos los módulos del programa. Haz clic en cualquier elemento para cambiar de vista — el elemento activo queda resaltado. El logo y el nombre de la empresa aparecen en la parte superior.</p>
+
+<h2 class="subsection-title">Área de contenido</h2>
+<p>Ocupa el resto de la pantalla y muestra la vista del módulo seleccionado. Cada módulo tiene su propia barra de herramientas con los botones de acción correspondientes.</p>
+
+<h2 class="subsection-title">Botón Cerrar</h2>
+<p>En la parte inferior de la barra lateral encontrarás el botón rojo <strong>⏻ Cerrar</strong>. Al pulsarlo aparece una confirmación de cierre. Si el módulo de IA (Ollama) está activo, también se detiene al cerrar la aplicación.</p>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Sin pérdida de datos</strong>
+  Cada cambio se guarda en la base de datos en el momento en que lo confirmas. No hay un botón de "Guardar todo" global — cada operación es inmediata e individual.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 3. DASHBOARD -->
+<h1 class="section-title" id="dashboard"><span class="section-number">3</span> Panel Principal</h1>
+
+<div class="breadcrumb">🏠 Panel principal</div>
+
+<p>Es la vista de inicio de la aplicación. Ofrece un resumen visual del estado del negocio en tiempo real: cinco tarjetas de indicadores clave y un panel de próximos recordatorios del calendario.</p>
+
+<div class="screenshot">
+  <span class="sc-icon">📊</span>
+  <span class="sc-label">Vista del Panel Principal</span>
+  Muestra cinco tarjetas KPI en la parte superior y el panel de recordatorios debajo
+</div>
+
+<h2 class="subsection-title">Tarjetas de indicadores (KPI)</h2>
+
+<div class="kpi-row">
+  <div class="kpi-card" style="border-left-color:#4C9BE8;">
+    <div class="kpi-icon">👥</div>
+    <div class="kpi-label">Clientes</div>
+    <div class="kpi-value" style="color:#4C9BE8;">—</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#F39C12;">
+    <div class="kpi-icon">📋</div>
+    <div class="kpi-label">Presupuestos pend.</div>
+    <div class="kpi-value" style="color:#F39C12;">—</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#E74C3C;">
+    <div class="kpi-icon">🧾</div>
+    <div class="kpi-label">Facturas pendientes</div>
+    <div class="kpi-value" style="color:#E74C3C;">—</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#9B59B6;">
+    <div class="kpi-icon">📦</div>
+    <div class="kpi-label">Bajo stock</div>
+    <div class="kpi-value" style="color:#9B59B6;">—</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#27AE60;">
+    <div class="kpi-icon">💰</div>
+    <div class="kpi-label">Facturado este año</div>
+    <div class="kpi-value" style="color:#27AE60;">—</div>
+  </div>
+</div>
+
+<table class="data-table">
+  <thead><tr><th>Tarjeta</th><th>Qué muestra</th></tr></thead>
+  <tbody>
+    <tr><td><strong>👥 Clientes</strong></td><td>Número total de clientes registrados en la base de datos.</td></tr>
+    <tr><td><strong>📋 Presupuestos pendientes</strong></td><td>Presupuestos en estado <em>Enviado</em> que aún no han sido aceptados ni rechazados.</td></tr>
+    <tr><td><strong>🧾 Facturas pendientes</strong></td><td>Facturas en estado <em>Pendiente</em> de cobro.</td></tr>
+    <tr><td><strong>📦 Bajo stock</strong></td><td>Materiales cuyo stock actual es igual o inferior al stock mínimo definido.</td></tr>
+    <tr><td><strong>💰 Facturado este año</strong></td><td>Suma total de todas las facturas del año en curso, en euros.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title">Panel de próximos recordatorios</h2>
+<p>Muestra las notas del calendario que vencen en los próximos días. El número de días que se muestra es configurable en <strong>Configuración → Preferencias → Recordatorios</strong>.</p>
+
+<p>Cada recordatorio se muestra con un <strong>badge de urgencia</strong>:</p>
+<ul>
+  <li><strong>HOY</strong> — La nota vence hoy (fondo rojo).</li>
+  <li><strong>+1d / +2d</strong> — Vence en 1 o 2 días (fondo naranja).</li>
+  <li><strong>+Xd</strong> — Vence en más de 2 días (fondo gris).</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Cómo añadir recordatorios</strong>
+  Ve al módulo <strong>Calendario</strong>, selecciona una fecha y crea una nota. Aparecerá automáticamente en este panel cuando esté dentro del rango configurado.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 4. CLIENTES -->
+<h1 class="section-title" id="clientes"><span class="section-number">4</span> Clientes</h1>
+
+<div class="breadcrumb">👥 <span>Clientes</span></div>
+
+<p>El módulo de Clientes almacena todos los datos de contacto de tus clientes (empresas y particulares). Es el punto de partida para crear presupuestos, facturas y demás documentos, ya que cada documento requiere un cliente asociado.</p>
+
+<h2 class="subsection-title" id="cli-tabla">Tabla de clientes y búsqueda</h2>
+
+<p>Al entrar en el módulo, se muestra la tabla con todos los clientes. Las columnas disponibles son:</p>
+
+<table class="data-table">
+  <thead><tr><th>Columna</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Nombre</td><td>Nombre de la empresa o del particular.</td></tr>
+    <tr><td>Apellidos</td><td>Apellidos (para clientes tipo <em>particular</em>).</td></tr>
+    <tr><td>Tipo</td><td><em>empresa</em> o <em>particular</em>.</td></tr>
+    <tr><td>NIF/CIF</td><td>Identificación fiscal.</td></tr>
+    <tr><td>Teléfono</td><td>Número de contacto.</td></tr>
+    <tr><td>Email</td><td>Correo electrónico.</td></tr>
+    <tr><td>Ciudad</td><td>Ciudad del cliente.</td></tr>
+  </tbody>
+</table>
+
+<p>Usa la <strong>caja de búsqueda</strong> situada a la izquierda de la barra de herramientas para filtrar la lista en tiempo real. Puedes buscar por nombre, apellido, NIF o email.</p>
+
+<h2 class="subsection-title" id="cli-crud">Crear, editar y eliminar clientes</h2>
+
+<h3 class="sub3">Nuevo cliente</h3>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Haz clic en el botón <strong>+ Nuevo</strong> (azul).</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Rellena el formulario. El <strong>Nombre</strong> es el único campo obligatorio (marcado con *).</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Selecciona el <strong>Tipo</strong>: <em>empresa</em> o <em>particular</em>.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">La ciudad se rellena automáticamente como "Almería". Cámbiala si es necesario.</div></div>
+  <div class="step"><div class="step-num">5</div><div class="step-body">Pulsa <strong>Aceptar</strong>. El cliente aparece inmediatamente en la tabla.</div></div>
+</div>
+
+<p>Los campos del formulario son: Nombre, Apellidos, Tipo (empresa/particular), NIF/CIF, Teléfono, Email, Ciudad, Código Postal, Dirección y Notas.</p>
+
+<h3 class="sub3">Editar un cliente</h3>
+<p>Selecciona el cliente en la tabla y pulsa el botón <strong>✏ Editar</strong> (naranja). Se abre el mismo formulario con los datos actuales. Modifica lo que necesites y pulsa <strong>Aceptar</strong>.</p>
+
+<h3 class="sub3">Eliminar un cliente</h3>
+<p>Selecciona el cliente y pulsa <strong>🗑 Borrar</strong> (rojo). Se pide confirmación antes de eliminar.</p>
+
+<div class="callout warn">
+  <div class="callout-icon">⚠️</div>
+  <div class="callout-body"><strong>Antes de eliminar</strong>
+  Si el cliente tiene presupuestos, facturas u otros documentos asociados, la eliminación puede afectar a esos registros. Considera desactivar o marcar el cliente como inactivo en lugar de borrarlo.
+  </div>
+</div>
+
+<h2 class="subsection-title" id="cli-import">Importar y exportar clientes</h2>
+
+<h3 class="sub3">Exportar</h3>
+<p>Pulsa el botón <strong>📤 Exportar</strong>. Elige uno de los seis formatos disponibles:</p>
+<div class="format-grid">
+  <div class="format-card"><span class="fmt-icon">💾</span><span class="fmt-name">SQLite</span><span class="fmt-desc">Copia completa de la base de datos</span></div>
+  <div class="format-card"><span class="fmt-icon">📊</span><span class="fmt-name">CSV</span><span class="fmt-desc">Excel / LibreOffice</span></div>
+  <div class="format-card"><span class="fmt-icon">🗄️</span><span class="fmt-name">SQL</span><span class="fmt-desc">Script de base de datos</span></div>
+  <div class="format-card"><span class="fmt-icon">{ }</span><span class="fmt-name">JSON</span><span class="fmt-desc">Datos estructurados</span></div>
+  <div class="format-card"><span class="fmt-icon">📄</span><span class="fmt-name">PDF</span><span class="fmt-desc">Listado imprimible</span></div>
+  <div class="format-card"><span class="fmt-icon">📝</span><span class="fmt-name">Word</span><span class="fmt-desc">Documento editable .docx</span></div>
+</div>
+<p>Selecciona el formato y elige dónde guardar el archivo. El nombre del archivo incluye la fecha y hora automáticamente.</p>
+
+<h3 class="sub3">Importar</h3>
+<p>Pulsa <strong>📥 Importar</strong>. Selecciona el formato del archivo origen (CSV, SQL o JSON) y elige el archivo. Los clientes importados se añaden o actualizan — si ya existe un cliente con el mismo ID, sus datos serán sobreescritos.</p>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Compatibilidad de importación</strong>
+  Solo son compatibles los archivos generados por esta misma aplicación. Para importar datos desde otras fuentes, adapta el formato CSV a las columnas que usa la aplicación.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 5. PRESUPUESTOS -->
+<h1 class="section-title" id="presupuestos"><span class="section-number">5</span> Presupuestos</h1>
+
+<div class="breadcrumb">📋 <span>Presupuestos</span></div>
+
+<p>El módulo de Presupuestos permite crear, gestionar y hacer seguimiento de las ofertas comerciales que envías a tus clientes. Cada presupuesto puede incluir líneas de servicios/técnicas de impresión y líneas de materiales del stock.</p>
+
+<h2 class="subsection-title" id="pre-crear">Crear un presupuesto</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Haz clic en <strong>+ Nuevo</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Selecciona el <strong>cliente</strong> del desplegable. Si aún no existe, créalo primero en el módulo Clientes.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Comprueba el <strong>número de presupuesto</strong> (se genera automáticamente con el prefijo configurado, p. ej. <em>PRE-0001</em>).</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Establece la <strong>fecha de emisión</strong> y la <strong>fecha de validez</strong> (cuántos días es válida la oferta).</div></div>
+  <div class="step"><div class="step-num">5</div><div class="step-body">Ajusta el <strong>% de IVA</strong> si es diferente al valor por defecto configurado.</div></div>
+  <div class="step"><div class="step-num">6</div><div class="step-body">Añade las líneas de conceptos (ver sección siguiente).</div></div>
+  <div class="step"><div class="step-num">7</div><div class="step-body">Escribe las <strong>notas</strong> y <strong>condiciones</strong> que aparecerán en el PDF.</div></div>
+  <div class="step"><div class="step-num">8</div><div class="step-body">Pulsa <strong>Aceptar</strong>. El presupuesto se guarda en estado <em>Borrador</em>.</div></div>
+</div>
+
+<h2 class="subsection-title" id="pre-lineas">Añadir líneas de concepto</h2>
+
+<p>El formulario de presupuesto tiene dos pestañas para añadir conceptos:</p>
+
+<h3 class="sub3">Pestaña "Servicios / Técnicas"</h3>
+<p>Aquí añades los trabajos de impresión. Para cada línea:</p>
+<ul>
+  <li>Selecciona la <strong>tarifa</strong> del desplegable (cargada desde el módulo Tarifas).</li>
+  <li>Introduce la <strong>descripción</strong> del servicio.</li>
+  <li>Especifica la <strong>cantidad</strong>.</li>
+  <li>El <strong>precio unitario</strong> y el <strong>setup</strong> se cargan automáticamente de la tarifa, pero puedes modificarlos.</li>
+  <li>El <strong>total de la línea</strong> se calcula solo.</li>
+</ul>
+
+<h3 class="sub3">Pestaña "Materiales del stock"</h3>
+<p>Aquí añades materiales que se incluirán en el presupuesto:</p>
+<ul>
+  <li>Selecciona el <strong>material</strong> del desplegable (cargado desde el módulo Materiales).</li>
+  <li>Introduce la <strong>cantidad</strong> y el <strong>precio de venta</strong>.</li>
+  <li>El total se calcula automáticamente.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Totales automáticos</strong>
+  La base imponible, el importe de IVA y el total con IVA se recalculan al instante cada vez que modificas cualquier línea. No tienes que calcularlos manualmente.
+  </div>
+</div>
+
+<h2 class="subsection-title" id="pre-estados">Estados y ciclo de vida</h2>
+
+<p>Cada presupuesto tiene un estado que refleja en qué punto del proceso se encuentra:</p>
+
+<table class="data-table">
+  <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-gray">Borrador</span></td><td>Recién creado, aún no enviado al cliente.</td></tr>
+    <tr><td><span class="badge badge-yellow">Enviado</span></td><td>Entregado al cliente, a la espera de respuesta. Aparece en el KPI del dashboard.</td></tr>
+    <tr><td><span class="badge badge-green">Aceptado</span></td><td>El cliente ha aceptado la oferta.</td></tr>
+    <tr><td><span class="badge badge-red">Rechazado</span></td><td>El cliente ha rechazado la oferta.</td></tr>
+    <tr><td><span class="badge badge-purple">Facturado</span></td><td>Se ha generado una factura a partir de este presupuesto.</td></tr>
+  </tbody>
+</table>
+
+<p>Para cambiar el estado, selecciona el presupuesto en la tabla y usa el botón <strong>✏ Editar</strong>. Cambia el campo de estado y guarda.</p>
+
+<h2 class="subsection-title" id="pre-pdf">Generar PDF y convertir a factura</h2>
+
+<h3 class="sub3">Generar PDF</h3>
+<p>Selecciona un presupuesto en la tabla y pulsa el botón <strong>📄 PDF</strong> o accede desde el formulario de edición. El PDF incluye los datos de tu empresa (configurados en Configuración → Mi empresa), los datos del cliente, todas las líneas de concepto, los totales con IVA y las condiciones.</p>
+
+<h3 class="sub3">Convertir a factura</h3>
+<p>Cuando un presupuesto es aceptado, puedes convertirlo directamente en factura:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona el presupuesto aceptado en la tabla.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa el botón <strong>🧾 Facturar</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Se crea automáticamente una nueva factura con todos los datos del presupuesto. El presupuesto cambia a estado <em>Facturado</em>.</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 6. FACTURAS -->
+<h1 class="section-title" id="facturas"><span class="section-number">6</span> Facturas</h1>
+
+<div class="breadcrumb">🧾 <span>Facturas</span></div>
+
+<p>Gestiona todas las facturas emitidas. Puedes crearlas desde cero, a partir de un presupuesto o a partir de un albarán.</p>
+
+<h2 class="subsection-title" id="fac-crear">Crear una factura</h2>
+
+<p>El proceso es idéntico al de los presupuestos. Las columnas de la tabla de facturas son:</p>
+
+<table class="data-table">
+  <thead><tr><th>Columna</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Número</td><td>Número único de factura (ej. FAC-0001).</td></tr>
+    <tr><td>Cliente</td><td>Nombre del cliente.</td></tr>
+    <tr><td>Fecha</td><td>Fecha de emisión.</td></tr>
+    <tr><td>Vencimiento</td><td>Fecha límite de pago.</td></tr>
+    <tr><td>Forma de pago</td><td>Transferencia, efectivo, tarjeta, etc.</td></tr>
+    <tr><td>Estado</td><td>Estado actual de la factura.</td></tr>
+    <tr><td>Total</td><td>Importe total con IVA.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title" id="fac-estados">Estados de factura</h2>
+
+<table class="data-table">
+  <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-yellow">Pendiente</span></td><td>Emitida pero sin cobrar. Aparece en el KPI del dashboard.</td></tr>
+    <tr><td><span class="badge badge-green">Pagada</span></td><td>Cobrada en su totalidad.</td></tr>
+    <tr><td><span class="badge badge-red">Vencida</span></td><td>Ha superado la fecha de vencimiento sin cobrar.</td></tr>
+    <tr><td><span class="badge badge-gray">Anulada</span></td><td>Factura cancelada. No se contabiliza en las estadísticas.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Seguimiento de cobros</strong>
+  Utiliza el módulo <strong>Pedidos → Control de pagos</strong> para llevar un seguimiento detallado de pagos fraccionados y vencimientos de cobro.
+  </div>
+</div>
+
+<h2 class="subsection-title" id="fac-albaran">Crear albarán desde factura</h2>
+
+<p>Para generar el albarán de entrega de una factura:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona la factura en la tabla.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa el botón <strong>📋 Albarán</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Se crea un albarán vinculado a esa factura. Puedes verlo y editarlo en el módulo Albaranes.</div></div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 7. ALBARANES -->
+<h1 class="section-title" id="albaranes"><span class="section-number">7</span> Albaranes</h1>
+
+<div class="breadcrumb">📋 <span>Albaranes</span></div>
+
+<p>Los albaranes son documentos de entrega que acompañan a los trabajos cuando se entregan al cliente. Pueden crearse desde una factura o de forma independiente.</p>
+
+<h2 class="subsection-title">Información de un albarán</h2>
+
+<table class="data-table">
+  <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Número</td><td>Número único de albarán.</td></tr>
+    <tr><td>Cliente</td><td>Cliente al que se entrega.</td></tr>
+    <tr><td>Fecha</td><td>Fecha de entrega.</td></tr>
+    <tr><td>Factura ref.</td><td>Número de factura vinculada (si existe).</td></tr>
+    <tr><td>Pedido ref.</td><td>Número de pedido vinculado (si existe).</td></tr>
+    <tr><td>Estado</td><td>Estado actual de la entrega.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title">Estados del albarán</h2>
+
+<table class="data-table">
+  <thead><tr><th>Estado</th><th>Significado</th></tr></thead>
+  <tbody>
+    <tr><td><span class="badge badge-yellow">Pendiente</span></td><td>Preparado pero aún no entregado.</td></tr>
+    <tr><td><span class="badge badge-blue">Entregado</span></td><td>Mercancía entregada al cliente.</td></tr>
+    <tr><td><span class="badge badge-green">Firmado</span></td><td>El cliente ha firmado la conformidad.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title">Añadir artículos al albarán</h2>
+<p>En el formulario del albarán puedes añadir artículos del stock. Selecciona el material, indica la cantidad y descripción. Los artículos quedan registrados en el albarán para que el cliente sepa exactamente qué ha recibido.</p>
+
+<!-- ═══════════════════════════════════════════════ 8. PEDIDOS -->
+<h1 class="section-title" id="pedidos"><span class="section-number">8</span> Pedidos y control de pagos</h1>
+
+<div class="breadcrumb">📦 <span>Pedidos</span></div>
+
+<p>El módulo de Pedidos es uno de los más completos de la aplicación. Tiene dos pestañas: <strong>Pedidos</strong> y <strong>Control de pagos</strong>.</p>
+
+<h2 class="subsection-title" id="ped-pedidos">Pestaña: Pedidos</h2>
+
+<p>En la parte superior aparecen cinco tarjetas KPI con un resumen financiero:</p>
+
+<div class="kpi-row">
+  <div class="kpi-card" style="border-left-color:#4C9BE8;">
+    <div class="kpi-label">Pedidos activos</div>
+    <div class="kpi-value" style="color:#4C9BE8;font-size:18px;">—</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#27AE60;">
+    <div class="kpi-label">Total facturado</div>
+    <div class="kpi-value" style="color:#27AE60;font-size:18px;">— €</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#2ECC71;">
+    <div class="kpi-label">Cobrado</div>
+    <div class="kpi-value" style="color:#2ECC71;font-size:18px;">— €</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#E67E22;">
+    <div class="kpi-label">Pendiente</div>
+    <div class="kpi-value" style="color:#E67E22;font-size:18px;">— €</div>
+  </div>
+  <div class="kpi-card" style="border-left-color:#E74C3C;">
+    <div class="kpi-label">Vencidos</div>
+    <div class="kpi-value" style="color:#E74C3C;font-size:18px;">—</div>
+  </div>
+</div>
+
+<p>La tabla de pedidos muestra el número, cliente, fecha, descripción del trabajo, importe total, importe cobrado, estado y fecha de vencimiento. Las filas se colorean según el estado para identificar visualmente qué pedidos requieren atención.</p>
+
+<h3 class="sub3">Crear un pedido</h3>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Pulsa <strong>+ Nuevo pedido</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Selecciona el <strong>cliente</strong> y rellena la <strong>descripción</strong> del trabajo.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Introduce el <strong>importe total</strong> y la <strong>fecha de vencimiento</strong>.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Guarda. El pedido aparece con estado <em>Activo</em>.</div></div>
+</div>
+
+<h2 class="subsection-title" id="ped-pagos">Pestaña: Control de pagos</h2>
+
+<p>Esta pestaña es la herramienta de tesorería del programa. Permite registrar los pagos recibidos de cada pedido, incluidos pagos fraccionados.</p>
+
+<h3 class="sub3">Registrar un pago</h3>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona el pedido en la tabla superior.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">En el panel inferior verás el historial de pagos de ese pedido.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Pulsa <strong>+ Añadir pago</strong>. Introduce la <strong>fecha</strong> y el <strong>importe</strong> cobrado.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">El importe cobrado del pedido se actualiza automáticamente. Si el total coincide con el importe del pedido, el estado cambia a <em>Cobrado</em>.</div></div>
+</div>
+
+<h3 class="sub3">Fraccionamiento de pagos</h3>
+<p>Para pedidos con pago en varios plazos, puedes usar la función de fraccionamiento:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona el pedido y pulsa <strong>Fraccionar pagos</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Indica el <strong>número de cuotas</strong> y la <strong>fecha del primer pago</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">La aplicación genera automáticamente todas las cuotas con sus fechas de vencimiento.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Según se reciban los pagos, márcalos como cobrados.</div></div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Pedidos vencidos</strong>
+  Los pedidos cuya fecha de vencimiento ha pasado y aún tienen importe pendiente se marcan como <em>Vencidos</em> y aparecen resaltados en rojo. El KPI del dashboard los contabiliza para que nunca se te pase ningún cobro.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 9. TARIFAS -->
+<h1 class="section-title" id="tarifas"><span class="section-number">9</span> Tarifas</h1>
+
+<div class="breadcrumb">💰 <span>Tarifas</span></div>
+
+<p>Las tarifas son los precios unitarios de los servicios de impresión que ofrece tu taller. Se usan como base para calcular el importe de las líneas en presupuestos y facturas.</p>
+
+<h2 class="subsection-title">Técnicas de impresión disponibles</h2>
+
+<div class="tech-grid">
+  <div class="tech-tag">🖨️ Serigrafía</div>
+  <div class="tech-tag">🎨 DTF</div>
+  <div class="tech-tag">🧵 Bordado</div>
+  <div class="tech-tag">🔷 Vinilo</div>
+  <div class="tech-tag">♨️ Sublimación</div>
+  <div class="tech-tag">📐 Gran Formato</div>
+  <div class="tech-tag">📰 Offset</div>
+</div>
+
+<h2 class="subsection-title">Campos de una tarifa</h2>
+
+<table class="data-table">
+  <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Técnica</td><td>Tipo de impresión (Serigrafía, DTF, Bordado, etc.).</td></tr>
+    <tr><td>Nombre</td><td>Nombre descriptivo de la tarifa (ej. "Serigrafía 1 color 100 uds.").</td></tr>
+    <tr><td>Precio unitario</td><td>Precio por unidad producida.</td></tr>
+    <tr><td>Setup</td><td>Coste fijo de preparación de la máquina o fotolito.</td></tr>
+    <tr><td>Mínimo uds.</td><td>Cantidad mínima de unidades para aplicar esta tarifa.</td></tr>
+  </tbody>
+</table>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Uso en presupuestos</strong>
+  Cuando creas un presupuesto y seleccionas una tarifa en las líneas de concepto, el precio unitario y el setup se cargan automáticamente. Puedes ajustar los valores para ese presupuesto concreto sin modificar la tarifa original.
+  </div>
+</div>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Crear varias tarifas por técnica</strong>
+  Es habitual tener múltiples tarifas para una misma técnica según el volumen. Por ejemplo, para Serigrafía: "1-50 uds." con un precio, "51-200 uds." con otro precio menor, etc.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 10. MATERIALES -->
+<h1 class="section-title" id="materiales"><span class="section-number">10</span> Materiales</h1>
+
+<div class="breadcrumb">📦 <span>Materiales</span></div>
+
+<p>El módulo de Materiales controla el inventario de todos los consumibles del taller. Tiene tres pestañas: <strong>Stock</strong>, <strong>Consumo por técnica</strong> y <strong>Pagos</strong>.</p>
+
+<h2 class="subsection-title" id="mat-stock">Pestaña: Stock</h2>
+
+<p>Muestra todos los materiales con su nivel de stock actual. Los materiales cuyo stock está por debajo del mínimo se muestran en <strong style="color:#E74C3C;">rojo</strong>.</p>
+
+<table class="data-table">
+  <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Nombre</td><td>Nombre del material.</td></tr>
+    <tr><td>Referencia</td><td>Código o referencia interna.</td></tr>
+    <tr><td>Categoría</td><td>tintas, pantallas, sustratos, vinilos, consumibles, bordado.</td></tr>
+    <tr><td>Stock actual</td><td>Cantidad disponible actualmente.</td></tr>
+    <tr><td>Stock mínimo</td><td>Nivel de alerta. Si el stock baja de aquí, se marca en rojo y aparece en el KPI del dashboard.</td></tr>
+    <tr><td>Unidad</td><td>Unidad de medida (litros, kg, metros, unidades, etc.).</td></tr>
+    <tr><td>Precio/unidad</td><td>Precio de coste por unidad.</td></tr>
+    <tr><td>Proveedor</td><td>Nombre del proveedor habitual.</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub3">Ajuste manual de stock</h3>
+<p>Para registrar entradas o salidas de material sin que estén ligadas a una producción:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona el material en la tabla.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa el botón <strong>+ Entrada</strong> o <strong>− Salida</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Introduce la cantidad y un motivo (opcional). El stock se actualiza al instante.</div></div>
+</div>
+
+<h2 class="subsection-title" id="mat-consumo">Pestaña: Consumo por técnica</h2>
+
+<p>Define las <strong>reglas de consumo automático</strong> de materiales por técnica de impresión. Por ejemplo: "cada 100 unidades impresas con Serigrafía consume 0,5 litros de tinta negra".</p>
+
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Pulsa <strong>+ Nueva regla</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Selecciona la <strong>técnica</strong> y el <strong>material</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Introduce la <strong>cantidad consumida</strong> por lote de producción.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Cuando se registre producción de esa técnica, el consumo se descontará automáticamente del stock.</div></div>
+</div>
+
+<h2 class="subsection-title" id="mat-pagos">Pestaña: Pagos a proveedores</h2>
+
+<p>Registra los pagos realizados a los proveedores de material. Para cada pago puedes registrar:</p>
+<ul>
+  <li><strong>Proveedor</strong>, <strong>importe</strong> y <strong>fecha de vencimiento</strong>.</li>
+  <li><strong>Estado</strong>: pendiente o pagado.</li>
+  <li>Los pagos pendientes con vencimiento próximo aparecen resaltados.</li>
+</ul>
+
+<div class="callout warn">
+  <div class="callout-icon">⚠️</div>
+  <div class="callout-body"><strong>Alerta de bajo stock</strong>
+  Revisa periódicamente el KPI "Bajo stock" del dashboard. Cuando un material llega al nivel mínimo es el momento de contactar con el proveedor para reponerlo a tiempo y evitar interrupciones en la producción.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 11. EMPLEADOS -->
+<h1 class="section-title" id="empleados"><span class="section-number">11</span> Empleados</h1>
+
+<div class="breadcrumb">👤 <span>Empleados</span></div>
+
+<p>Gestiona la plantilla del taller. Cada empleado tiene una ficha completa con sus datos personales, laborales y salariales.</p>
+
+<h2 class="subsection-title">Datos de un empleado</h2>
+
+<table class="data-table">
+  <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Nombre y apellidos</td><td>Datos personales del trabajador.</td></tr>
+    <tr><td>DNI/NIE</td><td>Documento de identidad.</td></tr>
+    <tr><td>Email / Teléfono</td><td>Datos de contacto.</td></tr>
+    <tr><td>Categoría profesional</td><td>Operario, Oficial 1ª, Oficial 2ª, Auxiliar, Técnico, Administrativo, Encargado, Gerente.</td></tr>
+    <tr><td>Salario bruto</td><td>Salario bruto mensual en euros.</td></tr>
+    <tr><td>IRPF (%)</td><td>Porcentaje de retención de IRPF.</td></tr>
+    <tr><td>Fecha de alta</td><td>Fecha de incorporación a la empresa.</td></tr>
+    <tr><td>Fecha de baja</td><td>Fecha de cese (si aplica).</td></tr>
+    <tr><td>Estado</td><td><span class="badge badge-green">Activo</span> o <span class="badge badge-red">Baja</span>.</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title">Dar de baja y reactivar</h2>
+<p>Para dar de baja a un empleado, edita su ficha, introduce la <strong>fecha de baja</strong> y cambia el estado a <em>Baja</em>. El empleado deja de aparecer en las nóminas nuevas pero sus datos históricos se conservan.</p>
+<p>Para reactivar un empleado en situación de baja, selecciónalo en la tabla y pulsa <strong>Reactivar</strong>. La fecha de baja se borra y vuelve a estar disponible para generar nóminas.</p>
+
+<!-- ═══════════════════════════════════════════════ 12. NÓMINAS -->
+<h1 class="section-title" id="nominas"><span class="section-number">12</span> Nóminas</h1>
+
+<div class="breadcrumb">💼 <span>Nóminas</span></div>
+
+<p>El módulo de Nóminas calcula y gestiona las retribuciones de los empleados según la normativa laboral española vigente.</p>
+
+<h2 class="subsection-title">Cálculo automático</h2>
+
+<p>Al crear una nómina, la aplicación calcula automáticamente todos los conceptos a partir del salario bruto del empleado:</p>
+
+<table class="data-table">
+  <thead><tr><th>Concepto</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Salario bruto</strong></td><td>Base de cotización (tomado de la ficha del empleado).</td></tr>
+    <tr><td><strong>Cotización SS trabajador</strong></td><td>Cuota de Seguridad Social a cargo del trabajador (~6,35%).</td></tr>
+    <tr><td><strong>Retención IRPF</strong></td><td>Retención fiscal según el % configurado en la ficha.</td></tr>
+    <tr><td><strong>Salario neto</strong></td><td>Lo que recibe el trabajador: bruto − SS − IRPF.</td></tr>
+    <tr><td><strong>Coste empresa</strong></td><td>Coste total para la empresa: bruto + cuota patronal SS (~30%).</td></tr>
+  </tbody>
+</table>
+
+<p>Los valores se recalculan en tiempo real mientras editas los campos. Puedes ajustar manualmente cualquier valor antes de guardar.</p>
+
+<h2 class="subsection-title">Crear una nómina individual</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Pulsa <strong>+ Nueva nómina</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Selecciona el <strong>empleado</strong> del desplegable.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Introduce el <strong>período</strong> (mes y año).</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Revisa los importes calculados automáticamente.</div></div>
+  <div class="step"><div class="step-num">5</div><div class="step-body">Pulsa <strong>Aceptar</strong>.</div></div>
+</div>
+
+<h2 class="subsection-title">Generación masiva de nóminas</h2>
+<p>Para generar la nómina de todos los empleados activos en un solo paso:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Pulsa el botón <strong>⚡ Generar todas</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Indica el <strong>período</strong> para el que quieres generar las nóminas.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">La aplicación crea automáticamente una nómina por cada empleado activo.</div></div>
+</div>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Aviso legal</strong>
+  Este módulo realiza cálculos orientativos basados en los porcentajes de cotización a la Seguridad Social vigentes. Para nóminas con convenio colectivo, horas extra, complementos o situaciones especiales, consulta con un gestor laboral.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 13. ESTADÍSTICAS -->
+<h1 class="section-title" id="estadisticas"><span class="section-number">13</span> Estadísticas</h1>
+
+<div class="breadcrumb">📊 <span>Estadísticas</span></div>
+
+<p>El módulo de Estadísticas ofrece un análisis visual completo del negocio. Dispone de un <strong>selector de año</strong> en la parte superior para filtrar todos los gráficos, y un botón <strong>📄 Exportar PDF</strong> para guardar el informe.</p>
+
+<p>Se organiza en cuatro pestañas:</p>
+
+<h2 class="subsection-title">Tab Financiero</h2>
+
+<p>Muestra los indicadores económicos clave:</p>
+<ul>
+  <li><strong>KPIs principales</strong>: total facturado, cobrado, pendiente y gastos de materiales del año.</li>
+  <li><strong>Gráfica de ingresos vs gastos</strong>: comparativa mensual en barras.</li>
+  <li><strong>Facturación acumulada</strong>: línea de progreso durante el año.</li>
+  <li><strong>Estado de facturas</strong>: distribución en tarta (pendiente, pagada, vencida, anulada).</li>
+  <li><strong>Estado de presupuestos</strong>: distribución en tarta (borrador, enviado, aceptado, rechazado, facturado).</li>
+</ul>
+
+<h2 class="subsection-title">Tab Materiales</h2>
+<ul>
+  <li><strong>Top 10 materiales más consumidos</strong>: gráfica de barras horizontal.</li>
+  <li><strong>Consumo por categoría</strong>: tintas, vinilos, pantallas, etc.</li>
+  <li><strong>Stock actual</strong>: comparativa de stock actual vs stock mínimo para cada material.</li>
+</ul>
+
+<h2 class="subsection-title">Tab Clientes</h2>
+<ul>
+  <li><strong>Nuevos clientes por mes</strong>: cuántos clientes nuevos se han dado de alta cada mes.</li>
+  <li><strong>Clientes por tipo</strong>: proporción empresa vs particular.</li>
+  <li><strong>Top 8 clientes por facturación</strong>: los clientes que más han facturado en el año seleccionado.</li>
+</ul>
+
+<h2 class="subsection-title">Tab Producción</h2>
+<ul>
+  <li><strong>Ingresos por técnica de impresión</strong>: cuánto ha facturado cada técnica (Serigrafía, DTF, Bordado, etc.).</li>
+  <li><strong>Volumen de producción</strong>: unidades producidas por técnica.</li>
+  <li><strong>Estado de pedidos</strong>: activos, completados, vencidos.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Exportar el informe</strong>
+  Pulsa el botón <strong>📄 Exportar PDF</strong> para generar un informe en PDF con todos los gráficos y datos del año seleccionado. Útil para reuniones o para guardar como registro anual.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 14. IA -->
+<h1 class="section-title" id="ia"><span class="section-number">14</span> Asistente IA</h1>
+
+<div class="breadcrumb">🤖 <span>Asistente IA</span></div>
+
+<p>El módulo de Asistente IA integra un chatbot local impulsado por <strong>Ollama</strong>. Toda la inteligencia artificial funciona <strong>completamente en tu equipo</strong>, sin enviar ningún dato a internet ni a servidores externos.</p>
+
+<h2 class="subsection-title">Requisitos previos</h2>
+
+<p>Para usar el asistente necesitas tener Ollama instalado. Si no lo tienes:</p>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Al entrar en la vista, si Ollama no está detectado aparece el botón <strong>⬇ Instalar Ollama</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa el botón para abrir el asistente de instalación integrado.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Sigue los pasos del instalador. Una vez completado, el indicador de estado cambia a verde.</div></div>
+</div>
+
+<h2 class="subsection-title">Barra de estado y controles</h2>
+
+<p>En la parte superior del módulo aparece la barra de estado con:</p>
+<ul>
+  <li><strong>Indicador de conexión</strong>: verde (conectado), naranja (verificando) o rojo (no disponible).</li>
+  <li><strong>Selector de modelo</strong>: elige el modelo de IA a usar. El modelo por defecto es <em>llama3.2</em>.</li>
+  <li><strong>⚙ Modelos</strong>: abre el gestor de modelos para descargar o eliminar modelos.</li>
+  <li><strong>💾 Exportar chat</strong>: guarda la conversación actual en PDF o Word.</li>
+  <li><strong>🗑 Limpiar chat</strong>: borra todos los mensajes del chat actual.</li>
+</ul>
+
+<h2 class="subsection-title">Usar el chat</h2>
+
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Escribe tu pregunta en el cuadro de texto inferior.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa <kbd>Enter</kbd> para enviar (o <kbd>Shift</kbd>+<kbd>Enter</kbd> para añadir una nueva línea sin enviar).</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">La respuesta aparece en tiempo real con <em>streaming</em> — las palabras van apareciendo progresivamente mientras el modelo genera la respuesta.</div></div>
+</div>
+
+<h2 class="subsection-title">Sugerencias rápidas</h2>
+
+<p>Encima del cuadro de texto aparecen botones de sugerencias rápidas con preguntas predefinidas relevantes para el negocio:</p>
+<ul>
+  <li>"¿Cómo calculo el precio de un trabajo de serigrafía?"</li>
+  <li>"Redacta un correo para enviar un presupuesto"</li>
+  <li>"¿Cuáles son los tiempos de secado para tintas al agua?"</li>
+  <li>"Ayúdame a optimizar el stock de materiales"</li>
+</ul>
+<p>Haz clic en cualquier sugerencia para enviarla directamente.</p>
+
+<h2 class="subsection-title">Gestor de modelos</h2>
+
+<p>Accede pulsando el botón <strong>⚙ Modelos</strong>. Desde aquí puedes:</p>
+<ul>
+  <li><strong>Ver</strong> los modelos de IA instalados en tu equipo y su tamaño.</li>
+  <li><strong>Descargar</strong> nuevos modelos de la biblioteca de Ollama (requiere conexión a internet).</li>
+  <li><strong>Eliminar</strong> modelos que ya no necesites para liberar espacio en disco.</li>
+</ul>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Velocidad de respuesta</strong>
+  La velocidad del asistente depende del hardware de tu equipo. Con un procesador moderno las respuestas son fluidas. Si dispones de una tarjeta gráfica compatible (NVIDIA con CUDA), Ollama la utilizará automáticamente, multiplicando la velocidad.
+  </div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Privacidad total</strong>
+  Al ser un modelo local, puedes consultar información confidencial del negocio (precios, clientes, estrategias) sin preocuparte por la privacidad. Ningún dato sale de tu ordenador.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 15. CALENDARIO -->
+<h1 class="section-title" id="calendario"><span class="section-number">15</span> Calendario</h1>
+
+<div class="breadcrumb">📅 <span>Calendario</span></div>
+
+<p>El módulo Calendario es una agenda visual donde puedes anotar recordatorios, fechas de entrega, citas con clientes y cualquier evento relevante para el negocio.</p>
+
+<h2 class="subsection-title">Navegación</h2>
+
+<p>La vista muestra el mes actual en formato de cuadrícula. Para navegar:</p>
+<ul>
+  <li>Botón <strong>◀ Anterior</strong>: retrocede un mes.</li>
+  <li>Botón <strong>Hoy</strong>: vuelve al mes actual.</li>
+  <li>Botón <strong>▶ Siguiente</strong>: avanza un mes.</li>
+</ul>
+
+<p>Las celdas del calendario tienen indicadores visuales:</p>
+<ul>
+  <li><strong>Día actual</strong>: resaltado con el color de acento del tema.</li>
+  <li><strong>Días pasados</strong>: ligeramente atenuados.</li>
+  <li><strong>Días con notas</strong>: muestran un indicador de punto o el título de la nota.</li>
+</ul>
+
+<h2 class="subsection-title">Crear una nota</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Haz clic en el día donde quieres añadir la nota.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Se abre el formulario de nota. Escribe el <strong>título</strong> (obligatorio).</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Añade los <strong>detalles</strong> o descripción en el área de texto.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Pulsa <strong>Guardar</strong>. La nota aparecerá en el día correspondiente.</div></div>
+</div>
+
+<h2 class="subsection-title">Editar y eliminar notas</h2>
+<p>Haz clic en un día que ya tenga nota para ver su contenido. Desde ahí puedes modificarla o eliminarla.</p>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Recordatorios en el dashboard</strong>
+  Todas las notas del calendario próximas a vencer aparecen automáticamente en el <strong>Panel Principal</strong>. El número de días de anticipación se configura en <strong>Configuración → Preferencias → Recordatorios</strong>.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 16. IMPORTAR -->
+<h1 class="section-title" id="importar"><span class="section-number">16</span> Importar Backup</h1>
+
+<div class="breadcrumb">📥 <span>Importar Backup</span></div>
+
+<p>Este módulo permite restaurar una copia de seguridad completa de la aplicación o importar datos desde un archivo externo.</p>
+
+<div class="callout danger">
+  <div class="callout-icon">🚨</div>
+  <div class="callout-body"><strong>¡Atención! Esta operación reemplaza todos los datos actuales</strong>
+  Al importar un backup completo (SQLite, SQL o ZIP de CSV), los datos existentes en la aplicación serán <strong>reemplazados completamente</strong> por los del archivo importado. Esta acción no se puede deshacer. Haz siempre una exportación previa antes de importar.
+  </div>
+</div>
+
+<h2 class="subsection-title">Formatos de importación</h2>
+
+<div class="format-grid">
+  <div class="format-card"><span class="fmt-icon">💾</span><span class="fmt-name">SQLite (.db)</span><span class="fmt-desc">Copia completa de la base de datos</span></div>
+  <div class="format-card"><span class="fmt-icon">🗜️</span><span class="fmt-name">CSV (.zip)</span><span class="fmt-desc">Carpeta comprimida con todos los CSV</span></div>
+  <div class="format-card"><span class="fmt-icon">🗄️</span><span class="fmt-name">SQL (.sql)</span><span class="fmt-desc">Script de volcado de base de datos</span></div>
+  <div class="format-card"><span class="fmt-icon">{ }</span><span class="fmt-name">JSON (.json)</span><span class="fmt-desc">Datos en formato JSON estructurado</span></div>
+</div>
+
+<h2 class="subsection-title">Cómo restaurar una copia</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Pulsa <strong>Seleccionar archivo de backup</strong>.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Elige el formato del archivo que vas a importar.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Selecciona el archivo en el explorador de archivos.</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">La aplicación muestra un aviso de confirmación detallando qué datos serán reemplazados. Confirma para continuar.</div></div>
+  <div class="step"><div class="step-num">5</div><div class="step-body">Una vez completada, la aplicación muestra un registro con el resultado y la fecha/hora de la operación.</div></div>
+</div>
+
+<h2 class="subsection-title">Información de la base de datos actual</h2>
+<p>La parte inferior del módulo muestra información sobre la base de datos activa: ruta del archivo, tamaño en disco y número de registros por tabla. Esto es útil para verificar el estado antes de importar.</p>
+
+<!-- ═══════════════════════════════════════════════ 17. EXPORTAR -->
+<h1 class="section-title" id="exportar"><span class="section-number">17</span> Exportar / Backup</h1>
+
+<div class="breadcrumb">💾 <span>Exportar / Backup</span></div>
+
+<p>Este módulo permite crear copias de seguridad completas de toda la aplicación y exportar los datos en varios formatos.</p>
+
+<h2 class="subsection-title">Formatos disponibles</h2>
+
+<table class="data-table">
+  <thead><tr><th>Formato</th><th>Descripción</th><th>Uso recomendado</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>💾 SQLite (.db)</strong></td>
+      <td>Copia exacta de la base de datos completa.</td>
+      <td>Backup principal. Para restaurar en otro equipo o reinstalación.</td>
+    </tr>
+    <tr>
+      <td><strong>🗜️ CSV (.zip)</strong></td>
+      <td>Todas las tablas exportadas en archivos CSV comprimidos.</td>
+      <td>Para analizar datos en Excel o LibreOffice.</td>
+    </tr>
+    <tr>
+      <td><strong>🗄️ SQL (.sql)</strong></td>
+      <td>Script SQL con la estructura y todos los datos.</td>
+      <td>Para desarrolladores o migración a otro gestor de BD.</td>
+    </tr>
+    <tr>
+      <td><strong>{ } JSON (.json)</strong></td>
+      <td>Todos los datos en formato JSON.</td>
+      <td>Para integración con otras aplicaciones o backups de datos.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title">Crear una copia de seguridad</h2>
+<div class="steps">
+  <div class="step"><div class="step-num">1</div><div class="step-body">Selecciona el formato de exportación.</div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body">Pulsa <strong>Exportar</strong>.</div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body">Elige la carpeta de destino. El nombre del archivo incluye la fecha y hora automáticamente (ej. <em>GraficasMulberry_Backup_20260501_143022.db</em>).</div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body">Una vez completada, puedes abrir la carpeta directamente pulsando el botón <strong>📂 Abrir carpeta</strong>.</div></div>
+</div>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Hábito recomendado</strong>
+  Realiza un backup en formato SQLite al menos una vez a la semana. Guarda los archivos en una unidad externa o en la nube (Google Drive, OneDrive) para protegerte ante un fallo del equipo.
+  </div>
+</div>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Registro de exportaciones</strong>
+  El módulo mantiene un registro con la fecha, hora y tipo de cada exportación realizada. Puedes consultarlo para saber cuándo fue la última copia.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ 18. CONFIGURACIÓN -->
+<h1 class="section-title" id="configuracion"><span class="section-number">18</span> Configuración</h1>
+
+<div class="breadcrumb">⚙ <span>Configuración</span></div>
+
+<p>El módulo de Configuración centraliza todas las opciones de personalización de la aplicación. Se organiza en seis pestañas.</p>
+
+<h2 class="subsection-title" id="conf-apariencia">Tab: Apariencia</h2>
+
+<h3 class="sub3">Tema de color</h3>
+<p>La aplicación incluye <strong>6 temas visuales</strong> que cambian al instante el aspecto completo de la interfaz:</p>
+
+<table class="data-table">
+  <thead><tr><th>Tema</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>🟣 <strong>Mulberry</strong></td><td>Tema por defecto. Tonos morados con barra lateral oscura.</td></tr>
+    <tr><td>⬛ <strong>Oscuro</strong></td><td>Tema oscuro completo. Ideal para trabajar con poca luz.</td></tr>
+    <tr><td>🔵 <strong>Azul marino</strong></td><td>Tema corporativo en tonos azules.</td></tr>
+    <tr><td>🟢 <strong>Verde</strong></td><td>Tema en tonos verdes naturales.</td></tr>
+    <tr><td>🔴 <strong>Rojo</strong></td><td>Tema en tonos rojos y granates.</td></tr>
+    <tr><td>⬜ <strong>Claro</strong></td><td>Tema claro y minimalista con colores neutros.</td></tr>
+  </tbody>
+</table>
+
+<p>Para cambiar el tema: haz clic sobre la tarjeta del tema que quieras. El cambio es inmediato y permanente.</p>
+
+<h3 class="sub3">Tipografía</h3>
+<p>Puedes personalizar la fuente y el tamaño del texto de la interfaz:</p>
+<ul>
+  <li><strong>Fuente</strong>: Segoe UI, Arial, Calibri, Georgia, Consolas, Trebuchet MS, Verdana.</li>
+  <li><strong>Tamaño</strong>: Pequeño (11px), Normal (13px), Grande (15px), Muy grande (17px).</li>
+</ul>
+<p>Selecciona la fuente y el tamaño y pulsa <strong>Aplicar tipografía</strong>.</p>
+
+<h2 class="subsection-title" id="conf-empresa">Tab: Mi empresa</h2>
+
+<p>Rellena aquí los datos de tu empresa. Esta información aparece automáticamente en todos los PDFs que genera la aplicación (presupuestos, facturas, nóminas).</p>
+
+<table class="data-table">
+  <thead><tr><th>Campo</th><th>Ejemplo</th></tr></thead>
+  <tbody>
+    <tr><td>Nombre / Razón social</td><td>Gráficas Mulberry S.L.</td></tr>
+    <tr><td>NIF / CIF</td><td>B12345678</td></tr>
+    <tr><td>Dirección</td><td>Calle Río Miño, 54 - 3F</td></tr>
+    <tr><td>Ciudad</td><td>Huercal de Almería</td></tr>
+    <tr><td>Código postal</td><td>04230</td></tr>
+    <tr><td>Teléfono</td><td>950 30 61 64</td></tr>
+    <tr><td>Email</td><td>info@graficasmulberry.com</td></tr>
+    <tr><td>Página web</td><td>www.graficasmulberry.com</td></tr>
+    <tr><td>IBAN</td><td>ES00 0000 0000 0000 0000 0000</td></tr>
+    <tr><td>Actividad / CNAE</td><td>Serigrafía y artes gráficas</td></tr>
+  </tbody>
+</table>
+
+<p>Pulsa <strong>Guardar cambios</strong> para confirmar.</p>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Primer paso imprescindible</strong>
+  Rellena estos datos antes de empezar a crear presupuestos y facturas. Si los dejas vacíos, los PDFs se generarán sin los datos de tu empresa.
+  </div>
+</div>
+
+<h2 class="subsection-title" id="conf-preferencias">Tab: Preferencias</h2>
+
+<p>Esta pestaña tiene dos secciones:</p>
+
+<h3 class="sub3">Facturación y presupuestos</h3>
+
+<table class="data-table">
+  <thead><tr><th>Opción</th><th>Descripción</th><th>Valor por defecto</th></tr></thead>
+  <tbody>
+    <tr><td>IVA por defecto (%)</td><td>Porcentaje de IVA que se aplica automáticamente al crear facturas y presupuestos.</td><td>21</td></tr>
+    <tr><td>Prefijo presupuesto</td><td>Texto que precede al número de presupuesto (ej. PRE-0001).</td><td>PRE</td></tr>
+    <tr><td>Prefijo factura</td><td>Texto que precede al número de factura (ej. FAC-0001).</td><td>FAC</td></tr>
+    <tr><td>Condiciones por defecto</td><td>Texto de condiciones legales o comerciales que aparece en todos los presupuestos.</td><td>—</td></tr>
+  </tbody>
+</table>
+
+<h3 class="sub3">Recordatorios del calendario</h3>
+
+<table class="data-table">
+  <thead><tr><th>Opción</th><th>Descripción</th><th>Valor por defecto</th></tr></thead>
+  <tbody>
+    <tr><td>Alerta emergente al iniciar (días)</td><td>Cuántos días antes del vencimiento se muestra una alerta emergente al abrir la aplicación.</td><td>3 días</td></tr>
+    <tr><td>Panel dashboard — mostrar eventos (días)</td><td>Con cuánta antelación aparecen los eventos en el panel de recordatorios del dashboard.</td><td>7 días</td></tr>
+  </tbody>
+</table>
+
+<h2 class="subsection-title" id="conf-musica">Tab: Música</h2>
+
+<p>La aplicación incluye un <strong>reproductor de música MP3</strong> integrado para amenizar las horas de trabajo.</p>
+
+<h3 class="sub3">Lista de reproducción</h3>
+<ul>
+  <li>Pulsa <strong>+ Añadir MP3</strong> para seleccionar uno o varios archivos de música de tu equipo.</li>
+  <li>Pulsa <strong>🗑 Quitar seleccionado</strong> para eliminar una pista de la lista.</li>
+  <li>Haz <strong>doble clic</strong> en una pista para reproducirla directamente.</li>
+</ul>
+
+<h3 class="sub3">Controles del reproductor</h3>
+<ul>
+  <li><strong>⏮</strong> — Pista anterior.</li>
+  <li><strong>⏯</strong> — Reproducir / Pausar.</li>
+  <li><strong>⏹</strong> — Detener.</li>
+  <li><strong>⏭</strong> — Pista siguiente.</li>
+</ul>
+
+<h3 class="sub3">Opciones</h3>
+<ul>
+  <li><strong>Volumen</strong>: ajusta el nivel de volumen con el slider (0–100%).</li>
+  <li><strong>Repetir lista en bucle</strong>: cuando termina la última pista, vuelve a empezar.</li>
+  <li><strong>Reproducir automáticamente al iniciar</strong>: la música empieza en cuanto abres la aplicación.</li>
+</ul>
+<p>Pulsa <strong>Guardar configuración de música</strong> para conservar todos los ajustes.</p>
+
+<h2 class="subsection-title" id="conf-ia">Tab: Modelos IA</h2>
+
+<p>Lista los modelos de Ollama disponibles en tu equipo y permite gestionar el modelo activo. Desde aquí puedes:</p>
+<ul>
+  <li><strong>Ver</strong> todos los modelos instalados con su nombre y tamaño.</li>
+  <li><strong>Cambiar</strong> el modelo activo que usará el chat del Asistente IA.</li>
+  <li><strong>Descargar</strong> nuevos modelos (requiere internet y Ollama instalado).</li>
+  <li><strong>Eliminar</strong> modelos para liberar espacio en disco.</li>
+</ul>
+
+<div class="callout note">
+  <div class="callout-icon">ℹ️</div>
+  <div class="callout-body"><strong>Modelos recomendados según el hardware</strong><br>
+  • <strong>llama3.2:1b</strong> (800 MB) — Muy rápido. Para equipos con 4 GB de RAM o menos.<br>
+  • <strong>llama3.2:3b</strong> (2 GB) — Equilibrio entre calidad y velocidad. Recomendado para uso general.<br>
+  • <strong>llama3.1:8b</strong> (5 GB) — Alta calidad. Recomendado si tienes 16 GB de RAM o tarjeta gráfica dedicada.
+  </div>
+</div>
+
+<h2 class="subsection-title" id="conf-acerca">Tab: Acerca de</h2>
+
+<p>Muestra información técnica del sistema y la aplicación:</p>
+<ul>
+  <li><strong>Versión de la aplicación</strong> (v5.1).</li>
+  <li><strong>Versión de Java</strong> instalada.</li>
+  <li><strong>Recursos del sistema</strong>: RAM disponible, espacio en disco, resolución de pantalla.</li>
+  <li><strong>Ruta de la base de datos</strong>: dónde está guardado el archivo SQLite.</li>
+  <li><strong>Información de soporte</strong>: contacto del desarrollador.</li>
+</ul>
+
+<div class="callout tip">
+  <div class="callout-icon">💡</div>
+  <div class="callout-body"><strong>Localizar la base de datos</strong>
+  La ruta que aparece en "Acerca de" te indica exactamente dónde está el archivo <code>graficas_mulberry.db</code>. Es el archivo que debes incluir en tus copias de seguridad manuales si las haces fuera de la aplicación.
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ FLUJO DE TRABAJO -->
+<div class="section-sep"></div>
+<h1 class="section-title"><span class="section-number">+</span> Flujo de trabajo típico</h1>
+
+<p>A continuación se describe el flujo de trabajo más habitual en un taller de artes gráficas usando la aplicación:</p>
+
+<div class="steps">
+  <div class="step">
+    <div class="step-num">1</div>
+    <div class="step-body"><strong>Alta del cliente</strong><br>El cliente contacta con el taller. Ve a <strong>Clientes → + Nuevo</strong> y registra sus datos.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">2</div>
+    <div class="step-body"><strong>Crear presupuesto</strong><br>En <strong>Presupuestos → + Nuevo</strong>, selecciona el cliente, añade las líneas de trabajo (técnica + materiales) y envíalo. Cambia el estado a <em>Enviado</em>.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">3</div>
+    <div class="step-body"><strong>Confirmación del cliente</strong><br>Si acepta: cambia el estado a <em>Aceptado</em>. Si rechaza: <em>Rechazado</em>.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">4</div>
+    <div class="step-body"><strong>Convertir a factura</strong><br>Con el presupuesto aceptado seleccionado, pulsa <strong>Facturar</strong>. Se genera automáticamente la factura correspondiente.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">5</div>
+    <div class="step-body"><strong>Crear albarán</strong><br>Cuando el trabajo está listo para entregar, crea el albarán desde la factura. Entrega el trabajo y cambia el estado a <em>Entregado</em>.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">6</div>
+    <div class="step-body"><strong>Registrar el cobro</strong><br>En <strong>Pedidos → Control de pagos</strong>, registra el pago recibido. Si es en varios plazos, usa el fraccionamiento de pagos.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">7</div>
+    <div class="step-body"><strong>Actualizar stock</strong><br>Si consumiste materiales para el trabajo, ve a <strong>Materiales → Stock</strong> y ajusta las cantidades.</div>
+  </div>
+  <div class="step">
+    <div class="step-num">8</div>
+    <div class="step-body"><strong>Revisar estadísticas</strong><br>Periódicamente consulta <strong>Estadísticas</strong> para ver la evolución del negocio.</div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════ ATAJOS -->
+<div class="section-sep"></div>
+<h1 class="section-title"><span class="section-number">+</span> Referencia rápida de módulos</h1>
+
+<table class="data-table">
+  <thead><tr><th>Módulo</th><th>Para qué sirve</th><th>Acceso rápido</th></tr></thead>
+  <tbody>
+    <tr><td>🏠 Panel principal</td><td>Resumen visual del negocio en tiempo real</td><td>Icono inicio en la barra lateral</td></tr>
+    <tr><td>👥 Clientes</td><td>Base de datos de clientes</td><td>Barra lateral → Clientes</td></tr>
+    <tr><td>📋 Presupuestos</td><td>Ofertas comerciales</td><td>Barra lateral → Presupuestos</td></tr>
+    <tr><td>🧾 Facturas</td><td>Facturación y cobros</td><td>Barra lateral → Facturas</td></tr>
+    <tr><td>📋 Albaranes</td><td>Documentos de entrega</td><td>Barra lateral → Albaranes</td></tr>
+    <tr><td>📦 Pedidos</td><td>Control de trabajos y pagos</td><td>Barra lateral → Pedidos</td></tr>
+    <tr><td>💰 Tarifas</td><td>Precios de servicios de impresión</td><td>Barra lateral → Tarifas</td></tr>
+    <tr><td>📦 Materiales</td><td>Inventario y stock</td><td>Barra lateral → Materiales</td></tr>
+    <tr><td>👤 Empleados</td><td>Plantilla del taller</td><td>Barra lateral → Empleados</td></tr>
+    <tr><td>💼 Nóminas</td><td>Gestión de salarios</td><td>Barra lateral → Nóminas</td></tr>
+    <tr><td>📊 Estadísticas</td><td>Análisis y gráficas</td><td>Barra lateral → Estadísticas</td></tr>
+    <tr><td>🤖 Asistente IA</td><td>Chat con IA local</td><td>Barra lateral → Asistente IA</td></tr>
+    <tr><td>📅 Calendario</td><td>Recordatorios y agenda</td><td>Barra lateral → Calendario</td></tr>
+    <tr><td>📥 Importar Backup</td><td>Restaurar datos</td><td>Barra lateral → Importar Backup</td></tr>
+    <tr><td>💾 Exportar / Backup</td><td>Copias de seguridad</td><td>Barra lateral → Exportar / Backup</td></tr>
+    <tr><td>⚙ Configuración</td><td>Personalización y ajustes</td><td>Barra lateral → Configuración</td></tr>
+  </tbody>
+</table>
+
+<!-- PIE -->
+<div class="page-footer">
+  <strong>Gráficas Mulberry · Sistema de Gestión Integral v5.1</strong><br>
+  Almería, España · 2026<br>
+  Soporte: gipsybuho@gmail.com<br><br>
+  <em>Este manual cubre todas las funcionalidades de la versión 5.1. Las capturas de pantalla pueden variar ligeramente según el tema visual seleccionado.</em>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>

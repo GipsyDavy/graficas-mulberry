@@ -51,7 +51,10 @@
       "Bash(Get-ChildItem \"C:\\\\Program Files\\\\Java\\\\\" -ErrorAction SilentlyContinue | Select-Object Name *)",
       "PowerShell(New-Item *)",
       "PowerShell(Copy-Item *)",
-      "Bash(powershell -Command \"Get-ChildItem -Path . -Filter *.java -Recurse | Select-String -Pattern 'text-area|TextArea.*setStyle|txtInput.*setStyle' | Select-Object -Unique Path\")"
+      "Bash(powershell -Command \"Get-ChildItem -Path . -Filter *.java -Recurse | Select-String -Pattern 'text-area|TextArea.*setStyle|txtInput.*setStyle' | Select-Object -Unique Path\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\" -Recurse -Force)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Sort-Object FullName)"
     ]
   }
 }

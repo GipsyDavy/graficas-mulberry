@@ -5,3 +5,6 @@ en el cajon que indica dentro del apartado Asistente IA el modelo que esta en us
 
 
 compila la aplicacion en un archivo .exe para instalarlo en cualquier pc con windows, esta es la version v5.1
+
+
+crea un manual/guia para usuario final del programa, explica todos los apartados que tiene, las funciones que realizan y como se utilizan par una mayor experiencia del usuario y poder sacar el maximo rendimiento al programa, tiene que quedar claras las funcionalidades de cada apartado y subapartado, como acceder a ellas y como usarlas y utilizarlas, incluye ejemplos y capturas de pantalla donde estimes oportuno sin saturar mucho el manual/guia de usuario con demasiadas imagenes      
