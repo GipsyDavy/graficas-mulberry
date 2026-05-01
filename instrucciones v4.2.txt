@@ -5,4 +5,8 @@ el boton importar datos del panel de la izquierda que esta debajo de calendario 
 
 añade una opcion de importar en el apartado de clientes, debe poder importar cualquiera de los formatos en los que hace la exportación.
 
-añade en el apartado acerca de, informacion sobre el sistema operativo que usa el pc en el que esta isntalado el programa y las caracteristicas del pc tales como cpu, ram, disco duro, almacenamiento, espacio libre...   
+añade en el apartado acerca de, informacion sobre el sistema operativo que usa el pc en el que esta isntalado el programa y las caracteristicas del pc tales como cpu, ram, disco duro, almacenamiento, espacio libre...  
+
+
+compila la aplicacion en un archivo .exe para instalarlo en cualquier pc con windows, esta es la version v4.2       
+ 
