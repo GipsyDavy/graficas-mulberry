@@ -54,7 +54,9 @@
       "Bash(powershell -Command \"Get-ChildItem -Path . -Filter *.java -Recurse | Select-String -Pattern 'text-area|TextArea.*setStyle|txtInput.*setStyle' | Select-Object -Unique Path\")",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\" -Recurse -Force)",
       "Bash(Select-Object FullName, PSIsContainer)",
-      "Bash(Sort-Object FullName)"
+      "Bash(Sort-Object FullName)",
+      "Bash(dir \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\")",
+      "Bash(xargs grep *)"
     ]
   }
 }

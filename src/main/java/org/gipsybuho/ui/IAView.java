@@ -10,8 +10,11 @@ import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import org.gipsybuho.model.AccionERP;
 import org.gipsybuho.service.ChatExportService;
 import org.gipsybuho.service.ChatExportService.MensajeChat;
+import org.gipsybuho.service.ContextoERPService;
+import org.gipsybuho.service.JsonInterceptorService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.SoundService;
@@ -25,7 +28,8 @@ import java.util.Optional;
 
 public class IAView extends VBox {
 
-    private final OllamaService ia = new OllamaService();
+    private final OllamaService      ia             = new OllamaService();
+    private final ContextoERPService contextoService = new ContextoERPService();
     private VBox chatBox;
     private ScrollPane scroll;
     private TextArea txtInput;
@@ -33,6 +37,7 @@ public class IAView extends VBox {
     private Label lblEstado;
     private ComboBox<String> cbModelo;
     private Button btnInstalarOllama;
+    private CheckBox cbContexto;
 
     public IAView() {
         getStyleClass().add("content-view");
@@ -82,8 +87,15 @@ public class IAView extends VBox {
         Button btnLimpiar = new Button("🗑 Limpiar chat");
         btnLimpiar.setOnAction(e -> chatBox.getChildren().clear());
 
+        cbContexto = new CheckBox("📊 Datos ERP");
+        cbContexto.setStyle("-fx-font-size:12; -fx-text-fill:#374151;");
+        cbContexto.setTooltip(new Tooltip(
+            "Incluir datos actuales del ERP (presupuestos, facturas, pedidos…) " +
+            "en el contexto del asistente para respuestas más precisas."));
+
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp, new Label("Modelo:"), cbModelo, btnModelos, btnExportar, btnLimpiar);
+        HBox bar = new HBox(12, lblEstado, btnInstalarOllama, sp,
+            cbContexto, new Label("Modelo:"), cbModelo, btnModelos, btnExportar, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle("-fx-background-color:#F0F4F8; -fx-border-radius:6; -fx-background-radius:6;");
@@ -187,33 +199,50 @@ public class IAView extends VBox {
         scrollAbajo();
 
         StringBuilder respuesta = new StringBuilder();
+        boolean inyectarContexto = cbContexto.isSelected();
 
-        ia.chatStreaming(
-            texto,
-            chunk -> {
-                respuesta.append(chunk);
-                tf.getChildren().remove(cursor);
-                tf.getChildren().clear();
-                tf.getChildren().add(new Text(respuesta.toString()));
-                tf.getChildren().add(cursor);
-                scrollAbajo();
-            },
-            () -> {
-                tf.getChildren().remove(cursor);
-                btnEnviar.setDisable(false);
-                SoundService.play(SoundService.Sound.NOTIFICATION);
-                scrollAbajo();
-            },
-            error -> {
-                tf.getChildren().clear();
-                Text errText = new Text("⚠ " + error + "\n\nAsegúrate de que Ollama esté en ejecución:\n  1. Descarga Ollama desde ollama.com\n  2. Ejecuta: ollama pull llama3.2\n  3. Ollama se inicia automáticamente al ejecutarse");
-                errText.setFill(Color.RED);
-                tf.getChildren().add(errText);
-                SoundService.play(SoundService.Sound.ERROR);
-                btnEnviar.setDisable(false);
-                scrollAbajo();
+        // Contexto ERP se obtiene off-thread para no bloquear el hilo FX
+        Thread.ofVirtual().start(() -> {
+            if (inyectarContexto) {
+                ia.setContextoERP(contextoService.construirContexto());
+            } else {
+                ia.clearContextoERP();
             }
-        );
+            ia.chatStreaming(
+                texto,
+                chunk -> {
+                    respuesta.append(chunk);
+                    tf.getChildren().remove(cursor);
+                    tf.getChildren().clear();
+                    tf.getChildren().add(new Text(respuesta.toString()));
+                    tf.getChildren().add(cursor);
+                    scrollAbajo();
+                },
+                () -> {
+                    tf.getChildren().remove(cursor);
+                    btnEnviar.setDisable(false);
+                    SoundService.play(SoundService.Sound.NOTIFICATION);
+                    scrollAbajo();
+                    procesarRespuestaFinal(respuesta.toString(), tf);
+                },
+                error -> {
+                    tf.getChildren().clear();
+                    Text errText = new Text("⚠ " + error + "\n\nAsegúrate de que Ollama esté en ejecución:\n  1. Descarga Ollama desde ollama.com\n  2. Ejecuta: ollama pull llama3.2\n  3. Ollama se inicia automáticamente al ejecutarse");
+                    errText.setFill(Color.RED);
+                    tf.getChildren().add(errText);
+                    SoundService.play(SoundService.Sound.ERROR);
+                    btnEnviar.setDisable(false);
+                    scrollAbajo();
+                },
+                modeloUsado -> {
+                    if (!cbModelo.getItems().contains(modeloUsado)) cbModelo.getItems().add(modeloUsado);
+                    cbModelo.setValue(modeloUsado);
+                    lblEstado.setText("🟢 Ollama listo — " + modeloUsado
+                        + (ia.isRoutingAutomatico() ? " [auto]" : "")
+                        + (inyectarContexto ? " [+ERP]" : ""));
+                }
+            );
+        });
     }
 
     private void addBurbuja(String texto, boolean esUsuario) {
@@ -417,6 +446,58 @@ public class IAView extends VBox {
             if (n instanceof Text t) sb.append(t.getText());
         }
         return sb.toString().trim();
+    }
+
+    // ── Interceptor JSON ──────────────────────────────────────────────────────
+
+    private void procesarRespuestaFinal(String respuestaCompleta, TextFlow burbuja) {
+        JsonInterceptorService.Resultado resultado =
+            JsonInterceptorService.interceptar(respuestaCompleta);
+
+        if (resultado.tieneAccion()) {
+            // Actualizar la burbuja para mostrar solo el texto natural (sin JSON)
+            String textoLimpio = resultado.textoLimpio();
+            burbuja.getChildren().clear();
+            if (!textoLimpio.isBlank()) {
+                burbuja.getChildren().add(new Text(textoLimpio));
+            } else {
+                burbuja.getChildren().add(new Text("Aquí tienes la acción detectada:"));
+            }
+            // Insertar panel de confirmación
+            mostrarPanelConfirmacion(resultado.accion().get());
+        }
+    }
+
+    private void mostrarPanelConfirmacion(AccionERP accion) {
+        ConfirmacionAccionPanel panel = new ConfirmacionAccionPanel(
+            accion,
+            feedbackTexto -> addMensajeFeedback(feedbackTexto,
+                !feedbackTexto.startsWith("❌")),
+            () -> addMensajeFeedback("Acción cancelada por el usuario.", false)
+        );
+
+        HBox wrapper = new HBox(panel);
+        wrapper.setPadding(new Insets(6, 8, 6, 8));
+        wrapper.setAlignment(Pos.CENTER_LEFT);
+        chatBox.getChildren().add(wrapper);
+        scrollAbajo();
+    }
+
+    private void addMensajeFeedback(String texto, boolean esExito) {
+        Text t = new Text(texto);
+        t.setFill(Color.web(esExito ? "#1A5C2A" : "#7F1D1D"));
+        TextFlow tf = new TextFlow(t);
+        tf.setMaxWidth(620);
+        tf.setPadding(new Insets(10, 14, 10, 14));
+        tf.setStyle(esExito
+            ? "-fx-background-color:#DCFCE7; -fx-background-radius:10; -fx-border-color:#86EFAC; -fx-border-radius:10; -fx-border-width:1;"
+            : "-fx-background-color:#FEE2E2; -fx-background-radius:10; -fx-border-color:#FCA5A5; -fx-border-radius:10; -fx-border-width:1;");
+
+        HBox row = new HBox(tf);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(2, 8, 2, 8));
+        chatBox.getChildren().add(row);
+        scrollAbajo();
     }
 
     private void scrollAbajo() {

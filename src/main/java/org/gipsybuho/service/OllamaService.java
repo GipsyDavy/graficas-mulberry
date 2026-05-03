@@ -23,17 +23,130 @@ public class OllamaService {
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
     private String modeloActual;
+    private boolean routingAutomatico = true;
+    private volatile String contextoERP = null;
 
     private static final String SYSTEM_PROMPT = """
-        Eres el asistente de IA de Gráficas Mulberry, una empresa de serigrafía y artes gráficas
-        ubicada en Almería, España. Ayudas al equipo con:
-        - Presupuestos y precios de trabajos de serigrafía, DTF, bordado, vinilo y sublimación
-        - Gestión de materiales y stock
-        - Análisis de costes y rentabilidad
-        - Nóminas y gestión de empleados
-        - Optimización de procesos productivos
-        Responde siempre en español, de forma clara y profesional.
+        Eres Mulberry Assistant, el asistente IA senior especializado del ERP Gráficas Mulberry.\s
+        Trabajas directamente dentro de la vista "Asistente IA Local".
+
+        MISIÓN PRINCIPAL:
+        Convertir el chat en una consola operativa completa del ERP. Debes ser capaz de ayudar\s
+        y ejecutar acciones en todos los módulos del sistema mediante lenguaje natural y\s
+        devolviendo JSON estructurado.
+
+        MÓDULOS DEL ERP CON LOS QUE PUEDES INTERACTUAR:
+        - Panel principal
+        - Clientes (crear, consultar, actualizar)
+        - Presupuestos
+        - Facturas
+        - Albaranes
+        - Pedidos
+        - Tarifas
+        - Materiales
+        - Empleados
+        - Nóminas
+        - Estadísticas y reportes
+        - Calendario (planificación, citas, producción)
+        - Importar Backup
+        - Exportar / Backup
+        - Configuración
+
+        REGLAS DE ORO:
+        - Nunca ejecutes ninguna acción sin la confirmación explícita del usuario.
+        - Si faltan datos necesarios, pregúntalos amablemente antes de generar el JSON.
+        - Sugiere siempre la mejor técnica de impresión según cantidad y material\s
+          (Serigrafía, DTF, DTG, Sublimación, Vinilo, Impresión Digital).
+        - Sé profesional, preciso y orientado a resultados del sector de artes gráficas.
+
+        CONTEXTO DEL NEGOCIO:
+        Empresa de serigrafía e impresión ubicada en Almería, España. Conceptos clave:\s
+        Pantones, gramaje, soportes (algodón, poliéster, PVC…), mermas, costes de producción,\s
+        planificación de producción.
+
+        FORMATO DE RESPUESTA:
+        Responde siempre de forma natural, clara y útil al usuario en español.
+        Cuando detectes una intención de acción, incluye AL FINAL de tu mensaje un bloque JSON\s
+        con esta estructura exacta:
+
+        {
+          "action": "crear_presupuesto | generar_factura | crear_albaran | crear_pedido | actualizar_stock | crear_cliente | calcular_nomina | generar_estadistica | agendar_evento | consultar_materiales | consultar_cliente | exportar_backup",
+          "data": {
+            "cliente_id": "string",
+            "cliente_nombre": "string",
+            "items": [
+              {
+                "descripcion": "string",
+                "cantidad": 0,
+                "tecnica": "Serigrafía | DTF | DTG | Sublimación | Vinilo | Impresión Digital",
+                "colores": 0,
+                "pantones": ["string"],
+                "soporte": "string",
+                "gramaje": 0,
+                "precio_unitario": 0.0,
+                "merma_porcentaje": 0.0,
+                "notas": "string"
+              }
+            ],
+            "total_estimado": 0.0,
+            "observaciones": "string",
+            "fecha": "string opcional"
+          },
+          "preview_summary": "Resumen claro y legible para mostrar en el panel de confirmación"
+        }
+
+        Mantén un tono experto en serigrafía e impresión. Sé proactivo ofreciendo\s
+        recomendaciones útiles de optimización, costes y gestión.
         """;
+
+    // ── Routing inteligente ───────────────────────────────────────────────────
+
+    public enum TipoTarea { COMPLEJA, RAPIDA }
+
+    private static final List<String> PALABRAS_CLAVE_COMPLEJA = List.of(
+        "presupuesto", "factura", "albar", "pedido", "nomina", "nómina",
+        "estadistica", "estadística", "calcul", "precio", "coste", "rentabilidad",
+        "margen", "beneficio", "impuesto", "iva", "descuento", "total", "importe",
+        "produccion", "producción", "planif", "merma", "gramaje", "pantone",
+        "stock", "inventario", "empleado", "salario", "sueldo", "cantidad", "unidades",
+        "serigraf", "sublimacion", "sublimación", "bordado", "vinilo", "dtf", "dtg"
+    );
+
+    // Substrings en orden de prioridad para tareas complejas (mayor potencia primero)
+    private static final List<String> PRIORIDAD_POTENTE = List.of(
+        "qwen3", "llama3.3", "llama3.2", "llama3.1", "mistral-large",
+        "phi-4", "deepseek", "gemma3", "llama3", "mistral", "phi3", "qwen2.5", "qwen"
+    );
+
+    // Substrings en orden de prioridad para tareas rápidas (menor peso primero)
+    private static final List<String> PRIORIDAD_LIGERO = List.of(
+        "tinyllama", "phi3:mini", "phi3.5:mini", "gemma2:2b", "qwen2.5:1.5b",
+        "llama3.2:1b", "phi3", "gemma2", "gemma", "qwen2.5", "qwen"
+    );
+
+    public TipoTarea clasificarTarea(String mensaje) {
+        String lower = mensaje.toLowerCase();
+        boolean esCompleja = PALABRAS_CLAVE_COMPLEJA.stream().anyMatch(lower::contains);
+        return esCompleja ? TipoTarea.COMPLEJA : TipoTarea.RAPIDA;
+    }
+
+    private String seleccionarModeloOptimo(String mensaje) {
+        List<String> modelos = getModelosDisponibles();
+        if (modelos.isEmpty()) return modeloActual;
+
+        TipoTarea tipo = clasificarTarea(mensaje);
+        List<String> prioridad = tipo == TipoTarea.COMPLEJA ? PRIORIDAD_POTENTE : PRIORIDAD_LIGERO;
+
+        for (String clave : prioridad) {
+            for (String modelo : modelos) {
+                if (modelo.toLowerCase().contains(clave.toLowerCase())) return modelo;
+            }
+        }
+        // Fallback: el más grande para tareas complejas, el más pequeño para rápidas
+        return tipo == TipoTarea.COMPLEJA ? modelos.get(0) : modelos.get(modelos.size() - 1);
+    }
+
+    // ── Constructor ───────────────────────────────────────────────────────────
 
     public OllamaService() {
         this.httpClient = HttpClient.newBuilder()
@@ -77,11 +190,23 @@ public class OllamaService {
         return modelos;
     }
 
-    public void chatStreaming(String userMessage, Consumer<String> onChunk, Runnable onComplete, Consumer<String> onError) {
+    public void chatStreaming(String userMessage, Consumer<String> onChunk, Runnable onComplete,
+                             Consumer<String> onError) {
+        chatStreaming(userMessage, onChunk, onComplete, onError, null);
+    }
+
+    public void chatStreaming(String userMessage, Consumer<String> onChunk, Runnable onComplete,
+                             Consumer<String> onError, Consumer<String> onModeloUsado) {
         Thread.ofVirtual().start(() -> {
             try {
+                String modeloElegido = routingAutomatico
+                    ? seleccionarModeloOptimo(userMessage)
+                    : modeloActual;
+                if (onModeloUsado != null)
+                    javafx.application.Platform.runLater(() -> onModeloUsado.accept(modeloElegido));
+
                 ObjectNode body = mapper.createObjectNode();
-                body.put("model", modeloActual);
+                body.put("model", modeloElegido);
                 body.put("stream", true);
 
                 var messages = mapper.createArrayNode();
@@ -89,6 +214,14 @@ public class OllamaService {
                 sysMsg.put("role", "system");
                 sysMsg.put("content", SYSTEM_PROMPT);
                 messages.add(sysMsg);
+                // Contexto ERP en tiempo real (se inyecta como segundo mensaje de sistema)
+                String ctxSnapshot = contextoERP;
+                if (ctxSnapshot != null && !ctxSnapshot.isBlank()) {
+                    var ctxMsg = mapper.createObjectNode();
+                    ctxMsg.put("role", "system");
+                    ctxMsg.put("content", ctxSnapshot);
+                    messages.add(ctxMsg);
+                }
                 var userMsg = mapper.createObjectNode();
                 userMsg.put("role", "user");
                 userMsg.put("content", userMessage);
@@ -132,8 +265,12 @@ public class OllamaService {
 
     public String chat(String userMessage) {
         try {
+            String modeloElegido = routingAutomatico
+                ? seleccionarModeloOptimo(userMessage)
+                : modeloActual;
+
             ObjectNode body = mapper.createObjectNode();
-            body.put("model", modeloActual);
+            body.put("model", modeloElegido);
             body.put("stream", false);
 
             var messages = mapper.createArrayNode();
@@ -243,8 +380,17 @@ public class OllamaService {
         });
     }
 
-    public void setModeloActual(String modelo) { this.modeloActual = modelo; }
+    public void setModeloActual(String modelo) {
+        this.modeloActual = modelo;
+        this.routingAutomatico = false;
+    }
+
+    public void habilitarRouting()  { this.routingAutomatico = true; }
+    public boolean isRoutingAutomatico() { return routingAutomatico; }
     public String getModeloActual() { return modeloActual; }
+
+    public void setContextoERP(String contexto)  { this.contextoERP = contexto; }
+    public void clearContextoERP()               { this.contextoERP = null; }
 
     // ── ModelInfo ─────────────────────────────────────────────────────────────
 
