@@ -1,5 +1,8 @@
 package org.gipsybuho.model;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 public class Cliente {
     private int id;
     private String nombre;
@@ -13,6 +16,8 @@ public class Cliente {
     private String email;
     private String notas;
     private String createdAt;
+    // Columnas adicionales añadidas dinámicamente al importar desde archivos externos
+    private Map<String, String> extras = new LinkedHashMap<>();
 
     public Cliente() {}
 
@@ -57,6 +62,11 @@ public class Cliente {
     public void setNotas(String notas) { this.notas = notas; }
     public String getCreatedAt() { return createdAt; }
     public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+
+    public Map<String, String> getExtras() { return extras; }
+    public void setExtras(Map<String, String> extras) { this.extras = extras != null ? extras : new LinkedHashMap<>(); }
+    public String getExtra(String key) { return extras.getOrDefault(key, null); }
+    public void setExtra(String key, String value) { if (key != null) extras.put(key, value); }
 
     @Override
     public String toString() { return getNombreCompleto(); }

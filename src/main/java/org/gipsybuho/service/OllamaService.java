@@ -48,7 +48,7 @@ public class OllamaService {
         - Albaranes
         - Pedidos
         - Tarifas
-        - Materiales
+        - Materiales (incluye importación inteligente desde Excel)
         - Empleados
         - Nóminas
         - Estadísticas y reportes
@@ -75,7 +75,7 @@ public class OllamaService {
         con esta estructura exacta:
 
         {
-          "action": "crear_presupuesto | generar_factura | crear_albaran | crear_pedido | actualizar_stock | crear_cliente | calcular_nomina | generar_estadistica | agendar_evento | consultar_materiales | consultar_cliente | exportar_backup",
+          "action": "crear_presupuesto | generar_factura | crear_albaran | crear_pedido | actualizar_stock | crear_cliente | calcular_nomina | generar_estadistica | agendar_evento | consultar_materiales | consultar_cliente | exportar_backup | importar_datos_excel",
           "data": {
             "cliente_id": "string",
             "cliente_nombre": "string",
@@ -95,10 +95,34 @@ public class OllamaService {
             ],
             "total_estimado": 0.0,
             "observaciones": "string",
-            "fecha": "string opcional"
+            "fecha": "string opcional",
+
+            "tipo_importacion": "materiales | tarifas_proveedor | clientes | otros (solo para importar_datos_excel)",
+            "proveedor": "nombre del proveedor (solo para importar_datos_excel)",
+            "hojas_a_importar": ["Hoja1"] ,
+            "actualizar_registros_existentes": true,
+            "crear_nuevos_registros": true
           },
           "preview_summary": "Resumen claro y legible para mostrar en el panel de confirmación"
         }
+
+        IMPORTACIÓN DESDE EXCEL (acción "importar_datos_excel"):
+        El sistema abre selector de archivo y detecta el tipo de cada hoja por puntuación de columnas:\s
+        · MATERIALES: GRAMAJE★★★★★, FORMATO★★★★, STOCK MÍNIMO★★★, REFERENCIA/UNIDAD★★, PROVEEDOR+PRECIO★★★\s
+        · CLIENTES: NIF/CIF★★★★, RAZÓN SOCIAL★★★★, EMAIL★★★, CIUDAD/CP/PROVINCIA/TELÉFONO/DIRECCIÓN★★\s
+        · EMPLEADOS: IBAN★★★★★★, SALARIO BASE/IRPF%★★★★★, HORAS SEMANALES★★★★, FECHA ALTA★★★\s
+        · PRESUPUESTOS: TOTAL+IVA%★★★★★, NOMBRE CLIENTE+TOTAL★★★★, CONCEPTO★★, TOTAL solo★\s
+        · PEDIDOS: FECHA ENTREGA★★★★★, ESTADO+Nº DOC★★★★\s
+        · ALBARANES: Nº DOCUMENTO sin TOTAL★★★\s
+        tipo_importacion fuerza el tipo a todas las hojas sin auto-detección.\s
+
+        dry_run:\s
+        - true → solo análisis por hoja (tipo, columnas, estimación) SIN modificar BD.\s
+          Usar con "analiza", "previsualiza", "qué contiene", "comprueba".\s
+        - false u omitido → importación real (incluye resumen previo automático).\s
+
+        Campos opcionales: tipo_importacion, proveedor (default para materiales),\s
+        hojas_a_importar, actualizar_registros_existentes, crear_nuevos_registros.
 
         Mantén un tono experto en serigrafía e impresión. Sé proactivo ofreciendo\s
         recomendaciones útiles de optimización, costes y gestión.

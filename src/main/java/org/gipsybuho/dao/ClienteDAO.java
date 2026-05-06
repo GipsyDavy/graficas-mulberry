@@ -4,16 +4,19 @@ import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 public class ClienteDAO {
 
+    private static final Set<String> CAMPOS_FIJOS = Set.of(
+        "id", "nombre", "apellidos", "tipo", "nif",
+        "direccion", "ciudad", "cp", "telefono", "email", "notas", "created_at"
+    );
+
     public List<Cliente> findAll() throws SQLException {
         List<Cliente> list = new ArrayList<>();
-        String sql = "SELECT * FROM clientes ORDER BY nombre";
         try (Statement st = DatabaseManager.getConnection().createStatement();
-             ResultSet rs = st.executeQuery(sql)) {
+             ResultSet rs = st.executeQuery("SELECT * FROM clientes ORDER BY nombre")) {
             while (rs.next()) list.add(map(rs));
         }
         return list;
@@ -45,9 +48,19 @@ public class ClienteDAO {
     }
 
     private void insert(Cliente c) throws SQLException {
-        String sql = "INSERT INTO clientes (nombre,apellidos,tipo,nif,direccion,ciudad,cp,telefono,email,notas) VALUES (?,?,?,?,?,?,?,?,?,?)";
+        List<String> cols = new ArrayList<>(List.of(
+            "nombre", "apellidos", "tipo", "nif", "direccion", "ciudad", "cp", "telefono", "email", "notas"
+        ));
+        List<String> extraKeys = new ArrayList<>(c.getExtras().keySet());
+        cols.addAll(extraKeys);
+
+        String sql = "INSERT INTO clientes (" + String.join(",", cols) + ") VALUES (" +
+            String.join(",", Collections.nCopies(cols.size(), "?")) + ")";
+
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
-            set(ps, c);
+            setBase(ps, c);
+            int idx = 11;
+            for (String key : extraKeys) ps.setString(idx++, c.getExtra(key));
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
             if (keys.next()) c.setId(keys.getInt(1));
@@ -55,10 +68,22 @@ public class ClienteDAO {
     }
 
     private void update(Cliente c) throws SQLException {
-        String sql = "UPDATE clientes SET nombre=?,apellidos=?,tipo=?,nif=?,direccion=?,ciudad=?,cp=?,telefono=?,email=?,notas=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
-            set(ps, c);
-            ps.setInt(11, c.getId());
+        List<String> baseFields = List.of(
+            "nombre", "apellidos", "tipo", "nif", "direccion", "ciudad", "cp", "telefono", "email", "notas"
+        );
+        List<String> extraKeys = new ArrayList<>(c.getExtras().keySet());
+
+        StringBuilder sql = new StringBuilder("UPDATE clientes SET ");
+        List<String> sets = new ArrayList<>();
+        baseFields.forEach(f -> sets.add(f + "=?"));
+        extraKeys.forEach(k -> sets.add("\"" + k + "\"=?"));
+        sql.append(String.join(",", sets)).append(" WHERE id=?");
+
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {
+            setBase(ps, c);
+            int idx = 11;
+            for (String key : extraKeys) ps.setString(idx++, c.getExtra(key));
+            ps.setInt(idx, c.getId());
             ps.executeUpdate();
         }
     }
@@ -78,7 +103,20 @@ public class ClienteDAO {
         }
     }
 
-    private void set(PreparedStatement ps, Cliente c) throws SQLException {
+    /** Devuelve los nombres de columnas extra (fuera de los campos fijos) presentes en la tabla. */
+    public List<String> obtenerColumnasExtra() throws SQLException {
+        List<String> extras = new ArrayList<>();
+        try (Statement st = DatabaseManager.getConnection().createStatement();
+             ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
+            while (rs.next()) {
+                String col = rs.getString("name").toLowerCase();
+                if (!CAMPOS_FIJOS.contains(col)) extras.add(col);
+            }
+        }
+        return extras;
+    }
+
+    private void setBase(PreparedStatement ps, Cliente c) throws SQLException {
         ps.setString(1, c.getNombre());
         ps.setString(2, c.getApellidos());
         ps.setString(3, c.getTipo());
@@ -93,18 +131,26 @@ public class ClienteDAO {
 
     private Cliente map(ResultSet rs) throws SQLException {
         Cliente c = new Cliente();
-        c.setId(rs.getInt("id"));
-        c.setNombre(rs.getString("nombre"));
-        c.setApellidos(rs.getString("apellidos"));
-        c.setTipo(rs.getString("tipo"));
-        c.setNif(rs.getString("nif"));
-        c.setDireccion(rs.getString("direccion"));
-        c.setCiudad(rs.getString("ciudad"));
-        c.setCp(rs.getString("cp"));
-        c.setTelefono(rs.getString("telefono"));
-        c.setEmail(rs.getString("email"));
-        c.setNotas(rs.getString("notas"));
-        c.setCreatedAt(rs.getString("created_at"));
+        ResultSetMetaData meta = rs.getMetaData();
+        int colCount = meta.getColumnCount();
+        for (int i = 1; i <= colCount; i++) {
+            String col = meta.getColumnName(i).toLowerCase();
+            switch (col) {
+                case "id"         -> c.setId(rs.getInt(i));
+                case "nombre"     -> c.setNombre(rs.getString(i));
+                case "apellidos"  -> c.setApellidos(rs.getString(i));
+                case "tipo"       -> c.setTipo(rs.getString(i));
+                case "nif"        -> c.setNif(rs.getString(i));
+                case "direccion"  -> c.setDireccion(rs.getString(i));
+                case "ciudad"     -> c.setCiudad(rs.getString(i));
+                case "cp"         -> c.setCp(rs.getString(i));
+                case "telefono"   -> c.setTelefono(rs.getString(i));
+                case "email"      -> c.setEmail(rs.getString(i));
+                case "notas"      -> c.setNotas(rs.getString(i));
+                case "created_at" -> c.setCreatedAt(rs.getString(i));
+                default           -> { String v = rs.getString(i); if (v != null) c.setExtra(col, v); }
+            }
+        }
         return c;
     }
 }

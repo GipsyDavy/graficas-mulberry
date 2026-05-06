@@ -16,12 +16,21 @@ public class AccionERP {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     public static class Data {
-        @JsonProperty("cliente_id")   public String clienteId;
+        @JsonProperty("cliente_id")     public String clienteId;
         @JsonProperty("cliente_nombre") public String clienteNombre;
         public List<Item> items;
         @JsonProperty("total_estimado") public double totalEstimado;
         public String observaciones;
         public String fecha;
+
+        // Campos para importar_datos_excel
+        @JsonProperty("tipo_importacion")               public String tipoImportacion;
+        public String proveedor;
+        @JsonProperty("archivo_nombre")                 public String archivoNombre;
+        @JsonProperty("hojas_a_importar")               public List<String> hojasAImportar;
+        @JsonProperty("actualizar_registros_existentes") public Boolean actualizarExistentes;
+        @JsonProperty("crear_nuevos_registros")          public Boolean crearNuevos;
+        @JsonProperty("dry_run")                         public Boolean dryRun;
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -50,9 +59,10 @@ public class AccionERP {
             case "calcular_nomina"     -> "Calcular Nómina";
             case "generar_estadistica" -> "Generar Estadística";
             case "agendar_evento"      -> "Agendar Evento";
-            case "consultar_materiales"-> "Consultar Materiales";
-            case "consultar_cliente"   -> "Consultar Cliente";
-            case "exportar_backup"     -> "Exportar Backup";
+            case "consultar_materiales"  -> "Consultar Materiales";
+            case "consultar_cliente"     -> "Consultar Cliente";
+            case "exportar_backup"       -> "Exportar Backup";
+            case "importar_datos_excel"  -> "Importar Datos Excel";
             default -> action;
         };
     }
@@ -72,7 +82,8 @@ public class AccionERP {
             case "agendar_evento"      -> "#00838F"; // Turquesa
             case "consultar_materiales"-> "#546E7A"; // Gris azulado
             case "consultar_cliente"   -> "#546E7A"; // Gris azulado
-            case "exportar_backup"     -> "#4E342E"; // Marrón
+            case "exportar_backup"      -> "#4E342E"; // Marrón
+            case "importar_datos_excel" -> "#1A6B3C"; // Verde oscuro
             default -> "#6B2D5E";
         };
     }
@@ -92,7 +103,8 @@ public class AccionERP {
             case "agendar_evento"      -> "#E0F7FA";
             case "consultar_materiales"-> "#ECEFF1";
             case "consultar_cliente"   -> "#ECEFF1";
-            case "exportar_backup"     -> "#EFEBE9";
+            case "exportar_backup"      -> "#EFEBE9";
+            case "importar_datos_excel" -> "#E8F5E9"; // Verde claro
             default -> "#F5E6F0";
         };
     }
@@ -111,7 +123,8 @@ public class AccionERP {
             case "agendar_evento"      -> "📅";
             case "consultar_materiales"-> "🔍";
             case "consultar_cliente"   -> "🔍";
-            case "exportar_backup"     -> "💾";
+            case "exportar_backup"      -> "💾";
+            case "importar_datos_excel" -> "📥";
             default -> "⚙";
         };
     }

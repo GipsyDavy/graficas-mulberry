@@ -24,9 +24,16 @@ import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.Pedido;
 import org.gipsybuho.model.Presupuesto;
 
+import javafx.application.Platform;
+import javafx.stage.FileChooser;
+
+import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 public class AccionDispatcherService {
@@ -71,6 +78,7 @@ public class AccionDispatcherService {
             case "calcular_nomina"     -> calcularNomina(accion);
             case "generar_estadistica" -> pendiente("Generar Estadística");
             case "agendar_evento"      -> agendarEvento(accion);
+            case "importar_datos_excel"-> importarDatosExcel(accion);
             default -> ResultadoAccion.error(
                 "Acción desconocida: " + accion.action,
                 "Esta acción no está implementada aún.");
@@ -461,6 +469,71 @@ public class AccionDispatcherService {
             return ResultadoAccion.ok("🗃 Informe de materiales:", sb.toString());
         } catch (Exception e) {
             return ResultadoAccion.error("Error al consultar materiales", e.getMessage());
+        }
+    }
+
+    // ── Importar Datos Excel ──────────────────────────────────────────────────
+
+    private ResultadoAccion importarDatosExcel(AccionERP accion) {
+        boolean dryRun = accion.data != null && Boolean.TRUE.equals(accion.data.dryRun);
+
+        try {
+            // Mostrar FileChooser en el hilo FX y esperar desde el hilo virtual
+            CompletableFuture<Optional<File>> futureArchivo = new CompletableFuture<>();
+            Platform.runLater(() -> {
+                FileChooser fc = new FileChooser();
+                fc.setTitle(dryRun
+                    ? "Seleccionar archivo Excel a analizar (modo prueba)"
+                    : "Seleccionar archivo Excel a importar");
+                fc.getExtensionFilters().addAll(
+                    new FileChooser.ExtensionFilter("Excel (*.xlsx, *.xls, *.xlsm)", "*.xlsx", "*.xls", "*.xlsm"),
+                    new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+                );
+                File f = fc.showOpenDialog(null);
+                futureArchivo.complete(Optional.ofNullable(f));
+            });
+
+            Optional<File> archivoOpt = futureArchivo.get(120, TimeUnit.SECONDS);
+            if (archivoOpt.isEmpty()) {
+                return ResultadoAccion.ok("Operación cancelada",
+                    "No se seleccionó ningún archivo. Puedes intentarlo de nuevo cuando quieras.");
+            }
+
+            File archivo = archivoOpt.get();
+            ImportarDatosService svc = new ImportarDatosService();
+
+            if (dryRun) {
+                ImportarDatosService.AnalisisExcel analisis = svc.analizarExcel(archivo, accion);
+                return ResultadoAccion.ok(
+                    "🔍 Análisis previo: " + archivo.getName(),
+                    analisis.resumenCompleto());
+            }
+
+            // Importación real: análisis previo + resultado
+            ImportarDatosService.AnalisisExcel analisis   = svc.analizarExcel(archivo, accion);
+            ImportarDatosService.ResultadoImportacion resultado = svc.importarDesdeExcel(archivo, accion);
+
+            boolean hayResultados = resultado.creados() + resultado.actualizados() > 0;
+            boolean hayErrores    = !resultado.errores().isEmpty();
+
+            String titulo = hayResultados
+                ? "📥 Importación completada: " + archivo.getName()
+                : (hayErrores ? "⚠ Sin registros importados: " + archivo.getName()
+                              : "📥 Sin cambios: " + archivo.getName());
+
+            String detalle = "Vista previa → " + analisis.resumenCorto() + "\n\n"
+                + resultado.resumen();
+
+            return (hayResultados || !hayErrores)
+                ? ResultadoAccion.ok(titulo, detalle)
+                : ResultadoAccion.error(titulo, detalle);
+
+        } catch (java.util.concurrent.TimeoutException e) {
+            return ResultadoAccion.error("Tiempo agotado",
+                "El selector de archivos no respondió en el tiempo esperado.");
+        } catch (Exception e) {
+            return ResultadoAccion.error("Error en la importación",
+                e.getMessage() != null ? e.getMessage() : e.getClass().getSimpleName());
         }
     }
 

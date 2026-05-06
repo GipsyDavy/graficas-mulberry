@@ -1,6 +1,7 @@
 package org.gipsybuho.ui;
 
 import javafx.application.Platform;
+import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
@@ -13,20 +14,27 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.service.ExportService;
-import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.ImportarClientesService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
 import java.nio.file.Path;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class ClientesView extends VBox {
 
     private final ClienteDAO dao = new ClienteDAO();
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
+
+    // Columnas base — sus IDs coinciden con los nombres de propiedad en Cliente
+    private static final Set<String> COLS_BASE_IDS = Set.of(
+        "nombre", "apellidos", "tipo", "nif", "telefono", "email", "ciudad"
+    );
 
     public ClientesView() {
         getStyleClass().add("content-view");
@@ -39,19 +47,22 @@ public class ClientesView extends VBox {
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        actualizarColumnasDinamicas();
     }
+
+    // ── Toolbar ───────────────────────────────────────────────────────────────
 
     private HBox buildToolbar() {
         TextField txtBuscar = new TextField();
-        txtBuscar.setPromptText("Buscar por nombre, apellido, NIF o email...");
+        txtBuscar.setPromptText("Buscar por nombre, apellido, NIF o email…");
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
-        Button btnNuevo    = btn("+ Nuevo",       "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",     "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",    "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar",  "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",  "#8E44AD", this::exportar);
+        Button btnNuevo    = btn("+ Nuevo",      "#4C9BE8", this::nuevo);
+        Button btnEditar   = btn("✏ Editar",    "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",   "#E74C3C", this::borrar);
+        Button btnImportar = btn("📥 Importar", "#27AE60", this::importar);
+        Button btnExportar = btn("📤 Exportar", "#8E44AD", this::exportar);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
@@ -60,23 +71,62 @@ public class ClientesView extends VBox {
         return bar;
     }
 
+    // ── Tabla ─────────────────────────────────────────────────────────────────
+
     @SuppressWarnings("unchecked")
     private TableView<Cliente> buildTabla() {
         tabla.getStyleClass().add("data-table");
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
-
         tabla.getColumns().addAll(
-            col("Nombre", "nombre", 160),
+            col("Nombre",    "nombre",    160),
             col("Apellidos", "apellidos", 160),
-            col("Tipo", "tipo", 80),
-            col("NIF/CIF", "nif", 100),
-            col("Teléfono", "telefono", 110),
-            col("Email", "email", 180),
-            col("Ciudad", "ciudad", 120)
+            col("Tipo",      "tipo",       80),
+            col("NIF/CIF",   "nif",       100),
+            col("Teléfono",  "telefono",  110),
+            col("Email",     "email",     180),
+            col("Ciudad",    "ciudad",    120)
         );
         tabla.setPlaceholder(new Label("No hay clientes registrados"));
         return tabla;
     }
+
+    /**
+     * Revisa las columnas extra que existen en la BD y las añade a la tabla si no están ya.
+     * Se llama al construir la vista y tras cada importación.
+     */
+    private void actualizarColumnasDinamicas() {
+        try {
+            // Conjunto de IDs de columnas ya presentes en la tabla
+            Set<String> presentes = new java.util.HashSet<>();
+            for (TableColumn<Cliente, ?> c : tabla.getColumns()) {
+                Object ud = c.getUserData();
+                if (ud instanceof String s) presentes.add(s);
+                else presentes.add(c.getId());
+            }
+
+            List<String> extras = dao.obtenerColumnasExtra();
+            for (String col : extras) {
+                if (presentes.contains(col)) continue;
+
+                // Formatear la cabecera: quitar prefijo "ext_" y convertir _ en espacios
+                String titulo = col.startsWith("ext_") ? col.substring(4) : col;
+                titulo = titulo.replace("_", " ");
+                titulo = titulo.isEmpty() ? col
+                    : Character.toUpperCase(titulo.charAt(0)) + titulo.substring(1);
+
+                final String colKey = col;
+                TableColumn<Cliente, String> tc = new TableColumn<>(titulo);
+                tc.setUserData(colKey);
+                tc.setCellValueFactory(data ->
+                    new SimpleStringProperty(nvl(data.getValue().getExtra(colKey))));
+                tc.setPrefWidth(130);
+                tabla.getColumns().add(tc);
+                presentes.add(colKey);
+            }
+        } catch (Exception ignored) {}
+    }
+
+    // ── CRUD ──────────────────────────────────────────────────────────────────
 
     private void cargar() {
         try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
@@ -118,7 +168,7 @@ public class ClientesView extends VBox {
         Dialog<Cliente> dlg = new Dialog<>();
         dlg.setTitle(c.getId() == 0 ? "Nuevo cliente" : "Editar cliente");
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        dlg.getDialogPane().getStylesheets().addAll(getScene() != null ? getScene().getStylesheets() : java.util.List.of());
+        dlg.getDialogPane().getStylesheets().addAll(getScene() != null ? getScene().getStylesheets() : List.of());
         dlg.getDialogPane().setPrefWidth(520);
 
         GridPane grid = new GridPane();
@@ -134,7 +184,7 @@ public class ClientesView extends VBox {
         TextField fCp        = tf(c.getCp());
         TextField fTelefono  = tf(c.getTelefono());
         TextField fEmail     = tf(c.getEmail());
-        TextArea fNotas      = new TextArea(nvl(c.getNotas()));
+        TextArea  fNotas     = new TextArea(nvl(c.getNotas()));
         fNotas.setPrefRowCount(3);
 
         int r = 0;
@@ -142,10 +192,8 @@ public class ClientesView extends VBox {
         grid.addRow(r++, lbl("Tipo"), fTipo, lbl("NIF/CIF"), fNif);
         grid.addRow(r++, lbl("Teléfono"), fTelefono, lbl("Email"), fEmail);
         grid.addRow(r++, lbl("Ciudad"), fCiudad, lbl("C.P."), fCp);
-        grid.add(lbl("Dirección"), 0, r); grid.add(fDireccion, 1, r, 3, 1);
-        r++;
-        grid.add(lbl("Notas"), 0, r);
-        grid.add(fNotas, 1, r, 3, 1);
+        grid.add(lbl("Dirección"), 0, r); grid.add(fDireccion, 1, r, 3, 1); r++;
+        grid.add(lbl("Notas"), 0, r);     grid.add(fNotas,     1, r, 3, 1);
 
         dlg.getDialogPane().setContent(grid);
 
@@ -172,36 +220,44 @@ public class ClientesView extends VBox {
         return dlg.showAndWait();
     }
 
-    private <T> TableColumn<Cliente, T> col(String titulo, String campo, double ancho) {
-        TableColumn<Cliente, T> c = new TableColumn<>(titulo);
-        c.setCellValueFactory(new PropertyValueFactory<>(campo));
-        c.setPrefWidth(ancho);
-        return c;
-    }
+    // ── Importar ──────────────────────────────────────────────────────────────
 
     private void importar() {
-        String[][] formatos = {
-            {"csv",  "📊  CSV (Excel / LibreOffice)",
-                "Archivo .csv generado por la exportación de clientes de esta aplicación.", "csv"},
-            {"sql",  "🗄️  Volcado SQL",
-                "Script .sql generado por la exportación SQL de clientes.", "sql"},
-            {"json", "{ }  JSON",
-                "Archivo .json generado por la exportación JSON de clientes o por el backup completo.", "json"}
+        // {clave, etiqueta, descripción, extensiones...}
+        Object[][] formatos = {
+            {"excel", "📊  Excel",
+             "Libros .xlsx, .xls, .xlsm, .xlsb, .xltx, .xltm — cualquier variante",
+             new String[]{"*.xlsx","*.xls","*.xlsm","*.xlsb","*.xltx","*.xltm"}},
+            {"csv",   "📋  CSV",
+             "Archivo separado por comas o punto y coma (.csv)",
+             new String[]{"*.csv"}},
+            {"json",  "{ }  JSON",
+             "Array de clientes o backup exportado desde esta aplicación (.json)",
+             new String[]{"*.json"}},
+            {"sql",   "🗄️  SQL",
+             "Script con sentencias INSERT INTO clientes (.sql)",
+             new String[]{"*.sql"}},
+            {"word",  "📝  Word",
+             "Documento con una tabla de clientes — .docx (Word moderno) o .doc (Word clásico)",
+             new String[]{"*.docx","*.doc"}},
+            {"pdf",   "📄  PDF",
+             "PDF con una tabla de datos de clientes (.pdf)",
+             new String[]{"*.pdf"}}
         };
 
         ToggleGroup grupo = new ToggleGroup();
         VBox opBox = new VBox(4);
-        for (String[] f : formatos) {
+        for (Object[] f : formatos) {
             RadioButton rb = new RadioButton();
             rb.setToggleGroup(grupo);
             rb.setUserData(f);
 
-            Label nombre = new Label(f[1]);
-            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
-            Label desc = new Label(f[2]);
-            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
+            Label lblNombre = new Label((String) f[1]);
+            lblNombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
+            Label lblDesc = new Label((String) f[2]);
+            lblDesc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
 
-            VBox texto = new VBox(2, nombre, desc);
+            VBox texto = new VBox(2, lblNombre, lblDesc);
             HBox fila  = new HBox(10, rb, texto);
             fila.setAlignment(Pos.CENTER_LEFT);
             fila.setPadding(new Insets(7, 12, 7, 12));
@@ -212,38 +268,41 @@ public class ClientesView extends VBox {
         grupo.getToggles().get(0).setSelected(true);
 
         Label aviso = new Label(
-            "ℹ  Los clientes importados se añaden o actualizan. " +
-            "Los clientes con el mismo ID serán sobreescritos.");
+            "ℹ  Si el archivo contiene columnas que no existen en la aplicación, " +
+            "se crearán automáticamente.");
         aviso.setWrapText(true);
         aviso.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
 
-        Label lblSelecciona = new Label("Selecciona el formato del archivo:");
-        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lblSelecciona, opBox, aviso);
+        Label lblTitulo = new Label("Selecciona el formato del archivo a importar:");
+        lblTitulo.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblTitulo, opBox, aviso);
         contenido.setPadding(new Insets(16));
 
-        Dialog<String[]> dlg = new Dialog<>();
+        Dialog<Object[]> dlg = new Dialog<>();
         dlg.setTitle("Importar clientes");
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        dlg.getDialogPane().setPrefWidth(460);
+        dlg.getDialogPane().setPrefWidth(500);
         dlg.getDialogPane().setContent(contenido);
         ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
-                return (String[]) grupo.getSelectedToggle().getUserData();
+                return (Object[]) grupo.getSelectedToggle().getUserData();
             return null;
         });
 
         dlg.showAndWait().ifPresent(this::lanzarImportacion);
     }
 
-    private void lanzarImportacion(String[] fmt) {
+    private void lanzarImportacion(Object[] fmt) {
+        String[] extensiones = (String[]) fmt[3];
+        String etiqueta = ((String) fmt[1]).replaceAll("[^\\w ]", "").trim();
+
         FileChooser fc = new FileChooser();
-        fc.setTitle("Seleccionar archivo de clientes — " + fmt[1]);
+        fc.setTitle("Seleccionar archivo — " + etiqueta);
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Clientes", "*." + fmt[3]),
+            new FileChooser.ExtensionFilter(etiqueta + " — Clientes", extensiones),
             new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
         );
         File docs = new File(System.getProperty("user.home"), "Documents");
@@ -253,26 +312,21 @@ public class ClientesView extends VBox {
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
-        Path origen = archivo.toPath();
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        final File archivoFinal = archivo;
         Thread.ofVirtual().start(() -> {
             try {
-                int importados = switch (fmt[0]) {
-                    case "csv"  -> ImportBackupService.importarClientesCSV(origen);
-                    case "sql"  -> ImportBackupService.importarClientesSQL(origen);
-                    case "json" -> ImportBackupService.importarClientesJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + fmt[0]);
-                };
-                final int n = importados;
+                ImportarClientesService svc = new ImportarClientesService();
+                ImportarClientesService.ResultadoImportacion resultado = svc.importar(archivoFinal);
+
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     cargar();
-                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Se han importado o actualizado " + n + " cliente(s) correctamente.",
-                        ButtonType.OK);
+                    actualizarColumnasDinamicas(); // añadir columnas nuevas a la tabla
+                    Alert ok = new Alert(Alert.AlertType.INFORMATION, resultado.resumen(), ButtonType.OK);
                     ok.setTitle("Importación completada");
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -288,20 +342,22 @@ public class ClientesView extends VBox {
         });
     }
 
+    // ── Exportar ──────────────────────────────────────────────────────────────
+
     private void exportar() {
         String[][] formatos = {
             {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
+             "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
             {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de clientes como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
+             "Tabla de clientes como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
             {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con la estructura y los datos de la tabla clientes.", "sql"},
+             "Script SQL con la estructura y los datos de la tabla clientes.", "sql"},
             {"json",   "{ }  Exportar a JSON",
-                "Datos de todos los clientes en formato JSON estructurado.", "json"},
+             "Datos de todos los clientes en formato JSON estructurado.", "json"},
             {"pdf",    "📄  Exportar a PDF",
-                "Listado de clientes como tabla en un documento PDF.", "pdf"},
+             "Listado de clientes como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de clientes en documento Word (.docx), editable.", "docx"}
+             "Tabla de clientes en documento Word (.docx), editable.", "docx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -326,9 +382,9 @@ public class ClientesView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
-        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lblSelecciona, opBox);
+        Label lblTitulo = new Label("Selecciona el formato de exportación:");
+        lblTitulo.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
+        VBox contenido = new VBox(12, lblTitulo, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
@@ -396,9 +452,19 @@ public class ClientesView extends VBox {
         });
     }
 
+    // ── Helpers ───────────────────────────────────────────────────────────────
+
+    private <T> TableColumn<Cliente, T> col(String titulo, String campo, double ancho) {
+        TableColumn<Cliente, T> c = new TableColumn<>(titulo);
+        c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setPrefWidth(ancho);
+        c.setUserData(campo);
+        return c;
+    }
+
     private Button btn(String texto, String color, Runnable accion) {
         Button b = new Button(texto);
-        b.setStyle("-fx-background-color: " + color + "; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 6 14;");
+        b.setStyle("-fx-background-color:" + color + "; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:6 14;");
         b.setOnAction(e -> accion.run());
         return b;
     }
