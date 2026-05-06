@@ -19,12 +19,17 @@ import java.util.function.Consumer;
 public class OllamaService {
 
     private static final String BASE_URL = "http://localhost:11434";
-    private static final String DEFAULT_MODEL = "llama3.2";
+    private static final String DEFAULT_MODEL = "phi3:mini"; // Modelo ligero y eficiente para 16GB RAM
+
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
     private String modeloActual;
     private boolean routingAutomatico = true;
     private volatile String contextoERP = null;
+
+    // Historial de conversación (pares user/assistant de los últimos 5 intercambios)
+    private final List<String[]> historial = new ArrayList<>();
+    private static final int MAX_HISTORIAL = 10; // 5 intercambios = 10 entradas
 
     private static final String SYSTEM_PROMPT = """
         Eres Mulberry Assistant, el asistente IA senior especializado del ERP Gráficas Mulberry.\s
@@ -97,6 +102,11 @@ public class OllamaService {
 
         Mantén un tono experto en serigrafía e impresión. Sé proactivo ofreciendo\s
         recomendaciones útiles de optimización, costes y gestión.
+
+        SUGERENCIAS DE SEGUIMIENTO:
+        Al final de respuestas informativas (sin acción), cierra con una pregunta breve y directa\s
+        ofreciendo ejecutar el paso siguiente. Ejemplos: "¿Quieres que lo cree ahora?",\s
+        "¿Procedo con el presupuesto?", "¿Genero la factura?". Una sola frase, al final.
         """;
 
     // ── Routing inteligente ───────────────────────────────────────────────────
@@ -113,15 +123,23 @@ public class OllamaService {
     );
 
     // Substrings en orden de prioridad para tareas complejas (mayor potencia primero)
+    // Modelos actualizados y optimizados para 16GB de RAM (versiones cuantificadas)
     private static final List<String> PRIORIDAD_POTENTE = List.of(
-        "qwen3", "llama3.3", "llama3.2", "llama3.1", "mistral-large",
-        "phi-4", "deepseek", "gemma3", "llama3", "mistral", "phi3", "qwen2.5", "qwen"
+        "qwen:3.5-9b", // Qwen 3.5 9B - Excelente rendimiento-tamaño, operativo en 16GB
+        "phi4:reasoning-vision-15b", // Phi-4-reasoning-vision-15B - Multimodal, operativo en 16GB
+        "llama4:scout", // Llama 4 Scout - MoE, eficiente con cuantizaciones, operativo en 16GB
+        "gemma4:e4b", // Gemma 4 E4B - Diseñado para laptops, operativo en 16GB
+        "llama3", // Llama3 (versiones 8B cuantificadas), muy operativo y actualizado
+        "mistral" // Mistral (versiones 7B cuantificadas), muy operativo y actualizado
     );
 
     // Substrings en orden de prioridad para tareas rápidas (menor peso primero)
+    // Modelos ligeros y rápidos, los más actualizados y operativos para 16GB de RAM
     private static final List<String> PRIORIDAD_LIGERO = List.of(
-        "tinyllama", "phi3:mini", "phi3.5:mini", "gemma2:2b", "qwen2.5:1.5b",
-        "llama3.2:1b", "phi3", "gemma2", "gemma", "qwen2.5", "qwen"
+        "phi3:mini", // Phi-3 Mini - Muy ligero y eficiente, actualizado
+        "gemma2:2b", // Gemma 2B - Muy ligero, diseñado para dispositivos, actualizado
+        "tinyllama", // TinyLlama - Extremadamente ligero, operativo
+        "qwen2:1.5b" // Qwen 2 1.5B - Versión pequeña y rápida, actualizado
     );
 
     public TipoTarea clasificarTarea(String mensaje) {
@@ -142,7 +160,8 @@ public class OllamaService {
                 if (modelo.toLowerCase().contains(clave.toLowerCase())) return modelo;
             }
         }
-        // Fallback: el más grande para tareas complejas, el más pequeño para rápidas
+        // Fallback: si no se encuentra ninguno de los prioritarios, se usa el modelo actual o el primero/último disponible
+        // Se mantiene la lógica original de fallback, pero con modelos más actuales en las listas
         return tipo == TipoTarea.COMPLEJA ? modelos.get(0) : modelos.get(modelos.size() - 1);
     }
 
@@ -210,11 +229,14 @@ public class OllamaService {
                 body.put("stream", true);
 
                 var messages = mapper.createArrayNode();
+
+                // System prompt principal
                 var sysMsg = mapper.createObjectNode();
                 sysMsg.put("role", "system");
                 sysMsg.put("content", SYSTEM_PROMPT);
                 messages.add(sysMsg);
-                // Contexto ERP en tiempo real (se inyecta como segundo mensaje de sistema)
+
+                // Contexto ERP en tiempo real
                 String ctxSnapshot = contextoERP;
                 if (ctxSnapshot != null && !ctxSnapshot.isBlank()) {
                     var ctxMsg = mapper.createObjectNode();
@@ -222,6 +244,18 @@ public class OllamaService {
                     ctxMsg.put("content", ctxSnapshot);
                     messages.add(ctxMsg);
                 }
+
+                // Historial de los últimos intercambios (memoria conversacional)
+                synchronized (historial) {
+                    for (String[] entrada : historial) {
+                        var hMsg = mapper.createObjectNode();
+                        hMsg.put("role", entrada[0]);
+                        hMsg.put("content", entrada[1]);
+                        messages.add(hMsg);
+                    }
+                }
+
+                // Mensaje actual del usuario
                 var userMsg = mapper.createObjectNode();
                 userMsg.put("role", "user");
                 userMsg.put("content", userMessage);
@@ -238,6 +272,7 @@ public class OllamaService {
                 HttpResponse<java.io.InputStream> response = httpClient.send(
                     request, HttpResponse.BodyHandlers.ofInputStream());
 
+                StringBuilder respuestaCompleta = new StringBuilder();
                 try (var reader = new java.io.BufferedReader(
                         new java.io.InputStreamReader(response.body()))) {
                     String line;
@@ -248,12 +283,24 @@ public class OllamaService {
                         if (messageNode != null) {
                             String content = messageNode.get("content").asText();
                             if (!content.isEmpty()) {
+                                respuestaCompleta.append(content);
                                 javafx.application.Platform.runLater(() -> onChunk.accept(content));
                             }
                         }
                         if (node.has("done") && node.get("done").asBoolean()) break;
                     }
                 }
+
+                // Guardar en historial sin JSON (para no contaminar el contexto conversacional)
+                String textoAsistente = JsonInterceptorService
+                    .interceptar(respuestaCompleta.toString()).textoLimpio();
+                if (textoAsistente.isBlank()) textoAsistente = respuestaCompleta.toString();
+                synchronized (historial) {
+                    historial.add(new String[]{"user", userMessage});
+                    historial.add(new String[]{"assistant", textoAsistente});
+                    while (historial.size() > MAX_HISTORIAL) historial.remove(0);
+                }
+
                 javafx.application.Platform.runLater(onComplete);
 
             } catch (Exception e) {
@@ -391,6 +438,7 @@ public class OllamaService {
 
     public void setContextoERP(String contexto)  { this.contextoERP = contexto; }
     public void clearContextoERP()               { this.contextoERP = null; }
+    public void limpiarHistorial()               { synchronized (historial) { historial.clear(); } }
 
     // ── ModelInfo ─────────────────────────────────────────────────────────────
 

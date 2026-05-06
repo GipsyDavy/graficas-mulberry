@@ -10,6 +10,7 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
 import org.gipsybuho.model.AccionERP;
 import org.gipsybuho.service.AccionDispatcherService;
 import org.gipsybuho.service.JsonInterceptorService;
@@ -19,8 +20,9 @@ import java.util.function.Consumer;
 
 public class ConfirmacionAccionPanel extends VBox {
 
-    private static final String COLOR_VERDE = "#27AE60";
-    private static final String COLOR_GRIS  = "#7F8C8D";
+    private static final String COLOR_VERDE      = "#27AE60";
+    private static final String COLOR_GRIS       = "#7F8C8D";
+    private static final String COLOR_SUMMARY_BG = "#FEF9FD";
 
     // Colores derivados dinámicamente de la acción
     private final String colorAccion;
@@ -33,7 +35,7 @@ public class ConfirmacionAccionPanel extends VBox {
     private TextArea  txtObservaciones;
 
     public ConfirmacionAccionPanel(AccionERP accion,
-                                   Consumer<String> onConfirmado,
+                                   Consumer<AccionDispatcherService.ResultadoAccion> onConfirmado,
                                    Runnable onCancelado) {
         this.accion      = accion;
         this.colorAccion = accion.colorHex();
@@ -269,7 +271,7 @@ public class ConfirmacionAccionPanel extends VBox {
 
     // ── Botones ───────────────────────────────────────────────────────────────
 
-    private HBox buildBotones(Consumer<String> onConfirmado, Runnable onCancelado) {
+    private HBox buildBotones(Consumer<AccionDispatcherService.ResultadoAccion> onConfirmado, Runnable onCancelado) {
         Button btnConfirmar = new Button("✓  Confirmar Acción");
         btnConfirmar.setStyle(String.format(
             "-fx-background-color:%s; -fx-text-fill:white; -fx-font-weight:bold; " +
@@ -286,14 +288,18 @@ public class ConfirmacionAccionPanel extends VBox {
             aplicarEdiciones();
             setDisable(true);
             Thread.ofVirtual().start(() -> {
-                AccionDispatcherService.ResultadoAccion resultado = dispatcher.ejecutar(accion);
+                AccionDispatcherService.ResultadoAccion resultado;
+                try {
+                    resultado = dispatcher.ejecutar(accion);
+                } catch (Throwable t) {
+                    resultado = AccionDispatcherService.ResultadoAccion.error(
+                        "Error inesperado al ejecutar la acción",
+                        t.getMessage() != null ? t.getMessage() : t.getClass().getSimpleName());
+                }
+                final AccionDispatcherService.ResultadoAccion r = resultado;
                 javafx.application.Platform.runLater(() -> {
-                    String feedback = resultado.exito()
-                        ? resultado.mensaje() + (resultado.detalle().isBlank()
-                            ? "" : "\n" + resultado.detalle())
-                        : "❌ " + resultado.mensaje() + "\n" + resultado.detalle();
-                    marcarEjecutado(resultado.exito());
-                    onConfirmado.accept(feedback);
+                    marcarEjecutado(r.exito());
+                    onConfirmado.accept(r);
                 });
             });
         });

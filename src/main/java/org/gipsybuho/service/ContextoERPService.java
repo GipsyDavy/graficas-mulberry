@@ -3,40 +3,73 @@ package org.gipsybuho.service;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
+import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.dao.PedidoDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
+import org.gipsybuho.model.Material;
+import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.Pedido;
 
 import java.time.LocalDate;
+import java.time.format.TextStyle;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Recopila datos actuales de la BD y los formatea como bloque de texto
  * para inyectarlos como contexto en los mensajes a Ollama.
+ * El resultado se cachea 8 minutos para evitar consultas repetidas.
  */
 public class ContextoERPService {
 
-    private final PresupuestoDAO presupuestoDAO = new PresupuestoDAO();
-    private final FacturaDAO     facturaDAO     = new FacturaDAO();
-    private final PedidoDAO      pedidoDAO      = new PedidoDAO();
-    private final MaterialDAO    materialDAO    = new MaterialDAO();
-    private final ClienteDAO     clienteDAO     = new ClienteDAO();
+    private static final long CACHE_MILLIS = 8 * 60 * 1000L;
 
-    /**
-     * Construye un bloque de texto con los datos actuales del ERP.
-     * Cada sección se protege con try-catch para que un fallo aislado
-     * no rompa el resto del contexto.
-     */
+    private final PresupuestoDAO    presupuestoDAO    = new PresupuestoDAO();
+    private final FacturaDAO        facturaDAO        = new FacturaDAO();
+    private final PedidoDAO         pedidoDAO         = new PedidoDAO();
+    private final MaterialDAO       materialDAO       = new MaterialDAO();
+    private final ClienteDAO        clienteDAO        = new ClienteDAO();
+    private final NotaCalendarioDAO calendarioDAO     = new NotaCalendarioDAO();
+
+    private volatile String cachedContexto = null;
+    private volatile long   cacheTimestamp = 0L;
+
+    /** Devuelve el contexto cacheado o lo regenera si han pasado más de 8 minutos. */
     public String construirContexto() {
-        LocalDate hoy = LocalDate.now();
-        StringBuilder sb = new StringBuilder();
-        sb.append("=== DATOS ACTUALES DEL ERP — ").append(hoy).append(" ===\n\n");
+        long ahora = System.currentTimeMillis();
+        if (cachedContexto != null && (ahora - cacheTimestamp) < CACHE_MILLIS) {
+            return cachedContexto;
+        }
+        String nuevo = generarContexto();
+        cachedContexto  = nuevo;
+        cacheTimestamp  = ahora;
+        return nuevo;
+    }
+
+    /** Invalida el caché para forzar una regeneración en la próxima llamada. */
+    public void invalidarCache() {
+        cacheTimestamp = 0L;
+    }
+
+    // ── Construcción real del contexto ────────────────────────────────────────
+
+    private String generarContexto() {
+        LocalDate hoy  = LocalDate.now();
+        int anio       = hoy.getYear();
+        int mes        = hoy.getMonthValue();
+        String mesNombre = hoy.getMonth().getDisplayName(TextStyle.FULL, Locale.of("es", "ES"));
+
+        StringBuilder alertas = new StringBuilder();
+        StringBuilder sb      = new StringBuilder();
+
+        sb.append("=== DATOS ACTUALES DEL ERP — ").append(hoy)
+          .append(" (").append(mesNombre).append(" ").append(anio).append(") ===\n\n");
 
         // ── Presupuestos ──────────────────────────────────────────────────────
         try {
-            int borrador  = presupuestoDAO.countByEstado("borrador");
-            int enviado   = presupuestoDAO.countByEstado("enviado");
-            int aceptado  = presupuestoDAO.countByEstado("aceptado");
+            int borrador = presupuestoDAO.countByEstado("borrador");
+            int enviado  = presupuestoDAO.countByEstado("enviado");
+            int aceptado = presupuestoDAO.countByEstado("aceptado");
             sb.append("PRESUPUESTOS  → ")
               .append(borrador).append(" en borrador · ")
               .append(enviado).append(" enviados · ")
@@ -47,16 +80,38 @@ public class ContextoERPService {
 
         // ── Facturas ──────────────────────────────────────────────────────────
         try {
-            int pendientes  = facturaDAO.countByEstado("pendiente");
-            int pagadas     = facturaDAO.countByEstado("pagada");
-            double totalAnio = facturaDAO.totalFacturadoAnio(hoy.getYear());
+            int    pendientes = facturaDAO.countByEstado("pendiente");
+            int    pagadas    = facturaDAO.countByEstado("pagada");
+            double totalAnio  = facturaDAO.totalFacturadoAnio(anio);
+            double totalMes   = facturaDAO.totalFacturadoMes(anio, mes);
             sb.append("FACTURAS      → ")
               .append(pendientes).append(" pendientes de cobro · ")
-              .append(pagadas).append(" pagadas | ")
-              .append("Facturado ").append(hoy.getYear()).append(": ")
+              .append(pagadas).append(" pagadas\n")
+              .append("  Facturado ").append(mesNombre).append(": ")
+              .append(String.format("%.2f €", totalMes))
+              .append("  |  Acumulado ").append(anio).append(": ")
               .append(String.format("%.2f €", totalAnio)).append("\n");
+
+            if (pendientes > 0)
+                alertas.append("  ⚠ ").append(pendientes)
+                       .append(" factura(s) pendientes de cobro\n");
         } catch (Exception ignored) {
             sb.append("FACTURAS      → (datos no disponibles)\n");
+        }
+
+        // ── Top clientes del mes ──────────────────────────────────────────────
+        try {
+            List<String[]> top = facturaDAO.topClientesMes(anio, mes, 5);
+            if (!top.isEmpty()) {
+                sb.append("TOP CLIENTES ").append(mesNombre.toUpperCase()).append(":\n");
+                int pos = 1;
+                for (String[] fila : top) {
+                    sb.append("  ").append(pos++).append(". ")
+                      .append(fila[0]).append(" — ").append(fila[1]).append("\n");
+                }
+            }
+        } catch (Exception ignored) {
+            // sección opcional, silencio en caso de error
         }
 
         // ── Pedidos ───────────────────────────────────────────────────────────
@@ -69,8 +124,7 @@ public class ContextoERPService {
                         || e.toLowerCase().contains("proceso")
                         || e.equalsIgnoreCase("en produccion")
                         || e.equalsIgnoreCase("en producción"));
-                })
-                .count();
+                }).count();
             long entregados = todos.stream()
                 .filter(p -> p.getEstado() != null
                     && (p.getEstado().equalsIgnoreCase("entregado")
@@ -86,11 +140,21 @@ public class ContextoERPService {
         // ── Materiales ────────────────────────────────────────────────────────
         try {
             int total     = materialDAO.findAll().size();
-            int bajoStock = materialDAO.countBajoStock();
+            List<Material> criticos = materialDAO.findBajoStock();
             sb.append("MATERIALES    → ").append(total).append(" en catálogo");
-            if (bajoStock > 0) sb.append(" · ⚠ ").append(bajoStock).append(" con stock bajo");
-            else               sb.append(" · ✅ todos con stock suficiente");
-            sb.append("\n");
+            if (!criticos.isEmpty()) {
+                sb.append(" · ⚠ ").append(criticos.size()).append(" con stock bajo:\n");
+                for (Material m : criticos) {
+                    sb.append("    - ").append(m.getNombre())
+                      .append(" (stock actual: ").append(m.getStockActual())
+                      .append(" ").append(m.getUnidad())
+                      .append(", mínimo: ").append(m.getStockMinimo()).append(")\n");
+                }
+                alertas.append("  ⚠ ").append(criticos.size())
+                       .append(" material(es) bajo stock mínimo → revisar pedidos\n");
+            } else {
+                sb.append(" · ✅ todos con stock suficiente\n");
+            }
         } catch (Exception ignored) {
             sb.append("MATERIALES    → (datos no disponibles)\n");
         }
@@ -101,6 +165,30 @@ public class ContextoERPService {
             sb.append("CLIENTES      → ").append(total).append(" registrados\n");
         } catch (Exception ignored) {
             sb.append("CLIENTES      → (datos no disponibles)\n");
+        }
+
+        // ── Calendario: próximos 7 días ───────────────────────────────────────
+        try {
+            List<NotaCalendario> proximas = calendarioDAO.findProximas(7);
+            if (!proximas.isEmpty()) {
+                sb.append("\nCALENDARIO (próximos 7 días):\n");
+                for (NotaCalendario n : proximas) {
+                    sb.append("  ").append(n.getFecha())
+                      .append(" → ").append(n.getTitulo());
+                    if (n.getNota() != null && !n.getNota().isBlank())
+                        sb.append(": ").append(n.getNota());
+                    sb.append("\n");
+                }
+            }
+        } catch (Exception ignored) {
+            // sección opcional, silencio en caso de error
+        }
+
+        // ── Alertas destacadas ────────────────────────────────────────────────
+        if (!alertas.isEmpty()) {
+            int idx = sb.indexOf("\n\n");
+            int insertPos = idx >= 0 ? idx + 2 : Math.max(sb.indexOf("\n") + 1, 0);
+            sb.insert(insertPos, "ALERTAS ACTIVAS:\n" + alertas + "\n");
         }
 
         sb.append("\n=== FIN CONTEXTO ERP ===\n")

@@ -185,6 +185,43 @@ public class FacturaDAO {
         }
     }
 
+    public double totalFacturadoMes(int anio, int mes) throws SQLException {
+        String mesStr = String.format("%04d-%02d", anio, mes);
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                "SELECT COALESCE(SUM(total),0) FROM facturas WHERE strftime('%Y-%m',fecha)=? AND estado!='anulada'")) {
+            ps.setString(1, mesStr);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getDouble(1) : 0;
+        }
+    }
+
+    public List<String[]> topClientesMes(int anio, int mes, int limit) throws SQLException {
+        List<String[]> list = new ArrayList<>();
+        String mesStr = String.format("%04d-%02d", anio, mes);
+        String sql = """
+            SELECT (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) AS cliente_nombre,
+                   COALESCE(SUM(f.total), 0) AS total_mes
+            FROM facturas f
+            LEFT JOIN clientes c ON f.cliente_id = c.id
+            WHERE strftime('%Y-%m', f.fecha) = ? AND f.estado != 'anulada'
+            GROUP BY f.cliente_id, c.nombre, c.apellidos
+            ORDER BY total_mes DESC
+            LIMIT ?
+            """;
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+            ps.setString(1, mesStr);
+            ps.setInt(2, limit);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                list.add(new String[]{
+                    rs.getString("cliente_nombre"),
+                    String.format("%.2f €", rs.getDouble("total_mes"))
+                });
+            }
+        }
+        return list;
+    }
+
     private void set(PreparedStatement ps, Factura f) throws SQLException {
         ps.setString(1, f.getNumero());
         ps.setInt(2, f.getPresupuestoId());

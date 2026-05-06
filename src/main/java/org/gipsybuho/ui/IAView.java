@@ -11,6 +11,7 @@ import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.model.AccionERP;
+import org.gipsybuho.service.AccionDispatcherService;
 import org.gipsybuho.service.ChatExportService;
 import org.gipsybuho.service.ChatExportService.MensajeChat;
 import org.gipsybuho.service.ContextoERPService;
@@ -85,9 +86,10 @@ public class IAView extends VBox {
         btnExportar.setOnAction(e -> exportarChat());
 
         Button btnLimpiar = new Button("🗑 Limpiar chat");
-        btnLimpiar.setOnAction(e -> chatBox.getChildren().clear());
+        btnLimpiar.setOnAction(e -> { chatBox.getChildren().clear(); ia.limpiarHistorial(); });
 
         cbContexto = new CheckBox("📊 Datos ERP");
+        cbContexto.setSelected(true);
         cbContexto.setStyle("-fx-font-size:12; -fx-text-fill:#374151;");
         cbContexto.setTooltip(new Tooltip(
             "Incluir datos actuales del ERP (presupuestos, facturas, pedidos…) " +
@@ -181,7 +183,22 @@ public class IAView extends VBox {
         return box;
     }
 
+    private record BurbujaIA(HBox row, TextFlow textFlow) {}
+
+    private BurbujaIA crearBurbujaIA() {
+        TextFlow tf = new TextFlow();
+        tf.setMaxWidth(600);
+        tf.setPadding(new Insets(10, 14, 10, 14));
+        tf.setStyle("-fx-background-color:#F0E6EF; -fx-background-radius:16 16 16 4;");
+        VBox container = new VBox(tf);
+        HBox row = new HBox(container);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(2, 8, 2, 8));
+        return new BurbujaIA(row, tf);
+    }
+
     private void enviar() {
+        if (btnEnviar.isDisabled()) return;   // evita doble envío por chips durante streaming
         String texto = txtInput.getText().trim();
         if (texto.isBlank()) return;
         txtInput.clear();
@@ -189,10 +206,9 @@ public class IAView extends VBox {
 
         addBurbuja(texto, true);
 
-        // Burbuja IA en construcción
-        HBox burbujaIA = crearBurbujaIA();
-        chatBox.getChildren().add(burbujaIA);
-        TextFlow tf = (TextFlow) ((VBox)burbujaIA.getChildren().get(0)).getChildren().get(0);
+        BurbujaIA burbuja = crearBurbujaIA();
+        chatBox.getChildren().add(burbuja.row());
+        TextFlow tf = burbuja.textFlow();
         Text cursor = new Text("▊");
         cursor.setFill(Color.web("#6B2D5E"));
         tf.getChildren().add(cursor);
@@ -201,10 +217,13 @@ public class IAView extends VBox {
         StringBuilder respuesta = new StringBuilder();
         boolean inyectarContexto = cbContexto.isSelected();
 
-        // Contexto ERP se obtiene off-thread para no bloquear el hilo FX
         Thread.ofVirtual().start(() -> {
             if (inyectarContexto) {
-                ia.setContextoERP(contextoService.construirContexto());
+                try {
+                    ia.setContextoERP(contextoService.construirContexto());
+                } catch (Exception ex) {
+                    ia.clearContextoERP();
+                }
             } else {
                 ia.clearContextoERP();
             }
@@ -260,19 +279,6 @@ public class IAView extends VBox {
         row.setPadding(new Insets(2, 8, 2, 8));
         chatBox.getChildren().add(row);
         scrollAbajo();
-    }
-
-    private HBox crearBurbujaIA() {
-        TextFlow tf = new TextFlow();
-        tf.setMaxWidth(600);
-        tf.setPadding(new Insets(10, 14, 10, 14));
-        tf.setStyle("-fx-background-color:#F0E6EF; -fx-background-radius:16 16 16 4;");
-
-        VBox container = new VBox(tf);
-        HBox row = new HBox(container);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(2, 8, 2, 8));
-        return row;
     }
 
     private void addMensajeSistema(String mensaje) {
@@ -455,25 +461,67 @@ public class IAView extends VBox {
             JsonInterceptorService.interceptar(respuestaCompleta);
 
         if (resultado.tieneAccion()) {
-            // Actualizar la burbuja para mostrar solo el texto natural (sin JSON)
             String textoLimpio = resultado.textoLimpio();
             burbuja.getChildren().clear();
-            if (!textoLimpio.isBlank()) {
-                burbuja.getChildren().add(new Text(textoLimpio));
-            } else {
-                burbuja.getChildren().add(new Text("Aquí tienes la acción detectada:"));
-            }
-            // Insertar panel de confirmación
+            burbuja.getChildren().add(new Text(
+                textoLimpio.isBlank() ? "Aquí tienes la acción detectada:" : textoLimpio));
             mostrarPanelConfirmacion(resultado.accion().get());
+        } else {
+            addSugerenciasContextuales(respuestaCompleta);
         }
+    }
+
+    private void addSugerenciasContextuales(String texto) {
+        String lower = texto.toLowerCase();
+
+        // Detectar hasta 2 acciones relevantes según el contenido de la respuesta
+        record Sugerencia(String etiqueta, String mensaje) {}
+        List<Sugerencia> sugerencias = new ArrayList<>();
+
+        if (lower.contains("presupuest"))
+            sugerencias.add(new Sugerencia("📋 Crear presupuesto", "Crea un presupuesto con los datos anteriores"));
+        if (lower.contains("factur") && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("🧾 Generar factura", "Genera una factura con esos datos"));
+        if (lower.contains("pedido") && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("🛒 Crear pedido", "Crea un pedido con esos datos"));
+        if (lower.contains("cliente") && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("👤 Crear cliente", "Crea ese cliente en el sistema"));
+        if ((lower.contains("stock") || lower.contains("material")) && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("🗃 Ver materiales", "¿Qué materiales están bajo stock?"));
+        if ((lower.contains("nómin") || lower.contains("nomina")) && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("💰 Calcular nómina", "Calcula la nómina con esos datos"));
+        if ((lower.contains("calendario") || lower.contains("evento") || lower.contains("cita"))
+                && sugerencias.size() < 2)
+            sugerencias.add(new Sugerencia("📅 Agendar evento", "Agéndalo en el calendario"));
+
+        if (sugerencias.isEmpty()) return;
+
+        Label lbl = new Label("¿Quieres que lo haga ahora?");
+        lbl.setStyle("-fx-font-size:11; -fx-text-fill:#6B2D5E; -fx-font-style:italic;");
+
+        FlowPane chips = new FlowPane(8, 4);
+        chips.getChildren().add(lbl);
+        for (Sugerencia s : sugerencias) {
+            Button chip = new Button(s.etiqueta());
+            chip.setStyle(
+                "-fx-background-color:#F0E6EF; -fx-text-fill:#6B2D5E; -fx-font-size:11; " +
+                "-fx-padding:4 12; -fx-border-radius:20; -fx-background-radius:20; -fx-cursor:hand;");
+            chip.setOnAction(e -> { txtInput.setText(s.mensaje()); enviar(); });
+            chips.getChildren().add(chip);
+        }
+
+        HBox row = new HBox(chips);
+        row.setAlignment(Pos.CENTER_LEFT);
+        row.setPadding(new Insets(0, 8, 4, 8));
+        chatBox.getChildren().add(row);
+        scrollAbajo();
     }
 
     private void mostrarPanelConfirmacion(AccionERP accion) {
         ConfirmacionAccionPanel panel = new ConfirmacionAccionPanel(
             accion,
-            feedbackTexto -> addMensajeFeedback(feedbackTexto,
-                !feedbackTexto.startsWith("❌")),
-            () -> addMensajeFeedback("Acción cancelada por el usuario.", false)
+            r -> addMensajeFeedback(r.mensaje(), r.detalle(), r.exito()),
+            () -> addMensajeFeedback("Acción cancelada", "El usuario canceló la acción antes de ejecutarla.", false)
         );
 
         HBox wrapper = new HBox(panel);
@@ -483,17 +531,33 @@ public class IAView extends VBox {
         scrollAbajo();
     }
 
-    private void addMensajeFeedback(String texto, boolean esExito) {
-        Text t = new Text(texto);
-        t.setFill(Color.web(esExito ? "#1A5C2A" : "#7F1D1D"));
-        TextFlow tf = new TextFlow(t);
-        tf.setMaxWidth(620);
-        tf.setPadding(new Insets(10, 14, 10, 14));
-        tf.setStyle(esExito
-            ? "-fx-background-color:#DCFCE7; -fx-background-radius:10; -fx-border-color:#86EFAC; -fx-border-radius:10; -fx-border-width:1;"
-            : "-fx-background-color:#FEE2E2; -fx-background-radius:10; -fx-border-color:#FCA5A5; -fx-border-radius:10; -fx-border-width:1;");
+    private void addMensajeFeedback(String titulo, String detalle, boolean esExito) {
+        String colorTexto = esExito ? "#1A5C2A" : "#7F1D1D";
+        String estiloCarta = esExito
+            ? "-fx-background-color:#DCFCE7; -fx-background-radius:10; " +
+              "-fx-border-color:#86EFAC; -fx-border-radius:10; -fx-border-width:1;"
+            : "-fx-background-color:#FEE2E2; -fx-background-radius:10; " +
+              "-fx-border-color:#FCA5A5; -fx-border-radius:10; -fx-border-width:1;";
 
-        HBox row = new HBox(tf);
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.setWrapText(true);
+        lblTitulo.setStyle(String.format(
+            "-fx-font-weight:bold; -fx-font-size:13; -fx-text-fill:%s;", colorTexto));
+
+        VBox card = new VBox(4, lblTitulo);
+        card.setMaxWidth(620);
+        card.setPadding(new Insets(10, 14, 10, 14));
+        card.setStyle(estiloCarta);
+
+        if (detalle != null && !detalle.isBlank()) {
+            Label lblDetalle = new Label(detalle);
+            lblDetalle.setWrapText(true);
+            lblDetalle.setStyle(String.format(
+                "-fx-font-size:11; -fx-text-fill:%s;", colorTexto));
+            card.getChildren().add(lblDetalle);
+        }
+
+        HBox row = new HBox(card);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(2, 8, 2, 8));
         chatBox.getChildren().add(row);

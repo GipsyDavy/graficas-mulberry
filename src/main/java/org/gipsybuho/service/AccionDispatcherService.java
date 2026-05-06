@@ -380,6 +380,41 @@ public class AccionDispatcherService {
         }
     }
 
+    // ── Crear Cliente ─────────────────────────────────────────────────────────
+
+    private ResultadoAccion crearCliente(AccionERP accion) {
+        try {
+            if (accion.data == null || accion.data.clienteNombre == null
+                    || accion.data.clienteNombre.isBlank()) {
+                return ResultadoAccion.error("Falta el nombre del cliente",
+                    "Indica el nombre (y opcionalmente apellidos) del cliente a crear.");
+            }
+
+            Cliente c = new Cliente();
+            String nombreCompleto = accion.data.clienteNombre.trim();
+            int espacio = nombreCompleto.indexOf(' ');
+            if (espacio > 0) {
+                c.setNombre(nombreCompleto.substring(0, espacio));
+                c.setApellidos(nombreCompleto.substring(espacio + 1));
+            } else {
+                c.setNombre(nombreCompleto);
+            }
+            c.setTipo("empresa");
+            if (accion.data.observaciones != null) c.setNotas(accion.data.observaciones);
+
+            clienteDAO.save(c);
+
+            return ResultadoAccion.ok(
+                "👤 Cliente «" + c.getNombreCompleto() + "» creado correctamente.",
+                String.format("Nombre: %s · ID: %d · Tipo: empresa\nNotas: %s",
+                    c.getNombreCompleto(), c.getId(),
+                    c.getNotas() != null ? c.getNotas() : "—"));
+
+        } catch (Exception e) {
+            return ResultadoAccion.error("Error al crear el cliente", e.getMessage());
+        }
+    }
+
     // ── Consultar Cliente ─────────────────────────────────────────────────────
 
     private ResultadoAccion consultarCliente(AccionERP accion) {
