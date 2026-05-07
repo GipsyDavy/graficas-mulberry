@@ -9,6 +9,7 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.Separator;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
@@ -17,9 +18,11 @@ import javafx.scene.layout.Region;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.apache.pdfbox.pdmodel.PDDocument;
+import org.apache.pdfbox.printing.PDFPageable;
 import org.apache.pdfbox.rendering.PDFRenderer;
 
 import java.awt.image.BufferedImage;
+import java.awt.print.PrinterJob;
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
@@ -64,10 +67,14 @@ public class PdfPreviewWindow {
         Button btnSiguiente = new Button("Siguiente ▶");
         Button btnZoomIn    = new Button("🔍+");
         Button btnZoomOut   = new Button("🔍−");
+        Button btnImprimir  = new Button("🖨  Imprimir");
 
         for (Button b : new Button[]{btnAnterior, btnSiguiente, btnZoomIn, btnZoomOut}) {
             b.setStyle("-fx-padding:4 12; -fx-background-radius:4;");
         }
+        btnImprimir.setStyle(
+            "-fx-padding:4 14; -fx-background-radius:4; -fx-background-color:#2980b9; " +
+            "-fx-text-fill:white; -fx-font-weight:bold; -fx-cursor:hand;");
 
         btnAnterior.setDisable(true);
         btnSiguiente.setDisable(paginas.size() <= 1);
@@ -104,9 +111,33 @@ public class PdfPreviewWindow {
             imgView.setFitWidth(zoom[0]);
         });
 
+        btnImprimir.setOnAction(e -> {
+            btnImprimir.setDisable(true);
+            Thread.ofVirtual().start(() -> {
+                try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
+                    PrinterJob job = PrinterJob.getPrinterJob();
+                    job.setPageable(new PDFPageable(doc));
+                    if (job.printDialog()) {
+                        job.print();
+                    }
+                } catch (Exception ex) {
+                    Platform.runLater(() -> {
+                        Alert a = new Alert(Alert.AlertType.ERROR,
+                            "Error al imprimir:\n" + ex.getMessage());
+                        a.setHeaderText(null);
+                        a.showAndWait();
+                    });
+                } finally {
+                    Platform.runLater(() -> btnImprimir.setDisable(false));
+                }
+            });
+        });
+
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox controles = new HBox(8, btnAnterior, lblPagina, btnSiguiente, spacer, btnZoomOut, btnZoomIn);
+        Separator sep = new Separator(javafx.geometry.Orientation.VERTICAL);
+        HBox controles = new HBox(8, btnAnterior, lblPagina, btnSiguiente, spacer,
+                                  btnZoomOut, btnZoomIn, sep, btnImprimir);
         controles.setAlignment(Pos.CENTER_LEFT);
         controles.setPadding(new Insets(8, 12, 8, 12));
         controles.setStyle("-fx-background-color:#f5f5f5; -fx-border-color:#dddddd; -fx-border-width:0 0 1 0;");

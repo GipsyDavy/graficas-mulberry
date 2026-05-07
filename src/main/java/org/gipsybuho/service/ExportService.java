@@ -29,7 +29,9 @@ import org.gipsybuho.model.Pedido;
 import org.gipsybuho.model.Factura;
 import org.gipsybuho.model.Presupuesto;
 import org.gipsybuho.model.Tarifa;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblGrid;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTcPr;
 import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 
 import java.awt.Color;
@@ -477,7 +479,8 @@ public class ExportService {
 
             String[] headers = {"Nombre", "Apellidos", "Tipo", "NIF/CIF", "Teléfono", "Email", "Ciudad"};
             XWPFTable tabla = word.createTable(clientes.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 20, 20, 8, 12, 12, 20, 8);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -702,7 +705,8 @@ public class ExportService {
             String[] headers = {"Número", "Cliente", "Fecha", "Vencimiento",
                                  "Forma pago", "Estado", "Base", "IVA%", "Total"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 10, 22, 9, 9, 12, 8, 10, 6, 10);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -926,7 +930,8 @@ public class ExportService {
 
             String[] headers = {"Número", "Cliente", "Fecha", "Factura", "Pedido", "Estado", "Observaciones"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 10, 22, 10, 10, 10, 8, 30);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -1159,7 +1164,8 @@ public class ExportService {
             String[] headers = {"Número", "Cliente", "Fecha", "Entrega prev.",
                                  "Estado", "Descripción", "Total", "Pendiente"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 9, 20, 9, 9, 10, 24, 10, 9);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -1399,7 +1405,8 @@ public class ExportService {
                                  "Stock actual", "Stock mín.", "Unidad",
                                  "Precio/ud.", "Proveedor", "Alerta"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 18, 12, 12, 9, 9, 7, 10, 16, 7);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -1633,7 +1640,8 @@ public class ExportService {
             String[] headers = {"Técnica", "Nombre", "Descripción",
                                  "Precio/ud.", "Setup (€)", "Mín. uds.", "Activa"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 12, 18, 30, 12, 12, 10, 6);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -1867,7 +1875,8 @@ public class ExportService {
             String[] headers = {"Empleado", "Período", "Salario base",
                                  "Bruto", "SS Trab.", "IRPF%", "IRPF €", "Neto", "Coste empresa"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 18, 10, 11, 11, 10, 7, 10, 12, 11);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -2105,7 +2114,8 @@ public class ExportService {
             String[] headers = {"Nombre", "Apellidos", "NIF", "Categoría",
                                  "Salario base", "IRPF%", "Fecha alta", "Estado"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 16, 18, 11, 14, 13, 9, 11, 8);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -2338,7 +2348,8 @@ public class ExportService {
 
             String[] headers = {"Número", "Cliente", "Fecha", "Validez", "Estado", "Base", "IVA%", "Total"};
             XWPFTable tabla = word.createTable(lista.size() + 1, headers.length);
-            tabla.setWidth("100%");
+            setTableWidth(tabla, "100%");
+            setCeldasAncho(tabla, 9000, 10, 22, 9, 9, 10, 12, 7, 12);
 
             XWPFTableRow headerRow = tabla.getRow(0);
             for (int i = 0; i < headers.length; i++) {
@@ -2417,8 +2428,9 @@ public class ExportService {
 
             // 2. Datos del documento (Número, Fecha, Validez, Estado)
             addSectionTitle(document, "DATOS DEL PRESUPUESTO");
-            XWPFTable docDataTable = document.createTable(2, 4);
+            XWPFTable docDataTable = document.createTable(0, 4);
             setTableWidth(docDataTable, "100%");
+            setCeldasAncho(docDataTable, 9000, 20, 30, 20, 30);
             addTableRow(docDataTable, new String[]{"Número:", p.getNumero(), "Estado:", s(p.getEstado()).toUpperCase()}, true, colorGrisClaro, colorGrisBorde);
             addTableRow(docDataTable, new String[]{"Fecha:", s(p.getFecha()), "Validez:", s(p.getFechaValidez())}, false, colorGrisClaro, colorGrisBorde);
             addParagraph(document, ""); // Espacio
@@ -2440,28 +2452,30 @@ public class ExportService {
 
             // 4. Tabla de líneas del presupuesto
             addSectionTitle(document, "DETALLE DEL PRESUPUESTO");
-            XWPFTable lineasTable = document.createTable(1, 6);
+            XWPFTable lineasTable = document.createTable(0, 6);
             setTableWidth(lineasTable, "100%");
             String[] headers = {"Descripción", "Técnica", "Cant.", "Precio ud.", "Dto.", "Total"};
             addTableHeader(lineasTable, headers, colorMulberry);
+            setCeldasAncho(lineasTable, 9000, 35, 20, 8, 14, 8, 15);
 
             boolean par = false;
             for (LineaPresupuesto linea : p.getLineas()) {
                 String bgColor = par ? colorGrisClaro : "FFFFFF";
                 XWPFTableRow row = lineasTable.createRow();
-                addCell(row, s(linea.getDescripcion()), bgColor, false, ParagraphAlignment.LEFT);
-                addCell(row, s(linea.getTecnica()), bgColor, false, ParagraphAlignment.LEFT);
-                addCell(row, String.valueOf(linea.getCantidad()), bgColor, false, ParagraphAlignment.RIGHT);
-                addCell(row, String.format("%.2f €", linea.getPrecioUnit()), bgColor, false, ParagraphAlignment.RIGHT);
-                addCell(row, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bgColor, false, ParagraphAlignment.RIGHT);
-                addCell(row, String.format("%.2f €", linea.getTotal()), bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, 0, s(linea.getDescripcion()), bgColor, false, ParagraphAlignment.LEFT);
+                addCell(row, 1, s(linea.getTecnica()), bgColor, false, ParagraphAlignment.LEFT);
+                addCell(row, 2, String.valueOf(linea.getCantidad()), bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, 3, String.format("%.2f €", linea.getPrecioUnit()), bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, 4, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, 5, String.format("%.2f €", linea.getTotal()), bgColor, false, ParagraphAlignment.RIGHT);
                 par = !par;
             }
             addParagraph(document, ""); // Espacio
 
             // 5. Totales
-            XWPFTable totalesTable = document.createTable(3, 2);
+            XWPFTable totalesTable = document.createTable(0, 2);
             setTableWidth(totalesTable, "40%");
+            setCeldasAncho(totalesTable, 3600, 60, 40);
             totalesTable.setTableAlignment(TableRowAlign.RIGHT); // Alinea la tabla a la derecha
             addTableRow(totalesTable, new String[]{"Base imponible:", String.format("%.2f €", p.getBaseImponible())}, false, "FFFFFF", colorGrisBorde);
             addTableRow(totalesTable, new String[]{String.format("IVA (%.0f%%):", p.getIvaPorcentaje()), String.format("%.2f €", p.getIvaImporte())}, false, "FFFFFF", colorGrisBorde);
@@ -2530,11 +2544,61 @@ public class ExportService {
         r.setColor(colorHex);
     }
 
-    // Helper para establecer el ancho de una tabla
-    private static void setTableWidth(XWPFTable table, String width) {
-        CTTblWidth tblWidth = table.getCTTbl().addNewTblPr().addNewTblW();
-        tblWidth.setType(STTblWidth.PCT);
-        tblWidth.setW(new BigInteger(width.replace("%", "")));
+    // ── Ancho de tabla en DXA. 9000 twips ≈ ancho de texto A4 con márgenes estándar.
+    private static void setTableWidth(XWPFTable table, String widthPct) {
+        int dxa = 9000 * Integer.parseInt(widthPct.replace("%", "")) / 100;
+        CTTblWidth tblW = table.getCTTbl().getTblPr().getTblW();
+        tblW.setType(STTblWidth.DXA);
+        tblW.setW(BigInteger.valueOf(dxa));
+    }
+
+    // ── Distribuye anchos de columna proporcionales a los pesos. Llámalo ANTES de
+    //    añadir filas de datos (solo actúa sobre las filas ya presentes).
+    private static void setCeldasAncho(XWPFTable table, int totalDxa, int... pesos) {
+        int sumaPesos = 0;
+        for (int p : pesos) sumaPesos += p;
+        int[] anchos = new int[pesos.length];
+        for (int i = 0; i < pesos.length; i++) anchos[i] = totalDxa * pesos[i] / sumaPesos;
+
+        CTTblGrid grid = table.getCTTbl().addNewTblGrid();
+        for (int a : anchos) grid.addNewGridCol().setW(BigInteger.valueOf(a));
+
+        for (XWPFTableRow row : table.getRows()) {
+            java.util.List<XWPFTableCell> cells = row.getTableCells();
+            for (int i = 0; i < Math.min(cells.size(), anchos.length); i++) {
+                var ctTc = cells.get(i).getCTTc();
+                CTTcPr tcPr = ctTc.isSetTcPr() ? ctTc.getTcPr() : ctTc.addNewTcPr();
+                CTTblWidth tcW = tcPr.isSetTcW() ? tcPr.getTcW() : tcPr.addNewTcW();
+                tcW.setType(STTblWidth.DXA);
+                tcW.setW(BigInteger.valueOf(anchos[i]));
+            }
+        }
+    }
+
+    // ── Configura tabla de lista: ancho, columnas proporcionales y fila cabecera.
+    private static void prepararCabeceraTabla(XWPFTable tabla, String[] headers, int... pesos) {
+        setTableWidth(tabla, "100%");
+        setCeldasAncho(tabla, 9000, pesos);
+        XWPFTableRow headerRow = tabla.getRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            XWPFTableCell cell = i < headerRow.getTableCells().size()
+                ? headerRow.getCell(i) : headerRow.addNewTableCell();
+            cell.setColor("6B2D5E");
+            XWPFParagraph p = cell.getParagraphs().get(0);
+            p.setSpacingAfter(0); p.setSpacingBefore(0);
+            XWPFRun r = p.getRuns().isEmpty() ? p.createRun() : p.getRuns().get(0);
+            r.setBold(true); r.setColor("FFFFFF"); r.setFontSize(9);
+            r.setText(headers[i]);
+        }
+    }
+
+    // ── Rellena una celda de lista (fondo + texto + tamaño de fuente).
+    private static void setWordCelda(XWPFTableCell cell, String text, String bgColor, int fontSize) {
+        cell.setColor(bgColor);
+        XWPFParagraph p = cell.getParagraphs().get(0);
+        p.setSpacingAfter(0); p.setSpacingBefore(0);
+        XWPFRun r = p.getRuns().isEmpty() ? p.createRun() : p.getRuns().get(0);
+        r.setFontSize(fontSize); r.setText(text);
     }
 
     // Helper para añadir una fila a una tabla de datos de documento/cliente
@@ -2563,9 +2627,9 @@ public class ExportService {
         }
     }
 
-    // Helper para añadir una celda a una tabla de líneas
-    private static void addCell(XWPFTableRow row, String text, String bgColorHex, boolean bold, ParagraphAlignment align) {
-        XWPFTableCell cell = row.addNewTableCell();
+    // Helper para configurar una celda de líneas por índice de columna
+    private static void addCell(XWPFTableRow row, int colIdx, String text, String bgColorHex, boolean bold, ParagraphAlignment align) {
+        XWPFTableCell cell = colIdx < row.getTableCells().size() ? row.getCell(colIdx) : row.addNewTableCell();
         cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
         cell.setColor(bgColorHex);
 
@@ -2594,8 +2658,9 @@ public class ExportService {
             addWordTituloDocumento(document, "ALBARÁN DE ENTREGA", colorMulberry);
 
             addSectionTitle(document, "DATOS DEL ALBARÁN");
-            XWPFTable tDatos = document.createTable(2, 4);
+            XWPFTable tDatos = document.createTable(0, 4);
             setTableWidth(tDatos, "100%");
+            setCeldasAncho(tDatos, 9000, 20, 30, 20, 30);
             addTableRow(tDatos, new String[]{"Número:", s(a.getNumero()), "Fecha:", s(a.getFecha())}, false, colorGrisClaro, colorGrisBorde);
             addTableRow(tDatos, new String[]{"Factura ref.:", s(a.getFacturaNumero()), "Pedido ref.:", s(a.getPedidoNumero())}, false, colorGrisClaro, colorGrisBorde);
             addParagraph(document, "");
@@ -2606,16 +2671,17 @@ public class ExportService {
 
             if (a.getLineas() != null && !a.getLineas().isEmpty()) {
                 addSectionTitle(document, "ARTÍCULOS");
-                XWPFTable tLineas = document.createTable(1, 3);
+                XWPFTable tLineas = document.createTable(0, 3);
                 setTableWidth(tLineas, "100%");
                 addTableHeader(tLineas, new String[]{"Descripción", "Cantidad", "Unidad"}, colorMulberry);
+                setCeldasAncho(tLineas, 9000, 60, 20, 20);
                 boolean par = false;
                 for (LineaAlbaran linea : a.getLineas()) {
                     String bg = par ? colorGrisClaro : "FFFFFF";
                     XWPFTableRow row = tLineas.createRow();
-                    addCell(row, s(linea.getDescripcion()), bg, false, ParagraphAlignment.LEFT);
-                    addCell(row, String.valueOf(linea.getCantidad()), bg, false, ParagraphAlignment.CENTER);
-                    addCell(row, s(linea.getUnidad()), bg, false, ParagraphAlignment.CENTER);
+                    addCell(row, 0, s(linea.getDescripcion()), bg, false, ParagraphAlignment.LEFT);
+                    addCell(row, 1, String.valueOf(linea.getCantidad()), bg, false, ParagraphAlignment.CENTER);
+                    addCell(row, 2, s(linea.getUnidad()), bg, false, ParagraphAlignment.CENTER);
                     par = !par;
                 }
                 addParagraph(document, "");
@@ -2646,16 +2712,18 @@ public class ExportService {
             addWordTituloDocumento(document, "RECIBO DE NÓMINA", colorMulberry);
 
             addSectionTitle(document, "DATOS DEL EMPLEADO");
-            XWPFTable tEmp = document.createTable(2, 4);
+            XWPFTable tEmp = document.createTable(0, 4);
             setTableWidth(tEmp, "100%");
+            setCeldasAncho(tEmp, 9000, 20, 30, 20, 30);
             addTableRow(tEmp, new String[]{"Empleado:", e.getNombreCompleto(), "Período:", s(n.getPeriodo())}, true, colorGrisClaro, colorGrisBorde);
             addTableRow(tEmp, new String[]{"NIF:", s(e.getNif()), "Categoría:", s(e.getCategoria())}, false, colorGrisClaro, colorGrisBorde);
             addParagraph(document, "");
 
             addSectionTitle(document, "PERCEPCIONES");
-            XWPFTable tPerc = document.createTable(1, 2);
+            XWPFTable tPerc = document.createTable(0, 2);
             setTableWidth(tPerc, "100%");
             addTableHeader(tPerc, new String[]{"Concepto", "Importe"}, colorMulberry);
+            setCeldasAncho(tPerc, 9000, 70, 30);
             addWordNominaFila(tPerc, "Salario base", String.format("%.2f €", n.getSalarioBase()), "FFFFFF", colorGrisBorde);
             if (n.getComplementos() > 0)
                 addWordNominaFila(tPerc, "Complementos", String.format("%.2f €", n.getComplementos()), colorGrisClaro, colorGrisBorde);
@@ -2667,17 +2735,19 @@ public class ExportService {
             addParagraph(document, "");
 
             addSectionTitle(document, "DEDUCCIONES");
-            XWPFTable tDed = document.createTable(1, 2);
+            XWPFTable tDed = document.createTable(0, 2);
             setTableWidth(tDed, "100%");
             addTableHeader(tDed, new String[]{"Concepto", "Importe"}, colorMulberry);
+            setCeldasAncho(tDed, 9000, 70, 30);
             addWordNominaFila(tDed, String.format("S.S. trabajador"), String.format("%.2f €", n.getSsTrabajador()), "FFFFFF", colorGrisBorde);
             addWordNominaFila(tDed, String.format("IRPF (%.1f%%)", n.getIrpfPorcentaje()), String.format("%.2f €", n.getIrpfImporte()), colorGrisClaro, colorGrisBorde);
             addWordNominaFila(tDed, "TOTAL DEDUCCIONES", String.format("%.2f €", n.getTotalDeducciones()), colorMulberry, colorGrisBorde);
             addParagraph(document, "");
 
             addSectionTitle(document, "LÍQUIDO A PERCIBIR");
-            XWPFTable tLiq = document.createTable(1, 2);
+            XWPFTable tLiq = document.createTable(0, 2);
             setTableWidth(tLiq, "60%");
+            setCeldasAncho(tLiq, 5400, 70, 30);
             addWordNominaFila(tLiq, "NETO A PERCIBIR", String.format("%.2f €", n.getNeto()), colorMulberry, colorGrisBorde);
             addParagraph(document, "");
 
@@ -2706,8 +2776,9 @@ public class ExportService {
             addWordTituloDocumento(document, "PEDIDO DE TRABAJO", colorMulberry);
 
             addSectionTitle(document, "DATOS DEL PEDIDO");
-            XWPFTable tDatos = document.createTable(2, 4);
+            XWPFTable tDatos = document.createTable(0, 4);
             setTableWidth(tDatos, "100%");
+            setCeldasAncho(tDatos, 9000, 20, 30, 20, 30);
             addTableRow(tDatos, new String[]{"Número:", s(p.getNumero()), "Estado:", s(p.getEstadoDisplay())}, true, colorGrisClaro, colorGrisBorde);
             addTableRow(tDatos, new String[]{"Fecha entrada:", p.getFecha() != null ? p.getFecha().toString() : "", "Entrega prevista:", p.getFechaEntregaPrevista() != null ? p.getFechaEntregaPrevista().toString() : ""}, false, colorGrisClaro, colorGrisBorde);
             addParagraph(document, "");
@@ -2722,8 +2793,9 @@ public class ExportService {
             }
 
             addSectionTitle(document, "IMPORTES");
-            XWPFTable tImp = document.createTable(1, 2);
+            XWPFTable tImp = document.createTable(0, 2);
             setTableWidth(tImp, "50%");
+            setCeldasAncho(tImp, 4500, 60, 40);
             addWordNominaFila(tImp, "Importe total:", String.format("%.2f €", p.getImporteTotal()), "FFFFFF", colorGrisBorde);
             addWordNominaFila(tImp, "Pagado:", String.format("%.2f €", p.getImportePagado()), colorGrisClaro, colorGrisBorde);
             addWordNominaFila(tImp, "Pendiente:", String.format("%.2f €", p.getImportePendiente()), colorMulberry, colorGrisBorde);
@@ -2752,8 +2824,9 @@ public class ExportService {
             addWordEmpresaHeader(document, colorMulberry);
             addWordTituloDocumento(document, "FICHA DE CLIENTE", colorMulberry);
             addSectionTitle(document, "DATOS DEL CLIENTE");
-            XWPFTable t = document.createTable(1, 2);
+            XWPFTable t = document.createTable(0, 2);
             setTableWidth(t, "100%");
+            setCeldasAncho(t, 9000, 30, 70);
             addWordFichaFila(t, "Nombre:",     s(c.getNombre()),    "FFFFFF",      colorGrisBorde);
             addWordFichaFila(t, "Apellidos:",  s(c.getApellidos()), colorGrisClaro, colorGrisBorde);
             addWordFichaFila(t, "Tipo:",       s(c.getTipo()),       "FFFFFF",      colorGrisBorde);
@@ -2780,8 +2853,9 @@ public class ExportService {
             addWordEmpresaHeader(document, colorMulberry);
             addWordTituloDocumento(document, "FICHA DE TARIFA", colorMulberry);
             addSectionTitle(document, "DATOS DE LA TARIFA");
-            XWPFTable t = document.createTable(1, 2);
+            XWPFTable t = document.createTable(0, 2);
             setTableWidth(t, "100%");
+            setCeldasAncho(t, 9000, 30, 70);
             addWordFichaFila(t, "Técnica:",       s(tarifa.getTecnica()),      "FFFFFF",      colorGrisBorde);
             addWordFichaFila(t, "Nombre:",         s(tarifa.getNombre()),       colorGrisClaro, colorGrisBorde);
             addWordFichaFila(t, "Descripción:",    s(tarifa.getDescripcion()),  "FFFFFF",      colorGrisBorde);
@@ -2807,8 +2881,9 @@ public class ExportService {
             addWordEmpresaHeader(document, colorMulberry);
             addWordTituloDocumento(document, "FICHA DE MATERIAL", colorMulberry);
             addSectionTitle(document, "DATOS DEL MATERIAL");
-            XWPFTable t = document.createTable(1, 2);
+            XWPFTable t = document.createTable(0, 2);
             setTableWidth(t, "100%");
+            setCeldasAncho(t, 9000, 30, 70);
             addWordFichaFila(t, "Nombre:",        s(m.getNombre()),       "FFFFFF",      colorGrisBorde);
             addWordFichaFila(t, "Referencia:",     s(m.getReferencia()),   colorGrisClaro, colorGrisBorde);
             addWordFichaFila(t, "Categoría:",      s(m.getCategoria()),    "FFFFFF",      colorGrisBorde);
@@ -2836,8 +2911,9 @@ public class ExportService {
             addWordEmpresaHeader(document, colorMulberry);
             addWordTituloDocumento(document, "FICHA DE EMPLEADO", colorMulberry);
             addSectionTitle(document, "DATOS DEL EMPLEADO");
-            XWPFTable t = document.createTable(1, 2);
+            XWPFTable t = document.createTable(0, 2);
             setTableWidth(t, "100%");
+            setCeldasAncho(t, 9000, 30, 70);
             addWordFichaFila(t, "Nombre:",      s(e.getNombre()),       "FFFFFF",      colorGrisBorde);
             addWordFichaFila(t, "Apellidos:",   s(e.getApellidos()),    colorGrisClaro, colorGrisBorde);
             addWordFichaFila(t, "NIF:",         s(e.getNif()),          "FFFFFF",      colorGrisBorde);
@@ -2858,16 +2934,26 @@ public class ExportService {
     // ─────────────────────────────────────────────────────────────────────────
 
     private static void addWordEmpresaHeader(XWPFDocument document, String colorMulberry) {
-        XWPFParagraph p = document.createParagraph();
-        p.setAlignment(ParagraphAlignment.RIGHT);
-        XWPFRun r = p.createRun();
-        r.setText("GRÁFICAS MULBERRY"); r.setBold(true); r.setFontSize(20); r.setColor(colorMulberry);
-        r.addBreak(); r.setFontSize(9); r.setColor("000000");
-        r.setText(DatabaseManager.getConfig("empresa_direccion")); r.addBreak();
-        r.setText(DatabaseManager.getConfig("empresa_cp") + " " + DatabaseManager.getConfig("empresa_ciudad")); r.addBreak();
-        r.setText("Tel: " + DatabaseManager.getConfig("empresa_telefono")); r.addBreak();
-        r.setText(DatabaseManager.getConfig("empresa_email")); r.addBreak();
-        r.setText("NIF: " + DatabaseManager.getConfig("empresa_nif"));
+        XWPFParagraph p0 = document.createParagraph();
+        p0.setAlignment(ParagraphAlignment.RIGHT);
+        p0.setSpacingAfter(0);
+        XWPFRun r0 = p0.createRun();
+        r0.setText("GRÁFICAS MULBERRY"); r0.setBold(true); r0.setFontSize(18); r0.setColor(colorMulberry);
+
+        String[] lineas = {
+            DatabaseManager.getConfig("empresa_direccion"),
+            DatabaseManager.getConfig("empresa_cp") + " " + DatabaseManager.getConfig("empresa_ciudad"),
+            "Tel: " + DatabaseManager.getConfig("empresa_telefono"),
+            DatabaseManager.getConfig("empresa_email"),
+            "NIF: " + DatabaseManager.getConfig("empresa_nif")
+        };
+        for (String linea : lineas) {
+            XWPFParagraph p = document.createParagraph();
+            p.setAlignment(ParagraphAlignment.RIGHT);
+            p.setSpacingAfter(0); p.setSpacingBefore(0);
+            XWPFRun r = p.createRun();
+            r.setText(linea != null ? linea : ""); r.setFontSize(9); r.setColor("333333");
+        }
     }
 
     private static void addWordTituloDocumento(XWPFDocument document, String titulo, String colorMulberry) {
@@ -2934,9 +3020,10 @@ public class ExportService {
 
     // Helper para añadir la fila de cabecera de una tabla de líneas
     private static void addTableHeader(XWPFTable table, String[] headers, String colorHex) {
-        XWPFTableRow row = table.getRow(0);
+        XWPFTableRow row = table.getNumberOfRows() > 0 ? table.getRow(0) : table.createRow();
         for (int i = 0; i < headers.length; i++) {
-            XWPFTableCell cell = i == 0 ? row.getCell(0) : row.addNewTableCell();
+            XWPFTableCell cell = row.getCell(i);
+            if (cell == null) cell = row.addNewTableCell();
             cell.setColor(colorHex);
             XWPFParagraph p = cell.getParagraphs().get(0);
             p.setAlignment(ParagraphAlignment.CENTER);
@@ -2994,8 +3081,9 @@ public class ExportService {
 
             // 2. Datos del documento
             addSectionTitle(document, "DATOS DE LA FACTURA");
-            XWPFTable docDataTable = document.createTable(3, 4);
+            XWPFTable docDataTable = document.createTable(0, 4);
             setTableWidth(docDataTable, "100%");
+            setCeldasAncho(docDataTable, 9000, 20, 30, 20, 30);
             addTableRow(docDataTable, new String[]{"Número:", s(f.getNumero()), "Estado:", s(f.getEstado()).toUpperCase()}, true, colorGrisClaro, colorGrisBorde);
             addTableRow(docDataTable, new String[]{"Fecha:", s(f.getFecha()), "Vencimiento:", s(f.getFechaVencimiento())}, false, colorGrisClaro, colorGrisBorde);
             addTableRow(docDataTable, new String[]{"Forma de pago:", s(f.getFormaPago()), "", ""}, false, colorGrisClaro, colorGrisBorde);
@@ -3017,27 +3105,29 @@ public class ExportService {
 
             // 4. Tabla de líneas
             addSectionTitle(document, "DETALLE DE LA FACTURA");
-            XWPFTable lineasTable = document.createTable(1, 6);
+            XWPFTable lineasTable = document.createTable(0, 6);
             setTableWidth(lineasTable, "100%");
             addTableHeader(lineasTable, new String[]{"Descripción", "Técnica", "Cant.", "Precio ud.", "Dto.", "Total"}, colorMulberry);
+            setCeldasAncho(lineasTable, 9000, 35, 20, 8, 14, 8, 15);
 
             boolean par = false;
             for (LineaFactura linea : f.getLineas()) {
                 String bg = par ? colorGrisClaro : "FFFFFF";
                 XWPFTableRow row = lineasTable.createRow();
-                addCell(row, s(linea.getDescripcion()),                                           bg, false, ParagraphAlignment.LEFT);
-                addCell(row, s(linea.getTecnica()),                                               bg, false, ParagraphAlignment.LEFT);
-                addCell(row, String.valueOf(linea.getCantidad()),                                 bg, false, ParagraphAlignment.RIGHT);
-                addCell(row, String.format("%.2f €", linea.getPrecioUnit()),                      bg, false, ParagraphAlignment.RIGHT);
-                addCell(row, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bg, false, ParagraphAlignment.RIGHT);
-                addCell(row, String.format("%.2f €", linea.getTotal()),                           bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, 0, s(linea.getDescripcion()),                                           bg, false, ParagraphAlignment.LEFT);
+                addCell(row, 1, s(linea.getTecnica()),                                               bg, false, ParagraphAlignment.LEFT);
+                addCell(row, 2, String.valueOf(linea.getCantidad()),                                 bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, 3, String.format("%.2f €", linea.getPrecioUnit()),                      bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, 4, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, 5, String.format("%.2f €", linea.getTotal()),                           bg, false, ParagraphAlignment.RIGHT);
                 par = !par;
             }
             addParagraph(document, "");
 
             // 5. Totales
-            XWPFTable totalesTable = document.createTable(3, 2);
+            XWPFTable totalesTable = document.createTable(0, 2);
             setTableWidth(totalesTable, "40%");
+            setCeldasAncho(totalesTable, 3600, 60, 40);
             totalesTable.setTableAlignment(TableRowAlign.RIGHT);
             addTableRow(totalesTable, new String[]{"Base imponible:", String.format("%.2f €", f.getBaseImponible())}, false, "FFFFFF", colorGrisBorde);
             addTableRow(totalesTable, new String[]{String.format("IVA (%.0f%%):", f.getIvaPorcentaje()), String.format("%.2f €", f.getIvaImporte())}, false, "FFFFFF", colorGrisBorde);

@@ -31,6 +31,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 public class IAView extends VBox {
 
@@ -189,7 +192,7 @@ public class IAView extends VBox {
         return box;
     }
 
-    private record BurbujaIA(HBox row, TextFlow textFlow) {}
+    private record BurbujaIA(HBox row, TextFlow textFlow, VBox container) {}
 
     private BurbujaIA crearBurbujaIA() {
         TextFlow tf = new TextFlow();
@@ -200,7 +203,7 @@ public class IAView extends VBox {
         HBox row = new HBox(container);
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(2, 8, 2, 8));
-        return new BurbujaIA(row, tf);
+        return new BurbujaIA(row, tf, container);
     }
 
     private void enviar() {
@@ -215,12 +218,14 @@ public class IAView extends VBox {
         BurbujaIA burbuja = crearBurbujaIA();
         chatBox.getChildren().add(burbuja.row());
         TextFlow tf = burbuja.textFlow();
+        VBox container = burbuja.container();
         Text cursor = new Text("▊");
         cursor.setFill(Color.web("#6B2D5E"));
         tf.getChildren().add(cursor);
         scrollAbajo();
 
         StringBuilder respuesta = new StringBuilder();
+        boolean[] jsonOculto = {false};
         boolean inyectarContexto = cbContexto.isSelected();
 
         Thread.ofVirtual().start(() -> {
@@ -237,21 +242,35 @@ public class IAView extends VBox {
                 texto,
                 chunk -> {
                     respuesta.append(chunk);
-                    tf.getChildren().remove(cursor);
-                    tf.getChildren().clear();
-                    tf.getChildren().add(new Text(respuesta.toString()));
-                    tf.getChildren().add(cursor);
+                    if (!jsonOculto[0]) {
+                        int jsonIdx = encontrarInicioJson(respuesta.toString());
+                        if (jsonIdx >= 0) {
+                            jsonOculto[0] = true;
+                            String textoAntes = respuesta.substring(0, jsonIdx).stripTrailing();
+                            tf.getChildren().clear();
+                            if (!textoAntes.isEmpty()) {
+                                tf.getChildren().add(new Text(textoAntes));
+                            }
+                            mostrarSpinner(container);
+                        } else {
+                            tf.getChildren().clear();
+                            tf.getChildren().add(new Text(respuesta.toString()));
+                            tf.getChildren().add(cursor);
+                        }
+                    }
                     scrollAbajo();
                 },
                 () -> {
                     tf.getChildren().remove(cursor);
+                    quitarSpinner(container);
                     btnEnviar.setDisable(false);
                     SoundService.play(SoundService.Sound.NOTIFICATION);
                     scrollAbajo();
-                    procesarRespuestaFinal(respuesta.toString(), tf);
+                    procesarRespuestaFinal(respuesta.toString(), tf, container);
                 },
                 error -> {
                     tf.getChildren().clear();
+                    quitarSpinner(container);
                     Text errText = new Text("⚠ " + error + "\n\nAsegúrate de que Ollama esté en ejecución:\n  1. Descarga Ollama desde ollama.com\n  2. Ejecuta: ollama pull llama3.2\n  3. Ollama se inicia automáticamente al ejecutarse");
                     errText.setFill(Color.RED);
                     tf.getChildren().add(errText);
@@ -462,7 +481,44 @@ public class IAView extends VBox {
 
     // ── Interceptor JSON ──────────────────────────────────────────────────────
 
-    private void procesarRespuestaFinal(String respuestaCompleta, TextFlow burbuja) {
+    private static final String SPINNER_ID = "ia-json-spinner";
+
+    private static void mostrarSpinner(VBox container) {
+        Label lbl = new Label("⏳ Procesando...");
+        lbl.setId(SPINNER_ID);
+        lbl.setStyle(
+            "-fx-text-fill:#6B2D5E; -fx-font-size:12; " +
+            "-fx-font-style:italic; -fx-padding:6 0 4 14;");
+        Timeline anim = new Timeline(
+            new KeyFrame(Duration.millis(650), e ->
+                lbl.setText(lbl.getText().startsWith("⏳") ? "⌛ Procesando..." : "⏳ Procesando..."))
+        );
+        anim.setCycleCount(Timeline.INDEFINITE);
+        anim.play();
+        lbl.setUserData(anim);
+        container.getChildren().add(lbl);
+    }
+
+    private static void quitarSpinner(VBox container) {
+        container.getChildren().stream()
+            .filter(n -> SPINNER_ID.equals(n.getId()))
+            .forEach(n -> { if (n.getUserData() instanceof Timeline t) t.stop(); });
+        container.getChildren().removeIf(n -> SPINNER_ID.equals(n.getId()));
+    }
+
+    private static int encontrarInicioJson(String texto) {
+        int codeBlock = texto.indexOf("```json");
+        if (codeBlock >= 0) return codeBlock;
+        // Detectar JSON raw por "action":
+        int actionIdx = texto.indexOf("\"action\"");
+        if (actionIdx < 0) return -1;
+        int braceIdx = actionIdx - 1;
+        while (braceIdx >= 0 && texto.charAt(braceIdx) != '{') braceIdx--;
+        return braceIdx >= 0 ? braceIdx : -1;
+    }
+
+    private void procesarRespuestaFinal(String respuestaCompleta, TextFlow burbuja, VBox container) {
+        quitarSpinner(container);
         JsonInterceptorService.Resultado resultado =
             JsonInterceptorService.interceptar(respuestaCompleta);
 
@@ -471,7 +527,7 @@ public class IAView extends VBox {
             String textoLimpio = resultado.textoLimpio();
             burbuja.getChildren().clear();
             burbuja.getChildren().add(new Text(
-                textoLimpio.isBlank() ? "Aquí tienes la acción detectada:" : textoLimpio));
+                textoLimpio.isBlank() ? "Procesando acción..." : textoLimpio));
 
             if ("abrir_modulo".equals(accion.action)) {
                 abrirModulo(accion);

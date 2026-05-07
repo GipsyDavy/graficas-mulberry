@@ -26,24 +26,41 @@ public class ImportBackupService {
     // ─── 1. RESTAURAR DESDE .db ───────────────────────────────────────────────
 
     public static void restaurarSQLite(Path origen) throws Exception {
-        File dbActual = ExportService.getDbFile();
-        Path dbPath   = dbActual.toPath();
-        Path tempPath = dbPath.getParent().resolve("graficas_mulberry_restore_temp.db");
-
-        DatabaseManager.closeConnection();
-        Files.copy(dbPath, tempPath, StandardCopyOption.REPLACE_EXISTING);
-
+        Connection conn = DatabaseManager.getConnection();
+        String backupPath = origen.toAbsolutePath().toString().replace("'", "''");
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
         try {
-            Files.copy(origen, dbPath, StandardCopyOption.REPLACE_EXISTING);
-            DatabaseManager.initialize();
-            Files.deleteIfExists(tempPath);
-        } catch (Exception e) {
+            try (Statement st = conn.createStatement()) {
+                st.execute("ATTACH DATABASE '" + backupPath + "' AS backup_db");
+            }
             try {
-                Files.copy(tempPath, dbPath, StandardCopyOption.REPLACE_EXISTING);
-                DatabaseManager.initialize();
-            } catch (Exception ignored) {}
-            Files.deleteIfExists(tempPath);
+                for (String tabla : TABLAS_ORDEN) {
+                    if (!tablaExiste(conn, tabla)) continue;
+                    if (!tablaExisteEn(conn, "backup_db", tabla)) continue;
+                    List<String> colsMain   = obtenerColumnas(conn, "main", tabla);
+                    List<String> colsBackup = obtenerColumnas(conn, "backup_db", tabla);
+                    List<String> cols = new ArrayList<>(colsMain);
+                    cols.retainAll(new HashSet<>(colsBackup));
+                    if (cols.isEmpty()) continue;
+                    String colList = cols.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(", "));
+                    try (Statement st = conn.createStatement()) {
+                        st.execute("INSERT OR REPLACE INTO \"" + tabla + "\" (" + colList + ") " +
+                                   "SELECT " + colList + " FROM backup_db.\"" + tabla + "\"");
+                    }
+                }
+                conn.commit();
+            } finally {
+                try (Statement st = conn.createStatement()) {
+                    st.execute("DETACH DATABASE backup_db");
+                } catch (Exception ignored) {}
+            }
+        } catch (Exception e) {
+            conn.rollback();
             throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
         }
     }
 
@@ -88,9 +105,6 @@ public class ImportBackupService {
         String[] cols = parsearLineaCSV(lineas[0]);
         if (cols.length == 0) return;
 
-        try (Statement st = conn.createStatement()) {
-            st.execute("DELETE FROM " + tabla);
-        }
         if (lineas.length < 2) return;
 
         String colNames     = String.join(", ", cols);
@@ -131,7 +145,7 @@ public class ImportBackupService {
                 if (trimmed.endsWith(";")) {
                     String stmt = buffer.toString().trim();
                     if (stmt.endsWith(";")) stmt = stmt.substring(0, stmt.length() - 1).trim();
-                    if (!stmt.isEmpty()) st.execute(stmt);
+                    if (!stmt.isEmpty() && !esDestructivo(stmt)) st.execute(stmt);
                     buffer.setLength(0);
                     inStatement = false;
                 }
@@ -175,9 +189,6 @@ public class ImportBackupService {
     }
 
     private static void restaurarTablaJSON(Connection conn, String tabla, JsonNode arr) throws Exception {
-        try (Statement st = conn.createStatement()) {
-            st.execute("DELETE FROM " + tabla);
-        }
         if (!arr.has(0)) return;
 
         List<String> cols = new ArrayList<>();
@@ -1980,5 +1991,31 @@ public class ImportBackupService {
 
     private static void activarFK(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
+    }
+
+    private static boolean tablaExisteEn(Connection conn, String schema, String tabla) {
+        try (PreparedStatement ps = conn.prepareStatement(
+                "SELECT 1 FROM " + schema + ".sqlite_master WHERE type='table' AND name=?")) {
+            ps.setString(1, tabla);
+            return ps.executeQuery().next();
+        } catch (SQLException e) {
+            return false;
+        }
+    }
+
+    private static List<String> obtenerColumnas(Connection conn, String schema, String tabla) throws SQLException {
+        List<String> cols = new ArrayList<>();
+        try (ResultSet rs = conn.createStatement().executeQuery(
+                "PRAGMA " + schema + ".table_info(\"" + tabla + "\")")) {
+            while (rs.next()) cols.add(rs.getString("name"));
+        }
+        return cols;
+    }
+
+    private static boolean esDestructivo(String stmt) {
+        String upper = stmt.toUpperCase().trim();
+        return upper.startsWith("DROP ") || upper.startsWith("DROP\t") ||
+               upper.startsWith("DELETE ") || upper.startsWith("DELETE\t") ||
+               upper.startsWith("TRUNCATE ") || upper.startsWith("TRUNCATE\t");
     }
 }
