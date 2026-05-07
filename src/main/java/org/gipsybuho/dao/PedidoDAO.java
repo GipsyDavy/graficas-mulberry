@@ -31,6 +31,15 @@ public class PedidoDAO {
         return list;
     }
 
+    public Pedido findById(int id) throws SQLException {
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                SELECT_BASE + "WHERE p.id = ?")) {
+            ps.setInt(1, id);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? map(rs) : null;
+        }
+    }
+
     public void save(Pedido p) throws SQLException {
         if (p.getId() == 0) insert(p); else update(p);
     }

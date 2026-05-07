@@ -56,7 +56,8 @@
       "Bash(Select-Object FullName, PSIsContainer)",
       "Bash(Sort-Object FullName)",
       "Bash(dir \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\")",
-      "Bash(xargs grep *)"
+      "Bash(xargs grep *)",
+      "Bash(\"C:\\\\Program Files\\\\Apache NetBeans\\\\java\\\\maven\\\\bin\\\\mvn.cmd\" compile -f \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\pom.xml\")"
     ]
   }
 }

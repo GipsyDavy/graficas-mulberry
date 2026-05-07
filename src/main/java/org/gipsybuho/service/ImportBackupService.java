@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -207,6 +208,209 @@ public class ImportBackupService {
         }
     }
 
+    // ─── IMPORTAR PEDIDOS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ──────
+
+    public static int importarPedidosExcel(Path origen) throws Exception {
+        List<String[]> filasPed    = new ArrayList<>();
+        List<String[]> filasPagos  = new ArrayList<>();
+        leerLibroExcel(origen, filasPed, filasPagos);
+        if (filasPed.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "pedidos",      filasPed);
+            count += importarFilasEnTabla(conn, "pagos_pedido", filasPagos);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR PEDIDOS (WORD: .docx / .doc) ───────────────────────────────
+
+    public static int importarPedidosWord(Path origen) throws Exception {
+        List<String[]> filasPed   = new ArrayList<>();
+        List<String[]> filasPagos = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasPed, filasPagos);
+        else
+            leerWordDocx(origen, filasPed, filasPagos);
+        if (filasPed.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de pedidos en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "pedidos",      filasPed);
+            count += importarFilasEnTabla(conn, "pagos_pedido", filasPagos);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR PEDIDOS (PDF) ───────────────────────────────────────────────
+
+    public static int importarPedidosPDF(Path origen) throws Exception {
+        List<String[]> filasPed = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasPed.add(vals);
+            }
+        }
+        if (filasPed.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "pedidos", filasPed);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── Helpers: lectura de formatos externos ────────────────────────────────
+
+    private static void leerLibroExcel(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        String nombre = path.getFileName().toString().toLowerCase();
+        try (org.apache.poi.ss.usermodel.Workbook wb =
+                 org.apache.poi.ss.usermodel.WorkbookFactory.create(path.toFile(), null, true)) {
+            if (wb.getNumberOfSheets() > 0) leerHojaExcel(wb.getSheetAt(0), filasPres);
+            if (wb.getNumberOfSheets() > 1) leerHojaExcel(wb.getSheetAt(1), filasLineas);
+        } catch (Exception e) {
+            if (nombre.endsWith(".xlsb")) {
+                throw new Exception("El formato .xlsb (Excel Binario) no está soportado directamente. " +
+                    "Ábrelo en Excel y guárdalo como .xlsx antes de importar.", e);
+            }
+            throw e;
+        }
+    }
+
+    private static void leerHojaExcel(org.apache.poi.ss.usermodel.Sheet hoja, List<String[]> dest) {
+        org.apache.poi.ss.usermodel.DataFormatter fmt = new org.apache.poi.ss.usermodel.DataFormatter();
+        for (org.apache.poi.ss.usermodel.Row fila : hoja) {
+            int nc = fila.getLastCellNum();
+            if (nc <= 0) continue;
+            String[] vals = new String[nc];
+            boolean blank = true;
+            for (int c = 0; c < nc; c++) {
+                org.apache.poi.ss.usermodel.Cell cell = fila.getCell(c,
+                    org.apache.poi.ss.usermodel.Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                vals[c] = cell == null ? "" : fmt.formatCellValue(cell).trim();
+                if (!vals[c].isBlank()) blank = false;
+            }
+            if (!blank) dest.add(vals);
+        }
+    }
+
+    private static void leerWordDocx(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        try (org.apache.poi.xwpf.usermodel.XWPFDocument doc =
+                 new org.apache.poi.xwpf.usermodel.XWPFDocument(new java.io.FileInputStream(path.toFile()))) {
+            List<org.apache.poi.xwpf.usermodel.XWPFTable> tablas = doc.getTables();
+            if (!tablas.isEmpty()) leerTablaXWPF(tablas.get(0), filasPres);
+            if (tablas.size() > 1)  leerTablaXWPF(tablas.get(1), filasLineas);
+        }
+    }
+
+    private static void leerTablaXWPF(org.apache.poi.xwpf.usermodel.XWPFTable tabla, List<String[]> dest) {
+        for (org.apache.poi.xwpf.usermodel.XWPFTableRow fila : tabla.getRows()) {
+            List<org.apache.poi.xwpf.usermodel.XWPFTableCell> celdas = fila.getTableCells();
+            String[] vals = new String[celdas.size()];
+            boolean blank = true;
+            for (int c = 0; c < celdas.size(); c++) {
+                vals[c] = celdas.get(c).getText().trim();
+                if (!vals[c].isBlank()) blank = false;
+            }
+            if (!blank) dest.add(vals);
+        }
+    }
+
+    private static void leerWordDoc(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        try (org.apache.poi.hwpf.HWPFDocument doc =
+                 new org.apache.poi.hwpf.HWPFDocument(new java.io.FileInputStream(path.toFile()))) {
+            org.apache.poi.hwpf.usermodel.TableIterator it =
+                new org.apache.poi.hwpf.usermodel.TableIterator(doc.getRange());
+            if (it.hasNext()) leerTablaHWPF(it.next(), filasPres);
+            if (it.hasNext()) leerTablaHWPF(it.next(), filasLineas);
+        }
+    }
+
+    private static void leerTablaHWPF(org.apache.poi.hwpf.usermodel.Table tabla, List<String[]> dest) {
+        for (int r = 0; r < tabla.numRows(); r++) {
+            org.apache.poi.hwpf.usermodel.TableRow fila = tabla.getRow(r);
+            String[] vals = new String[fila.numCells()];
+            boolean blank = true;
+            for (int c = 0; c < fila.numCells(); c++) {
+                vals[c] = fila.getCell(c).text().trim().replace("", "");
+                if (!vals[c].isBlank()) blank = false;
+            }
+            if (!blank) dest.add(vals);
+        }
+    }
+
+    private static String[] parsearLineaPDF(String linea) {
+        if (linea.contains("\t"))    return linea.split("\t", -1);
+        if (linea.contains(" | "))   return linea.split(" \\| ", -1);
+        if (linea.contains("|"))     return linea.split("\\|", -1);
+        if (linea.contains(";"))     return linea.split(";", -1);
+        String[] parts = linea.trim().split("\\s{2,}");
+        return parts.length > 1 ? parts : new String[]{linea.trim()};
+    }
+
+    private static int importarFilasEnTabla(Connection conn, String tabla, List<String[]> filas) throws Exception {
+        if (filas.size() < 2) return 0;
+        List<String> cols = Arrays.stream(filas.get(0))
+            .map(h -> h.trim().replaceAll("[^\\p{L}\\p{N}_]", "_").replaceAll("_+", "_").replaceAll("^_|_$", ""))
+            .filter(h -> !h.isBlank())
+            .collect(Collectors.toList());
+        if (cols.isEmpty()) return 0;
+
+        asegurarColumnas(conn, tabla, cols);
+
+        String sql = "INSERT OR REPLACE INTO \"" + tabla + "\" (" +
+            cols.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(", ")) +
+            ") VALUES (" + String.join(", ", Collections.nCopies(cols.size(), "?")) + ")";
+
+        int count = 0;
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            for (int i = 1; i < filas.size(); i++) {
+                String[] vals = filas.get(i);
+                for (int j = 0; j < cols.size(); j++) {
+                    String v = j < vals.length ? vals[j].trim() : null;
+                    ps.setString(j + 1, (v == null || v.isBlank()) ? null : v);
+                }
+                ps.addBatch();
+                count++;
+            }
+            ps.executeBatch();
+        }
+        return count;
+    }
+
+    private static void asegurarColumnas(Connection conn, String tabla, List<String> columnas) throws SQLException {
+        Set<String> existentes = new HashSet<>();
+        try (ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(\"" + tabla + "\")")) {
+            while (rs.next()) existentes.add(rs.getString("name").toLowerCase());
+        }
+        for (String col : columnas) {
+            if (col == null || col.isBlank()) continue;
+            if (!existentes.contains(col.toLowerCase())) {
+                conn.createStatement().execute("ALTER TABLE \"" + tabla + "\" ADD COLUMN \"" + col + "\" TEXT");
+            }
+        }
+    }
+
     // ─── Helpers ──────────────────────────────────────────────────────────────
 
     /** INSERT OR REPLACE de todos los registros de un array JSON en la tabla dada. */
@@ -290,6 +494,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "albaranes", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO albaranes (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -361,10 +566,18 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrAlb    != null && arrAlb.isArray()    && arrAlb.has(0))
-                count += importarTablaJSON(conn, "albaranes",     arrAlb);
-            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0))
+            if (arrAlb != null && arrAlb.isArray() && arrAlb.has(0)) {
+                List<String> colsAlb = new ArrayList<>();
+                arrAlb.get(0).fieldNames().forEachRemaining(colsAlb::add);
+                asegurarColumnas(conn, "albaranes", colsAlb);
+                count += importarTablaJSON(conn, "albaranes", arrAlb);
+            }
+            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0)) {
+                List<String> colsLin = new ArrayList<>();
+                arrLineas.get(0).fieldNames().forEachRemaining(colsLin::add);
+                asegurarColumnas(conn, "lineas_albaran", colsLin);
                 count += importarTablaJSON(conn, "lineas_albaran", arrLineas);
+            }
             conn.commit();
         } catch (Exception e) {
             conn.rollback();
@@ -373,6 +586,79 @@ public class ImportBackupService {
             conn.setAutoCommit(true);
             activarFK(conn);
         }
+        return count;
+    }
+
+    // ─── IMPORTAR ALBARANES (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ────
+
+    public static int importarAlbaranesExcel(Path origen) throws Exception {
+        List<String[]> filasAlb    = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        leerLibroExcel(origen, filasAlb, filasLineas);
+        if (filasAlb.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "albaranes",      filasAlb);
+            count += importarFilasEnTabla(conn, "lineas_albaran", filasLineas);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR ALBARANES (WORD: .docx / .doc) ─────────────────────────────
+
+    public static int importarAlbaranesWord(Path origen) throws Exception {
+        List<String[]> filasAlb    = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasAlb, filasLineas);
+        else
+            leerWordDocx(origen, filasAlb, filasLineas);
+        if (filasAlb.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de albaranes en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "albaranes",      filasAlb);
+            count += importarFilasEnTabla(conn, "lineas_albaran", filasLineas);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR ALBARANES (PDF) ─────────────────────────────────────────────
+
+    public static int importarAlbaranesPDF(Path origen) throws Exception {
+        List<String[]> filasAlb = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasAlb.add(vals);
+            }
+        }
+        if (filasAlb.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF. " +
+                "El documento debe tener una cabecera y filas separadas por tabuladores, «|» o dobles espacios.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "albaranes", filasAlb);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
         return count;
     }
 
@@ -390,6 +676,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "facturas", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO facturas (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -461,10 +748,111 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrFact   != null && arrFact.isArray()   && arrFact.has(0))
-                count += importarTablaJSON(conn, "facturas",       arrFact);
-            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0))
+            if (arrFact != null && arrFact.isArray() && arrFact.has(0)) {
+                List<String> colsFact = new ArrayList<>();
+                arrFact.get(0).fieldNames().forEachRemaining(colsFact::add);
+                asegurarColumnas(conn, "facturas", colsFact);
+                count += importarTablaJSON(conn, "facturas", arrFact);
+            }
+            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0)) {
+                List<String> colsLin = new ArrayList<>();
+                arrLineas.get(0).fieldNames().forEachRemaining(colsLin::add);
+                asegurarColumnas(conn, "lineas_factura", colsLin);
                 count += importarTablaJSON(conn, "lineas_factura", arrLineas);
+            }
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR FACTURAS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ────
+
+    public static int importarFacturasExcel(Path origen) throws Exception {
+        List<String[]> filasFact   = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        leerLibroExcel(origen, filasFact, filasLineas);
+        if (filasFact.size() < 2) return 0;
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "facturas",       filasFact);
+            count += importarFilasEnTabla(conn, "lineas_factura", filasLineas);
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR FACTURAS (WORD: .docx / .doc) ──────────────────────────────
+
+    public static int importarFacturasWord(Path origen) throws Exception {
+        List<String[]> filasFact   = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        String nombre = origen.getFileName().toString().toLowerCase();
+        if (nombre.endsWith(".doc")) {
+            leerWordDoc(origen, filasFact, filasLineas);
+        } else {
+            leerWordDocx(origen, filasFact, filasLineas);
+        }
+        if (filasFact.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de facturas en el documento Word.");
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "facturas",       filasFact);
+            count += importarFilasEnTabla(conn, "lineas_factura", filasLineas);
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR FACTURAS (PDF) ─────────────────────────────────────────────
+
+    public static int importarFacturasPDF(Path origen) throws Exception {
+        List<String[]> filasFact = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasFact.add(vals);
+            }
+        }
+        if (filasFact.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF. " +
+                "El documento debe tener una cabecera y filas separadas por tabuladores, «|» o dobles espacios.");
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "facturas", filasFact);
             conn.commit();
         } catch (Exception e) {
             conn.rollback();
@@ -490,6 +878,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "presupuestos", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO presupuestos (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -564,10 +953,111 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrPres != null && arrPres.isArray() && arrPres.has(0))
+            if (arrPres != null && arrPres.isArray() && arrPres.has(0)) {
+                List<String> colsPres = new ArrayList<>();
+                arrPres.get(0).fieldNames().forEachRemaining(colsPres::add);
+                asegurarColumnas(conn, "presupuestos", colsPres);
                 count += importarTablaJSON(conn, "presupuestos", arrPres);
-            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0))
+            }
+            if (arrLineas != null && arrLineas.isArray() && arrLineas.has(0)) {
+                List<String> colsLin = new ArrayList<>();
+                arrLineas.get(0).fieldNames().forEachRemaining(colsLin::add);
+                asegurarColumnas(conn, "lineas_presupuesto", colsLin);
                 count += importarTablaJSON(conn, "lineas_presupuesto", arrLineas);
+            }
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR PRESUPUESTOS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ─
+
+    public static int importarPresupuestosExcel(Path origen) throws Exception {
+        List<String[]> filasPres   = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        leerLibroExcel(origen, filasPres, filasLineas);
+        if (filasPres.size() < 2) return 0;
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "presupuestos",       filasPres);
+            count += importarFilasEnTabla(conn, "lineas_presupuesto", filasLineas);
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR PRESUPUESTOS (WORD: .docx / .doc) ──────────────────────────
+
+    public static int importarPresupuestosWord(Path origen) throws Exception {
+        List<String[]> filasPres   = new ArrayList<>();
+        List<String[]> filasLineas = new ArrayList<>();
+        String nombre = origen.getFileName().toString().toLowerCase();
+        if (nombre.endsWith(".doc")) {
+            leerWordDoc(origen, filasPres, filasLineas);
+        } else {
+            leerWordDocx(origen, filasPres, filasLineas);
+        }
+        if (filasPres.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de presupuestos en el documento Word.");
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "presupuestos",       filasPres);
+            count += importarFilasEnTabla(conn, "lineas_presupuesto", filasLineas);
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(true);
+            activarFK(conn);
+        }
+        return count;
+    }
+
+    // ─── IMPORTAR PRESUPUESTOS (PDF) ─────────────────────────────────────────
+
+    public static int importarPresupuestosPDF(Path origen) throws Exception {
+        List<String[]> filasPres = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasPres.add(vals);
+            }
+        }
+        if (filasPres.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF. " +
+                "El documento debe tener una cabecera y filas separadas por tabuladores, «|» o dobles espacios.");
+
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "presupuestos", filasPres);
             conn.commit();
         } catch (Exception e) {
             conn.rollback();
@@ -592,6 +1082,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "nominas", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO nominas (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -659,6 +1150,9 @@ public class ImportBackupService {
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         try {
+            List<String> colsNom = new ArrayList<>();
+            arr.get(0).fieldNames().forEachRemaining(colsNom::add);
+            asegurarColumnas(conn, "nominas", colsNom);
             int count = importarTablaJSON(conn, "nominas", arr);
             conn.commit();
             return count;
@@ -668,6 +1162,73 @@ public class ImportBackupService {
         } finally {
             conn.setAutoCommit(true);
         }
+    }
+
+    // ─── IMPORTAR NÓMINAS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ──────
+
+    public static int importarNominasExcel(Path origen) throws Exception {
+        List<String[]> filasNom  = new ArrayList<>();
+        List<String[]> filasIgn  = new ArrayList<>();
+        leerLibroExcel(origen, filasNom, filasIgn);
+        if (filasNom.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "nominas", filasNom);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
+    }
+
+    // ─── IMPORTAR NÓMINAS (WORD: .docx / .doc) ───────────────────────────────
+
+    public static int importarNominasWord(Path origen) throws Exception {
+        List<String[]> filasNom = new ArrayList<>();
+        List<String[]> filasIgn = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasNom, filasIgn);
+        else
+            leerWordDocx(origen, filasNom, filasIgn);
+        if (filasNom.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de nóminas en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "nominas", filasNom);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
+    }
+
+    // ─── IMPORTAR NÓMINAS (PDF) ───────────────────────────────────────────────
+
+    public static int importarNominasPDF(Path origen) throws Exception {
+        List<String[]> filasNom = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasNom.add(vals);
+            }
+        }
+        if (filasNom.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF.");
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "nominas", filasNom);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
     }
 
     // ─── IMPORTAR EMPLEADOS (CSV / SQL / JSON) ───────────────────────────────
@@ -684,6 +1245,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "empleados", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO empleados (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -755,10 +1317,18 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrEmp != null && arrEmp.isArray() && arrEmp.has(0))
+            if (arrEmp != null && arrEmp.isArray() && arrEmp.has(0)) {
+                List<String> colsEmp = new ArrayList<>();
+                arrEmp.get(0).fieldNames().forEachRemaining(colsEmp::add);
+                asegurarColumnas(conn, "empleados", colsEmp);
                 count += importarTablaJSON(conn, "empleados", arrEmp);
-            if (arrNom != null && arrNom.isArray() && arrNom.has(0))
-                count += importarTablaJSON(conn, "nominas",   arrNom);
+            }
+            if (arrNom != null && arrNom.isArray() && arrNom.has(0)) {
+                List<String> colsNom = new ArrayList<>();
+                arrNom.get(0).fieldNames().forEachRemaining(colsNom::add);
+                asegurarColumnas(conn, "nominas", colsNom);
+                count += importarTablaJSON(conn, "nominas", arrNom);
+            }
             conn.commit();
         } catch (Exception e) {
             conn.rollback();
@@ -767,6 +1337,78 @@ public class ImportBackupService {
             conn.setAutoCommit(true);
             activarFK(conn);
         }
+        return count;
+    }
+
+    // ─── IMPORTAR EMPLEADOS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ────
+
+    public static int importarEmpleadosExcel(Path origen) throws Exception {
+        List<String[]> filasEmp    = new ArrayList<>();
+        List<String[]> filasNom    = new ArrayList<>();
+        leerLibroExcel(origen, filasEmp, filasNom);
+        if (filasEmp.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "empleados", filasEmp);
+            count += importarFilasEnTabla(conn, "nominas",   filasNom);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR EMPLEADOS (WORD: .docx / .doc) ─────────────────────────────
+
+    public static int importarEmpleadosWord(Path origen) throws Exception {
+        List<String[]> filasEmp = new ArrayList<>();
+        List<String[]> filasNom = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasEmp, filasNom);
+        else
+            leerWordDocx(origen, filasEmp, filasNom);
+        if (filasEmp.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de empleados en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "empleados", filasEmp);
+            count += importarFilasEnTabla(conn, "nominas",   filasNom);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR EMPLEADOS (PDF) ─────────────────────────────────────────────
+
+    public static int importarEmpleadosPDF(Path origen) throws Exception {
+        List<String[]> filasEmp = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasEmp.add(vals);
+            }
+        }
+        if (filasEmp.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "empleados", filasEmp);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
         return count;
     }
 
@@ -785,6 +1427,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "materiales", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO materiales (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -861,14 +1504,30 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrMat     != null && arrMat.isArray()     && arrMat.has(0))
-                count += importarTablaJSON(conn, "materiales",               arrMat);
-            if (arrConsumo != null && arrConsumo.isArray() && arrConsumo.has(0))
+            if (arrMat != null && arrMat.isArray() && arrMat.has(0)) {
+                List<String> colsMat = new ArrayList<>();
+                arrMat.get(0).fieldNames().forEachRemaining(colsMat::add);
+                asegurarColumnas(conn, "materiales", colsMat);
+                count += importarTablaJSON(conn, "materiales", arrMat);
+            }
+            if (arrConsumo != null && arrConsumo.isArray() && arrConsumo.has(0)) {
+                List<String> colsCon = new ArrayList<>();
+                arrConsumo.get(0).fieldNames().forEachRemaining(colsCon::add);
+                asegurarColumnas(conn, "consumo_material_tecnica", colsCon);
                 count += importarTablaJSON(conn, "consumo_material_tecnica", arrConsumo);
-            if (arrMovim   != null && arrMovim.isArray()   && arrMovim.has(0))
-                count += importarTablaJSON(conn, "movimientos_material",     arrMovim);
-            if (arrPagos   != null && arrPagos.isArray()   && arrPagos.has(0))
-                count += importarTablaJSON(conn, "pagos_material",           arrPagos);
+            }
+            if (arrMovim != null && arrMovim.isArray() && arrMovim.has(0)) {
+                List<String> colsMov = new ArrayList<>();
+                arrMovim.get(0).fieldNames().forEachRemaining(colsMov::add);
+                asegurarColumnas(conn, "movimientos_material", colsMov);
+                count += importarTablaJSON(conn, "movimientos_material", arrMovim);
+            }
+            if (arrPagos != null && arrPagos.isArray() && arrPagos.has(0)) {
+                List<String> colsPag = new ArrayList<>();
+                arrPagos.get(0).fieldNames().forEachRemaining(colsPag::add);
+                asegurarColumnas(conn, "pagos_material", colsPag);
+                count += importarTablaJSON(conn, "pagos_material", arrPagos);
+            }
             conn.commit();
         } catch (Exception e) {
             conn.rollback();
@@ -877,6 +1536,76 @@ public class ImportBackupService {
             conn.setAutoCommit(true);
             activarFK(conn);
         }
+        return count;
+    }
+
+    // ─── IMPORTAR MATERIALES (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ───
+
+    public static int importarMaterialesExcel(Path origen) throws Exception {
+        List<String[]> filasMat = new ArrayList<>();
+        List<String[]> filasIgn = new ArrayList<>();
+        leerLibroExcel(origen, filasMat, filasIgn);
+        if (filasMat.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "materiales", filasMat);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR MATERIALES (WORD: .docx / .doc) ────────────────────────────
+
+    public static int importarMaterialesWord(Path origen) throws Exception {
+        List<String[]> filasMat = new ArrayList<>();
+        List<String[]> filasIgn = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasMat, filasIgn);
+        else
+            leerWordDocx(origen, filasMat, filasIgn);
+        if (filasMat.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de materiales en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "materiales", filasMat);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
+        return count;
+    }
+
+    // ─── IMPORTAR MATERIALES (PDF) ────────────────────────────────────────────
+
+    public static int importarMaterialesPDF(Path origen) throws Exception {
+        List<String[]> filasMat = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasMat.add(vals);
+            }
+        }
+        if (filasMat.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF.");
+        Connection conn = DatabaseManager.getConnection();
+        desactivarFK(conn);
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "materiales", filasMat);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); activarFK(conn); }
         return count;
     }
 
@@ -893,6 +1622,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "tarifas", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO tarifas (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -960,6 +1690,9 @@ public class ImportBackupService {
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         try {
+            List<String> colsTar = new ArrayList<>();
+            arr.get(0).fieldNames().forEachRemaining(colsTar::add);
+            asegurarColumnas(conn, "tarifas", colsTar);
             int count = importarTablaJSON(conn, "tarifas", arr);
             conn.commit();
             return count;
@@ -969,6 +1702,73 @@ public class ImportBackupService {
         } finally {
             conn.setAutoCommit(true);
         }
+    }
+
+    // ─── IMPORTAR TARIFAS (EXCEL: .xlsx / .xls / .xlsb / .xlsm / .xltx) ──────
+
+    public static int importarTarifasExcel(Path origen) throws Exception {
+        List<String[]> filasTar = new ArrayList<>();
+        List<String[]> filasIgn = new ArrayList<>();
+        leerLibroExcel(origen, filasTar, filasIgn);
+        if (filasTar.size() < 2) return 0;
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "tarifas", filasTar);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
+    }
+
+    // ─── IMPORTAR TARIFAS (WORD: .docx / .doc) ───────────────────────────────
+
+    public static int importarTarifasWord(Path origen) throws Exception {
+        List<String[]> filasTar = new ArrayList<>();
+        List<String[]> filasIgn = new ArrayList<>();
+        if (origen.getFileName().toString().toLowerCase().endsWith(".doc"))
+            leerWordDoc(origen, filasTar, filasIgn);
+        else
+            leerWordDocx(origen, filasTar, filasIgn);
+        if (filasTar.size() < 2)
+            throw new Exception("No se encontraron tablas con datos de tarifas en el documento Word.");
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "tarifas", filasTar);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
+    }
+
+    // ─── IMPORTAR TARIFAS (PDF) ───────────────────────────────────────────────
+
+    public static int importarTarifasPDF(Path origen) throws Exception {
+        List<String[]> filasTar = new ArrayList<>();
+        try (org.apache.pdfbox.pdmodel.PDDocument doc =
+                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+            org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
+            ts.setSortByPosition(true);
+            for (String linea : ts.getText(doc).split("\r?\n")) {
+                if (linea.trim().isEmpty()) continue;
+                String[] vals = parsearLineaPDF(linea);
+                if (vals.length > 1) filasTar.add(vals);
+            }
+        }
+        if (filasTar.size() < 2)
+            throw new Exception("No se encontraron datos tabulares en el PDF.");
+        Connection conn = DatabaseManager.getConnection();
+        conn.setAutoCommit(false);
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "tarifas", filasTar);
+            conn.commit();
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
+        return count;
     }
 
     // ─── IMPORTAR CLIENTES (CSV / SQL / JSON) ────────────────────────────────
@@ -1077,6 +1877,7 @@ public class ImportBackupService {
         if (cols.length == 0) return 0;
 
         Connection conn = DatabaseManager.getConnection();
+        asegurarColumnas(conn, "pedidos", Arrays.asList(cols));
         String sql = "INSERT OR REPLACE INTO pedidos (" +
             String.join(", ", cols) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
@@ -1148,10 +1949,18 @@ public class ImportBackupService {
         conn.setAutoCommit(false);
         int count = 0;
         try {
-            if (arrPed   != null && arrPed.isArray()   && arrPed.has(0))
-                count += importarTablaJSON(conn, "pedidos",      arrPed);
-            if (arrPagos != null && arrPagos.isArray() && arrPagos.has(0))
+            if (arrPed != null && arrPed.isArray() && arrPed.has(0)) {
+                List<String> colsPed = new ArrayList<>();
+                arrPed.get(0).fieldNames().forEachRemaining(colsPed::add);
+                asegurarColumnas(conn, "pedidos", colsPed);
+                count += importarTablaJSON(conn, "pedidos", arrPed);
+            }
+            if (arrPagos != null && arrPagos.isArray() && arrPagos.has(0)) {
+                List<String> colsPag = new ArrayList<>();
+                arrPagos.get(0).fieldNames().forEachRemaining(colsPag::add);
+                asegurarColumnas(conn, "pagos_pedido", colsPag);
                 count += importarTablaJSON(conn, "pagos_pedido", arrPagos);
+            }
             conn.commit();
         } catch (Exception e) {
             conn.rollback();

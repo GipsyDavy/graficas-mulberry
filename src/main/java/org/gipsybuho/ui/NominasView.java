@@ -16,6 +16,7 @@ import org.gipsybuho.model.Nomina;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.NominaService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -23,6 +24,7 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 public class NominasView extends VBox {
@@ -49,21 +51,23 @@ public class NominasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNueva    = btn("+ Nueva nómina",    "#4C9BE8", this::nueva);
-        Button btnEditar   = btn("✏ Editar",            "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar",         "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
-        Button btnGenMes   = btn("⚡ Generar mes para todos", "#9B59B6", this::generarMesCompleto);
+        Button btnNueva    = btn("+ Nueva nómina",         "#4C9BE8", this::nueva);
+        Button btnEditar   = btn("✏ Editar",                "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",               "#E74C3C", this::borrar);
+        Button btnImportar = btn("📥 Importar",              "#27AE60", this::importar);
+        Button btnExportar = btn("📤 Exportar",              "#8E44AD", this::exportar);
+        Button btnGenMes   = btn("⚡ Generar mes para todos","#9B59B6", this::generarMesCompleto);
+        Button btnPreview  = btn("👁 Previsualizar",         "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes);
+        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
     private TableView<Nomina> buildTabla() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Nomina, Double> colNeto = new TableColumn<>("Neto");
@@ -311,12 +315,18 @@ public class NominasView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  Importar desde CSV",
-                "Importa nóminas desde un archivo CSV.", "csv"},
-            {"sql",  "🗄️  Importar desde SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = nóminas.", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Importa nóminas desde un volcado SQL.", "sql"},
-            {"json", "{ }  Importar desde JSON",
-                "Importa nóminas desde un archivo JSON.", "json"}
+            {"json",  "{ }  JSON",
+                "Importa nóminas desde un archivo JSON.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc) con tabla de nóminas.", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de nóminas (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -366,9 +376,18 @@ public class NominasView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Importar nóminas — " + fmt[1]);
-        fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Nóminas", "*." + fmt[3]));
-        File archivo = fc.showOpenDialog(getScene().getWindow());
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Nóminas", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Nóminas", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Nóminas", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
         Path origen = archivo.toPath();
@@ -378,10 +397,13 @@ public class NominasView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int n = switch (tipo) {
-                    case "csv"  -> ImportBackupService.importarNominasCSV(origen);
-                    case "sql"  -> ImportBackupService.importarNominasSQL(origen);
-                    case "json" -> ImportBackupService.importarNominasJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                    case "csv"   -> ImportBackupService.importarNominasCSV(origen);
+                    case "sql"   -> ImportBackupService.importarNominasSQL(origen);
+                    case "json"  -> ImportBackupService.importarNominasJSON(origen);
+                    case "excel" -> ImportBackupService.importarNominasExcel(origen);
+                    case "word"  -> ImportBackupService.importarNominasWord(origen);
+                    case "pdf"   -> ImportBackupService.importarNominasPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + tipo);
                 };
                 int filas = n;
                 Platform.runLater(() -> {
@@ -519,6 +541,25 @@ public class NominasView extends VBox {
         TableColumn<Nomina, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
+    }
+
+    private void previsualizar() {
+        List<Nomina> sel = new ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Nomina> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarNominas(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Nóminas (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {

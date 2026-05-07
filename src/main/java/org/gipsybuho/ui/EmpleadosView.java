@@ -14,6 +14,7 @@ import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -21,6 +22,8 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class EmpleadosView extends VBox {
@@ -52,21 +55,23 @@ public class EmpleadosView extends VBox {
         chkMostrarBajas = new CheckBox("Mostrar empleados dados de baja");
         chkMostrarBajas.setOnAction(e -> cargar());
 
-        Button btnNuevo     = btn("+ Nuevo",        "#4C9BE8", this::nuevo);
-        Button btnEditar    = btn("✏ Editar",        "#F39C12", this::editar);
-        Button btnBaja      = btn("🚫 Dar de baja",  "#E74C3C", this::darDeBaja);
-        Button btnReactivar = btn("✅ Reactivar",    "#27AE60", this::reactivar);
-        Button btnImportar  = btn("📥 Importar",     "#2980B9", this::importar);
-        Button btnExportar  = btn("📤 Exportar",     "#8E44AD", this::exportar);
+        Button btnNuevo     = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
+        Button btnEditar    = btn("✏ Editar",          "#F39C12", this::editar);
+        Button btnBaja      = btn("🚫 Dar de baja",    "#E74C3C", this::darDeBaja);
+        Button btnReactivar = btn("✅ Reactivar",      "#27AE60", this::reactivar);
+        Button btnImportar  = btn("📥 Importar",       "#2980B9", this::importar);
+        Button btnExportar  = btn("📤 Exportar",       "#8E44AD", this::exportar);
+        Button btnPreview   = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
 
     private TableView<Empleado> buildTabla() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         // Estado (activo / baja)
@@ -269,12 +274,18 @@ public class EmpleadosView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  Importar desde CSV",
-                "Importa empleados desde un archivo CSV (solo tabla empleados).", "csv"},
-            {"sql",  "🗄️  Importar desde SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = empleados · Hoja 2 = nóminas (opcional).", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Importa empleados y nóminas desde un volcado SQL.", "sql"},
-            {"json", "{ }  Importar desde JSON",
-                "Importa empleados y nóminas desde un archivo JSON.", "json"}
+            {"json",  "{ }  JSON",
+                "Importa empleados y nóminas desde un archivo JSON.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc). Tabla 1 = empleados · Tabla 2 = nóminas (opcional).", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de empleados (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -324,9 +335,18 @@ public class EmpleadosView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Importar empleados — " + fmt[1]);
-        fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]));
-        File archivo = fc.showOpenDialog(getScene().getWindow());
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Empleados", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Empleados", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
         Path origen = archivo.toPath();
@@ -336,10 +356,13 @@ public class EmpleadosView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int n = switch (tipo) {
-                    case "csv"  -> ImportBackupService.importarEmpleadosCSV(origen);
-                    case "sql"  -> ImportBackupService.importarEmpleadosSQL(origen);
-                    case "json" -> ImportBackupService.importarEmpleadosJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                    case "csv"   -> ImportBackupService.importarEmpleadosCSV(origen);
+                    case "sql"   -> ImportBackupService.importarEmpleadosSQL(origen);
+                    case "json"  -> ImportBackupService.importarEmpleadosJSON(origen);
+                    case "excel" -> ImportBackupService.importarEmpleadosExcel(origen);
+                    case "word"  -> ImportBackupService.importarEmpleadosWord(origen);
+                    case "pdf"   -> ImportBackupService.importarEmpleadosPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + tipo);
                 };
                 int filas = n;
                 Platform.runLater(() -> {
@@ -469,6 +492,25 @@ public class EmpleadosView extends VBox {
         TableColumn<Empleado, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho); return c;
+    }
+
+    private void previsualizar() {
+        List<Empleado> sel = new ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Empleado> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarEmpleados(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Empleados (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {

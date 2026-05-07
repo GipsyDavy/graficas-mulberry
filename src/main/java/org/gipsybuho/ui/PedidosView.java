@@ -23,6 +23,7 @@ import org.gipsybuho.model.PagoPedido;
 import org.gipsybuho.model.Pedido;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -192,14 +193,16 @@ public class PedidosView extends VBox {
         Button btnImportar = btn("📥 Importar",     "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",     "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
+        Button btnPreview  = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
 
-        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar);
+        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
 
     private void buildTablaPedidos() {
         tablaPedidos.getStyleClass().add("data-table");
+        tablaPedidos.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tablaPedidos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         // Estado (dot)
@@ -594,12 +597,18 @@ public class PedidosView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  Importar desde CSV",
-                "Importa pedidos desde un archivo CSV (solo tabla pedidos).", "csv"},
-            {"sql",  "🗄️  Importar desde SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = pedidos · Hoja 2 = pagos (opcional).", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Importa pedidos y pagos desde un volcado SQL.", "sql"},
-            {"json", "{ }  Importar desde JSON",
-                "Importa pedidos y pagos desde un archivo JSON.", "json"}
+            {"json",  "{ }  JSON",
+                "Importa pedidos y pagos desde un archivo JSON.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc). Tabla 1 = pedidos · Tabla 2 = pagos (opcional).", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de pedidos (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -649,9 +658,18 @@ public class PedidosView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Importar pedidos — " + fmt[1]);
-        fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]));
-        File archivo = fc.showOpenDialog(getScene().getWindow());
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Pedidos", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Pedidos", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
         Path origen = archivo.toPath();
@@ -661,10 +679,13 @@ public class PedidosView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int n = switch (tipo) {
-                    case "csv"  -> ImportBackupService.importarPedidosCSV(origen);
-                    case "sql"  -> ImportBackupService.importarPedidosSQL(origen);
-                    case "json" -> ImportBackupService.importarPedidosJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                    case "csv"   -> ImportBackupService.importarPedidosCSV(origen);
+                    case "sql"   -> ImportBackupService.importarPedidosSQL(origen);
+                    case "json"  -> ImportBackupService.importarPedidosJSON(origen);
+                    case "excel" -> ImportBackupService.importarPedidosExcel(origen);
+                    case "word"  -> ImportBackupService.importarPedidosWord(origen);
+                    case "pdf"   -> ImportBackupService.importarPedidosPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + tipo);
                 };
                 int filas = n;
                 Platform.runLater(() -> {
@@ -1174,6 +1195,25 @@ public class PedidosView extends VBox {
             if (sel) onSelect.run();
         });
         return tb;
+    }
+
+    private void previsualizar() {
+        List<Pedido> sel = new ArrayList<>(tablaPedidos.getSelectionModel().getSelectedItems());
+        List<Pedido> lista = sel.isEmpty() ? new ArrayList<>(datosPedidos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarPedidos(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Pedidos (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {

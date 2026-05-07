@@ -9,6 +9,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.gipsybuho.service.EstadisticasService;
 import org.gipsybuho.service.PDFService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.awt.Desktop;
@@ -84,7 +85,11 @@ public class EstadisticasView extends VBox {
         btnExportarPDF.setStyle("-fx-padding:5 14; -fx-background-radius:4;");
         btnExportarPDF.setOnAction(e -> exportarPDF());
 
-        HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnRefrescar, btnExportarPDF);
+        Button btnPreview = new Button("👁  Previsualizar");
+        btnPreview.setStyle("-fx-padding:5 14; -fx-background-radius:4; -fx-background-color:#6B2D5E; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnPreview.setOnAction(e -> previsualizar());
+
+        HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnRefrescar, btnExportarPDF, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(6, 10, 6, 10));
         bar.setStyle("-fx-background-color:-c-tab-bg; -fx-background-radius:6;");
@@ -455,6 +460,25 @@ public class EstadisticasView extends VBox {
 
     private String primeraClave(Map<String, Double> map) {
         return map.isEmpty() ? "—" : map.keySet().iterator().next();
+    }
+
+    private void previsualizar() {
+        setDisable(true);
+        int a = anio;
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarEstadisticas(a);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf, "Previsualización — Estadísticas " + a);
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    new Alert(Alert.AlertType.ERROR, "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+                });
+            }
+        });
     }
 
     private void exportarPDF() {

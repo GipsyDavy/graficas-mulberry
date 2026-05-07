@@ -21,6 +21,7 @@ import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -109,22 +110,24 @@ public class MaterialesView extends VBox {
         chkSoloAlerta = new CheckBox("Solo materiales con stock bajo");
         chkSoloAlerta.setOnAction(e -> cargar());
 
-        Button btnNuevo    = btn("+ Nuevo",       "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",      "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",     "#E74C3C", this::borrar);
-        Button btnEntrada  = btn("📥 Entrada",    "#27AE60", this::ajustarEntrada);
-        Button btnSalida   = btn("📤 Salida",     "#E67E22", this::ajustarSalida);
-        Button btnImportar = btn("📂 Importar",   "#1ABC9C", this::importar);
-        Button btnExportar = btn("📤 Exportar",   "#8E44AD", this::exportar);
+        Button btnNuevo    = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
+        Button btnEditar   = btn("✏ Editar",          "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",         "#E74C3C", this::borrar);
+        Button btnEntrada  = btn("📥 Entrada",        "#27AE60", this::ajustarEntrada);
+        Button btnSalida   = btn("📤 Salida",         "#E67E22", this::ajustarSalida);
+        Button btnImportar = btn("📂 Importar",       "#1ABC9C", this::importar);
+        Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
+        Button btnPreview  = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar);
+        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
 
     private TableView<Material> buildTablaStock() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Material, String> colEstado = new TableColumn<>("");
@@ -775,12 +778,18 @@ public class MaterialesView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  Importar desde CSV",
-                "Importa materiales desde un archivo CSV (solo tabla materiales).", "csv"},
-            {"sql",  "🗄️  Importar desde SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = materiales.", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Importa materiales, consumo, movimientos y pagos desde un volcado SQL.", "sql"},
-            {"json", "{ }  Importar desde JSON",
-                "Importa materiales, consumo, movimientos y pagos desde un archivo JSON.", "json"}
+            {"json",  "{ }  JSON",
+                "Importa materiales, consumo, movimientos y pagos desde un archivo JSON.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc) con tabla de materiales.", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de materiales (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -830,9 +839,18 @@ public class MaterialesView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Importar materiales — " + fmt[1]);
-        fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Materiales", "*." + fmt[3]));
-        File archivo = fc.showOpenDialog(getScene().getWindow());
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Materiales", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Materiales", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Materiales", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
         Path origen = archivo.toPath();
@@ -842,10 +860,13 @@ public class MaterialesView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int n = switch (tipo) {
-                    case "csv"  -> ImportBackupService.importarMaterialesCSV(origen);
-                    case "sql"  -> ImportBackupService.importarMaterialesSQL(origen);
-                    case "json" -> ImportBackupService.importarMaterialesJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + tipo);
+                    case "csv"   -> ImportBackupService.importarMaterialesCSV(origen);
+                    case "sql"   -> ImportBackupService.importarMaterialesSQL(origen);
+                    case "json"  -> ImportBackupService.importarMaterialesJSON(origen);
+                    case "excel" -> ImportBackupService.importarMaterialesExcel(origen);
+                    case "word"  -> ImportBackupService.importarMaterialesWord(origen);
+                    case "pdf"   -> ImportBackupService.importarMaterialesPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + tipo);
                 };
                 int filas = n;
                 Platform.runLater(() -> {
@@ -994,6 +1015,25 @@ public class MaterialesView extends VBox {
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho);
         return c;
+    }
+
+    private void previsualizar() {
+        List<Material> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Material> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarMateriales(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Materiales (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+            }
+        });
     }
 
     private Button btn(String t, String color, Runnable r) {

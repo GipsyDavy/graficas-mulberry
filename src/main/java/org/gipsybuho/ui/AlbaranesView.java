@@ -20,6 +20,7 @@ import org.gipsybuho.model.LineaAlbaran;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -57,15 +58,17 @@ public class AlbaranesView extends VBox {
         Button btnImportar = btn("📥 Importar",         "#16A085", this::importar);
         Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
+        Button btnPreview  = btn("👁 Previsualizar",    "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
     private TableView<Albaran> buildTabla() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Albaran, String> colEstado = new TableColumn<>("Estado");
@@ -326,12 +329,18 @@ public class AlbaranesView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  CSV (Excel / LibreOffice)",
-                "Archivo .csv generado por la exportación de albaranes (solo cabecera, sin líneas).", "csv"},
-            {"sql",  "🗄️  Volcado SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = albaranes · Hoja 2 = líneas (opcional).", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Script .sql con albaranes y sus líneas generado por la exportación SQL.", "sql"},
-            {"json", "{ }  JSON",
-                "Archivo .json con albaranes y líneas generado por la exportación JSON o por el backup completo.", "json"}
+            {"json",  "{ }  JSON",
+                "Archivo .json con albaranes y líneas generado por la exportación JSON o por el backup completo.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc). Tabla 1 = albaranes · Tabla 2 = líneas (opcional).", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de albaranes (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -385,10 +394,17 @@ public class AlbaranesView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Seleccionar archivo de albaranes — " + fmt[1]);
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Albaranes", "*." + fmt[3]),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
-        );
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Albaranes", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Albaranes", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Albaranes", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -403,10 +419,13 @@ public class AlbaranesView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int importados = switch (fmt[0]) {
-                    case "csv"  -> ImportBackupService.importarAlbaranesCSV(origen);
-                    case "sql"  -> ImportBackupService.importarAlbaranesSQL(origen);
-                    case "json" -> ImportBackupService.importarAlbaranesJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + fmt[0]);
+                    case "csv"   -> ImportBackupService.importarAlbaranesCSV(origen);
+                    case "sql"   -> ImportBackupService.importarAlbaranesSQL(origen);
+                    case "json"  -> ImportBackupService.importarAlbaranesJSON(origen);
+                    case "excel" -> ImportBackupService.importarAlbaranesExcel(origen);
+                    case "word"  -> ImportBackupService.importarAlbaranesWord(origen);
+                    case "pdf"   -> ImportBackupService.importarAlbaranesPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + fmt[0]);
                 };
                 final int n = importados;
                 Platform.runLater(() -> {
@@ -535,6 +554,25 @@ public class AlbaranesView extends VBox {
                     setDisable(false);
                     mostrarError(e);
                 });
+            }
+        });
+    }
+
+    private void previsualizar() {
+        List<Albaran> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Albaran> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarAlbaranes(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Albaranes (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
             }
         });
     }

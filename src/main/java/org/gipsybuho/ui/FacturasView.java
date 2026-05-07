@@ -18,6 +18,7 @@ import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -55,15 +56,17 @@ public class FacturasView extends VBox {
         Button btnPagada   = btn("✅ Marcar pagada",   "#4C9BE8", this::marcarPagada);
         Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
         Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
+        Button btnPreview  = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar);
+        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
 
     private TableView<Factura> buildTabla() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Factura, String> colEstado = new TableColumn<>("Estado");
@@ -452,12 +455,18 @@ public class FacturasView extends VBox {
 
     private void importar() {
         String[][] formatos = {
-            {"csv",  "📊  CSV (Excel / LibreOffice)",
-                "Archivo .csv generado por la exportación de facturas (solo cabecera, sin líneas).", "csv"},
-            {"sql",  "🗄️  Volcado SQL",
+            {"csv",   "📊  CSV",
+                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
+            {"excel", "📗  Excel",
+                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = facturas · Hoja 2 = líneas (opcional).", "xlsx"},
+            {"sql",   "🗄️  Volcado SQL",
                 "Script .sql con facturas y sus líneas generado por la exportación SQL.", "sql"},
-            {"json", "{ }  JSON",
-                "Archivo .json con facturas y líneas generado por la exportación JSON o por el backup completo.", "json"}
+            {"json",  "{ }  JSON",
+                "Archivo .json con facturas y líneas generado por la exportación JSON o por el backup completo.", "json"},
+            {"word",  "📝  Word",
+                "Documento Word (.docx/.doc). Tabla 1 = facturas · Tabla 2 = líneas (opcional).", "docx"},
+            {"pdf",   "📄  PDF",
+                "Documento PDF con tabla de facturas (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -511,10 +520,17 @@ public class FacturasView extends VBox {
     private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle("Seleccionar archivo de facturas — " + fmt[1]);
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Facturas", "*." + fmt[3]),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
-        );
+        switch (fmt[0]) {
+            case "excel" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Excel — Facturas", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            case "word" -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Word — Facturas", "*.docx", "*.doc"),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            default -> fc.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Facturas", "*." + fmt[3]),
+                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        }
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -529,10 +545,13 @@ public class FacturasView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 int importados = switch (fmt[0]) {
-                    case "csv"  -> ImportBackupService.importarFacturasCSV(origen);
-                    case "sql"  -> ImportBackupService.importarFacturasSQL(origen);
-                    case "json" -> ImportBackupService.importarFacturasJSON(origen);
-                    default     -> throw new Exception("Formato desconocido: " + fmt[0]);
+                    case "csv"   -> ImportBackupService.importarFacturasCSV(origen);
+                    case "sql"   -> ImportBackupService.importarFacturasSQL(origen);
+                    case "json"  -> ImportBackupService.importarFacturasJSON(origen);
+                    case "excel" -> ImportBackupService.importarFacturasExcel(origen);
+                    case "word"  -> ImportBackupService.importarFacturasWord(origen);
+                    case "pdf"   -> ImportBackupService.importarFacturasPDF(origen);
+                    default      -> throw new Exception("Formato desconocido: " + fmt[0]);
                 };
                 final int n = importados;
                 Platform.runLater(() -> {
@@ -661,6 +680,25 @@ public class FacturasView extends VBox {
                     setDisable(false);
                     mostrarError(e);
                 });
+            }
+        });
+    }
+
+    private void previsualizar() {
+        List<Factura> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Factura> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarFacturas(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Facturas (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
             }
         });
     }

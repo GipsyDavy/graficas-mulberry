@@ -3,12 +3,15 @@ package org.gipsybuho.ui;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.gipsybuho.model.AccionERP;
 import org.gipsybuho.service.AccionDispatcherService;
@@ -24,13 +27,16 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class IAView extends VBox {
 
     private final OllamaService      ia             = new OllamaService();
     private final ContextoERPService contextoService = new ContextoERPService();
+    private final Map<String, Stage> modulosAbiertos = new HashMap<>();
     private VBox chatBox;
     private ScrollPane scroll;
     private TextArea txtInput;
@@ -461,11 +467,19 @@ public class IAView extends VBox {
             JsonInterceptorService.interceptar(respuestaCompleta);
 
         if (resultado.tieneAccion()) {
+            AccionERP accion = resultado.accion().get();
             String textoLimpio = resultado.textoLimpio();
             burbuja.getChildren().clear();
             burbuja.getChildren().add(new Text(
                 textoLimpio.isBlank() ? "Aquí tienes la acción detectada:" : textoLimpio));
-            mostrarPanelConfirmacion(resultado.accion().get());
+
+            if ("abrir_modulo".equals(accion.action)) {
+                abrirModulo(accion);
+            } else if ("cerrar_modulo".equals(accion.action)) {
+                cerrarModulo(accion);
+            } else {
+                mostrarPanelConfirmacion(accion);
+            }
         } else {
             addSugerenciasContextuales(respuestaCompleta);
         }
@@ -566,5 +580,95 @@ public class IAView extends VBox {
 
     private void scrollAbajo() {
         Platform.runLater(() -> scroll.setVvalue(1.0));
+    }
+
+    // ── Abrir / Cerrar módulos ────────────────────────────────────────────────
+
+    private void abrirModulo(AccionERP accion) {
+        String modulo = accion.data != null ? accion.data.modulo : null;
+        if (modulo == null || modulo.isBlank()) {
+            addMensajeFeedback("Módulo no especificado",
+                "Indica el nombre del módulo a abrir: clientes, presupuestos, facturas, " +
+                "albaranes, pedidos, tarifas, materiales, empleados, nominas, estadisticas, calendario.", false);
+            return;
+        }
+        String clave = modulo.toLowerCase().trim();
+
+        Stage existente = modulosAbiertos.get(clave);
+        if (existente != null && existente.isShowing()) {
+            existente.toFront();
+            addMensajeFeedback("Módulo «" + clave + "» ya estaba abierto",
+                "La ventana se ha traído al frente.", true);
+            return;
+        }
+
+        Parent vista = crearVista(clave);
+        if (vista == null) {
+            addMensajeFeedback("Módulo desconocido: " + modulo,
+                "Módulos disponibles: clientes · presupuestos · facturas · albaranes · " +
+                "pedidos · tarifas · materiales · empleados · nominas · estadisticas · calendario", false);
+            return;
+        }
+
+        Stage stage = new Stage();
+        stage.setTitle("Gráficas Mulberry — " + capitalizarModulo(clave));
+        stage.initModality(Modality.NONE);
+        Scene scene = new Scene(vista, 1100, 700);
+        try {
+            var cssUrl = getClass().getResource("/styles.css");
+            if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
+        } catch (Exception ignored) {}
+        stage.setScene(scene);
+        stage.setOnCloseRequest(e -> modulosAbiertos.remove(clave));
+        stage.show();
+        modulosAbiertos.put(clave, stage);
+
+        addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» abierto",
+            "Ventana emergente abierta correctamente.", true);
+    }
+
+    private void cerrarModulo(AccionERP accion) {
+        String modulo = accion.data != null ? accion.data.modulo : null;
+        if (modulo == null || modulo.isBlank()) {
+            addMensajeFeedback("Módulo no especificado",
+                "Indica el nombre del módulo a cerrar.", false);
+            return;
+        }
+        String clave = modulo.toLowerCase().trim();
+        Stage stage = modulosAbiertos.remove(clave);
+        if (stage != null && stage.isShowing()) {
+            stage.close();
+            addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» cerrado",
+                "La ventana se ha cerrado correctamente.", true);
+        } else {
+            addMensajeFeedback("Módulo «" + clave + "» no estaba abierto",
+                "No hay ninguna ventana abierta para ese módulo.", false);
+        }
+    }
+
+    private Parent crearVista(String clave) {
+        return switch (clave) {
+            case "clientes"                       -> new ClientesView();
+            case "presupuestos"                   -> new PresupuestosView();
+            case "facturas"                       -> new FacturasView();
+            case "albaranes"                      -> new AlbaranesView();
+            case "pedidos"                        -> new PedidosView();
+            case "tarifas"                        -> new TarifasView();
+            case "materiales"                     -> new MaterialesView();
+            case "empleados"                      -> new EmpleadosView();
+            case "nominas", "nóminas"             -> new NominasView();
+            case "estadisticas", "estadísticas"   -> new EstadisticasView();
+            case "calendario"                     -> new CalendarioView();
+            default -> null;
+        };
+    }
+
+    private String capitalizarModulo(String texto) {
+        if (texto == null || texto.isBlank()) return "";
+        return switch (texto) {
+            case "nominas", "nóminas"           -> "Nóminas";
+            case "estadisticas", "estadísticas" -> "Estadísticas";
+            default -> Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+        };
     }
 }

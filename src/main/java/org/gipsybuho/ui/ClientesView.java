@@ -15,6 +15,7 @@ import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportarClientesService;
+import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -58,15 +59,16 @@ public class ClientesView extends VBox {
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
-        Button btnNuevo    = btn("+ Nuevo",      "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",    "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",   "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar", "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar", "#8E44AD", this::exportar);
+        Button btnNuevo    = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
+        Button btnEditar   = btn("✏ Editar",          "#F39C12", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",         "#E74C3C", this::borrar);
+        Button btnImportar = btn("📥 Importar",       "#27AE60", this::importar);
+        Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
+        Button btnPreview  = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar);
+        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -76,6 +78,7 @@ public class ClientesView extends VBox {
     @SuppressWarnings("unchecked")
     private TableView<Cliente> buildTabla() {
         tabla.getStyleClass().add("data-table");
+        tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         tabla.getColumns().addAll(
             col("Nombre",    "nombre",    160),
@@ -448,6 +451,27 @@ public class ClientesView extends VBox {
                     setDisable(false);
                     mostrarError(e);
                 });
+            }
+        });
+    }
+
+    // ── Previsualizar ─────────────────────────────────────────────────────────
+
+    private void previsualizar() {
+        List<Cliente> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        List<Cliente> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
+        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        setDisable(true);
+        Thread.ofVirtual().start(() -> {
+            try {
+                byte[] pdf = PdfPreviewService.previsualizarClientes(lista);
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    PdfPreviewWindow.mostrar(pdf,
+                        "Previsualización — Clientes (" + lista.size() + " registro(s))");
+                });
+            } catch (Exception ex) {
+                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
             }
         });
     }
