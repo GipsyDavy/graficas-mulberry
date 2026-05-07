@@ -6,7 +6,7 @@
 
     <groupId>org.gipsybuho</groupId>
     <artifactId>GraficasMulberry</artifactId>
-    <version>6.0</version>
+    <version>6.1</version>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
