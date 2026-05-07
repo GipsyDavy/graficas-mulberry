@@ -21,11 +21,14 @@ import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -967,6 +970,7 @@ public class MaterialesView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        List<Material> selExp = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         Thread.ofVirtual().start(() -> {
             try {
                 switch (fmt[0]) {
@@ -974,8 +978,23 @@ public class MaterialesView extends VBox {
                     case "csv"    -> ExportService.exportarMaterialesCSV(destino);
                     case "sql"    -> ExportService.exportarMaterialesSQL(destino);
                     case "json"   -> ExportService.exportarMaterialesJSON(destino);
-                    case "pdf"    -> ExportService.exportarMaterialesPDF(destino, dao.findAll());
-                    case "word"   -> ExportService.exportarMaterialesWord(destino, dao.findAll());
+                    case "pdf"    -> {
+                        if (selExp.size() == 1) {
+                            Material m = selExp.get(0);
+                            Path pdf = new PDFService().generarFichaMaterial(m);
+                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+                            Files.deleteIfExists(pdf);
+                        } else {
+                            ExportService.exportarMaterialesPDF(destino, dao.findAll());
+                        }
+                    }
+                    case "word"   -> {
+                        if (selExp.size() == 1) {
+                            ExportService.exportarMaterialDetalladoWord(destino, selExp.get(0));
+                        } else {
+                            ExportService.exportarMaterialesWord(destino, dao.findAll());
+                        }
+                    }
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
@@ -1022,16 +1041,32 @@ public class MaterialesView extends VBox {
         List<Material> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
         if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarMateriales(lista);
+                byte[] pdfBytes; String tituloVentana;
+                if (lista.size() == 1) {
+                    Material m = lista.get(0);
+                    Path pdfPath = new PDFService().generarFichaMaterial(m);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Material " + m.getNombre();
+                    Files.deleteIfExists(pdfPath);
+                } else {
+                    pdfBytes = PdfPreviewService.previsualizarMateriales(lista);
+                    tituloVentana = "Previsualización — Materiales (" + lista.size() + " registro(s))";
+                }
+                final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Materiales (" + lista.size() + " registro(s))");
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    PdfPreviewWindow.mostrar(bytes, titulo);
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(ex);
+                });
             }
         });
     }

@@ -18,11 +18,14 @@ import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -654,15 +657,43 @@ public class FacturasView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        List<Factura> facturasAExportar = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (facturasAExportar.isEmpty()) facturasAExportar.addAll(datos);
+        if (facturasAExportar.isEmpty()) {
+            Platform.runLater(() -> { setDisable(false); alerta("No hay registros para exportar."); });
+            return;
+        }
+        final List<Factura> listaFinal = facturasAExportar;
+
         Thread.ofVirtual().start(() -> {
             try {
-                switch (fmt[0]) {
-                    case "sqlite" -> ExportService.backupSQLite(destino);
-                    case "csv"    -> ExportService.exportarFacturasCSV(destino);
-                    case "sql"    -> ExportService.exportarFacturasSQL(destino);
-                    case "json"   -> ExportService.exportarFacturasJSON(destino);
-                    case "pdf"    -> ExportService.exportarFacturasPDF(destino, dao.findAll());
-                    case "word"   -> ExportService.exportarFacturasWord(destino, dao.findAll());
+                if (listaFinal.size() == 1 && ("pdf".equals(fmt[0]) || "word".equals(fmt[0]))) {
+                    // Exportar una única factura como documento detallado
+                    Factura facturaSeleccionada = dao.findById(listaFinal.get(0).getId());
+                    if (facturaSeleccionada == null)
+                        throw new Exception("No se pudo cargar la factura seleccionada.");
+                    Cliente clienteAsociado = clienteDAO.findById(facturaSeleccionada.getClienteId());
+                    if (clienteAsociado == null)
+                        throw new Exception("No se pudo encontrar el cliente asociado a la factura.");
+
+                    if ("pdf".equals(fmt[0])) {
+                        PDFService pdfService = new PDFService();
+                        Path tempPdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado);
+                        Files.copy(tempPdfPath, destino, StandardCopyOption.REPLACE_EXISTING);
+                        Files.deleteIfExists(tempPdfPath);
+                    } else {
+                        ExportService.exportarFacturaDetalladaWord(destino, facturaSeleccionada, clienteAsociado);
+                    }
+
+                } else {
+                    switch (fmt[0]) {
+                        case "sqlite" -> ExportService.backupSQLite(destino);
+                        case "csv"    -> ExportService.exportarFacturasCSV(destino);
+                        case "sql"    -> ExportService.exportarFacturasSQL(destino);
+                        case "json"   -> ExportService.exportarFacturasJSON(destino);
+                        case "pdf"    -> ExportService.exportarFacturasPDF(destino, listaFinal);
+                        case "word"   -> ExportService.exportarFacturasWord(destino, listaFinal);
+                    }
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
@@ -689,16 +720,42 @@ public class FacturasView extends VBox {
         List<Factura> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
         if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarFacturas(lista);
+                byte[] pdfBytes;
+                String tituloVentana;
+
+                if (lista.size() == 1) {
+                    Factura facturaSeleccionada = dao.findById(lista.get(0).getId());
+                    if (facturaSeleccionada == null)
+                        throw new Exception("No se pudo cargar la factura seleccionada.");
+                    Cliente clienteAsociado = clienteDAO.findById(facturaSeleccionada.getClienteId());
+                    if (clienteAsociado == null)
+                        throw new Exception("No se pudo encontrar el cliente asociado a la factura.");
+                    PDFService pdfService = new PDFService();
+                    Path pdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Factura " + facturaSeleccionada.getNumero();
+                    Files.deleteIfExists(pdfPath);
+                } else {
+                    pdfBytes = PdfPreviewService.previsualizarFacturas(lista);
+                    tituloVentana = "Previsualización — Facturas (" + lista.size() + " registro(s))";
+                }
+
+                final byte[] finalPdfBytes = pdfBytes;
+                final String finalTitulo = tituloVentana;
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Facturas (" + lista.size() + " registro(s))");
+                    PdfPreviewWindow.mostrar(finalPdfBytes, finalTitulo);
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(ex);
+                });
             }
         });
     }

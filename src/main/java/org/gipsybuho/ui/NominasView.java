@@ -16,11 +16,14 @@ import org.gipsybuho.model.Nomina;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.NominaService;
+import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -498,6 +501,7 @@ public class NominasView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        List<Nomina> selExp = new ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         Thread.ofVirtual().start(() -> {
             try {
                 switch (fmt[0]) {
@@ -505,8 +509,26 @@ public class NominasView extends VBox {
                     case "csv"    -> ExportService.exportarNominasCSV(destino);
                     case "sql"    -> ExportService.exportarNominasSQL(destino);
                     case "json"   -> ExportService.exportarNominasJSON(destino);
-                    case "pdf"    -> ExportService.exportarNominasPDF(destino, dao.findAll());
-                    case "word"   -> ExportService.exportarNominasWord(destino, dao.findAll());
+                    case "pdf"    -> {
+                        if (selExp.size() == 1) {
+                            Nomina n = dao.findById(selExp.get(0).getId());
+                            Empleado emp = empleadoDAO.findById(n.getEmpleadoId());
+                            Path pdf = new PDFService().generarNomina(n, emp);
+                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+                            Files.deleteIfExists(pdf);
+                        } else {
+                            ExportService.exportarNominasPDF(destino, dao.findAll());
+                        }
+                    }
+                    case "word"   -> {
+                        if (selExp.size() == 1) {
+                            Nomina n = dao.findById(selExp.get(0).getId());
+                            Empleado emp = empleadoDAO.findById(n.getEmpleadoId());
+                            ExportService.exportarNominaDetalladaWord(destino, n, emp);
+                        } else {
+                            ExportService.exportarNominasWord(destino, dao.findAll());
+                        }
+                    }
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
@@ -548,16 +570,33 @@ public class NominasView extends VBox {
         List<Nomina> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
         if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarNominas(lista);
+                byte[] pdfBytes; String tituloVentana;
+                if (lista.size() == 1) {
+                    Nomina n = dao.findById(lista.get(0).getId());
+                    Empleado emp = empleadoDAO.findById(n.getEmpleadoId());
+                    Path pdfPath = new PDFService().generarNomina(n, emp);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Nómina " + n.getEmpleadoNombre() + " " + n.getPeriodo();
+                    Files.deleteIfExists(pdfPath);
+                } else {
+                    pdfBytes = PdfPreviewService.previsualizarNominas(lista);
+                    tituloVentana = "Previsualización — Nóminas (" + lista.size() + " registro(s))";
+                }
+                final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Nóminas (" + lista.size() + " registro(s))");
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    PdfPreviewWindow.mostrar(bytes, titulo);
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(ex);
+                });
             }
         });
     }

@@ -23,11 +23,14 @@ import org.gipsybuho.model.PagoPedido;
 import org.gipsybuho.model.Pedido;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -785,6 +788,7 @@ public class PedidosView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        List<Pedido> selExp = new ArrayList<>(tablaPedidos.getSelectionModel().getSelectedItems());
         Thread.ofVirtual().start(() -> {
             try {
                 switch (fmt[0]) {
@@ -792,8 +796,26 @@ public class PedidosView extends VBox {
                     case "csv"    -> ExportService.exportarPedidosCSV(destino);
                     case "sql"    -> ExportService.exportarPedidosSQL(destino);
                     case "json"   -> ExportService.exportarPedidosJSON(destino);
-                    case "pdf"    -> ExportService.exportarPedidosPDF(destino, pedidoDao.findAll());
-                    case "word"   -> ExportService.exportarPedidosWord(destino, pedidoDao.findAll());
+                    case "pdf"    -> {
+                        if (selExp.size() == 1) {
+                            Pedido p = pedidoDao.findById(selExp.get(0).getId());
+                            Cliente c = clienteDao.findById(p.getClienteId());
+                            Path pdf = new PDFService().generarPedido(p, c);
+                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+                            Files.deleteIfExists(pdf);
+                        } else {
+                            ExportService.exportarPedidosPDF(destino, pedidoDao.findAll());
+                        }
+                    }
+                    case "word"   -> {
+                        if (selExp.size() == 1) {
+                            Pedido p = pedidoDao.findById(selExp.get(0).getId());
+                            Cliente c = clienteDao.findById(p.getClienteId());
+                            ExportService.exportarPedidoDetalladoWord(destino, p, c);
+                        } else {
+                            ExportService.exportarPedidosWord(destino, pedidoDao.findAll());
+                        }
+                    }
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
@@ -1202,16 +1224,33 @@ public class PedidosView extends VBox {
         List<Pedido> lista = sel.isEmpty() ? new ArrayList<>(datosPedidos) : sel;
         if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarPedidos(lista);
+                byte[] pdfBytes; String tituloVentana;
+                if (lista.size() == 1) {
+                    Pedido p = pedidoDao.findById(lista.get(0).getId());
+                    Cliente c = clienteDao.findById(p.getClienteId());
+                    Path pdfPath = new PDFService().generarPedido(p, c);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Pedido " + p.getNumero();
+                    Files.deleteIfExists(pdfPath);
+                } else {
+                    pdfBytes = PdfPreviewService.previsualizarPedidos(lista);
+                    tituloVentana = "Previsualización — Pedidos (" + lista.size() + " registro(s))";
+                }
+                final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Pedidos (" + lista.size() + " registro(s))");
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    PdfPreviewWindow.mostrar(bytes, titulo);
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(ex);
+                });
             }
         });
     }

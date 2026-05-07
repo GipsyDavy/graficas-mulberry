@@ -57,7 +57,9 @@
       "Bash(Sort-Object FullName)",
       "Bash(dir \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\")",
       "Bash(xargs grep *)",
-      "Bash(\"C:\\\\Program Files\\\\Apache NetBeans\\\\java\\\\maven\\\\bin\\\\mvn.cmd\" compile -f \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\pom.xml\")"
+      "Bash(\"C:\\\\Program Files\\\\Apache NetBeans\\\\java\\\\maven\\\\bin\\\\mvn.cmd\" compile -f \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\pom.xml\")",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\" -Recurse)",
+      "Bash(Select-Object FullName)"
     ]
   }
 }

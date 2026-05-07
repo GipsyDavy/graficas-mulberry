@@ -9,7 +9,7 @@ import java.util.*;
 public class ClienteDAO {
 
     private static final Set<String> CAMPOS_FIJOS = Set.of(
-        "id", "nombre", "apellidos", "tipo", "nif",
+        "id", "nombre", "apellidos", "apellido", "tipo", "nif",
         "direccion", "ciudad", "cp", "telefono", "email", "notas", "created_at"
     );
 
@@ -137,8 +137,8 @@ public class ClienteDAO {
             String col = meta.getColumnName(i).toLowerCase();
             switch (col) {
                 case "id"         -> c.setId(rs.getInt(i));
-                case "nombre"     -> c.setNombre(rs.getString(i));
-                case "apellidos"  -> c.setApellidos(rs.getString(i));
+                case "nombre"              -> c.setNombre(rs.getString(i));
+                case "apellidos", "apellido" -> c.setApellidos(rs.getString(i));
                 case "tipo"       -> c.setTipo(rs.getString(i));
                 case "nif"        -> c.setNif(rs.getString(i));
                 case "direccion"  -> c.setDireccion(rs.getString(i));

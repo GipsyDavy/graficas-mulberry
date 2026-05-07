@@ -14,11 +14,14 @@ import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.Tarifa;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -358,6 +361,7 @@ public class TarifasView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        List<Tarifa> selExp = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         Thread.ofVirtual().start(() -> {
             try {
                 switch (fmt[0]) {
@@ -365,8 +369,23 @@ public class TarifasView extends VBox {
                     case "csv"    -> ExportService.exportarTarifasCSV(destino);
                     case "sql"    -> ExportService.exportarTarifasSQL(destino);
                     case "json"   -> ExportService.exportarTarifasJSON(destino);
-                    case "pdf"    -> ExportService.exportarTarifasPDF(destino, dao.findAll());
-                    case "word"   -> ExportService.exportarTarifasWord(destino, dao.findAll());
+                    case "pdf"    -> {
+                        if (selExp.size() == 1) {
+                            Tarifa t = selExp.get(0);
+                            Path pdf = new PDFService().generarFichaTarifa(t);
+                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+                            Files.deleteIfExists(pdf);
+                        } else {
+                            ExportService.exportarTarifasPDF(destino, dao.findAll());
+                        }
+                    }
+                    case "word"   -> {
+                        if (selExp.size() == 1) {
+                            ExportService.exportarTarifaDetalladaWord(destino, selExp.get(0));
+                        } else {
+                            ExportService.exportarTarifasWord(destino, dao.findAll());
+                        }
+                    }
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
@@ -393,16 +412,32 @@ public class TarifasView extends VBox {
         List<Tarifa> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
         if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarTarifas(lista);
+                byte[] pdfBytes; String tituloVentana;
+                if (lista.size() == 1) {
+                    Tarifa t = lista.get(0);
+                    Path pdfPath = new PDFService().generarFichaTarifa(t);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Tarifa " + t.getNombre();
+                    Files.deleteIfExists(pdfPath);
+                } else {
+                    pdfBytes = PdfPreviewService.previsualizarTarifas(lista);
+                    tituloVentana = "Previsualización — Tarifas (" + lista.size() + " registro(s))";
+                }
+                final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Tarifas (" + lista.size() + " registro(s))");
+                    SoundService.play(SoundService.Sound.COMPLETE);
+                    PdfPreviewWindow.mostrar(bytes, titulo);
                 });
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    setDisable(false);
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(ex);
+                });
             }
         });
     }

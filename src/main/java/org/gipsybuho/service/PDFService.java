@@ -733,4 +733,167 @@ public class PDFService {
     }
 
     private String nvl(String s) { return s != null ? s : ""; }
+
+    // ── Pedido de trabajo ──────────────────────────────────────────────────────
+
+    public Path generarPedido(Pedido p, Cliente c) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Pedidos")
+            .resolve(safeFilename(p.getNumero()) + ".pdf");
+        path.getParent().toFile().mkdirs();
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "PEDIDO DE TRABAJO");
+
+        PdfPTable tDatos = new PdfPTable(4);
+        tDatos.setWidthPercentage(100);
+        tDatos.setWidths(new float[]{1.2f, 2f, 1.2f, 2f});
+        addCeldaInfo(tDatos, "Número:", nvl(p.getNumero()));
+        addCeldaInfo(tDatos, "Estado:", nvl(p.getEstadoDisplay()));
+        addCeldaInfo(tDatos, "Fecha entrada:", p.getFecha() != null ? p.getFecha().toString() : "");
+        addCeldaInfo(tDatos, "Entrega prevista:", p.getFechaEntregaPrevista() != null ? p.getFechaEntregaPrevista().toString() : "");
+        doc.add(tDatos);
+        addDatosCliente(doc, c);
+        doc.add(Chunk.NEWLINE);
+
+        if (p.getDescripcion() != null && !p.getDescripcion().isBlank())
+            addSeccion(doc, "Descripción del trabajo", p.getDescripcion());
+
+        doc.add(Chunk.NEWLINE);
+        PdfPTable tImportes = new PdfPTable(2);
+        tImportes.setWidthPercentage(40);
+        tImportes.setHorizontalAlignment(Element.ALIGN_RIGHT);
+        tImportes.setWidths(new float[]{2f, 1.5f});
+        addFilaTotales(tImportes, "Importe total:", String.format("%.2f €", p.getImporteTotal()), false);
+        addFilaTotales(tImportes, "Pagado:", String.format("%.2f €", p.getImportePagado()), false);
+        addFilaTotales(tImportes, "Pendiente:", String.format("%.2f €", p.getImportePendiente()), true);
+        doc.add(tImportes);
+
+        if (p.getNotas() != null && !p.getNotas().isBlank()) {
+            doc.add(Chunk.NEWLINE);
+            addSeccion(doc, "Notas", p.getNotas());
+        }
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
+
+    // ── Ficha de Cliente ──────────────────────────────────────────────────────
+
+    public Path generarFichaCliente(Cliente c) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Clientes")
+            .resolve(safeFilename(nvl(c.getNombreCompleto())) + ".pdf");
+        path.getParent().toFile().mkdirs();
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "FICHA DE CLIENTE");
+
+        PdfPTable t = new PdfPTable(2);
+        t.setWidthPercentage(100);
+        t.setWidths(new float[]{1.5f, 3f});
+        addCeldaInfo(t, "Nombre:", nvl(c.getNombre()));
+        addCeldaInfo(t, "Apellidos:", nvl(c.getApellidos()));
+        addCeldaInfo(t, "Tipo:", nvl(c.getTipo()));
+        addCeldaInfo(t, "NIF/CIF:", nvl(c.getNif()));
+        addCeldaInfo(t, "Teléfono:", nvl(c.getTelefono()));
+        addCeldaInfo(t, "Email:", nvl(c.getEmail()));
+        addCeldaInfo(t, "Dirección:", nvl(c.getDireccion()));
+        addCeldaInfo(t, "C.P. / Ciudad:", nvl(c.getCp()) + " " + nvl(c.getCiudad()));
+        doc.add(t);
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
+
+    // ── Ficha de Tarifa ───────────────────────────────────────────────────────
+
+    public Path generarFichaTarifa(Tarifa tarifa) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Tarifas")
+            .resolve(safeFilename(nvl(tarifa.getTecnica()) + "_" + nvl(tarifa.getNombre())) + ".pdf");
+        path.getParent().toFile().mkdirs();
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "FICHA DE TARIFA");
+
+        PdfPTable tabla = new PdfPTable(2);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{1.5f, 3f});
+        addCeldaInfo(tabla, "Técnica:", nvl(tarifa.getTecnica()));
+        addCeldaInfo(tabla, "Nombre:", nvl(tarifa.getNombre()));
+        addCeldaInfo(tabla, "Descripción:", nvl(tarifa.getDescripcion()));
+        addCeldaInfo(tabla, "Precio por ud.:", String.format("%.2f €", tarifa.getPrecioUnit()));
+        addCeldaInfo(tabla, "Setup (€):", String.format("%.2f €", tarifa.getPrecioSetup()));
+        addCeldaInfo(tabla, "Mínimo uds.:", String.valueOf(tarifa.getMinimoUnidades()));
+        addCeldaInfo(tabla, "Activa:", tarifa.isActiva() ? "Sí" : "No");
+        doc.add(tabla);
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
+
+    // ── Ficha de Material ─────────────────────────────────────────────────────
+
+    public Path generarFichaMaterial(Material m) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Materiales")
+            .resolve(safeFilename(nvl(m.getNombre())) + ".pdf");
+        path.getParent().toFile().mkdirs();
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "FICHA DE MATERIAL");
+
+        PdfPTable tabla = new PdfPTable(2);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{1.5f, 3f});
+        addCeldaInfo(tabla, "Nombre:", nvl(m.getNombre()));
+        addCeldaInfo(tabla, "Referencia:", nvl(m.getReferencia()));
+        addCeldaInfo(tabla, "Categoría:", nvl(m.getCategoria()));
+        addCeldaInfo(tabla, "Proveedor:", nvl(m.getProveedor()));
+        addCeldaInfo(tabla, "Unidad:", nvl(m.getUnidad()));
+        addCeldaInfo(tabla, "Precio/ud.:", String.format("%.2f €", m.getPrecioUnidad()));
+        addCeldaInfo(tabla, "Stock actual:", String.format("%.2f %s", m.getStockActual(), nvl(m.getUnidad())));
+        addCeldaInfo(tabla, "Stock mínimo:", String.format("%.2f %s", m.getStockMinimo(), nvl(m.getUnidad())));
+        addCeldaInfo(tabla, "Alerta:", m.isBajoStock() ? "BAJO MÍNIMO" : "OK");
+        doc.add(tabla);
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
+
+    // ── Ficha de Empleado ─────────────────────────────────────────────────────
+
+    public Path generarFichaEmpleado(Empleado e) throws Exception {
+        initFonts();
+        Path path = getDocumentosPath().resolve("Mulberry").resolve("Empleados")
+            .resolve(safeFilename(e.getNombreCompleto()) + ".pdf");
+        path.getParent().toFile().mkdirs();
+        Document doc = new Document(PageSize.A4, 40, 40, 60, 40);
+        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+        doc.open();
+        addCabecera(doc, writer, "FICHA DE EMPLEADO");
+
+        PdfPTable tabla = new PdfPTable(2);
+        tabla.setWidthPercentage(100);
+        tabla.setWidths(new float[]{1.5f, 3f});
+        addCeldaInfo(tabla, "Nombre:", nvl(e.getNombre()));
+        addCeldaInfo(tabla, "Apellidos:", nvl(e.getApellidos()));
+        addCeldaInfo(tabla, "NIF:", nvl(e.getNif()));
+        addCeldaInfo(tabla, "Categoría:", nvl(e.getCategoria()));
+        addCeldaInfo(tabla, "Fecha alta:", nvl(e.getFechaAlta()));
+        addCeldaInfo(tabla, "Estado:", e.isActivo() ? "ACTIVO"
+            : "BAJA" + (e.getFechaBaja() != null ? " (" + e.getFechaBaja() + ")" : ""));
+        addCeldaInfo(tabla, "Salario base:", String.format("%.2f €", e.getSalarioBase()));
+        addCeldaInfo(tabla, "IRPF:", String.format("%.1f%%", e.getIrpf()));
+        addCeldaInfo(tabla, "IBAN:", nvl(e.getIban()));
+        doc.add(tabla);
+        addPiePagina(doc, writer);
+        doc.close();
+        return path;
+    }
 }

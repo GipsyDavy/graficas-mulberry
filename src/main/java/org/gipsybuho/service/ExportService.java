@@ -20,15 +20,21 @@ import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Empleado;
+import org.gipsybuho.model.LineaAlbaran;
+import org.gipsybuho.model.LineaFactura;
+import org.gipsybuho.model.LineaPresupuesto;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.model.Nomina;
 import org.gipsybuho.model.Pedido;
 import org.gipsybuho.model.Factura;
 import org.gipsybuho.model.Presupuesto;
 import org.gipsybuho.model.Tarifa;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.CTTblWidth;
+import org.openxmlformats.schemas.wordprocessingml.x2006.main.STTblWidth;
 
 import java.awt.Color;
 import java.io.*;
+import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.sql.*;
@@ -2369,4 +2375,699 @@ public class ExportService {
         }
         return destino;
     }
+
+    public static Path exportarPresupuestoDetalladoWord(Path destino, Presupuesto p, Cliente c) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            // Configuración de estilos y colores
+            String colorMulberry = "6B2D5E"; // Hex para Color(107, 45, 94)
+            String colorGrisClaro = "F5F5F5"; // Hex para Color(245, 245, 245)
+            String colorGrisBorde = "C8C8C8"; // Hex para Color(200, 200, 200)
+
+            // 1. Cabecera de la empresa
+            XWPFParagraph pHeader = document.createParagraph();
+            pHeader.setAlignment(ParagraphAlignment.RIGHT);
+            XWPFRun rHeader = pHeader.createRun();
+            rHeader.setText("GRÁFICAS MULBERRY");
+            rHeader.setBold(true);
+            rHeader.setFontSize(20);
+            rHeader.setColor(colorMulberry);
+            rHeader.addBreak();
+            rHeader.setFontSize(9);
+            rHeader.setColor("000000"); // Negro para texto normal
+            rHeader.setText(DatabaseManager.getConfig("empresa_direccion"));
+            rHeader.addBreak();
+            rHeader.setText(DatabaseManager.getConfig("empresa_cp") + " " + DatabaseManager.getConfig("empresa_ciudad"));
+            rHeader.addBreak();
+            rHeader.setText("Tel: " + DatabaseManager.getConfig("empresa_telefono"));
+            rHeader.addBreak();
+            rHeader.setText(DatabaseManager.getConfig("empresa_email"));
+            rHeader.addBreak();
+            rHeader.setText("NIF: " + DatabaseManager.getConfig("empresa_nif"));
+
+            // Título del documento
+            XWPFParagraph pDocTitle = document.createParagraph();
+            pDocTitle.setAlignment(ParagraphAlignment.CENTER);
+            pDocTitle.setSpacingAfter(200); // Espacio después del título
+            XWPFRun rDocTitle = pDocTitle.createRun();
+            rDocTitle.setText("PRESUPUESTO");
+            rDocTitle.setBold(true);
+            rDocTitle.setFontSize(14);
+            rDocTitle.setColor("FFFFFF"); // Blanco
+            pDocTitle.getCTP().getPPr().addNewShd().setFill(colorMulberry); // Fondo Mulberry
+
+            // 2. Datos del documento (Número, Fecha, Validez, Estado)
+            addSectionTitle(document, "DATOS DEL PRESUPUESTO");
+            XWPFTable docDataTable = document.createTable(2, 4);
+            setTableWidth(docDataTable, "100%");
+            addTableRow(docDataTable, new String[]{"Número:", p.getNumero(), "Estado:", s(p.getEstado()).toUpperCase()}, true, colorGrisClaro, colorGrisBorde);
+            addTableRow(docDataTable, new String[]{"Fecha:", s(p.getFecha()), "Validez:", s(p.getFechaValidez())}, false, colorGrisClaro, colorGrisBorde);
+            addParagraph(document, ""); // Espacio
+
+            // 3. Datos del cliente
+            addSectionTitle(document, "CLIENTE");
+            XWPFTable clientDataTable = document.createTable(1, 1);
+            setTableWidth(clientDataTable, "50%");
+            XWPFTableRow clientRow = clientDataTable.getRow(0);
+            XWPFTableCell clientCell = clientRow.getCell(0);
+            clientCell.setColor(colorGrisClaro); // Fondo gris claro para la celda
+            addRunToCell(clientCell, s(c.getNombreCompleto()), true, 10, "000000");
+            if (c.getNif() != null) addRunToCell(clientCell, "NIF/CIF: " + c.getNif(), false, 9, "000000");
+            if (c.getDireccion() != null) addRunToCell(clientCell, c.getDireccion(), false, 9, "000000");
+            if (c.getCiudad() != null) addRunToCell(clientCell, s(c.getCp()) + " " + c.getCiudad(), false, 9, "000000");
+            if (c.getTelefono() != null) addRunToCell(clientCell, "Tel: " + c.getTelefono(), false, 9, "000000");
+            if (c.getEmail() != null) addRunToCell(clientCell, c.getEmail(), false, 9, "000000");
+            addParagraph(document, ""); // Espacio
+
+            // 4. Tabla de líneas del presupuesto
+            addSectionTitle(document, "DETALLE DEL PRESUPUESTO");
+            XWPFTable lineasTable = document.createTable(1, 6);
+            setTableWidth(lineasTable, "100%");
+            String[] headers = {"Descripción", "Técnica", "Cant.", "Precio ud.", "Dto.", "Total"};
+            addTableHeader(lineasTable, headers, colorMulberry);
+
+            boolean par = false;
+            for (LineaPresupuesto linea : p.getLineas()) {
+                String bgColor = par ? colorGrisClaro : "FFFFFF";
+                XWPFTableRow row = lineasTable.createRow();
+                addCell(row, s(linea.getDescripcion()), bgColor, false, ParagraphAlignment.LEFT);
+                addCell(row, s(linea.getTecnica()), bgColor, false, ParagraphAlignment.LEFT);
+                addCell(row, String.valueOf(linea.getCantidad()), bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, String.format("%.2f €", linea.getPrecioUnit()), bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bgColor, false, ParagraphAlignment.RIGHT);
+                addCell(row, String.format("%.2f €", linea.getTotal()), bgColor, false, ParagraphAlignment.RIGHT);
+                par = !par;
+            }
+            addParagraph(document, ""); // Espacio
+
+            // 5. Totales
+            XWPFTable totalesTable = document.createTable(3, 2);
+            setTableWidth(totalesTable, "40%");
+            totalesTable.setTableAlignment(TableRowAlign.RIGHT); // Alinea la tabla a la derecha
+            addTableRow(totalesTable, new String[]{"Base imponible:", String.format("%.2f €", p.getBaseImponible())}, false, "FFFFFF", colorGrisBorde);
+            addTableRow(totalesTable, new String[]{String.format("IVA (%.0f%%):", p.getIvaPorcentaje()), String.format("%.2f €", p.getIvaImporte())}, false, "FFFFFF", colorGrisBorde);
+            addTableRow(totalesTable, new String[]{"TOTAL:", String.format("%.2f €", p.getTotal())}, true, colorMulberry, colorGrisBorde);
+            addParagraph(document, ""); // Espacio
+
+            // 6. Notas y condiciones
+            if (p.getNotas() != null && !p.getNotas().isBlank()) {
+                addSectionTitle(document, "NOTAS");
+                addParagraph(document, p.getNotas());
+            }
+            if (p.getCondiciones() != null && !p.getCondiciones().isBlank()) {
+                addSectionTitle(document, "CONDICIONES");
+                addParagraph(document, p.getCondiciones());
+            }
+
+            // 7. Pie de página (adaptado de PDFService)
+            XWPFParagraph pFooter = document.createParagraph();
+            pFooter.setAlignment(ParagraphAlignment.CENTER);
+            pFooter.setSpacingBefore(200); // Espacio antes del pie de página
+            XWPFRun rFooter = pFooter.createRun();
+            rFooter.setFontSize(8);
+            rFooter.setColor("888888"); // Gris
+            rFooter.setText("Gráficas Mulberry · " + DatabaseManager.getConfig("empresa_web") +
+                " · " + DatabaseManager.getConfig("empresa_email") +
+                " · Tel. " + DatabaseManager.getConfig("empresa_telefono"));
+
+
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) {
+                document.write(out);
+            }
+        }
+        return destino;
+    }
+
+    // Helper para añadir un título de sección en Word
+    private static void addSectionTitle(XWPFDocument document, String title) {
+        XWPFParagraph p = document.createParagraph();
+        p.setAlignment(ParagraphAlignment.LEFT);
+        p.setSpacingAfter(100);
+        XWPFRun r = p.createRun();
+        r.setText(title);
+        r.setBold(true);
+        r.setFontSize(12);
+        r.setColor("6B2D5E"); // Color Mulberry
+    }
+
+    // Helper para añadir un párrafo de texto normal
+    private static void addParagraph(XWPFDocument document, String text) {
+        XWPFParagraph p = document.createParagraph();
+        p.setSpacingAfter(100);
+        XWPFRun r = p.createRun();
+        r.setText(text);
+        r.setFontSize(9);
+    }
+
+    // Helper para añadir texto a una celda
+    private static void addRunToCell(XWPFTableCell cell, String text, boolean bold, int fontSize, String colorHex) {
+        XWPFParagraph p = cell.addParagraph();
+        p.setSpacingAfter(0);
+        p.setSpacingBefore(0);
+        XWPFRun r = p.createRun();
+        r.setText(text);
+        r.setBold(bold);
+        r.setFontSize(fontSize);
+        r.setColor(colorHex);
+    }
+
+    // Helper para establecer el ancho de una tabla
+    private static void setTableWidth(XWPFTable table, String width) {
+        CTTblWidth tblWidth = table.getCTTbl().addNewTblPr().addNewTblW();
+        tblWidth.setType(STTblWidth.PCT);
+        tblWidth.setW(new BigInteger(width.replace("%", "")));
+    }
+
+    // Helper para añadir una fila a una tabla de datos de documento/cliente
+    private static void addTableRow(XWPFTable table, String[] data, boolean boldValue, String bgColorHex, String borderColorHex) {
+        XWPFTableRow row = table.createRow();
+        for (int i = 0; i < data.length; i++) {
+            XWPFTableCell cell = row.getCell(i);
+            if (cell == null) cell = row.addNewTableCell(); // Asegurarse de que la celda existe
+            cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+            cell.setColor(bgColorHex); // Fondo de la celda
+
+            XWPFParagraph p = cell.getParagraphs().get(0);
+            p.setSpacingAfter(0);
+            p.setSpacingBefore(0);
+            XWPFRun r = p.createRun();
+            r.setFontSize(9);
+            r.setColor("000000"); // Texto negro
+
+            if (i % 2 == 0) { // Es una etiqueta
+                r.setBold(true);
+                r.setText(data[i]);
+            } else { // Es un valor
+                r.setBold(boldValue);
+                r.setText(data[i]);
+            }
+        }
+    }
+
+    // Helper para añadir una celda a una tabla de líneas
+    private static void addCell(XWPFTableRow row, String text, String bgColorHex, boolean bold, ParagraphAlignment align) {
+        XWPFTableCell cell = row.addNewTableCell();
+        cell.setVerticalAlignment(XWPFTableCell.XWPFVertAlign.CENTER);
+        cell.setColor(bgColorHex);
+
+        XWPFParagraph p = cell.getParagraphs().get(0);
+        p.setAlignment(align);
+        p.setSpacingAfter(0);
+        p.setSpacingBefore(0);
+        XWPFRun r = p.createRun();
+        r.setText(text);
+        r.setBold(bold);
+        r.setFontSize(9);
+        r.setColor("000000");
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // ALBARÁN INDIVIDUAL DETALLADO (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarAlbaranDetalladoWord(Path destino, Albaran a, Cliente c) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "ALBARÁN DE ENTREGA", colorMulberry);
+
+            addSectionTitle(document, "DATOS DEL ALBARÁN");
+            XWPFTable tDatos = document.createTable(2, 4);
+            setTableWidth(tDatos, "100%");
+            addTableRow(tDatos, new String[]{"Número:", s(a.getNumero()), "Fecha:", s(a.getFecha())}, false, colorGrisClaro, colorGrisBorde);
+            addTableRow(tDatos, new String[]{"Factura ref.:", s(a.getFacturaNumero()), "Pedido ref.:", s(a.getPedidoNumero())}, false, colorGrisClaro, colorGrisBorde);
+            addParagraph(document, "");
+
+            addSectionTitle(document, "CLIENTE");
+            addWordClienteBlock(document, c, colorGrisClaro);
+            addParagraph(document, "");
+
+            if (a.getLineas() != null && !a.getLineas().isEmpty()) {
+                addSectionTitle(document, "ARTÍCULOS");
+                XWPFTable tLineas = document.createTable(1, 3);
+                setTableWidth(tLineas, "100%");
+                addTableHeader(tLineas, new String[]{"Descripción", "Cantidad", "Unidad"}, colorMulberry);
+                boolean par = false;
+                for (LineaAlbaran linea : a.getLineas()) {
+                    String bg = par ? colorGrisClaro : "FFFFFF";
+                    XWPFTableRow row = tLineas.createRow();
+                    addCell(row, s(linea.getDescripcion()), bg, false, ParagraphAlignment.LEFT);
+                    addCell(row, String.valueOf(linea.getCantidad()), bg, false, ParagraphAlignment.CENTER);
+                    addCell(row, s(linea.getUnidad()), bg, false, ParagraphAlignment.CENTER);
+                    par = !par;
+                }
+                addParagraph(document, "");
+            }
+
+            if (a.getObservaciones() != null && !a.getObservaciones().isBlank()) {
+                addSectionTitle(document, "OBSERVACIONES");
+                addParagraph(document, a.getObservaciones());
+            }
+
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // NÓMINA INDIVIDUAL DETALLADA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarNominaDetalladaWord(Path destino, Nomina n, Empleado e) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "RECIBO DE NÓMINA", colorMulberry);
+
+            addSectionTitle(document, "DATOS DEL EMPLEADO");
+            XWPFTable tEmp = document.createTable(2, 4);
+            setTableWidth(tEmp, "100%");
+            addTableRow(tEmp, new String[]{"Empleado:", e.getNombreCompleto(), "Período:", s(n.getPeriodo())}, true, colorGrisClaro, colorGrisBorde);
+            addTableRow(tEmp, new String[]{"NIF:", s(e.getNif()), "Categoría:", s(e.getCategoria())}, false, colorGrisClaro, colorGrisBorde);
+            addParagraph(document, "");
+
+            addSectionTitle(document, "PERCEPCIONES");
+            XWPFTable tPerc = document.createTable(1, 2);
+            setTableWidth(tPerc, "100%");
+            addTableHeader(tPerc, new String[]{"Concepto", "Importe"}, colorMulberry);
+            addWordNominaFila(tPerc, "Salario base", String.format("%.2f €", n.getSalarioBase()), "FFFFFF", colorGrisBorde);
+            if (n.getComplementos() > 0)
+                addWordNominaFila(tPerc, "Complementos", String.format("%.2f €", n.getComplementos()), colorGrisClaro, colorGrisBorde);
+            if (n.getHorasExtraNormales() > 0)
+                addWordNominaFila(tPerc, "Horas extra normales", String.format("%.2f €", n.getHorasExtraNormales() * n.getPrecioHoraExtra()), "FFFFFF", colorGrisBorde);
+            if (n.getHorasExtraFestivas() > 0)
+                addWordNominaFila(tPerc, "Horas extra festivas", String.format("%.2f €", n.getHorasExtraFestivas() * n.getPrecioHoraFestiva()), colorGrisClaro, colorGrisBorde);
+            addWordNominaFila(tPerc, "TOTAL DEVENGADO", String.format("%.2f €", n.getTotalBruto()), colorMulberry, colorGrisBorde);
+            addParagraph(document, "");
+
+            addSectionTitle(document, "DEDUCCIONES");
+            XWPFTable tDed = document.createTable(1, 2);
+            setTableWidth(tDed, "100%");
+            addTableHeader(tDed, new String[]{"Concepto", "Importe"}, colorMulberry);
+            addWordNominaFila(tDed, String.format("S.S. trabajador"), String.format("%.2f €", n.getSsTrabajador()), "FFFFFF", colorGrisBorde);
+            addWordNominaFila(tDed, String.format("IRPF (%.1f%%)", n.getIrpfPorcentaje()), String.format("%.2f €", n.getIrpfImporte()), colorGrisClaro, colorGrisBorde);
+            addWordNominaFila(tDed, "TOTAL DEDUCCIONES", String.format("%.2f €", n.getTotalDeducciones()), colorMulberry, colorGrisBorde);
+            addParagraph(document, "");
+
+            addSectionTitle(document, "LÍQUIDO A PERCIBIR");
+            XWPFTable tLiq = document.createTable(1, 2);
+            setTableWidth(tLiq, "60%");
+            addWordNominaFila(tLiq, "NETO A PERCIBIR", String.format("%.2f €", n.getNeto()), colorMulberry, colorGrisBorde);
+            addParagraph(document, "");
+
+            if (e.getIban() != null && !e.getIban().isBlank()) {
+                addSectionTitle(document, "FORMA DE PAGO");
+                addParagraph(document, "IBAN: " + e.getIban());
+            }
+
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PEDIDO INDIVIDUAL DETALLADO (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarPedidoDetalladoWord(Path destino, Pedido p, Cliente c) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "PEDIDO DE TRABAJO", colorMulberry);
+
+            addSectionTitle(document, "DATOS DEL PEDIDO");
+            XWPFTable tDatos = document.createTable(2, 4);
+            setTableWidth(tDatos, "100%");
+            addTableRow(tDatos, new String[]{"Número:", s(p.getNumero()), "Estado:", s(p.getEstadoDisplay())}, true, colorGrisClaro, colorGrisBorde);
+            addTableRow(tDatos, new String[]{"Fecha entrada:", p.getFecha() != null ? p.getFecha().toString() : "", "Entrega prevista:", p.getFechaEntregaPrevista() != null ? p.getFechaEntregaPrevista().toString() : ""}, false, colorGrisClaro, colorGrisBorde);
+            addParagraph(document, "");
+
+            addSectionTitle(document, "CLIENTE");
+            addWordClienteBlock(document, c, colorGrisClaro);
+            addParagraph(document, "");
+
+            if (p.getDescripcion() != null && !p.getDescripcion().isBlank()) {
+                addSectionTitle(document, "DESCRIPCIÓN DEL TRABAJO");
+                addParagraph(document, p.getDescripcion());
+            }
+
+            addSectionTitle(document, "IMPORTES");
+            XWPFTable tImp = document.createTable(1, 2);
+            setTableWidth(tImp, "50%");
+            addWordNominaFila(tImp, "Importe total:", String.format("%.2f €", p.getImporteTotal()), "FFFFFF", colorGrisBorde);
+            addWordNominaFila(tImp, "Pagado:", String.format("%.2f €", p.getImportePagado()), colorGrisClaro, colorGrisBorde);
+            addWordNominaFila(tImp, "Pendiente:", String.format("%.2f €", p.getImportePendiente()), colorMulberry, colorGrisBorde);
+            addParagraph(document, "");
+
+            if (p.getNotas() != null && !p.getNotas().isBlank()) {
+                addSectionTitle(document, "NOTAS");
+                addParagraph(document, p.getNotas());
+            }
+
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // CLIENTE INDIVIDUAL — FICHA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarClienteDetalladoWord(Path destino, Cliente c) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "FICHA DE CLIENTE", colorMulberry);
+            addSectionTitle(document, "DATOS DEL CLIENTE");
+            XWPFTable t = document.createTable(1, 2);
+            setTableWidth(t, "100%");
+            addWordFichaFila(t, "Nombre:",     s(c.getNombre()),    "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Apellidos:",  s(c.getApellidos()), colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Tipo:",       s(c.getTipo()),       "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "NIF/CIF:",    s(c.getNif()),        colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Teléfono:",   s(c.getTelefono()),   "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Email:",      s(c.getEmail()),      colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Dirección:",  s(c.getDireccion()),  "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "C.P./Ciudad:", s(c.getCp()) + " " + s(c.getCiudad()), colorGrisClaro, colorGrisBorde);
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // TARIFA INDIVIDUAL — FICHA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarTarifaDetalladaWord(Path destino, Tarifa tarifa) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "FICHA DE TARIFA", colorMulberry);
+            addSectionTitle(document, "DATOS DE LA TARIFA");
+            XWPFTable t = document.createTable(1, 2);
+            setTableWidth(t, "100%");
+            addWordFichaFila(t, "Técnica:",       s(tarifa.getTecnica()),      "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Nombre:",         s(tarifa.getNombre()),       colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Descripción:",    s(tarifa.getDescripcion()),  "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Precio por ud.:", String.format("%.2f €", tarifa.getPrecioUnit()),   colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Setup (€):",      String.format("%.2f €", tarifa.getPrecioSetup()),  "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Mínimo uds.:",    String.valueOf(tarifa.getMinimoUnidades()),          colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Activa:",         tarifa.isActiva() ? "Sí" : "No",                   "FFFFFF",      colorGrisBorde);
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // MATERIAL INDIVIDUAL — FICHA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarMaterialDetalladoWord(Path destino, Material m) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "FICHA DE MATERIAL", colorMulberry);
+            addSectionTitle(document, "DATOS DEL MATERIAL");
+            XWPFTable t = document.createTable(1, 2);
+            setTableWidth(t, "100%");
+            addWordFichaFila(t, "Nombre:",        s(m.getNombre()),       "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Referencia:",     s(m.getReferencia()),   colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Categoría:",      s(m.getCategoria()),    "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Proveedor:",      s(m.getProveedor()),    colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Unidad:",         s(m.getUnidad()),       "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Precio/ud.:",     String.format("%.2f €", m.getPrecioUnidad()),                             colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Stock actual:",   String.format("%.2f %s", m.getStockActual(), s(m.getUnidad())),            "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Stock mínimo:",   String.format("%.2f %s", m.getStockMinimo(), s(m.getUnidad())),            colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Alerta:",         m.isBajoStock() ? "BAJO MÍNIMO" : "OK",                                   "FFFFFF",      colorGrisBorde);
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EMPLEADO INDIVIDUAL — FICHA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarEmpleadoDetalladoWord(Path destino, Empleado e) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+            addWordEmpresaHeader(document, colorMulberry);
+            addWordTituloDocumento(document, "FICHA DE EMPLEADO", colorMulberry);
+            addSectionTitle(document, "DATOS DEL EMPLEADO");
+            XWPFTable t = document.createTable(1, 2);
+            setTableWidth(t, "100%");
+            addWordFichaFila(t, "Nombre:",      s(e.getNombre()),       "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Apellidos:",   s(e.getApellidos()),    colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "NIF:",         s(e.getNif()),          "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Categoría:",   s(e.getCategoria()),    colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Fecha alta:",  s(e.getFechaAlta()),    "FFFFFF",      colorGrisBorde);
+            addWordFichaFila(t, "Estado:",      e.isActivo() ? "ACTIVO" : "BAJA" + (e.getFechaBaja() != null ? " (" + e.getFechaBaja() + ")" : ""), colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "Salario base:", String.format("%.2f €", e.getSalarioBase()), "FFFFFF", colorGrisBorde);
+            addWordFichaFila(t, "IRPF:",        String.format("%.1f%%", e.getIrpf()),          colorGrisClaro, colorGrisBorde);
+            addWordFichaFila(t, "IBAN:",        s(e.getIban()),         "FFFFFF",      colorGrisBorde);
+            addWordFooter(document);
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // Helpers compartidos para documentos Word detallados
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private static void addWordEmpresaHeader(XWPFDocument document, String colorMulberry) {
+        XWPFParagraph p = document.createParagraph();
+        p.setAlignment(ParagraphAlignment.RIGHT);
+        XWPFRun r = p.createRun();
+        r.setText("GRÁFICAS MULBERRY"); r.setBold(true); r.setFontSize(20); r.setColor(colorMulberry);
+        r.addBreak(); r.setFontSize(9); r.setColor("000000");
+        r.setText(DatabaseManager.getConfig("empresa_direccion")); r.addBreak();
+        r.setText(DatabaseManager.getConfig("empresa_cp") + " " + DatabaseManager.getConfig("empresa_ciudad")); r.addBreak();
+        r.setText("Tel: " + DatabaseManager.getConfig("empresa_telefono")); r.addBreak();
+        r.setText(DatabaseManager.getConfig("empresa_email")); r.addBreak();
+        r.setText("NIF: " + DatabaseManager.getConfig("empresa_nif"));
+    }
+
+    private static void addWordTituloDocumento(XWPFDocument document, String titulo, String colorMulberry) {
+        XWPFParagraph p = document.createParagraph();
+        p.setAlignment(ParagraphAlignment.CENTER);
+        p.setSpacingAfter(200);
+        XWPFRun r = p.createRun();
+        r.setText(titulo); r.setBold(true); r.setFontSize(14); r.setColor("FFFFFF");
+        p.getCTP().getPPr().addNewShd().setFill(colorMulberry);
+    }
+
+    private static void addWordClienteBlock(XWPFDocument document, Cliente c, String colorGrisClaro) {
+        XWPFTable t = document.createTable(1, 1);
+        setTableWidth(t, "50%");
+        XWPFTableCell cell = t.getRow(0).getCell(0);
+        cell.setColor(colorGrisClaro);
+        addRunToCell(cell, s(c.getNombreCompleto()), true,  10, "000000");
+        if (c.getNif()       != null) addRunToCell(cell, "NIF/CIF: " + c.getNif(),   false, 9, "000000");
+        if (c.getDireccion() != null) addRunToCell(cell, c.getDireccion(),             false, 9, "000000");
+        if (c.getCiudad()    != null) addRunToCell(cell, s(c.getCp()) + " " + c.getCiudad(), false, 9, "000000");
+        if (c.getTelefono()  != null) addRunToCell(cell, "Tel: " + c.getTelefono(),   false, 9, "000000");
+        if (c.getEmail()     != null) addRunToCell(cell, c.getEmail(),                 false, 9, "000000");
+    }
+
+    private static void addWordNominaFila(XWPFTable t, String concepto, String importe, String bg, String border) {
+        XWPFTableRow row = t.createRow();
+        XWPFTableCell c1 = row.getCell(0);
+        if (c1 == null) c1 = row.addNewTableCell();
+        c1.setColor(bg);
+        XWPFParagraph p1 = c1.getParagraphs().get(0); p1.setSpacingAfter(0); p1.setSpacingBefore(0);
+        XWPFRun r1 = p1.createRun(); r1.setText(concepto); r1.setFontSize(9); r1.setColor("000000");
+        XWPFTableCell c2 = row.getCell(1);
+        if (c2 == null) c2 = row.addNewTableCell();
+        c2.setColor(bg);
+        XWPFParagraph p2 = c2.getParagraphs().get(0);
+        p2.setAlignment(ParagraphAlignment.RIGHT); p2.setSpacingAfter(0); p2.setSpacingBefore(0);
+        XWPFRun r2 = p2.createRun(); r2.setText(importe); r2.setFontSize(9); r2.setColor("000000"); r2.setBold(true);
+    }
+
+    private static void addWordFichaFila(XWPFTable t, String label, String value, String bg, String border) {
+        XWPFTableRow row = t.createRow();
+        XWPFTableCell c1 = row.getCell(0);
+        if (c1 == null) c1 = row.addNewTableCell();
+        c1.setColor(bg);
+        XWPFParagraph p1 = c1.getParagraphs().get(0); p1.setSpacingAfter(0); p1.setSpacingBefore(0);
+        XWPFRun r1 = p1.createRun(); r1.setText(label); r1.setBold(true); r1.setFontSize(9); r1.setColor("000000");
+        XWPFTableCell c2 = row.getCell(1);
+        if (c2 == null) c2 = row.addNewTableCell();
+        c2.setColor(bg);
+        XWPFParagraph p2 = c2.getParagraphs().get(0); p2.setSpacingAfter(0); p2.setSpacingBefore(0);
+        XWPFRun r2 = p2.createRun(); r2.setText(value); r2.setFontSize(9); r2.setColor("000000");
+    }
+
+    private static void addWordFooter(XWPFDocument document) {
+        XWPFParagraph p = document.createParagraph();
+        p.setAlignment(ParagraphAlignment.CENTER);
+        p.setSpacingBefore(200);
+        XWPFRun r = p.createRun();
+        r.setFontSize(8); r.setColor("888888");
+        r.setText("Gráficas Mulberry · " + DatabaseManager.getConfig("empresa_web") +
+            " · " + DatabaseManager.getConfig("empresa_email") +
+            " · Tel. " + DatabaseManager.getConfig("empresa_telefono"));
+    }
+
+    // Helper para añadir la fila de cabecera de una tabla de líneas
+    private static void addTableHeader(XWPFTable table, String[] headers, String colorHex) {
+        XWPFTableRow row = table.getRow(0);
+        for (int i = 0; i < headers.length; i++) {
+            XWPFTableCell cell = i == 0 ? row.getCell(0) : row.addNewTableCell();
+            cell.setColor(colorHex);
+            XWPFParagraph p = cell.getParagraphs().get(0);
+            p.setAlignment(ParagraphAlignment.CENTER);
+            p.setSpacingAfter(0);
+            p.setSpacingBefore(0);
+            XWPFRun r = p.createRun();
+            r.setText(headers[i]);
+            r.setBold(true);
+            r.setFontSize(9);
+            r.setColor("FFFFFF");
+        }
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // FACTURA INDIVIDUAL DETALLADA (Word)
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarFacturaDetalladaWord(Path destino, Factura f, Cliente c) throws Exception {
+        try (XWPFDocument document = new XWPFDocument()) {
+            String colorMulberry  = "6B2D5E";
+            String colorGrisClaro = "F5F5F5";
+            String colorGrisBorde = "C8C8C8";
+
+            // 1. Cabecera empresa
+            XWPFParagraph pHeader = document.createParagraph();
+            pHeader.setAlignment(ParagraphAlignment.RIGHT);
+            XWPFRun rHeader = pHeader.createRun();
+            rHeader.setText("GRÁFICAS MULBERRY");
+            rHeader.setBold(true);
+            rHeader.setFontSize(20);
+            rHeader.setColor(colorMulberry);
+            rHeader.addBreak();
+            rHeader.setFontSize(9);
+            rHeader.setColor("000000");
+            rHeader.setText(DatabaseManager.getConfig("empresa_direccion"));
+            rHeader.addBreak();
+            rHeader.setText(DatabaseManager.getConfig("empresa_cp") + " " + DatabaseManager.getConfig("empresa_ciudad"));
+            rHeader.addBreak();
+            rHeader.setText("Tel: " + DatabaseManager.getConfig("empresa_telefono"));
+            rHeader.addBreak();
+            rHeader.setText(DatabaseManager.getConfig("empresa_email"));
+            rHeader.addBreak();
+            rHeader.setText("NIF: " + DatabaseManager.getConfig("empresa_nif"));
+
+            // Título del documento
+            XWPFParagraph pDocTitle = document.createParagraph();
+            pDocTitle.setAlignment(ParagraphAlignment.CENTER);
+            pDocTitle.setSpacingAfter(200);
+            XWPFRun rDocTitle = pDocTitle.createRun();
+            rDocTitle.setText("FACTURA");
+            rDocTitle.setBold(true);
+            rDocTitle.setFontSize(14);
+            rDocTitle.setColor("FFFFFF");
+            pDocTitle.getCTP().getPPr().addNewShd().setFill(colorMulberry);
+
+            // 2. Datos del documento
+            addSectionTitle(document, "DATOS DE LA FACTURA");
+            XWPFTable docDataTable = document.createTable(3, 4);
+            setTableWidth(docDataTable, "100%");
+            addTableRow(docDataTable, new String[]{"Número:", s(f.getNumero()), "Estado:", s(f.getEstado()).toUpperCase()}, true, colorGrisClaro, colorGrisBorde);
+            addTableRow(docDataTable, new String[]{"Fecha:", s(f.getFecha()), "Vencimiento:", s(f.getFechaVencimiento())}, false, colorGrisClaro, colorGrisBorde);
+            addTableRow(docDataTable, new String[]{"Forma de pago:", s(f.getFormaPago()), "", ""}, false, colorGrisClaro, colorGrisBorde);
+            addParagraph(document, "");
+
+            // 3. Datos del cliente
+            addSectionTitle(document, "CLIENTE");
+            XWPFTable clientDataTable = document.createTable(1, 1);
+            setTableWidth(clientDataTable, "50%");
+            XWPFTableCell clientCell = clientDataTable.getRow(0).getCell(0);
+            clientCell.setColor(colorGrisClaro);
+            addRunToCell(clientCell, s(c.getNombreCompleto()), true, 10, "000000");
+            if (c.getNif()       != null) addRunToCell(clientCell, "NIF/CIF: " + c.getNif(),   false, 9, "000000");
+            if (c.getDireccion() != null) addRunToCell(clientCell, c.getDireccion(),             false, 9, "000000");
+            if (c.getCiudad()    != null) addRunToCell(clientCell, s(c.getCp()) + " " + c.getCiudad(), false, 9, "000000");
+            if (c.getTelefono()  != null) addRunToCell(clientCell, "Tel: " + c.getTelefono(),   false, 9, "000000");
+            if (c.getEmail()     != null) addRunToCell(clientCell, c.getEmail(),                 false, 9, "000000");
+            addParagraph(document, "");
+
+            // 4. Tabla de líneas
+            addSectionTitle(document, "DETALLE DE LA FACTURA");
+            XWPFTable lineasTable = document.createTable(1, 6);
+            setTableWidth(lineasTable, "100%");
+            addTableHeader(lineasTable, new String[]{"Descripción", "Técnica", "Cant.", "Precio ud.", "Dto.", "Total"}, colorMulberry);
+
+            boolean par = false;
+            for (LineaFactura linea : f.getLineas()) {
+                String bg = par ? colorGrisClaro : "FFFFFF";
+                XWPFTableRow row = lineasTable.createRow();
+                addCell(row, s(linea.getDescripcion()),                                           bg, false, ParagraphAlignment.LEFT);
+                addCell(row, s(linea.getTecnica()),                                               bg, false, ParagraphAlignment.LEFT);
+                addCell(row, String.valueOf(linea.getCantidad()),                                 bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, String.format("%.2f €", linea.getPrecioUnit()),                      bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, linea.getDescuento() > 0 ? String.format("%.0f%%", linea.getDescuento()) : "-", bg, false, ParagraphAlignment.RIGHT);
+                addCell(row, String.format("%.2f €", linea.getTotal()),                           bg, false, ParagraphAlignment.RIGHT);
+                par = !par;
+            }
+            addParagraph(document, "");
+
+            // 5. Totales
+            XWPFTable totalesTable = document.createTable(3, 2);
+            setTableWidth(totalesTable, "40%");
+            totalesTable.setTableAlignment(TableRowAlign.RIGHT);
+            addTableRow(totalesTable, new String[]{"Base imponible:", String.format("%.2f €", f.getBaseImponible())}, false, "FFFFFF", colorGrisBorde);
+            addTableRow(totalesTable, new String[]{String.format("IVA (%.0f%%):", f.getIvaPorcentaje()), String.format("%.2f €", f.getIvaImporte())}, false, "FFFFFF", colorGrisBorde);
+            addTableRow(totalesTable, new String[]{"TOTAL:", String.format("%.2f €", f.getTotal())}, true, colorMulberry, colorGrisBorde);
+            addParagraph(document, "");
+
+            // 6. Forma de pago y notas
+            addSectionTitle(document, "FORMA DE PAGO");
+            addParagraph(document, f.getFormaPago() != null ? f.getFormaPago() : "Transferencia bancaria");
+            if (f.getNotas() != null && !f.getNotas().isBlank()) {
+                addSectionTitle(document, "NOTAS");
+                addParagraph(document, f.getNotas());
+            }
+
+            // 7. Pie de página
+            XWPFParagraph pFooter = document.createParagraph();
+            pFooter.setAlignment(ParagraphAlignment.CENTER);
+            pFooter.setSpacingBefore(200);
+            XWPFRun rFooter = pFooter.createRun();
+            rFooter.setFontSize(8);
+            rFooter.setColor("888888");
+            rFooter.setText("Gráficas Mulberry · " + DatabaseManager.getConfig("empresa_web") +
+                " · " + DatabaseManager.getConfig("empresa_email") +
+                " · Tel. " + DatabaseManager.getConfig("empresa_telefono"));
+
+            try (FileOutputStream out = new FileOutputStream(destino.toFile())) {
+                document.write(out);
+            }
+        }
+        return destino;
+    }
+
 }

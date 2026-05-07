@@ -19,11 +19,14 @@ import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.PDFService; // Importar PDFService
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -688,16 +691,52 @@ public class PresupuestosView extends VBox {
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
 
+        // Determinar la lista de presupuestos a exportar
+        List<Presupuesto> presupuestosAExportar = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (presupuestosAExportar.isEmpty()) {
+            // Si no hay selección, exportar todos los registros
+            presupuestosAExportar.addAll(datos);
+        }
+        if (presupuestosAExportar.isEmpty()) {
+            Platform.runLater(() -> {
+                setDisable(false);
+                alerta("No hay registros para exportar.");
+            });
+            return;
+        }
+
+
         Thread.ofVirtual().start(() -> {
             try {
-                switch (fmt[0]) {
-                    case "sqlite" -> ExportService.backupSQLite(destino);
-                    case "csv"    -> ExportService.exportarPresupuestosCSV(destino);
-                    case "sql"    -> ExportService.exportarPresupuestosSQL(destino);
-                    case "json"   -> ExportService.exportarPresupuestosJSON(destino);
-                    case "pdf"    -> ExportService.exportarPresupuestosPDF(destino, dao.findAll());
-                    case "word"   -> ExportService.exportarPresupuestosWord(destino, dao.findAll());
+                if (presupuestosAExportar.size() == 1 && ("pdf".equals(fmt[0]) || "word".equals(fmt[0]))) {
+                    // Exportar un único presupuesto como documento detallado
+                    Presupuesto presupuestoSeleccionado = dao.findById(presupuestosAExportar.get(0).getId());
+                    if (presupuestoSeleccionado == null)
+                        throw new Exception("No se pudo cargar el presupuesto seleccionado.");
+                    Cliente clienteAsociado = clienteDAO.findById(presupuestoSeleccionado.getClienteId());
+                    if (clienteAsociado == null)
+                        throw new Exception("No se pudo encontrar el cliente asociado al presupuesto.");
+
+                    if ("pdf".equals(fmt[0])) {
+                        PDFService pdfService = new PDFService();
+                        Path tempPdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado);
+                        Files.copy(tempPdfPath, destino, StandardCopyOption.REPLACE_EXISTING);
+                        Files.deleteIfExists(tempPdfPath);
+                    } else {
+                        ExportService.exportarPresupuestoDetalladoWord(destino, presupuestoSeleccionado, clienteAsociado);
+                    }
+
+                } else {
+                    switch (fmt[0]) {
+                        case "sqlite" -> ExportService.backupSQLite(destino);
+                        case "csv"    -> ExportService.exportarPresupuestosCSV(destino);
+                        case "sql"    -> ExportService.exportarPresupuestosSQL(destino);
+                        case "json"   -> ExportService.exportarPresupuestosJSON(destino);
+                        case "pdf"    -> ExportService.exportarPresupuestosPDF(destino, presupuestosAExportar);
+                        case "word"   -> ExportService.exportarPresupuestosWord(destino, presupuestosAExportar);
+                    }
                 }
+
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
@@ -719,20 +758,66 @@ public class PresupuestosView extends VBox {
     }
 
     private void previsualizar() {
-        List<Presupuesto> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        List<Presupuesto> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        List<Presupuesto> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) {
+            alerta("No hay presupuestos seleccionados para previsualizar. Se previsualizarán todos los registros.");
+            seleccionados.addAll(datos); // Si no hay selección, previsualizar todos
+        }
+        if (seleccionados.isEmpty()) { // Si aún después de añadir todos, sigue vacío
+            alerta("No hay registros para previsualizar.");
+            return;
+        }
+
         setDisable(true);
+        SoundService.play(SoundService.Sound.START);
+
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdf = PdfPreviewService.previsualizarPresupuestos(lista);
+                byte[] pdfBytes;
+                String tituloVentana;
+
+                if (seleccionados.size() == 1) {
+                    // Previsualizar un único presupuesto detallado
+                    Presupuesto presupuestoSeleccionado = dao.findById(seleccionados.get(0).getId());
+                    if (presupuestoSeleccionado == null) {
+                        throw new Exception("No se pudo cargar el presupuesto seleccionado.");
+                    }
+                    Cliente clienteAsociado = clienteDAO.findById(presupuestoSeleccionado.getClienteId());
+                    if (clienteAsociado == null) {
+                        // Manejar el caso de cliente no encontrado, quizás usar un cliente por defecto o lanzar error
+                        // Por ahora, lanzamos un error para que el usuario sepa que falta información
+                        throw new Exception("No se pudo encontrar el cliente asociado al presupuesto.");
+                    }
+
+                    PDFService pdfService = new PDFService();
+                    Path pdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado);
+                    pdfBytes = Files.readAllBytes(pdfPath);
+                    tituloVentana = "Previsualización — Presupuesto " + presupuestoSeleccionado.getNumero();
+
+                    // Opcional: eliminar el archivo temporal después de leerlo
+                    Files.deleteIfExists(pdfPath);
+
+                } else {
+                    // Previsualizar un listado de múltiples presupuestos
+                    pdfBytes = PdfPreviewService.previsualizarPresupuestos(seleccionados);
+                    tituloVentana = "Previsualización — Presupuestos (" + seleccionados.size() + " registro(s))";
+                }
+
+                final byte[] finalPdfBytes = pdfBytes;
+                final String finalTituloVentana = tituloVentana;
+
                 Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf,
-                        "Previsualización — Presupuestos (" + lista.size() + " registro(s))");
+                    PdfPreviewWindow.mostrar(finalPdfBytes, finalTituloVentana);
                 });
+
             } catch (Exception ex) {
-                Platform.runLater(() -> { setDisable(false); mostrarError(ex); });
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    setDisable(false);
+                    mostrarError(ex);
+                });
             }
         });
     }

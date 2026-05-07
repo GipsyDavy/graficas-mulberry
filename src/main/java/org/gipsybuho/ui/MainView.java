@@ -67,27 +67,37 @@ public class MainView extends BorderPane {
         sidebar.getChildren().add(sep);
 
         // ── Botones de navegación ─────────────────────────────────────────
+        sidebar.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
         sidebar.getChildren().addAll(
-            navBtn("🏠  Panel principal",    DashboardView::new),
-            navBtn("👥  Clientes",            ClientesView::new),
-            navBtn("📋  Presupuestos",        PresupuestosView::new),
-            navBtn("🧾  Facturas",            FacturasView::new),
-            navBtn("📋  Albaranes",           AlbaranesView::new),
-            navBtn("📦  Pedidos",             PedidosView::new),
-            navBtn("💰  Tarifas",             TarifasView::new),
-            navBtn("📦  Materiales",          MaterialesView::new),
-            navBtn("👤  Empleados",           EmpleadosView::new),
-            navBtn("💼  Nóminas",             NominasView::new),
-            navBtn("📊  Estadísticas",        EstadisticasView::new),
-            // IAView: clic izquierdo reutiliza la instancia compartida (conserva el chat);
-            // clic derecho / popup abre una instancia nueva independiente
-            navBtnEspecial("🤖  Asistente IA",
-                () -> mostrarVista(iaView),
-                IAView::new),
-            navBtn("📅  Calendario",          CalendarioView::new),
-            navBtn("📥  Importar Backup",     ImportBackupView::new),
-            navBtn("💾  Exportar / Backup",   ExportView::new),
-            navBtn("⚙  Configuración",        ConfiguracionView::new)
+            navGrupo("CLIENTES",
+                navBtn("👥  Clientes",            ClientesView::new)
+            ),
+            navGrupo("COMERCIAL",
+                navBtn("📋  Presupuestos",        PresupuestosView::new),
+                navBtn("🧾  Facturas",            FacturasView::new),
+                navBtn("📋  Albaranes",           AlbaranesView::new),
+                navBtn("📦  Pedidos",             PedidosView::new)
+            ),
+            navGrupo("ALMACÉN",
+                navBtn("💰  Tarifas",             TarifasView::new),
+                navBtn("📦  Materiales",          MaterialesView::new)
+            ),
+            navGrupo("PERSONAL",
+                navBtn("👤  Empleados",           EmpleadosView::new),
+                navBtn("💼  Nóminas",             NominasView::new)
+            ),
+            navGrupo("ANALÍTICA",
+                navBtn("📊  Estadísticas",        EstadisticasView::new),
+                navBtn("📅  Calendario",          CalendarioView::new)
+            ),
+            navGrupo("SISTEMA",
+                navBtnEspecial("🤖  Asistente IA",
+                    () -> mostrarVista(iaView),
+                    IAView::new),
+                navBtn("📥  Importar Backup",     ImportBackupView::new),
+                navBtn("💾  Exportar / Backup",   ExportView::new),
+                navBtn("⚙  Configuración",        ConfiguracionView::new)
+            )
         );
 
         Region spacer = new Region();
@@ -115,7 +125,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnSalir);
 
-        Label version = new Label("v6.1 · Almería, España");
+        Label version = new Label("v6.2 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -205,6 +215,40 @@ public class MainView extends BorderPane {
         ctx.getItems().add(miPrincipal);
 
         return ctx;
+    }
+
+    private VBox navGrupo(String titulo, StackPane... botones) {
+        Label arrow = new Label("▶");
+        arrow.getStyleClass().add("nav-group-arrow");
+
+        Label lblTitulo = new Label(titulo);
+        lblTitulo.getStyleClass().add("nav-group-title");
+        lblTitulo.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(lblTitulo, Priority.ALWAYS);
+
+        HBox header = new HBox(8, arrow, lblTitulo);
+        header.getStyleClass().add("nav-group-header");
+        header.setAlignment(Pos.CENTER_LEFT);
+        header.setMaxWidth(Double.MAX_VALUE);
+
+        VBox contenido = new VBox();
+        contenido.getStyleClass().add("nav-group-content");
+        contenido.getChildren().addAll(botones);
+        contenido.setVisible(false);
+        contenido.setManaged(false);
+
+        header.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.PRIMARY) {
+                boolean expand = !contenido.isVisible();
+                contenido.setVisible(expand);
+                contenido.setManaged(expand);
+                arrow.setText(expand ? "▼" : "▶");
+            }
+        });
+
+        VBox grupo = new VBox(header, contenido);
+        grupo.getStyleClass().add("nav-group");
+        return grupo;
     }
 
     private void mostrarVista(Node vista) {

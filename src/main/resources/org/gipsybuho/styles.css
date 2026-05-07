@@ -102,6 +102,37 @@
     -fx-border-width: 0 0 0 3;
 }
 
+/* ── GRUPOS DE NAVEGACIÓN ────────────────────────────────── */
+.nav-group {
+    -fx-padding: 0;
+}
+
+.nav-group-header {
+    -fx-padding: 7 14 7 12;
+    -fx-cursor: hand;
+    -fx-max-width: infinity;
+}
+
+.nav-group-header:hover {
+    -fx-background-color: -c-nav-hover;
+}
+
+.nav-group-title {
+    -fx-font-size: 10px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-muted;
+}
+
+.nav-group-arrow {
+    -fx-font-size: 9px;
+    -fx-text-fill: -c-muted;
+    -fx-min-width: 10px;
+}
+
+.nav-group-content .nav-btn {
+    -fx-padding: 10 18 10 26;
+}
+
 /* ── ÁREA DE CONTENIDO ───────────────────────────────────── */
 .content-view {
     -fx-background-color: -c-bg;
