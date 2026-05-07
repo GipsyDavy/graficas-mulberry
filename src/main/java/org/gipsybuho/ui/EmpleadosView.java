@@ -63,11 +63,12 @@ public class EmpleadosView extends VBox {
         Button btnBaja      = btn("🚫 Dar de baja",    "#E74C3C", this::darDeBaja);
         Button btnReactivar = btn("✅ Reactivar",      "#27AE60", this::reactivar);
         Button btnImportar  = btn("📥 Importar",       "#2980B9", this::importar);
-        Button btnExportar  = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnPreview   = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
+        Button btnActualizar = btn("🔄 Actualizar",    "#1ABC9C", this::cargar);
+        Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnActualizar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }

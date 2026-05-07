@@ -249,12 +249,16 @@ public class IAView extends VBox {
                             String textoAntes = respuesta.substring(0, jsonIdx).stripTrailing();
                             tf.getChildren().clear();
                             if (!textoAntes.isEmpty()) {
-                                tf.getChildren().add(new Text(textoAntes));
+                                Text t = new Text(textoAntes);
+                                t.setFill(Color.web("#1A1A2E"));
+                                tf.getChildren().add(t);
                             }
                             mostrarSpinner(container);
                         } else {
                             tf.getChildren().clear();
-                            tf.getChildren().add(new Text(respuesta.toString()));
+                            Text t = new Text(respuesta.toString());
+                            t.setFill(Color.web("#1A1A2E"));
+                            tf.getChildren().add(t);
                             tf.getChildren().add(cursor);
                         }
                     }
@@ -526,8 +530,9 @@ public class IAView extends VBox {
             AccionERP accion = resultado.accion().get();
             String textoLimpio = resultado.textoLimpio();
             burbuja.getChildren().clear();
-            burbuja.getChildren().add(new Text(
-                textoLimpio.isBlank() ? "Procesando acción..." : textoLimpio));
+            Text tAccion = new Text(textoLimpio.isBlank() ? "Procesando acción..." : textoLimpio);
+            tAccion.setFill(Color.web("#1A1A2E"));
+            burbuja.getChildren().add(tAccion);
 
             if ("abrir_modulo".equals(accion.action)) {
                 abrirModulo(accion);
@@ -537,6 +542,13 @@ public class IAView extends VBox {
                 mostrarPanelConfirmacion(accion);
             }
         } else {
+            // Garantiza que el texto sea visible aunque el streaming lo hubiera ocultado
+            // (p.ej. JSON detectado mid-stream pero no parseable como acción válida)
+            String textoFinal = resultado.textoLimpio();
+            burbuja.getChildren().clear();
+            Text tFinal = new Text(textoFinal.isBlank() ? respuestaCompleta : textoFinal);
+            tFinal.setFill(Color.web("#1A1A2E"));
+            burbuja.getChildren().add(tFinal);
             addSugerenciasContextuales(respuestaCompleta);
         }
     }
@@ -590,7 +602,10 @@ public class IAView extends VBox {
     private void mostrarPanelConfirmacion(AccionERP accion) {
         ConfirmacionAccionPanel panel = new ConfirmacionAccionPanel(
             accion,
-            r -> addMensajeFeedback(r.mensaje(), r.detalle(), r.exito()),
+            r -> {
+                addMensajeFeedback(r.mensaje(), r.detalle(), r.exito());
+                if (r.exito()) refrescarModuloAbierto(accion.action);
+            },
             () -> addMensajeFeedback("Acción cancelada", "El usuario canceló la acción antes de ejecutarla.", false)
         );
 
@@ -653,6 +668,7 @@ public class IAView extends VBox {
         Stage existente = modulosAbiertos.get(clave);
         if (existente != null && existente.isShowing()) {
             existente.toFront();
+            existente.requestFocus();
             addMensajeFeedback("Módulo «" + clave + "» ya estaba abierto",
                 "La ventana se ha traído al frente.", true);
             return;
@@ -666,7 +682,9 @@ public class IAView extends VBox {
             return;
         }
 
+        Stage ownerStage = getScene() != null ? (Stage) getScene().getWindow() : null;
         Stage stage = new Stage();
+        if (ownerStage != null) stage.initOwner(ownerStage);
         stage.setTitle("Gráficas Mulberry — " + capitalizarModulo(clave));
         stage.initModality(Modality.NONE);
         Scene scene = new Scene(vista, 1100, 700);
@@ -677,6 +695,8 @@ public class IAView extends VBox {
         stage.setScene(scene);
         stage.setOnCloseRequest(e -> modulosAbiertos.remove(clave));
         stage.show();
+        stage.toFront();
+        stage.requestFocus();
         modulosAbiertos.put(clave, stage);
 
         addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» abierto",
@@ -725,6 +745,50 @@ public class IAView extends VBox {
             case "nominas", "nóminas"           -> "Nóminas";
             case "estadisticas", "estadísticas" -> "Estadísticas";
             default -> Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
+        };
+    }
+
+    // Recarga la vista del módulo abierto en popup tras ejecutar una acción sobre ese módulo.
+    private void refrescarModuloAbierto(String accion) {
+        String clave = mapAccionAModulo(accion);
+        if (clave == null) return;
+        Stage stage = modulosAbiertos.get(clave);
+        if (stage == null || !stage.isShowing()) return;
+        Parent vistaFresca = crearVista(clave);
+        if (vistaFresca == null) return;
+        List<String> css = stage.getScene() != null
+            ? new ArrayList<>(stage.getScene().getStylesheets()) : List.of();
+        Scene nuevaScene = new Scene(vistaFresca, stage.getWidth(), stage.getHeight());
+        nuevaScene.getStylesheets().addAll(css);
+        stage.setScene(nuevaScene);
+        stage.toFront();
+        stage.requestFocus();
+    }
+
+    private static String mapAccionAModulo(String action) {
+        if (action == null) return null;
+        return switch (action) {
+            case "crear_cliente", "editar_cliente", "borrar_cliente",
+                 "listar_clientes", "consultar_cliente"                -> "clientes";
+            case "crear_presupuesto", "editar_presupuesto",
+                 "borrar_presupuesto", "listar_presupuestos"           -> "presupuestos";
+            case "generar_factura", "editar_factura",
+                 "borrar_factura", "listar_facturas"                   -> "facturas";
+            case "crear_albaran", "editar_albaran",
+                 "borrar_albaran", "listar_albaranes"                  -> "albaranes";
+            case "crear_pedido", "editar_pedido",
+                 "borrar_pedido", "listar_pedidos"                     -> "pedidos";
+            case "crear_tarifa", "editar_tarifa",
+                 "borrar_tarifa", "listar_tarifas"                     -> "tarifas";
+            case "crear_material", "editar_material", "borrar_material",
+                 "listar_materiales", "actualizar_stock",
+                 "consultar_materiales"                                -> "materiales";
+            case "crear_empleado", "editar_empleado",
+                 "borrar_empleado", "listar_empleados"                 -> "empleados";
+            case "calcular_nomina", "editar_nomina",
+                 "borrar_nomina", "listar_nominas"                     -> "nominas";
+            case "agendar_evento"                                      -> "calendario";
+            default -> null;
         };
     }
 }

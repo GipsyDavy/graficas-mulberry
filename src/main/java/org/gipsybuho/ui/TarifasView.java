@@ -54,11 +54,12 @@ public class TarifasView extends VBox {
         Button btnNuevo    = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
         Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
         Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar",      "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",      "#8E44AD", this::exportar);
-        Button btnPreview  = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
+        Button btnImportar   = btn("📥 Importar",      "#27AE60", this::importar);
+        Button btnExportar   = btn("📤 Exportar",      "#8E44AD", this::exportar);
+        Button btnActualizar = btn("🔄 Actualizar",    "#1ABC9C", this::cargar);
+        Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnActualizar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }

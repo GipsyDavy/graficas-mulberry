@@ -99,30 +99,8 @@ public class ImportBackupService {
     }
 
     private static void restaurarTablaCSV(Connection conn, String tabla, String contenido) throws Exception {
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 1) return;
-
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return;
-
-        if (lineas.length < 2) return;
-
-        String colNames     = String.join(", ", cols);
-        String placeholders = String.join(", ", Collections.nCopies(cols.length, "?"));
-        String sql = "INSERT OR REPLACE INTO " + tabla + " (" + colNames + ") VALUES (" + placeholders + ")";
-
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-            }
-            ps.executeBatch();
-        }
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() >= 2) importarFilasEnTabla(conn, tabla, filas);
     }
 
     // ─── 3. RESTAURAR DESDE .sql ──────────────────────────────────────────────
@@ -381,6 +359,19 @@ public class ImportBackupService {
 
     private static int importarFilasEnTabla(Connection conn, String tabla, List<String[]> filas) throws Exception {
         if (filas.size() < 2) return 0;
+
+        // Leer restricciones NOT NULL y defaults declarados en el esquema
+        Map<String, Boolean> notNullCols = new LinkedHashMap<>();
+        Map<String, String>  schemaDflt  = new LinkedHashMap<>();
+        try (ResultSet rs = conn.createStatement()
+                .executeQuery("PRAGMA table_info(\"" + tabla + "\")")) {
+            while (rs.next()) {
+                String cn = rs.getString("name").toLowerCase();
+                notNullCols.put(cn, rs.getInt("notnull") == 1);
+                schemaDflt.put(cn, rs.getString("dflt_value"));
+            }
+        }
+
         List<String> cols = Arrays.stream(filas.get(0))
             .map(h -> h.trim().replaceAll("[^\\p{L}\\p{N}_]", "_").replaceAll("_+", "_").replaceAll("^_|_$", ""))
             .filter(h -> !h.isBlank())
@@ -398,8 +389,18 @@ public class ImportBackupService {
             for (int i = 1; i < filas.size(); i++) {
                 String[] vals = filas.get(i);
                 for (int j = 0; j < cols.size(); j++) {
+                    String colKey = cols.get(j).toLowerCase();
                     String v = j < vals.length ? vals[j].trim() : null;
-                    ps.setString(j + 1, (v == null || v.isBlank()) ? null : v);
+                    if (v == null || v.isBlank()) {
+                        if (Boolean.TRUE.equals(notNullCols.get(colKey))) {
+                            v = resolverDefecto(colKey, schemaDflt.get(colKey));
+                        }
+                    }
+                    if (v == null || v.isBlank()) {
+                        ps.setNull(j + 1, Types.NULL);
+                    } else {
+                        ps.setString(j + 1, v);
+                    }
                 }
                 ps.addBatch();
                 count++;
@@ -407,6 +408,46 @@ public class ImportBackupService {
             ps.executeBatch();
         }
         return count;
+    }
+
+    /**
+     * Devuelve un valor de relleno para una columna NOT NULL que llegó vacía desde la fuente.
+     * Primero intenta usar el DEFAULT declarado en el esquema; si no, aplica un default semántico
+     * por nombre de columna; como último recurso usa cadena vacía (evita el error NOT NULL).
+     */
+    private static String resolverDefecto(String col, String schemaDflt) {
+        if (schemaDflt != null && !schemaDflt.isBlank()) {
+            String d = schemaDflt.trim();
+            // Ignorar expresiones SQL (datetime('now'), etc.) — SQLite las evalúa al insertar
+            if (!d.startsWith("(") && !d.contains("(")) {
+                return d.replaceAll("^'(.*)'$", "$1");
+            }
+        }
+        return switch (col) {
+            case "tecnica"                                      -> "General";
+            case "estado"                                       -> "pendiente";
+            case "tipo"                                         -> "empresa";
+            case "unidad"                                       -> "ud";
+            case "categoria"                                    -> "general";
+            case "activa", "activo"                             -> "1";
+            case "forma_pago"                                   -> "Transferencia bancaria";
+            case "iva_porcentaje"                               -> "21.0";
+            case "fecha", "fecha_compra", "fecha_vencimiento",
+                 "fecha_alta", "fecha_emision", "fecha_entrega" -> java.time.LocalDate.now().toString();
+            case "mes"    -> String.valueOf(java.time.LocalDate.now().getMonthValue());
+            case "anio"   -> String.valueOf(java.time.LocalDate.now().getYear());
+            case "numero" -> "IMP-" + System.nanoTime();
+            default       -> "";   // cadena vacía: satisface NOT NULL sin romper la importación
+        };
+    }
+
+    /** Convierte el contenido de un CSV (separador «;») en lista de filas para importarFilasEnTabla. */
+    private static List<String[]> leerCSV(String contenido) {
+        List<String[]> filas = new ArrayList<>();
+        for (String linea : contenido.split("\r?\n")) {
+            if (!linea.trim().isEmpty()) filas.add(parsearLineaCSV(linea));
+        }
+        return filas;
     }
 
     private static void asegurarColumnas(Connection conn, String tabla, List<String> columnas) throws SQLException {
@@ -423,6 +464,40 @@ public class ImportBackupService {
     }
 
     // ─── Helpers ──────────────────────────────────────────────────────────────
+
+    /**
+     * Garantiza que la columna indicada tenga el valor por defecto en las filas de datos
+     * (a partir del índice 1). Si la columna no existe en la cabecera, la añade.
+     * Útil para columnas NOT NULL que no siempre están presentes en el archivo de origen.
+     */
+    private static void aplicarDefecto(List<String[]> filas, String columna, String defecto) {
+        if (filas.size() < 2) return;
+        String[] headers = filas.get(0);
+        int idx = -1;
+        for (int i = 0; i < headers.length; i++) {
+            if (columna.equalsIgnoreCase(headers[i].trim())) { idx = i; break; }
+        }
+        if (idx < 0) {
+            for (int r = 0; r < filas.size(); r++) {
+                String[] row = filas.get(r);
+                String[] newRow = Arrays.copyOf(row, row.length + 1);
+                newRow[row.length] = r == 0 ? columna : defecto;
+                filas.set(r, newRow);
+            }
+        } else {
+            for (int r = 1; r < filas.size(); r++) {
+                String[] row = filas.get(r);
+                String v = idx < row.length ? row[idx].trim() : "";
+                if (v.isEmpty()) {
+                    if (idx >= row.length) {
+                        row = Arrays.copyOf(row, idx + 1);
+                        filas.set(r, row);
+                    }
+                    row[idx] = defecto;
+                }
+            }
+        }
+    }
 
     /** INSERT OR REPLACE de todos los registros de un array JSON en la tabla dada. */
     private static int importarTablaJSON(Connection conn, String tabla, JsonNode arr) throws Exception {
@@ -498,39 +573,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "albaranes", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO albaranes (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "albaranes", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -680,39 +732,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "facturas", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO facturas (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "facturas", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -882,39 +911,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "presupuestos", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO presupuestos (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "presupuestos", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1086,39 +1092,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "nominas", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO nominas (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "nominas", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1249,39 +1232,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "empleados", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO empleados (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "empleados", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1431,39 +1391,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "materiales", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO materiales (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "materiales", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1626,39 +1563,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "tarifas", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO tarifas (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "tarifas", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1722,6 +1636,7 @@ public class ImportBackupService {
         List<String[]> filasIgn = new ArrayList<>();
         leerLibroExcel(origen, filasTar, filasIgn);
         if (filasTar.size() < 2) return 0;
+        aplicarDefecto(filasTar, "tecnica", "General");
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         int count = 0;
@@ -1744,6 +1659,7 @@ public class ImportBackupService {
             leerWordDocx(origen, filasTar, filasIgn);
         if (filasTar.size() < 2)
             throw new Exception("No se encontraron tablas con datos de tarifas en el documento Word.");
+        aplicarDefecto(filasTar, "tecnica", "General");
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         int count = 0;
@@ -1771,6 +1687,7 @@ public class ImportBackupService {
         }
         if (filasTar.size() < 2)
             throw new Exception("No se encontraron datos tabulares en el PDF.");
+        aplicarDefecto(filasTar, "tecnica", "General");
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         int count = 0;
@@ -1789,38 +1706,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        String sql = "INSERT OR REPLACE INTO clientes (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "clientes", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 
@@ -1881,39 +1776,16 @@ public class ImportBackupService {
         byte[] bytes = Files.readAllBytes(origen);
         String contenido = new String(bytes, StandardCharsets.UTF_8);
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
-
-        String[] lineas = contenido.split("\r?\n");
-        if (lineas.length < 2) return 0;
-        String[] cols = parsearLineaCSV(lineas[0]);
-        if (cols.length == 0) return 0;
-
+        List<String[]> filas = leerCSV(contenido);
+        if (filas.size() < 2) return 0;
         Connection conn = DatabaseManager.getConnection();
-        asegurarColumnas(conn, "pedidos", Arrays.asList(cols));
-        String sql = "INSERT OR REPLACE INTO pedidos (" +
-            String.join(", ", cols) + ") VALUES (" +
-            String.join(", ", Collections.nCopies(cols.length, "?")) + ")";
-
-        int count = 0;
         conn.setAutoCommit(false);
-        try (PreparedStatement ps = conn.prepareStatement(sql)) {
-            for (int i = 1; i < lineas.length; i++) {
-                if (lineas[i].trim().isEmpty()) continue;
-                String[] vals = parsearLineaCSV(lineas[i]);
-                for (int j = 0; j < cols.length; j++) {
-                    String v = (j < vals.length) ? vals[j] : null;
-                    ps.setString(j + 1, (v == null || v.isEmpty()) ? null : v);
-                }
-                ps.addBatch();
-                count++;
-            }
-            ps.executeBatch();
+        int count = 0;
+        try {
+            count += importarFilasEnTabla(conn, "pedidos", filas);
             conn.commit();
-        } catch (Exception e) {
-            conn.rollback();
-            throw e;
-        } finally {
-            conn.setAutoCommit(true);
-        }
+        } catch (Exception e) { conn.rollback(); throw e; }
+        finally { conn.setAutoCommit(true); }
         return count;
     }
 

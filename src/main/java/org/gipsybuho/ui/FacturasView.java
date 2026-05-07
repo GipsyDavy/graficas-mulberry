@@ -59,10 +59,11 @@ public class FacturasView extends VBox {
         Button btnPagada   = btn("✅ Marcar pagada",   "#4C9BE8", this::marcarPagada);
         Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
         Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
-        Button btnPreview  = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
+        Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
+        Button btnActualizar = btn("🔄 Actualizar",     "#1ABC9C", this::cargar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview);
+        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnActualizar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }

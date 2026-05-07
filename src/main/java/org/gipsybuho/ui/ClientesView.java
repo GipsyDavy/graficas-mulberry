@@ -67,11 +67,12 @@ public class ClientesView extends VBox {
         Button btnBorrar   = btn("🗑 Borrar",         "#E74C3C", this::borrar);
         Button btnImportar = btn("📥 Importar",       "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnPreview  = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnActualizar = btn("🔄 Actualizar",    "#1ABC9C", this::cargar);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnActualizar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
