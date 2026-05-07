@@ -7,16 +7,23 @@ import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.SoundService;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class MainView extends BorderPane {
 
@@ -59,30 +66,33 @@ public class MainView extends BorderPane {
         sep.setPrefHeight(1);
         sidebar.getChildren().add(sep);
 
-        // Botones de navegación
+        // ── Botones de navegación ─────────────────────────────────────────
         sidebar.getChildren().addAll(
-            navBtn("🏠  Panel principal",   () -> mostrarVista(new DashboardView())),
-            navBtn("👥  Clientes",           () -> mostrarVista(new ClientesView())),
-            navBtn("📋  Presupuestos",       () -> mostrarVista(new PresupuestosView())),
-            navBtn("🧾  Facturas",           () -> mostrarVista(new FacturasView())),
-            navBtn("📋  Albaranes",          () -> mostrarVista(new AlbaranesView())),
-            navBtn("📦  Pedidos",            () -> mostrarVista(new PedidosView())),
-            navBtn("💰  Tarifas",            () -> mostrarVista(new TarifasView())),
-            navBtn("📦  Materiales",         () -> mostrarVista(new MaterialesView())),
-            navBtn("👤  Empleados",          () -> mostrarVista(new EmpleadosView())),
-            navBtn("💼  Nóminas",            () -> mostrarVista(new NominasView())),
-            navBtn("📊  Estadísticas",       () -> mostrarVista(new EstadisticasView())),
-            navBtn("🤖  Asistente IA",       () -> mostrarVista(iaView)),
-            navBtn("📅  Calendario",          () -> mostrarVista(new CalendarioView())),
-            navBtn("📥  Importar Backup",        () -> mostrarVista(new ImportBackupView())),
-            navBtn("💾  Exportar / Backup",   () -> mostrarVista(new ExportView())),
-            navBtn("⚙  Configuración",        () -> mostrarVista(new ConfiguracionView()))
+            navBtn("🏠  Panel principal",    DashboardView::new),
+            navBtn("👥  Clientes",            ClientesView::new),
+            navBtn("📋  Presupuestos",        PresupuestosView::new),
+            navBtn("🧾  Facturas",            FacturasView::new),
+            navBtn("📋  Albaranes",           AlbaranesView::new),
+            navBtn("📦  Pedidos",             PedidosView::new),
+            navBtn("💰  Tarifas",             TarifasView::new),
+            navBtn("📦  Materiales",          MaterialesView::new),
+            navBtn("👤  Empleados",           EmpleadosView::new),
+            navBtn("💼  Nóminas",             NominasView::new),
+            navBtn("📊  Estadísticas",        EstadisticasView::new),
+            // IAView: clic izquierdo reutiliza la instancia compartida (conserva el chat);
+            // clic derecho / popup abre una instancia nueva independiente
+            navBtnEspecial("🤖  Asistente IA",
+                () -> mostrarVista(iaView),
+                IAView::new),
+            navBtn("📅  Calendario",          CalendarioView::new),
+            navBtn("📥  Importar Backup",     ImportBackupView::new),
+            navBtn("💾  Exportar / Backup",   ExportView::new),
+            navBtn("⚙  Configuración",        ConfiguracionView::new)
         );
 
         Region spacer = new Region();
         VBox.setVgrow(spacer, Priority.ALWAYS);
         sidebar.getChildren().add(spacer);
-
 
         Button btnSalir = new Button("⏻  Cerrar");
         btnSalir.setMaxWidth(Double.MAX_VALUE);
@@ -92,12 +102,16 @@ public class MainView extends BorderPane {
         btnSalir.setOnAction(e -> {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
                 "¿Deseas cerrar Gráficas Mulberry?\n" +
-                "Se detendrá también el proceso de Ollama si está activo.",
+                "Se cerrarán también todas las ventanas emergentes abiertas y se " +
+                "detendrá el proceso de Ollama si está activo.",
                 ButtonType.YES, ButtonType.NO);
             conf.setTitle("Cerrar aplicación");
             conf.setHeaderText(null);
             if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> Platform.exit());
+            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+                ModuloWindowManager.cerrarTodas();
+                Platform.exit();
+            });
         });
         sidebar.getChildren().add(btnSalir);
 
@@ -109,20 +123,88 @@ public class MainView extends BorderPane {
         return sidebar;
     }
 
+    // ── Constructores de botón ────────────────────────────────────────────────
 
-    private StackPane navBtn(String texto, Runnable accion) {
+    /**
+     * Botón estándar: clic izquierdo crea una nueva instancia del módulo y la
+     * muestra en el área central; clic derecho abre el menú contextual con la
+     * opción de abrir en ventana emergente (también crea una nueva instancia).
+     */
+    private StackPane navBtn(String texto, Supplier<javafx.scene.Parent> factory) {
+        return navBtnImpl(texto, () -> mostrarVista(factory.get()), factory);
+    }
+
+    /**
+     * Botón especial: permite separar la acción de clic izquierdo (p.ej. reusar
+     * una instancia existente) de la fábrica usada para crear ventanas emergentes.
+     */
+    private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
+                                     Supplier<javafx.scene.Parent> popupFactory) {
+        return navBtnImpl(texto, accionPrincipal, popupFactory);
+    }
+
+    private StackPane navBtnImpl(String texto, Runnable accionPrincipal,
+                                  Supplier<javafx.scene.Parent> popupFactory) {
         Label lbl = new Label(texto);
         lbl.setMaxWidth(Double.MAX_VALUE);
         lbl.getStyleClass().add("nav-btn");
+
         StackPane pane = new StackPane(lbl);
         pane.getStyleClass().add("nav-btn-pane");
+
+        // Tooltip de ayuda para el clic derecho
+        Tooltip tip = new Tooltip("Clic para abrir · Clic derecho → ventana emergente");
+        tip.setStyle("-fx-font-size:10;");
+        Tooltip.install(pane, tip);
+
+        // ── Clic izquierdo: abrir en área principal ──────────────────────
         pane.setOnMouseClicked(e -> {
-            SoundService.play(SoundService.Sound.CLICK);
-            sidebar.lookupAll(".nav-btn-pane").forEach(n -> n.getStyleClass().remove("nav-btn-active"));
-            pane.getStyleClass().add("nav-btn-active");
-            accion.run();
+            if (e.getButton() == MouseButton.PRIMARY) {
+                SoundService.play(SoundService.Sound.CLICK);
+                sidebar.lookupAll(".nav-btn-pane")
+                       .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
+                pane.getStyleClass().add("nav-btn-active");
+                accionPrincipal.run();
+            }
         });
+
+        // ── Clic derecho: menú contextual ────────────────────────────────
+        ContextMenu ctx = buildContextMenu(texto, popupFactory, pane);
+        pane.setOnContextMenuRequested(e ->
+            ctx.show(pane, e.getScreenX(), e.getScreenY()));
+
         return pane;
+    }
+
+    private ContextMenu buildContextMenu(String titulo, Supplier<javafx.scene.Parent> factory,
+                                          StackPane pane) {
+        ContextMenu ctx = new ContextMenu();
+
+        // Elemento principal
+        MenuItem miVentana = new MenuItem("🪟  Abrir en ventana aparte");
+        miVentana.setStyle("-fx-font-weight: bold;");
+        miVentana.setOnAction(e -> {
+            List<String> css = getScene() != null
+                ? new ArrayList<>(getScene().getStylesheets())
+                : List.of();
+            ModuloWindowManager.abrirEnVentana(titulo, factory, css);
+        });
+
+        ctx.getItems().add(miVentana);
+        ctx.getItems().add(new SeparatorMenuItem());
+
+        // Elemento secundario: abrir en área principal y marcar activo
+        MenuItem miPrincipal = new MenuItem("↩  Abrir en área principal");
+        miPrincipal.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
+            sidebar.lookupAll(".nav-btn-pane")
+                   .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
+            pane.getStyleClass().add("nav-btn-active");
+            mostrarVista(factory.get());
+        });
+        ctx.getItems().add(miPrincipal);
+
+        return ctx;
     }
 
     private void mostrarVista(Node vista) {
