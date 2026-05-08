@@ -55,7 +55,7 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "6.3.3" `
+    --app-version "6.4.0" `
     --vendor "Graficas Mulberry S.L." `
     --description "Sistema de gestion para Graficas Mulberry" `
     --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
