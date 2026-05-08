@@ -4,6 +4,7 @@ import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -29,13 +30,36 @@ public class MainView extends BorderPane {
 
     private final StackPane contentArea = new StackPane();
     private VBox sidebar;
-    private final IAView iaView = new IAView();
+    private final IAView iaView;
 
     public MainView(Stage stage) {
+        this.iaView = new IAView(this::navegarDesdeIA);
         setLeft(buildSidebar());
         setCenter(contentArea);
         getStyleClass().add("main-view");
         mostrarVista(new DashboardView());
+    }
+
+    private void navegarDesdeIA(String clave) {
+        var vista = crearVistaModulo(clave);
+        if (vista != null) mostrarVista(vista);
+    }
+
+    private Parent crearVistaModulo(String clave) {
+        return switch (clave) {
+            case "clientes"                     -> new ClientesView();
+            case "presupuestos"                 -> new PresupuestosView();
+            case "facturas"                     -> new FacturasView();
+            case "albaranes"                    -> new AlbaranesView();
+            case "pedidos"                      -> new PedidosView();
+            case "tarifas"                      -> new TarifasView();
+            case "materiales"                   -> new MaterialesView();
+            case "empleados"                    -> new EmpleadosView();
+            case "nominas", "nóminas"           -> new NominasView();
+            case "estadisticas", "estadísticas" -> new EstadisticasView();
+            case "calendario"                   -> new CalendarioView();
+            default -> null;
+        };
     }
 
     private VBox buildSidebar() {
@@ -93,7 +117,7 @@ public class MainView extends BorderPane {
             navGrupo("SISTEMA",
                 navBtnEspecial("🤖  Asistente IA",
                     () -> mostrarVista(iaView),
-                    IAView::new),
+                    () -> new IAView(this::navegarDesdeIA)),
                 navBtn("📥  Importar Backup",     ImportBackupView::new),
                 navBtn("💾  Exportar / Backup",   ExportView::new),
                 navBtn("⚙  Configuración",        ConfiguracionView::new)
@@ -125,7 +149,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnSalir);
 
-        Label version = new Label("v6.3.2 · Almería, España");
+        Label version = new Label("v6.3.3 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);

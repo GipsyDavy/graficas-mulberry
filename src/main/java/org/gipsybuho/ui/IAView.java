@@ -30,15 +30,17 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.function.Consumer;
 import javafx.animation.KeyFrame;
 import javafx.animation.Timeline;
 import javafx.util.Duration;
 
 public class IAView extends VBox {
 
-    private final OllamaService      ia             = new OllamaService();
+    private final OllamaService      ia              = new OllamaService();
     private final ContextoERPService contextoService = new ContextoERPService();
     private final Map<String, Stage> modulosAbiertos = new HashMap<>();
+    private final Consumer<String>   navegarCallback;
     private VBox chatBox;
     private ScrollPane scroll;
     private TextArea txtInput;
@@ -48,7 +50,8 @@ public class IAView extends VBox {
     private Button btnInstalarOllama;
     private CheckBox cbContexto;
 
-    public IAView() {
+    public IAView(Consumer<String> navegarCallback) {
+        this.navegarCallback = navegarCallback;
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);
@@ -675,6 +678,22 @@ public class IAView extends VBox {
         }
         String clave = modulo.toLowerCase().trim();
 
+        // Navegar en el área principal de la aplicación
+        if (navegarCallback != null) {
+            Parent prueba = crearVista(clave);
+            if (prueba == null) {
+                addMensajeFeedback("Módulo desconocido: " + modulo,
+                    "Módulos disponibles: clientes · presupuestos · facturas · albaranes · " +
+                    "pedidos · tarifas · materiales · empleados · nominas · estadisticas · calendario", false);
+                return;
+            }
+            navegarCallback.accept(clave);
+            addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» abierto",
+                "El módulo se ha cargado en el área principal de la aplicación.", true);
+            return;
+        }
+
+        // Fallback si no hay callback: ventana emergente
         Stage existente = modulosAbiertos.get(clave);
         if (existente != null && existente.isShowing()) {
             existente.toFront();
@@ -758,21 +777,30 @@ public class IAView extends VBox {
         };
     }
 
-    // Recarga la vista del módulo abierto en popup tras ejecutar una acción sobre ese módulo.
+    // Refresca el módulo en el área principal y en cualquier popup abierto.
     private void refrescarModuloAbierto(String accion) {
         String clave = mapAccionAModulo(accion);
         if (clave == null) return;
+
+        // 1. Refrescar popup propio del asistente si está abierto
         Stage stage = modulosAbiertos.get(clave);
-        if (stage == null || !stage.isShowing()) return;
-        Parent vistaFresca = crearVista(clave);
-        if (vistaFresca == null) return;
-        List<String> css = stage.getScene() != null
-            ? new ArrayList<>(stage.getScene().getStylesheets()) : List.of();
-        Scene nuevaScene = new Scene(vistaFresca, stage.getWidth(), stage.getHeight());
-        nuevaScene.getStylesheets().addAll(css);
-        stage.setScene(nuevaScene);
-        stage.toFront();
-        stage.requestFocus();
+        if (stage != null && stage.isShowing()) {
+            Parent vistaFresca = crearVista(clave);
+            if (vistaFresca != null) {
+                List<String> css = stage.getScene() != null
+                    ? new ArrayList<>(stage.getScene().getStylesheets()) : List.of();
+                Scene nuevaScene = new Scene(vistaFresca, stage.getWidth(), stage.getHeight());
+                nuevaScene.getStylesheets().addAll(css);
+                stage.setScene(nuevaScene);
+                stage.toFront();
+                stage.requestFocus();
+            }
+        }
+
+        // 2. Navegar al módulo en el área principal para mostrar los datos actualizados
+        if (navegarCallback != null) {
+            navegarCallback.accept(clave);
+        }
     }
 
     private static String mapAccionAModulo(String action) {
