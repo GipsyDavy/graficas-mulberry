@@ -14,7 +14,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 import org.gipsybuho.model.AccionERP;
-import org.gipsybuho.service.AccionDispatcherService;
 import org.gipsybuho.service.ChatExportService;
 import org.gipsybuho.service.ChatExportService.MensajeChat;
 import org.gipsybuho.service.ContextoERPService;
@@ -188,8 +187,7 @@ public class IAView extends VBox {
             chips.getChildren().add(chip);
         }
 
-        VBox box = new VBox(4, lbl, chips);
-        return box;
+        return new VBox(4, lbl, chips); // Refactorizado: eliminada variable 'box' redundante
     }
 
     private record BurbujaIA(HBox row, TextFlow textFlow, VBox container) {}
@@ -213,7 +211,7 @@ public class IAView extends VBox {
         txtInput.clear();
         btnEnviar.setDisable(true);
 
-        addBurbuja(texto, true);
+        addBurbujaUsuario(texto); // Renombrado y sin parámetro esUsuario
 
         BurbujaIA burbuja = crearBurbujaIA();
         chatBox.getChildren().add(burbuja.row());
@@ -275,7 +273,12 @@ public class IAView extends VBox {
                 error -> {
                     tf.getChildren().clear();
                     quitarSpinner(container);
-                    Text errText = new Text("⚠ " + error + "\n\nAsegúrate de que Ollama esté en ejecución:\n  1. Descarga Ollama desde ollama.com\n  2. Ejecuta: ollama pull llama3.2\n  3. Ollama se inicia automáticamente al ejecutarse");
+                    Text errText = new Text("""
+                        ⚠ %s
+                        Asegúrate de que Ollama esté en ejecución:
+                          1. Descarga Ollama desde ollama.com
+                          2. Ejecuta: ollama pull llama3.2
+                          3. Ollama se inicia automáticamente al ejecutarse""".formatted(error));
                     errText.setFill(Color.RED);
                     tf.getChildren().add(errText);
                     SoundService.play(SoundService.Sound.ERROR);
@@ -293,18 +296,16 @@ public class IAView extends VBox {
         });
     }
 
-    private void addBurbuja(String texto, boolean esUsuario) {
+    private void addBurbujaUsuario(String texto) { // Renombrado y sin parámetro esUsuario
         Text t = new Text(texto);
-        t.setFill(esUsuario ? Color.WHITE : Color.web("#1A1A2E"));
+        t.setFill(Color.WHITE); // Siempre blanco para usuario
         TextFlow tf = new TextFlow(t);
         tf.setMaxWidth(500);
         tf.setPadding(new Insets(10, 14, 10, 14));
-        tf.setStyle(esUsuario
-            ? "-fx-background-color:#6B2D5E; -fx-background-radius:16 16 4 16;"
-            : "-fx-background-color:#F0E6EF; -fx-background-radius:16 16 16 4;");
+        tf.setStyle("-fx-background-color:#6B2D5E; -fx-background-radius:16 16 4 16;"); // Estilo de usuario
 
         HBox row = new HBox(tf);
-        row.setAlignment(esUsuario ? Pos.CENTER_RIGHT : Pos.CENTER_LEFT);
+        row.setAlignment(Pos.CENTER_RIGHT); // Siempre a la derecha para usuario
         row.setPadding(new Insets(2, 8, 2, 8));
         chatBox.getChildren().add(row);
         scrollAbajo();
@@ -336,8 +337,8 @@ public class IAView extends VBox {
                     if (actual != null && modelos.contains(actual)) {
                         cbModelo.setValue(actual);
                     } else if (!modelos.isEmpty()) {
-                        cbModelo.setValue(modelos.get(0));
-                        ia.setModeloActual(modelos.get(0));
+                        cbModelo.setValue(modelos.getFirst()); // Usar getFirst()
+                        ia.setModeloActual(modelos.getFirst()); // Usar getFirst()
                     }
                 });
             });
@@ -369,7 +370,7 @@ public class IAView extends VBox {
                     if (!modelos.isEmpty()) {
                         String modelo = modelos.stream()
                             .filter(m -> m.contains("llama") || m.contains("phi") || m.contains("mistral"))
-                            .findFirst().orElse(modelos.get(0));
+                            .findFirst().orElse(modelos.getFirst()); // Usar getFirst()
                         cbModelo.setValue(modelo);
                         ia.setModeloActual(modelo);
                         lblEstado.setText("🟢 Ollama listo — " + modelo);
@@ -389,10 +390,12 @@ public class IAView extends VBox {
                         btnInstalarOllama.setVisible(true);
                         btnInstalarOllama.setManaged(true);
                         addMensajeSistema(
-                            "⚠  Ollama no está instalado en este equipo.\n\n" +
-                            "Haz clic en «⬇ Instalar Ollama» en la barra superior para instalarlo " +
-                            "automáticamente. El proceso descargará el instalador oficial y el modelo " +
-                            "de IA. Solo necesitas conexión a Internet.");
+                            """
+                            ⚠  Ollama no está instalado en este equipo.
+                            
+                            Haz clic en «⬇ Instalar Ollama» en la barra superior para instalarlo \
+                            automáticamente. El proceso descargará el instalador oficial y el modelo \
+                            de IA. Solo necesitas conexión a Internet."""); // Convertido a text block
                     }
                 }
             });
@@ -456,14 +459,14 @@ public class IAView extends VBox {
         for (javafx.scene.Node nodo : chatBox.getChildren()) {
             if (!(nodo instanceof HBox row)) continue;
             if (row.getChildren().isEmpty()) continue;
-            javafx.scene.Node hijo = row.getChildren().get(0);
+            javafx.scene.Node hijo = row.getChildren().getFirst(); // Usar getFirst()
 
             if (row.getAlignment() == Pos.CENTER_RIGHT && hijo instanceof TextFlow tf) {
                 String texto = extraerTextoDeTextFlow(tf);
                 if (!texto.isBlank()) lista.add(new MensajeChat("usuario", texto));
 
             } else if (hijo instanceof VBox vbox && !vbox.getChildren().isEmpty()
-                       && vbox.getChildren().get(0) instanceof TextFlow tf) {
+                       && vbox.getChildren().getFirst() instanceof TextFlow tf) { // Usar getFirst()
                 String texto = extraerTextoDeTextFlow(tf);
                 if (!texto.isBlank()) lista.add(new MensajeChat("ia", texto));
 
@@ -534,10 +537,11 @@ public class IAView extends VBox {
             tAccion.setFill(Color.web("#1A1A2E"));
             burbuja.getChildren().add(tAccion);
 
+            // Envuelve las llamadas a abrirModulo y cerrarModulo en Platform.runLater
             if ("abrir_modulo".equals(accion.action)) {
-                abrirModulo(accion);
+                Platform.runLater(() -> abrirModulo(accion));
             } else if ("cerrar_modulo".equals(accion.action)) {
-                cerrarModulo(accion);
+                Platform.runLater(() -> cerrarModulo(accion));
             } else {
                 mostrarPanelConfirmacion(accion);
             }
@@ -560,21 +564,27 @@ public class IAView extends VBox {
         record Sugerencia(String etiqueta, String mensaje) {}
         List<Sugerencia> sugerencias = new ArrayList<>();
 
-        if (lower.contains("presupuest"))
+        if (lower.contains("presupuest")) {
             sugerencias.add(new Sugerencia("📋 Crear presupuesto", "Crea un presupuesto con los datos anteriores"));
-        if (lower.contains("factur") && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && lower.contains("factur")) {
             sugerencias.add(new Sugerencia("🧾 Generar factura", "Genera una factura con esos datos"));
-        if (lower.contains("pedido") && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && lower.contains("pedido")) {
             sugerencias.add(new Sugerencia("🛒 Crear pedido", "Crea un pedido con esos datos"));
-        if (lower.contains("cliente") && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && lower.contains("cliente")) {
             sugerencias.add(new Sugerencia("👤 Crear cliente", "Crea ese cliente en el sistema"));
-        if ((lower.contains("stock") || lower.contains("material")) && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && (lower.contains("stock") || lower.contains("material"))) {
             sugerencias.add(new Sugerencia("🗃 Ver materiales", "¿Qué materiales están bajo stock?"));
-        if ((lower.contains("nómin") || lower.contains("nomina")) && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && (lower.contains("nómin") || lower.contains("nomina"))) {
             sugerencias.add(new Sugerencia("💰 Calcular nómina", "Calcula la nómina con esos datos"));
-        if ((lower.contains("calendario") || lower.contains("evento") || lower.contains("cita"))
-                && sugerencias.size() < 2)
+        }
+        if (sugerencias.size() < 2 && (lower.contains("calendario") || lower.contains("evento") || lower.contains("cita"))) {
             sugerencias.add(new Sugerencia("📅 Agendar evento", "Agéndalo en el calendario"));
+        }
 
         if (sugerencias.isEmpty()) return;
 

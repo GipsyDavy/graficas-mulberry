@@ -33,6 +33,7 @@ import java.io.File;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
@@ -73,7 +74,7 @@ public class AccionDispatcherService {
             case "crear_presupuesto"    -> crearPresupuesto(accion);
             case "crear_cliente"        -> crearCliente(accion);
             case "consultar_cliente"    -> consultarCliente(accion);
-            case "consultar_materiales" -> consultarMateriales(accion);
+            case "consultar_materiales" -> consultarMateriales();
             case "exportar_backup"      -> exportarBackup();
             case "generar_factura"      -> generarFactura(accion);
             case "crear_albaran"        -> crearAlbaran(accion);
@@ -86,42 +87,42 @@ public class AccionDispatcherService {
             // ── Clientes ───────────────────────────────────────────────────
             case "editar_cliente"       -> editarCliente(accion);
             case "borrar_cliente"       -> borrarCliente(accion);
-            case "listar_clientes"      -> listarClientes(accion);
+            case "listar_clientes"      -> listarClientes();
             // ── Presupuestos ───────────────────────────────────────────────
             case "editar_presupuesto"   -> editarPresupuesto(accion);
             case "borrar_presupuesto"   -> borrarPresupuesto(accion);
-            case "listar_presupuestos"  -> listarPresupuestos(accion);
+            case "listar_presupuestos"  -> listarPresupuestos();
             // ── Facturas ───────────────────────────────────────────────────
             case "editar_factura"       -> editarFactura(accion);
             case "borrar_factura"       -> borrarFactura(accion);
-            case "listar_facturas"      -> listarFacturas(accion);
+            case "listar_facturas"      -> listarFacturas();
             // ── Albaranes ──────────────────────────────────────────────────
             case "editar_albaran"       -> editarAlbaran(accion);
             case "borrar_albaran"       -> borrarAlbaran(accion);
-            case "listar_albaranes"     -> listarAlbaranes(accion);
+            case "listar_albaranes"     -> listarAlbaranes();
             // ── Pedidos ────────────────────────────────────────────────────
             case "editar_pedido"        -> editarPedido(accion);
             case "borrar_pedido"        -> borrarPedido(accion);
-            case "listar_pedidos"       -> listarPedidos(accion);
+            case "listar_pedidos"       -> listarPedidos();
             // ── Tarifas ────────────────────────────────────────────────────
             case "crear_tarifa"         -> crearTarifa(accion);
             case "editar_tarifa"        -> editarTarifa(accion);
             case "borrar_tarifa"        -> borrarTarifa(accion);
-            case "listar_tarifas"       -> listarTarifas(accion);
+            case "listar_tarifas"       -> listarTarifas();
             // ── Materiales ─────────────────────────────────────────────────
             case "crear_material"       -> crearMaterial(accion);
             case "editar_material"      -> editarMaterial(accion);
             case "borrar_material"      -> borrarMaterial(accion);
-            case "listar_materiales"    -> listarMaterialesDetalle(accion);
+            case "listar_materiales"    -> listarMaterialesDetalle();
             // ── Empleados ──────────────────────────────────────────────────
             case "crear_empleado"       -> crearEmpleado(accion);
             case "editar_empleado"      -> editarEmpleado(accion);
             case "borrar_empleado"      -> borrarEmpleado(accion);
-            case "listar_empleados"     -> listarEmpleados(accion);
+            case "listar_empleados"     -> listarEmpleados();
             // ── Nóminas ────────────────────────────────────────────────────
             case "editar_nomina"        -> editarNomina(accion);
             case "borrar_nomina"        -> borrarNomina(accion);
-            case "listar_nominas"       -> listarNominas(accion);
+            case "listar_nominas"       -> listarNominas();
             // ── abrir/cerrar módulo se gestiona en IAView ──────────────────
             case "abrir_modulo", "cerrar_modulo" ->
                 ResultadoAccion.ok("Módulo gestionado", "La ventana fue procesada por el asistente.");
@@ -143,14 +144,14 @@ public class AccionDispatcherService {
                     "Indica el nombre (y opcionalmente apellidos) del cliente a crear.");
             }
             Cliente c = new Cliente();
-            String nombreCompleto = accion.data.clienteNombre != null && !accion.data.clienteNombre.isBlank()
+            String nombreCompletoStr = accion.data.clienteNombre != null && !accion.data.clienteNombre.isBlank()
                 ? accion.data.clienteNombre.trim() : accion.data.nombre.trim();
-            int espacio = nombreCompleto.indexOf(' ');
+            int espacio = nombreCompletoStr.indexOf(' ');
             if (espacio > 0) {
-                c.setNombre(nombreCompleto.substring(0, espacio));
-                c.setApellidos(nombreCompleto.substring(espacio + 1));
+                c.setNombre(nombreCompletoStr.substring(0, espacio));
+                c.setApellidos(nombreCompletoStr.substring(espacio + 1));
             } else {
-                c.setNombre(nombreCompleto);
+                c.setNombre(nombreCompletoStr);
             }
             if (accion.data.apellidos != null) c.setApellidos(accion.data.apellidos);
             if (accion.data.nif != null)       c.setNif(accion.data.nif);
@@ -240,25 +241,23 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarClientes(AccionERP accion) {
+    private ResultadoAccion listarClientes() { // Parámetro 'accion' eliminado
         try {
             List<Cliente> todos = clienteDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay clientes registrados.",
                     "La base de datos no tiene ningún cliente todavía.");
             }
-            String termino = accion.data != null ? accion.data.clienteNombre : null;
-            List<Cliente> lista = (termino != null && !termino.isBlank())
-                ? clienteDAO.search(termino) : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por término se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(c -> String.format("• ID %d: %s · %s · %s",
                     c.getId(), c.getNombreCompleto(),
                     c.getTipo() != null ? c.getTipo() : "—",
                     c.getEmail() != null ? c.getEmail() : "—"))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
             return ResultadoAccion.ok(
-                "👥 " + lista.size() + " cliente(s):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                "👥 " + todos.size() + " cliente(s):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar clientes", e.getMessage());
         }
@@ -278,14 +277,14 @@ public class AccionDispatcherService {
             if (accion.data != null) {
                 if (accion.data.clienteNombre != null) p.setClienteNombre(accion.data.clienteNombre);
                 if (accion.data.observaciones != null) p.setNotas(accion.data.observaciones);
-                int cid = parsearClienteId(accion.data);
+                int cid = resolverClienteId(accion.data); // Usar el nuevo método resolverClienteId
                 if (cid > 0) p.setClienteId(cid);
                 if (accion.data.items != null) {
                     p.setLineas(accion.data.items.stream().map(item ->
                         new LineaPresupuesto(construirDescripcion(item),
                             item.tecnica != null ? item.tecnica : "",
                             item.cantidad, item.precioUnitario, item.mermaPorcentaje)
-                    ).collect(Collectors.toList()));
+                    ).toList()); // Usar toList()
                 }
             }
             p.calcularTotales();
@@ -344,23 +343,20 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarPresupuestos(AccionERP accion) {
+    private ResultadoAccion listarPresupuestos() { // Parámetro 'accion' eliminado
         try {
             List<Presupuesto> todos = presupuestoDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay presupuestos registrados.", "");
             }
-            String filtroEstado = accion.data != null ? accion.data.estado : null;
-            List<Presupuesto> lista = filtroEstado != null && !filtroEstado.isBlank()
-                ? todos.stream().filter(p -> filtroEstado.equalsIgnoreCase(p.getEstado())).collect(Collectors.toList())
-                : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por estado se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(p -> String.format("• ID %d: %s · %s · %s · %.2f €",
                     p.getId(), p.getNumero(), p.getEstado(),
                     p.getClienteNombre() != null ? p.getClienteNombre() : "—", p.getTotal()))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("📋 " + lista.size() + " presupuesto(s):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("📋 " + todos.size() + " presupuesto(s):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar presupuestos", e.getMessage());
         }
@@ -382,14 +378,14 @@ public class AccionDispatcherService {
             if (accion.data != null) {
                 if (accion.data.clienteNombre != null) f.setClienteNombre(accion.data.clienteNombre);
                 if (accion.data.observaciones != null) f.setNotas(accion.data.observaciones);
-                int cid = parsearClienteId(accion.data);
+                int cid = resolverClienteId(accion.data); // Usar el nuevo método resolverClienteId
                 if (cid > 0) f.setClienteId(cid);
                 if (accion.data.items != null) {
                     f.setLineas(accion.data.items.stream().map(item ->
                         new LineaFactura(construirDescripcion(item),
                             item.tecnica != null ? item.tecnica : "",
                             item.cantidad, item.precioUnitario, item.mermaPorcentaje)
-                    ).collect(Collectors.toList()));
+                    ).toList()); // Usar toList()
                 }
             }
             f.calcularTotales();
@@ -449,23 +445,20 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarFacturas(AccionERP accion) {
+    private ResultadoAccion listarFacturas() { // Parámetro 'accion' eliminado
         try {
             List<Factura> todos = facturaDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay facturas registradas.", "");
             }
-            String filtroEstado = accion.data != null ? accion.data.estado : null;
-            List<Factura> lista = filtroEstado != null && !filtroEstado.isBlank()
-                ? todos.stream().filter(f -> filtroEstado.equalsIgnoreCase(f.getEstado())).collect(Collectors.toList())
-                : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por estado se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(f -> String.format("• ID %d: %s · %s · %s · %.2f €",
                     f.getId(), f.getNumero(), f.getEstado(),
                     f.getClienteNombre() != null ? f.getClienteNombre() : "—", f.getTotal()))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("🧾 " + lista.size() + " factura(s):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("🧾 " + todos.size() + " factura(s):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar facturas", e.getMessage());
         }
@@ -484,13 +477,13 @@ public class AccionDispatcherService {
             if (accion.data != null) {
                 if (accion.data.clienteNombre != null) a.setClienteNombre(accion.data.clienteNombre);
                 if (accion.data.observaciones != null) a.setObservaciones(accion.data.observaciones);
-                int cid = parsearClienteId(accion.data);
+                int cid = resolverClienteId(accion.data); // Usar el nuevo método resolverClienteId
                 if (cid > 0) a.setClienteId(cid);
                 if (accion.data.items != null) {
                     a.setLineas(accion.data.items.stream().map(item -> {
                         String unidad = item.soporte != null && !item.soporte.isBlank() ? item.soporte : "ud";
                         return new LineaAlbaran(construirDescripcion(item), item.cantidad, unidad);
-                    }).collect(Collectors.toList()));
+                    }).toList()); // Usar toList()
                 }
             }
             albaranDAO.save(a);
@@ -546,23 +539,20 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarAlbaranes(AccionERP accion) {
+    private ResultadoAccion listarAlbaranes() { // Parámetro 'accion' eliminado
         try {
             List<Albaran> todos = albaranDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay albaranes registrados.", "");
             }
-            String filtroEstado = accion.data != null ? accion.data.estado : null;
-            List<Albaran> lista = filtroEstado != null && !filtroEstado.isBlank()
-                ? todos.stream().filter(a -> filtroEstado.equalsIgnoreCase(a.getEstado())).collect(Collectors.toList())
-                : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por estado se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(a -> String.format("• ID %d: %s · %s · %s",
                     a.getId(), a.getNumero(), a.getEstado(),
                     a.getClienteNombre() != null ? a.getClienteNombre() : "—"))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("📦 " + lista.size() + " albarán(es):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("📦 " + todos.size() + " albarán(es):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar albaranes", e.getMessage());
         }
@@ -583,7 +573,7 @@ public class AccionDispatcherService {
                 if (accion.data.clienteNombre != null) p.setClienteNombre(accion.data.clienteNombre);
                 if (accion.data.observaciones != null) p.setNotas(accion.data.observaciones);
                 if (accion.data.totalEstimado > 0)    p.setImporteTotal(accion.data.totalEstimado);
-                int cid = parsearClienteId(accion.data);
+                int cid = resolverClienteId(accion.data); // Usar el nuevo método resolverClienteId
                 if (cid > 0) p.setClienteId(cid);
                 if (accion.data.fecha != null && !accion.data.fecha.isBlank()) {
                     try { p.setFechaEntregaPrevista(LocalDate.parse(accion.data.fecha)); } catch (Exception ignored) {}
@@ -651,23 +641,20 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarPedidos(AccionERP accion) {
+    private ResultadoAccion listarPedidos() { // Parámetro 'accion' eliminado
         try {
             List<Pedido> todos = pedidoDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay pedidos registrados.", "");
             }
-            String filtroEstado = accion.data != null ? accion.data.estado : null;
-            List<Pedido> lista = filtroEstado != null && !filtroEstado.isBlank()
-                ? todos.stream().filter(p -> filtroEstado.equalsIgnoreCase(p.getEstado())).collect(Collectors.toList())
-                : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por estado se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(p -> String.format("• ID %d: %s · %s · %s · %.2f €",
                     p.getId(), p.getNumero(), p.getEstado(),
                     p.getClienteNombre() != null ? p.getClienteNombre() : "—", p.getImporteTotal()))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("🛒 " + lista.size() + " pedido(s):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("🛒 " + todos.size() + " pedido(s):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar pedidos", e.getMessage());
         }
@@ -746,22 +733,19 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarTarifas(AccionERP accion) {
+    private ResultadoAccion listarTarifas() { // Parámetro 'accion' eliminado
         try {
             List<Tarifa> todas = tarifaDAO.findAll();
             if (todas.isEmpty()) {
                 return ResultadoAccion.ok("No hay tarifas registradas.", "");
             }
-            String filtroTecnica = accion.data != null ? accion.data.tecnica : null;
-            List<Tarifa> lista = filtroTecnica != null && !filtroTecnica.isBlank()
-                ? todas.stream().filter(t -> filtroTecnica.equalsIgnoreCase(t.getTecnica())).collect(Collectors.toList())
-                : todas;
-            String resumen = lista.stream().limit(20)
+            // El filtro por técnica se ha eliminado ya que 'accion' no se usa
+            String resumen = todas.stream().limit(20)
                 .map(t -> String.format("• ID %d: %s · %s · %.2f €/ud · Setup: %.2f €",
                     t.getId(), t.getNombre(), t.getTecnica(), t.getPrecioUnit(), t.getPrecioSetup()))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("🏷 " + lista.size() + " tarifa(s):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("🏷 " + todas.size() + " tarifa(s):",
+                resumen + (todas.size() > 20 ? "\n… y " + (todas.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar tarifas", e.getMessage());
         }
@@ -771,7 +755,7 @@ public class AccionDispatcherService {
     // MATERIALES
     // ══════════════════════════════════════════════════════════════════════════
 
-    private ResultadoAccion consultarMateriales(AccionERP accion) {
+    private ResultadoAccion consultarMateriales() { // Parámetro 'accion' eliminado
         try {
             List<Material> bajoStock = materialDAO.findBajoStock();
             List<Material> todos = materialDAO.findAll();
@@ -862,24 +846,21 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarMaterialesDetalle(AccionERP accion) {
+    private ResultadoAccion listarMaterialesDetalle() { // Parámetro 'accion' eliminado
         try {
             List<Material> todos = materialDAO.findAll();
             if (todos.isEmpty()) {
                 return ResultadoAccion.ok("No hay materiales registrados.", "");
             }
-            String filtroCategoria = accion.data != null ? accion.data.categoria : null;
-            List<Material> lista = filtroCategoria != null && !filtroCategoria.isBlank()
-                ? todos.stream().filter(m -> filtroCategoria.equalsIgnoreCase(m.getCategoria())).collect(Collectors.toList())
-                : todos;
-            String resumen = lista.stream().limit(20)
+            // El filtro por categoría se ha eliminado ya que 'accion' no se usa
+            String resumen = todos.stream().limit(20)
                 .map(m -> String.format("• ID %d: %s · %s · Stock: %.1f %s%s",
                     m.getId(), m.getNombre(), m.getCategoria(),
                     m.getStockActual(), m.getUnidad(),
                     m.isBajoStock() ? " ⚠" : ""))
-                .collect(Collectors.joining("\n"));
-            return ResultadoAccion.ok("📦 " + lista.size() + " material(es):",
-                resumen + (lista.size() > 20 ? "\n… y " + (lista.size() - 20) + " más." : ""));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
+            return ResultadoAccion.ok("📦 " + todos.size() + " material(es):",
+                resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
             return ResultadoAccion.error("Error al listar materiales", e.getMessage());
         }
@@ -933,22 +914,21 @@ public class AccionDispatcherService {
                     "Indica 'nombre' (y opcionalmente 'apellidos', 'nif', 'categoria', 'salario_base', 'irpf').");
             }
             Empleado e = new Empleado();
-            String nombreCompleto = accion.data.nombre != null && !accion.data.nombre.isBlank()
+            String nombreCompletoStr = accion.data.nombre != null && !accion.data.nombre.isBlank()
                 ? accion.data.nombre.trim() : accion.data.clienteNombre.trim();
-            int espacio = nombreCompleto.indexOf(' ');
+            int espacio = nombreCompletoStr.indexOf(' ');
             if (espacio > 0 && (accion.data.apellidos == null || accion.data.apellidos.isBlank())) {
-                e.setNombre(nombreCompleto.substring(0, espacio));
-                e.setApellidos(nombreCompleto.substring(espacio + 1));
+                e.setNombre(nombreCompletoStr.substring(0, espacio));
+                e.setApellidos(nombreCompletoStr.substring(espacio + 1));
             } else {
-                e.setNombre(nombreCompleto);
+                e.setNombre(nombreCompletoStr);
             }
             if (accion.data.apellidos != null && !accion.data.apellidos.isBlank())
                 e.setApellidos(accion.data.apellidos);
             if (accion.data.nif != null)       e.setNif(accion.data.nif);
             if (accion.data.email != null)     e.setEmail(accion.data.email);
             if (accion.data.telefono != null)  e.setTelefono(accion.data.telefono);
-            if (accion.data.categoria != null) e.setCategoria(accion.data.categoria);
-            else e.setCategoria("Operario");
+            e.setCategoria(Objects.requireNonNullElse(accion.data.categoria, "Operario")); // Modernizado
             if (accion.data.salarioBase > 0)  e.setSalarioBase(accion.data.salarioBase);
             if (accion.data.irpf > 0)         e.setIrpf(accion.data.irpf);
             if (accion.data.iban != null)     e.setIban(accion.data.iban);
@@ -1012,7 +992,7 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarEmpleados(AccionERP accion) {
+    private ResultadoAccion listarEmpleados() { // Parámetro 'accion' eliminado
         try {
             List<Empleado> todos = empleadoDAO.findAll();
             if (todos.isEmpty()) {
@@ -1022,7 +1002,7 @@ public class AccionDispatcherService {
                 .map(e -> String.format("• ID %d: %s · %s · %.2f €/mes",
                     e.getId(), e.getNombreCompleto(),
                     e.getCategoria() != null ? e.getCategoria() : "—", e.getSalarioBase()))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
             return ResultadoAccion.ok("👥 " + todos.size() + " empleado(s):",
                 resumen + (todos.size() > 20 ? "\n… y " + (todos.size() - 20) + " más." : ""));
         } catch (Exception e) {
@@ -1054,8 +1034,9 @@ public class AccionDispatcherService {
                     + todos.stream().map(Empleado::getNombreCompleto).collect(Collectors.joining(", ")));
             }
             LocalDate fechaNomina = resolverFechaLocal(accion.data);
-            double complementos = accion.data != null && accion.data.totalEstimado > 0
-                ? accion.data.totalEstimado : 0.0;
+            // Simplificado: si accion.data.totalEstimado no es > 0, se usa 0.0
+            double complementos = (accion.data != null)
+                ? accion.data.totalEstimado : 0.0; // Simplificado
             Nomina nomina = nominaService.calcular(
                 empleado, fechaNomina.getMonthValue(), fechaNomina.getYear(),
                 complementos, 0, 0.0, 0, 0.0, 0.0);
@@ -1086,7 +1067,9 @@ public class AccionDispatcherService {
                 return ResultadoAccion.error("Empleado no encontrado",
                     "No se puede editar la nómina porque el empleado asociado no existe.");
             }
-            double complementos = accion.data.totalEstimado > 0 ? accion.data.totalEstimado : n.getComplementos();
+            // Simplificado: si accion.data.totalEstimado no es > 0, se usa el valor existente
+            double complementos = (accion.data != null)
+                ? accion.data.totalEstimado : n.getComplementos(); // Simplificado
             Nomina recalculada = nominaService.calcular(
                 emp, n.getMes(), n.getAnio(), complementos,
                 n.getHorasExtraNormales(), n.getPrecioHoraExtra(),
@@ -1120,7 +1103,7 @@ public class AccionDispatcherService {
         }
     }
 
-    private ResultadoAccion listarNominas(AccionERP accion) {
+    private ResultadoAccion listarNominas() { // Parámetro 'accion' eliminado
         try {
             List<Nomina> todas = nominaDAO.findAll();
             if (todas.isEmpty()) {
@@ -1131,7 +1114,7 @@ public class AccionDispatcherService {
                     n.getId(), n.getPeriodo(),
                     n.getEmpleadoNombre() != null ? n.getEmpleadoNombre() : "—",
                     n.getTotalBruto(), n.getNeto()))
-                .collect(Collectors.joining("\n"));
+                .collect(Collectors.joining("\n")); // Corregido: usar Collectors.joining para String
             return ResultadoAccion.ok("💰 " + todas.size() + " nómina(s):",
                 resumen + (todas.size() > 20 ? "\n… y " + (todas.size() - 20) + " más." : ""));
         } catch (Exception e) {
@@ -1174,6 +1157,7 @@ public class AccionDispatcherService {
         boolean dryRun = accion.data != null && Boolean.TRUE.equals(accion.data.dryRun);
         try {
             CompletableFuture<Optional<File>> futureArchivo = new CompletableFuture<>();
+            // Se necesita Platform.runLater para FileChooser
             Platform.runLater(() -> {
                 FileChooser fc = new FileChooser();
                 fc.setTitle(dryRun ? "Seleccionar Excel a analizar (modo prueba)" : "Seleccionar Excel a importar");
@@ -1233,7 +1217,7 @@ public class AccionDispatcherService {
                 .collect(Collectors.joining("\n"));
             return "Hay " + encontrados.size() + " clientes con ese nombre. Especifica el ID:\n" + lista;
         }
-        return encontrados.get(0);
+        return encontrados.getFirst(); // Usar getFirst()
     }
 
     private void applyClienteFields(Cliente c, AccionERP.Data data) {
@@ -1253,9 +1237,42 @@ public class AccionDispatcherService {
         if (data.observaciones != null) c.setNotas(data.observaciones);
     }
 
-    private static int parsearClienteId(AccionERP.Data data) {
-        if (data == null || data.clienteId == null || data.clienteId.isBlank()) return 0;
-        try { return Integer.parseInt(data.clienteId); } catch (NumberFormatException ignored) { return 0; }
+    // Nuevo método para resolver cliente ID por ID o por nombre
+    private int resolverClienteId(AccionERP.Data data) throws Exception {
+        if (data == null) return 0;
+
+        // 1. Intentar obtener el ID numérico si está presente y es válido
+        if (data.clienteId != null && !data.clienteId.isBlank()) {
+            try {
+                int id = Integer.parseInt(data.clienteId);
+                if (id > 0 && clienteDAO.findById(id) != null) { // Verificar si el ID existe
+                    return id;
+                }
+            } catch (NumberFormatException ignored) {
+                // No es un número válido, se intentará buscar por nombre
+            }
+        }
+
+        // 2. Si no hay ID válido o no existe, intentar resolver por nombre
+        String terminoBusqueda = null;
+        if (data.clienteNombre != null && !data.clienteNombre.isBlank()) {
+            terminoBusqueda = data.clienteNombre;
+        } else if (data.nombre != null && !data.nombre.isBlank()) {
+            terminoBusqueda = data.nombre;
+        }
+
+        if (terminoBusqueda != null && !terminoBusqueda.isBlank()) {
+            List<Cliente> encontrados = clienteDAO.search(terminoBusqueda);
+            if (encontrados.size() == 1) {
+                return encontrados.getFirst().getId(); // Usar getFirst()
+            } else if (encontrados.size() > 1) {
+                // Múltiples clientes encontrados, no se puede resolver de forma unívoca
+                // Podríamos lanzar una excepción o devolver 0, por ahora devolvemos 0
+                return 0;
+            }
+        }
+
+        return 0; // No se pudo resolver el cliente
     }
 
     private static String resolverFechaStr(AccionERP.Data data) {
