@@ -179,11 +179,7 @@ public class ModelosGestionDialog extends Stage {
         Label lblTitulo = new Label("Modelos instalados");
         lblTitulo.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
-        Button btnRefrescar = new Button("↻ Actualizar lista");
-        btnRefrescar.setStyle("-fx-font-size:11px; -fx-padding:3 10; -fx-background-radius:4;");
-        btnRefrescar.setOnAction(e -> cargarModelosInstalados());
-
-        HBox header = new HBox(8, lblTitulo, new Region(), btnRefrescar);
+        HBox header = new HBox(8, lblTitulo, new Region());
         HBox.setHgrow(header.getChildren().get(1), Priority.ALWAYS);
         header.setAlignment(Pos.CENTER_LEFT);
 

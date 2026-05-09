@@ -62,7 +62,23 @@
       "Bash(Select-Object FullName)",
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\" -Recurse -File -Filter \"*.java\")",
       "Bash(Select-Object -ExpandProperty Name)",
-      "Bash(Sort-Object)"
+      "Bash(Sort-Object)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\\\\service\\\\AccionDispatcherService.java\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\\\\service\\\\JsonInterceptorService.java\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\\\\ui\\\\ConfirmacionAccionPanel.java\" -Force)",
+      "Bash(Remove-Item \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\\\\main\\\\java\\\\org\\\\gipsybuho\\\\model\\\\AccionERP.java\" -Force)",
+      "Bash(Write-Output \"Eliminados correctamente\")",
+      "Bash(rm \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/java/org/gipsybuho/service/AccionDispatcherService.java\")",
+      "Bash(rm \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/java/org/gipsybuho/service/JsonInterceptorService.java\")",
+      "Bash(rm \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/java/org/gipsybuho/ui/ConfirmacionAccionPanel.java\")",
+      "Bash(rm \"C:/Users/GipsyDavy/MAVEN/Graficas Mulberry/src/main/java/org/gipsybuho/model/AccionERP.java\")",
+      "Read(//c/Program Files/Java/**)",
+      "Read(//c/Program Files/JetBrains/IntelliJ IDEA 2026.1/plugins/maven/lib/maven3/bin/**)",
+      "Read(//c/Users/GipsyDavy/AppData/Local/Programs/Inno Setup 6/**)",
+      "Read(//c/Program Files \\(x86\\)/Inno Setup 6/**)",
+      "Read(//c/Program Files/Inno Setup 6/**)",
+      "Bash(winget --version)",
+      "Bash(winget install *)"
     ]
   }
 }

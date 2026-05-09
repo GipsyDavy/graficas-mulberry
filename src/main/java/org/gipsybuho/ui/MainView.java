@@ -12,6 +12,7 @@ import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -33,33 +34,11 @@ public class MainView extends BorderPane {
     private final IAView iaView;
 
     public MainView(Stage stage) {
-        this.iaView = new IAView(this::navegarDesdeIA);
+        this.iaView = new IAView();
         setLeft(buildSidebar());
         setCenter(contentArea);
         getStyleClass().add("main-view");
         mostrarVista(new DashboardView());
-    }
-
-    private void navegarDesdeIA(String clave) {
-        var vista = crearVistaModulo(clave);
-        if (vista != null) mostrarVista(vista);
-    }
-
-    private Parent crearVistaModulo(String clave) {
-        return switch (clave) {
-            case "clientes"                     -> new ClientesView();
-            case "presupuestos"                 -> new PresupuestosView();
-            case "facturas"                     -> new FacturasView();
-            case "albaranes"                    -> new AlbaranesView();
-            case "pedidos"                      -> new PedidosView();
-            case "tarifas"                      -> new TarifasView();
-            case "materiales"                   -> new MaterialesView();
-            case "empleados"                    -> new EmpleadosView();
-            case "nominas", "nóminas"           -> new NominasView();
-            case "estadisticas", "estadísticas" -> new EstadisticasView();
-            case "calendario"                   -> new CalendarioView();
-            default -> null;
-        };
     }
 
     private VBox buildSidebar() {
@@ -90,9 +69,10 @@ public class MainView extends BorderPane {
         sep.setPrefHeight(1);
         sidebar.getChildren().add(sep);
 
-        // ── Botones de navegación ─────────────────────────────────────────
-        sidebar.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
-        sidebar.getChildren().addAll(
+        // ── Botones de navegación dentro de ScrollPane ───────────────────
+        VBox navMenu = new VBox();
+        navMenu.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
+        navMenu.getChildren().addAll(
             navGrupo("CLIENTES",
                 navBtn("👥  Clientes",            ClientesView::new)
             ),
@@ -117,16 +97,20 @@ public class MainView extends BorderPane {
             navGrupo("SISTEMA",
                 navBtnEspecial("🤖  Asistente IA",
                     () -> mostrarVista(iaView),
-                    () -> new IAView(this::navegarDesdeIA)),
+                    IAView::new),
                 navBtn("📥  Importar Backup",     ImportBackupView::new),
                 navBtn("💾  Exportar / Backup",   ExportView::new),
                 navBtn("⚙  Configuración",        ConfiguracionView::new)
             )
         );
 
-        Region spacer = new Region();
-        VBox.setVgrow(spacer, Priority.ALWAYS);
-        sidebar.getChildren().add(spacer);
+        ScrollPane scroll = new ScrollPane(navMenu);
+        scroll.setFitToWidth(true);
+        scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        scroll.setStyle("-fx-background:transparent; -fx-background-color:transparent; -fx-border-color:transparent;");
+        VBox.setVgrow(scroll, Priority.ALWAYS);
+        sidebar.getChildren().add(scroll);
 
         Button btnSalir = new Button("⏻  Cerrar");
         btnSalir.setMaxWidth(Double.MAX_VALUE);
@@ -149,7 +133,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnSalir);
 
-        Label version = new Label("v6.4.0 · Almería, España");
+        Label version = new Label("v7.0.0 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);

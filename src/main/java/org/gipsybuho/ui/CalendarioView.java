@@ -61,10 +61,7 @@ public class CalendarioView extends VBox {
         lblMesAnio.getStyleClass().add("cal-mes-label");
         HBox.setHgrow(lblMesAnio, Priority.ALWAYS);
 
-        Button btnActualizar = new Button("🔄 Actualizar");
-        btnActualizar.getStyleClass().add("btn-cal-hoy");
-        btnActualizar.setOnAction(e -> cargarMes());
-        HBox nav = new HBox(10, btnAnt, lblMesAnio, btnSig, btnHoy, btnActualizar);
+        HBox nav = new HBox(10, btnAnt, lblMesAnio, btnSig, btnHoy);
         nav.setAlignment(Pos.CENTER_LEFT);
         return nav;
     }

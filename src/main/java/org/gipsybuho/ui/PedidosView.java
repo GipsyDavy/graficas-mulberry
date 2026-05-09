@@ -196,10 +196,9 @@ public class PedidosView extends VBox {
         Button btnImportar = btn("📥 Importar",     "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",     "#8E44AD", this::exportar);
         Button btnBorrar     = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
-        Button btnActualizar = btn("🔄 Actualizar",   "#1ABC9C", this::cargarPedidos);
         Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
 
-        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnActualizar, btnPreview);
+        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -414,8 +413,7 @@ public class PedidosView extends VBox {
         filtros.setStyle("-fx-background-color:-c-tab-bg;-fx-background-radius:5;-fx-padding:3;");
 
         Region spPagos = new Region(); HBox.setHgrow(spPagos, Priority.ALWAYS);
-        Button btnActualizarPagos = btn("🔄 Actualizar", "#1ABC9C", this::cargarTodosPagos);
-        HBox bar = new HBox(10, filtros, spPagos, btnActualizarPagos);
+        HBox bar = new HBox(10, filtros, spPagos);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }

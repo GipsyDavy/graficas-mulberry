@@ -120,11 +120,10 @@ public class MaterialesView extends VBox {
         Button btnSalida   = btn("📤 Salida",         "#E67E22", this::ajustarSalida);
         Button btnImportar = btn("📂 Importar",       "#1ABC9C", this::importar);
         Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnActualizar = btn("🔄 Actualizar",    "#1ABC9C", this::cargar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnActualizar, btnPreview);
+        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -423,8 +422,7 @@ public class MaterialesView extends VBox {
         Button btnEditar  = btn("✏ Editar",          "#F39C12", this::editarPago);
         Button btnBorrar  = btn("🗑 Eliminar",        "#E74C3C", this::eliminarPago);
 
-        Button btnActualizarPagos = btn("🔄 Actualizar", "#1ABC9C", this::cargarPagos);
-        HBox bar = new HBox(10, filtros, sp, btnNuevo, btnPagado, btnEditar, btnBorrar, btnActualizarPagos);
+        HBox bar = new HBox(10, filtros, sp, btnNuevo, btnPagado, btnEditar, btnBorrar);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }

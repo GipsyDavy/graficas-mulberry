@@ -61,10 +61,9 @@ public class PresupuestosView extends VBox {
         Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
         Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
-        Button btnActualizar = btn("🔄 Actualizar",     "#1ABC9C", this::cargar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnFacturar, btnActualizar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnFacturar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }

@@ -3,21 +3,16 @@ package org.gipsybuho.ui;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.Parent;
-import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
-import javafx.stage.Modality;
 import javafx.stage.Stage;
-import org.gipsybuho.model.AccionERP;
 import org.gipsybuho.service.ChatExportService;
 import org.gipsybuho.service.ChatExportService.MensajeChat;
 import org.gipsybuho.service.ContextoERPService;
-import org.gipsybuho.service.JsonInterceptorService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.SoundService;
@@ -26,21 +21,13 @@ import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.function.Consumer;
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
-import javafx.util.Duration;
 
 public class IAView extends VBox {
 
     private final OllamaService      ia              = new OllamaService();
     private final ContextoERPService contextoService = new ContextoERPService();
-    private final Map<String, Stage> modulosAbiertos = new HashMap<>();
-    private final Consumer<String>   navegarCallback;
     private VBox chatBox;
     private ScrollPane scroll;
     private TextArea txtInput;
@@ -50,8 +37,7 @@ public class IAView extends VBox {
     private Button btnInstalarOllama;
     private CheckBox cbContexto;
 
-    public IAView(Consumer<String> navegarCallback) {
-        this.navegarCallback = navegarCallback;
+    public IAView() {
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);
@@ -138,8 +124,7 @@ public class IAView extends VBox {
         scroll.setStyle("-fx-background-color:white; -fx-border-color:#E2E8F0;");
         scroll.setPrefHeight(400);
 
-        // Mensaje de bienvenida
-        addMensajeSistema("¡Hola! Soy el asistente IA de Gráficas Mulberry. Puedo ayudarte con presupuestos, precios, materiales, nóminas y mucho más.\n\nEscribe tu pregunta abajo para comenzar.");
+        addMensajeSistema("¡Hola! Soy el asistente IA de Gráficas Mulberry. Puedo ayudarte con consultas sobre presupuestos, precios, materiales, nóminas y mucho más.\n\nEscribe tu pregunta abajo para comenzar.");
 
         return scroll;
     }
@@ -190,43 +175,40 @@ public class IAView extends VBox {
             chips.getChildren().add(chip);
         }
 
-        return new VBox(4, lbl, chips); // Refactorizado: eliminada variable 'box' redundante
+        return new VBox(4, lbl, chips);
     }
 
-    private record BurbujaIA(HBox row, TextFlow textFlow, VBox container) {}
+    private record BurbujaIA(HBox row, TextFlow textFlow) {}
 
     private BurbujaIA crearBurbujaIA() {
         TextFlow tf = new TextFlow();
         tf.setMaxWidth(600);
         tf.setPadding(new Insets(10, 14, 10, 14));
         tf.setStyle("-fx-background-color:#F0E6EF; -fx-background-radius:16 16 16 4;");
-        VBox container = new VBox(tf);
-        HBox row = new HBox(container);
+        HBox row = new HBox(new VBox(tf));
         row.setAlignment(Pos.CENTER_LEFT);
         row.setPadding(new Insets(2, 8, 2, 8));
-        return new BurbujaIA(row, tf, container);
+        return new BurbujaIA(row, tf);
     }
 
     private void enviar() {
-        if (btnEnviar.isDisabled()) return;   // evita doble envío por chips durante streaming
+        if (btnEnviar.isDisabled()) return;
         String texto = txtInput.getText().trim();
         if (texto.isBlank()) return;
         txtInput.clear();
         btnEnviar.setDisable(true);
 
-        addBurbujaUsuario(texto); // Renombrado y sin parámetro esUsuario
+        addBurbujaUsuario(texto);
 
         BurbujaIA burbuja = crearBurbujaIA();
         chatBox.getChildren().add(burbuja.row());
         TextFlow tf = burbuja.textFlow();
-        VBox container = burbuja.container();
         Text cursor = new Text("▊");
         cursor.setFill(Color.web("#6B2D5E"));
         tf.getChildren().add(cursor);
         scrollAbajo();
 
         StringBuilder respuesta = new StringBuilder();
-        boolean[] jsonOculto = {false};
         boolean inyectarContexto = cbContexto.isSelected();
 
         Thread.ofVirtual().start(() -> {
@@ -243,39 +225,21 @@ public class IAView extends VBox {
                 texto,
                 chunk -> {
                     respuesta.append(chunk);
-                    if (!jsonOculto[0]) {
-                        int jsonIdx = encontrarInicioJson(respuesta.toString());
-                        if (jsonIdx >= 0) {
-                            jsonOculto[0] = true;
-                            String textoAntes = respuesta.substring(0, jsonIdx).stripTrailing();
-                            tf.getChildren().clear();
-                            if (!textoAntes.isEmpty()) {
-                                Text t = new Text(textoAntes);
-                                t.setFill(Color.web("#1A1A2E"));
-                                tf.getChildren().add(t);
-                            }
-                            mostrarSpinner(container);
-                        } else {
-                            tf.getChildren().clear();
-                            Text t = new Text(respuesta.toString());
-                            t.setFill(Color.web("#1A1A2E"));
-                            tf.getChildren().add(t);
-                            tf.getChildren().add(cursor);
-                        }
-                    }
+                    tf.getChildren().clear();
+                    Text t = new Text(respuesta.toString());
+                    t.setFill(Color.web("#1A1A2E"));
+                    tf.getChildren().add(t);
+                    tf.getChildren().add(cursor);
                     scrollAbajo();
                 },
                 () -> {
                     tf.getChildren().remove(cursor);
-                    quitarSpinner(container);
                     btnEnviar.setDisable(false);
                     SoundService.play(SoundService.Sound.NOTIFICATION);
                     scrollAbajo();
-                    procesarRespuestaFinal(respuesta.toString(), tf, container);
                 },
                 error -> {
                     tf.getChildren().clear();
-                    quitarSpinner(container);
                     Text errText = new Text("""
                         ⚠ %s
                         Asegúrate de que Ollama esté en ejecución:
@@ -299,16 +263,16 @@ public class IAView extends VBox {
         });
     }
 
-    private void addBurbujaUsuario(String texto) { // Renombrado y sin parámetro esUsuario
+    private void addBurbujaUsuario(String texto) {
         Text t = new Text(texto);
-        t.setFill(Color.WHITE); // Siempre blanco para usuario
+        t.setFill(Color.WHITE);
         TextFlow tf = new TextFlow(t);
         tf.setMaxWidth(500);
         tf.setPadding(new Insets(10, 14, 10, 14));
-        tf.setStyle("-fx-background-color:#6B2D5E; -fx-background-radius:16 16 4 16;"); // Estilo de usuario
+        tf.setStyle("-fx-background-color:#6B2D5E; -fx-background-radius:16 16 4 16;");
 
         HBox row = new HBox(tf);
-        row.setAlignment(Pos.CENTER_RIGHT); // Siempre a la derecha para usuario
+        row.setAlignment(Pos.CENTER_RIGHT);
         row.setPadding(new Insets(2, 8, 2, 8));
         chatBox.getChildren().add(row);
         scrollAbajo();
@@ -331,17 +295,16 @@ public class IAView extends VBox {
         ModelosGestionDialog dlg = new ModelosGestionDialog(owner, ia);
         dlg.showAndWait();
         if (dlg.isHuboCambios()) {
-            // Refrescar la lista de modelos en el ComboBox
             Thread.ofVirtual().start(() -> {
-                java.util.List<String> modelos = ia.getModelosDisponibles();
+                List<String> modelos = ia.getModelosDisponibles();
                 Platform.runLater(() -> {
                     String actual = cbModelo.getValue();
                     cbModelo.getItems().setAll(modelos);
                     if (actual != null && modelos.contains(actual)) {
                         cbModelo.setValue(actual);
                     } else if (!modelos.isEmpty()) {
-                        cbModelo.setValue(modelos.getFirst()); // Usar getFirst()
-                        ia.setModeloActual(modelos.getFirst()); // Usar getFirst()
+                        cbModelo.setValue(modelos.getFirst());
+                        ia.setModeloActual(modelos.getFirst());
                     }
                 });
             });
@@ -355,7 +318,6 @@ public class IAView extends VBox {
                 lblEstado.setStyle("-fx-text-fill: #E67E22; -fx-font-weight: bold;");
             });
 
-            // Reintentar hasta 12 s para dar tiempo al arranque de OllamaManager
             boolean disponible = false;
             for (int intento = 0; intento < 12 && !disponible; intento++) {
                 disponible = ia.isDisponible();
@@ -373,7 +335,7 @@ public class IAView extends VBox {
                     if (!modelos.isEmpty()) {
                         String modelo = modelos.stream()
                             .filter(m -> m.contains("llama") || m.contains("phi") || m.contains("mistral"))
-                            .findFirst().orElse(modelos.getFirst()); // Usar getFirst()
+                            .findFirst().orElse(modelos.getFirst());
                         cbModelo.setValue(modelo);
                         ia.setModeloActual(modelo);
                         lblEstado.setText("🟢 Ollama listo — " + modelo);
@@ -395,10 +357,10 @@ public class IAView extends VBox {
                         addMensajeSistema(
                             """
                             ⚠  Ollama no está instalado en este equipo.
-                            
+
                             Haz clic en «⬇ Instalar Ollama» en la barra superior para instalarlo \
                             automáticamente. El proceso descargará el instalador oficial y el modelo \
-                            de IA. Solo necesitas conexión a Internet."""); // Convertido a text block
+                            de IA. Solo necesitas conexión a Internet.""");
                     }
                 }
             });
@@ -462,14 +424,14 @@ public class IAView extends VBox {
         for (javafx.scene.Node nodo : chatBox.getChildren()) {
             if (!(nodo instanceof HBox row)) continue;
             if (row.getChildren().isEmpty()) continue;
-            javafx.scene.Node hijo = row.getChildren().getFirst(); // Usar getFirst()
+            javafx.scene.Node hijo = row.getChildren().getFirst();
 
             if (row.getAlignment() == Pos.CENTER_RIGHT && hijo instanceof TextFlow tf) {
                 String texto = extraerTextoDeTextFlow(tf);
                 if (!texto.isBlank()) lista.add(new MensajeChat("usuario", texto));
 
             } else if (hijo instanceof VBox vbox && !vbox.getChildren().isEmpty()
-                       && vbox.getChildren().getFirst() instanceof TextFlow tf) { // Usar getFirst()
+                       && vbox.getChildren().getFirst() instanceof TextFlow tf) {
                 String texto = extraerTextoDeTextFlow(tf);
                 if (!texto.isBlank()) lista.add(new MensajeChat("ia", texto));
 
@@ -489,344 +451,7 @@ public class IAView extends VBox {
         return sb.toString().trim();
     }
 
-    // ── Interceptor JSON ──────────────────────────────────────────────────────
-
-    private static final String SPINNER_ID = "ia-json-spinner";
-
-    private static void mostrarSpinner(VBox container) {
-        Label lbl = new Label("⏳ Procesando...");
-        lbl.setId(SPINNER_ID);
-        lbl.setStyle(
-            "-fx-text-fill:#6B2D5E; -fx-font-size:12; " +
-            "-fx-font-style:italic; -fx-padding:6 0 4 14;");
-        Timeline anim = new Timeline(
-            new KeyFrame(Duration.millis(650), e ->
-                lbl.setText(lbl.getText().startsWith("⏳") ? "⌛ Procesando..." : "⏳ Procesando..."))
-        );
-        anim.setCycleCount(Timeline.INDEFINITE);
-        anim.play();
-        lbl.setUserData(anim);
-        container.getChildren().add(lbl);
-    }
-
-    private static void quitarSpinner(VBox container) {
-        container.getChildren().stream()
-            .filter(n -> SPINNER_ID.equals(n.getId()))
-            .forEach(n -> { if (n.getUserData() instanceof Timeline t) t.stop(); });
-        container.getChildren().removeIf(n -> SPINNER_ID.equals(n.getId()));
-    }
-
-    private static int encontrarInicioJson(String texto) {
-        int codeBlock = texto.indexOf("```json");
-        if (codeBlock >= 0) return codeBlock;
-        // Detectar JSON raw por "action":
-        int actionIdx = texto.indexOf("\"action\"");
-        if (actionIdx < 0) return -1;
-        int braceIdx = actionIdx - 1;
-        while (braceIdx >= 0 && texto.charAt(braceIdx) != '{') braceIdx--;
-        return braceIdx >= 0 ? braceIdx : -1;
-    }
-
-    private void procesarRespuestaFinal(String respuestaCompleta, TextFlow burbuja, VBox container) {
-        quitarSpinner(container);
-        JsonInterceptorService.Resultado resultado =
-            JsonInterceptorService.interceptar(respuestaCompleta);
-
-        if (resultado.tieneAccion()) {
-            AccionERP accion = resultado.accion().get();
-            String textoLimpio = resultado.textoLimpio();
-            burbuja.getChildren().clear();
-            Text tAccion = new Text(textoLimpio.isBlank() ? "Procesando acción..." : textoLimpio);
-            tAccion.setFill(Color.web("#1A1A2E"));
-            burbuja.getChildren().add(tAccion);
-
-            // Envuelve las llamadas a abrirModulo y cerrarModulo en Platform.runLater
-            if ("abrir_modulo".equals(accion.action)) {
-                Platform.runLater(() -> abrirModulo(accion));
-            } else if ("cerrar_modulo".equals(accion.action)) {
-                Platform.runLater(() -> cerrarModulo(accion));
-            } else {
-                mostrarPanelConfirmacion(accion);
-            }
-        } else {
-            // Garantiza que el texto sea visible aunque el streaming lo hubiera ocultado
-            // (p.ej. JSON detectado mid-stream pero no parseable como acción válida)
-            String textoFinal = resultado.textoLimpio();
-            burbuja.getChildren().clear();
-            Text tFinal = new Text(textoFinal.isBlank() ? respuestaCompleta : textoFinal);
-            tFinal.setFill(Color.web("#1A1A2E"));
-            burbuja.getChildren().add(tFinal);
-            addSugerenciasContextuales(respuestaCompleta);
-        }
-    }
-
-    private void addSugerenciasContextuales(String texto) {
-        String lower = texto.toLowerCase();
-
-        // Detectar hasta 2 acciones relevantes según el contenido de la respuesta
-        record Sugerencia(String etiqueta, String mensaje) {}
-        List<Sugerencia> sugerencias = new ArrayList<>();
-
-        if (lower.contains("presupuest")) {
-            sugerencias.add(new Sugerencia("📋 Crear presupuesto", "Crea un presupuesto con los datos anteriores"));
-        }
-        if (sugerencias.size() < 2 && lower.contains("factur")) {
-            sugerencias.add(new Sugerencia("🧾 Generar factura", "Genera una factura con esos datos"));
-        }
-        if (sugerencias.size() < 2 && lower.contains("pedido")) {
-            sugerencias.add(new Sugerencia("🛒 Crear pedido", "Crea un pedido con esos datos"));
-        }
-        if (sugerencias.size() < 2 && lower.contains("cliente")) {
-            sugerencias.add(new Sugerencia("👤 Crear cliente", "Crea ese cliente en el sistema"));
-        }
-        if (sugerencias.size() < 2 && (lower.contains("stock") || lower.contains("material"))) {
-            sugerencias.add(new Sugerencia("🗃 Ver materiales", "¿Qué materiales están bajo stock?"));
-        }
-        if (sugerencias.size() < 2 && (lower.contains("nómin") || lower.contains("nomina"))) {
-            sugerencias.add(new Sugerencia("💰 Calcular nómina", "Calcula la nómina con esos datos"));
-        }
-        if (sugerencias.size() < 2 && (lower.contains("calendario") || lower.contains("evento") || lower.contains("cita"))) {
-            sugerencias.add(new Sugerencia("📅 Agendar evento", "Agéndalo en el calendario"));
-        }
-
-        if (sugerencias.isEmpty()) return;
-
-        Label lbl = new Label("¿Quieres que lo haga ahora?");
-        lbl.setStyle("-fx-font-size:11; -fx-text-fill:#6B2D5E; -fx-font-style:italic;");
-
-        FlowPane chips = new FlowPane(8, 4);
-        chips.getChildren().add(lbl);
-        for (Sugerencia s : sugerencias) {
-            Button chip = new Button(s.etiqueta());
-            chip.setStyle(
-                "-fx-background-color:#F0E6EF; -fx-text-fill:#6B2D5E; -fx-font-size:11; " +
-                "-fx-padding:4 12; -fx-border-radius:20; -fx-background-radius:20; -fx-cursor:hand;");
-            chip.setOnAction(e -> { txtInput.setText(s.mensaje()); enviar(); });
-            chips.getChildren().add(chip);
-        }
-
-        HBox row = new HBox(chips);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(0, 8, 4, 8));
-        chatBox.getChildren().add(row);
-        scrollAbajo();
-    }
-
-    private void mostrarPanelConfirmacion(AccionERP accion) {
-        ConfirmacionAccionPanel panel = new ConfirmacionAccionPanel(
-            accion,
-            r -> {
-                addMensajeFeedback(r.mensaje(), r.detalle(), r.exito());
-                if (r.exito()) refrescarModuloAbierto(accion.action);
-            },
-            () -> addMensajeFeedback("Acción cancelada", "El usuario canceló la acción antes de ejecutarla.", false)
-        );
-
-        HBox wrapper = new HBox(panel);
-        wrapper.setPadding(new Insets(6, 8, 6, 8));
-        wrapper.setAlignment(Pos.CENTER_LEFT);
-        chatBox.getChildren().add(wrapper);
-        scrollAbajo();
-    }
-
-    private void addMensajeFeedback(String titulo, String detalle, boolean esExito) {
-        String colorTexto = esExito ? "#1A5C2A" : "#7F1D1D";
-        String estiloCarta = esExito
-            ? "-fx-background-color:#DCFCE7; -fx-background-radius:10; " +
-              "-fx-border-color:#86EFAC; -fx-border-radius:10; -fx-border-width:1;"
-            : "-fx-background-color:#FEE2E2; -fx-background-radius:10; " +
-              "-fx-border-color:#FCA5A5; -fx-border-radius:10; -fx-border-width:1;";
-
-        Label lblTitulo = new Label(titulo);
-        lblTitulo.setWrapText(true);
-        lblTitulo.setStyle(String.format(
-            "-fx-font-weight:bold; -fx-font-size:13; -fx-text-fill:%s;", colorTexto));
-
-        VBox card = new VBox(4, lblTitulo);
-        card.setMaxWidth(620);
-        card.setPadding(new Insets(10, 14, 10, 14));
-        card.setStyle(estiloCarta);
-
-        if (detalle != null && !detalle.isBlank()) {
-            Label lblDetalle = new Label(detalle);
-            lblDetalle.setWrapText(true);
-            lblDetalle.setStyle(String.format(
-                "-fx-font-size:11; -fx-text-fill:%s;", colorTexto));
-            card.getChildren().add(lblDetalle);
-        }
-
-        HBox row = new HBox(card);
-        row.setAlignment(Pos.CENTER_LEFT);
-        row.setPadding(new Insets(2, 8, 2, 8));
-        chatBox.getChildren().add(row);
-        scrollAbajo();
-    }
-
     private void scrollAbajo() {
         Platform.runLater(() -> scroll.setVvalue(1.0));
-    }
-
-    // ── Abrir / Cerrar módulos ────────────────────────────────────────────────
-
-    private void abrirModulo(AccionERP accion) {
-        String modulo = accion.data != null ? accion.data.modulo : null;
-        if (modulo == null || modulo.isBlank()) {
-            addMensajeFeedback("Módulo no especificado",
-                "Indica el nombre del módulo a abrir: clientes, presupuestos, facturas, " +
-                "albaranes, pedidos, tarifas, materiales, empleados, nominas, estadisticas, calendario.", false);
-            return;
-        }
-        String clave = modulo.toLowerCase().trim();
-
-        // Navegar en el área principal de la aplicación
-        if (navegarCallback != null) {
-            Parent prueba = crearVista(clave);
-            if (prueba == null) {
-                addMensajeFeedback("Módulo desconocido: " + modulo,
-                    "Módulos disponibles: clientes · presupuestos · facturas · albaranes · " +
-                    "pedidos · tarifas · materiales · empleados · nominas · estadisticas · calendario", false);
-                return;
-            }
-            navegarCallback.accept(clave);
-            addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» abierto",
-                "El módulo se ha cargado en el área principal de la aplicación.", true);
-            return;
-        }
-
-        // Fallback si no hay callback: ventana emergente
-        Stage existente = modulosAbiertos.get(clave);
-        if (existente != null && existente.isShowing()) {
-            existente.toFront();
-            existente.requestFocus();
-            addMensajeFeedback("Módulo «" + clave + "» ya estaba abierto",
-                "La ventana se ha traído al frente.", true);
-            return;
-        }
-
-        Parent vista = crearVista(clave);
-        if (vista == null) {
-            addMensajeFeedback("Módulo desconocido: " + modulo,
-                "Módulos disponibles: clientes · presupuestos · facturas · albaranes · " +
-                "pedidos · tarifas · materiales · empleados · nominas · estadisticas · calendario", false);
-            return;
-        }
-
-        Stage ownerStage = getScene() != null ? (Stage) getScene().getWindow() : null;
-        Stage stage = new Stage();
-        if (ownerStage != null) stage.initOwner(ownerStage);
-        stage.setTitle("Gráficas Mulberry — " + capitalizarModulo(clave));
-        stage.initModality(Modality.NONE);
-        Scene scene = new Scene(vista, 1100, 700);
-        try {
-            var cssUrl = getClass().getResource("/styles.css");
-            if (cssUrl != null) scene.getStylesheets().add(cssUrl.toExternalForm());
-        } catch (Exception ignored) {}
-        stage.setScene(scene);
-        stage.setOnCloseRequest(e -> modulosAbiertos.remove(clave));
-        stage.show();
-        stage.toFront();
-        stage.requestFocus();
-        modulosAbiertos.put(clave, stage);
-
-        addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» abierto",
-            "Ventana emergente abierta correctamente.", true);
-    }
-
-    private void cerrarModulo(AccionERP accion) {
-        String modulo = accion.data != null ? accion.data.modulo : null;
-        if (modulo == null || modulo.isBlank()) {
-            addMensajeFeedback("Módulo no especificado",
-                "Indica el nombre del módulo a cerrar.", false);
-            return;
-        }
-        String clave = modulo.toLowerCase().trim();
-        Stage stage = modulosAbiertos.remove(clave);
-        if (stage != null && stage.isShowing()) {
-            stage.close();
-            addMensajeFeedback("✅ Módulo «" + capitalizarModulo(clave) + "» cerrado",
-                "La ventana se ha cerrado correctamente.", true);
-        } else {
-            addMensajeFeedback("Módulo «" + clave + "» no estaba abierto",
-                "No hay ninguna ventana abierta para ese módulo.", false);
-        }
-    }
-
-    private Parent crearVista(String clave) {
-        return switch (clave) {
-            case "clientes"                       -> new ClientesView();
-            case "presupuestos"                   -> new PresupuestosView();
-            case "facturas"                       -> new FacturasView();
-            case "albaranes"                      -> new AlbaranesView();
-            case "pedidos"                        -> new PedidosView();
-            case "tarifas"                        -> new TarifasView();
-            case "materiales"                     -> new MaterialesView();
-            case "empleados"                      -> new EmpleadosView();
-            case "nominas", "nóminas"             -> new NominasView();
-            case "estadisticas", "estadísticas"   -> new EstadisticasView();
-            case "calendario"                     -> new CalendarioView();
-            default -> null;
-        };
-    }
-
-    private String capitalizarModulo(String texto) {
-        if (texto == null || texto.isBlank()) return "";
-        return switch (texto) {
-            case "nominas", "nóminas"           -> "Nóminas";
-            case "estadisticas", "estadísticas" -> "Estadísticas";
-            default -> Character.toUpperCase(texto.charAt(0)) + texto.substring(1);
-        };
-    }
-
-    // Refresca el módulo en el área principal y en cualquier popup abierto.
-    private void refrescarModuloAbierto(String accion) {
-        String clave = mapAccionAModulo(accion);
-        if (clave == null) return;
-
-        // 1. Refrescar popup propio del asistente si está abierto
-        Stage stage = modulosAbiertos.get(clave);
-        if (stage != null && stage.isShowing()) {
-            Parent vistaFresca = crearVista(clave);
-            if (vistaFresca != null) {
-                List<String> css = stage.getScene() != null
-                    ? new ArrayList<>(stage.getScene().getStylesheets()) : List.of();
-                Scene nuevaScene = new Scene(vistaFresca, stage.getWidth(), stage.getHeight());
-                nuevaScene.getStylesheets().addAll(css);
-                stage.setScene(nuevaScene);
-                stage.toFront();
-                stage.requestFocus();
-            }
-        }
-
-        // 2. Navegar al módulo en el área principal para mostrar los datos actualizados
-        if (navegarCallback != null) {
-            navegarCallback.accept(clave);
-        }
-    }
-
-    private static String mapAccionAModulo(String action) {
-        if (action == null) return null;
-        return switch (action) {
-            case "crear_cliente", "editar_cliente", "borrar_cliente",
-                 "listar_clientes", "consultar_cliente"                -> "clientes";
-            case "crear_presupuesto", "editar_presupuesto",
-                 "borrar_presupuesto", "listar_presupuestos"           -> "presupuestos";
-            case "generar_factura", "editar_factura",
-                 "borrar_factura", "listar_facturas"                   -> "facturas";
-            case "crear_albaran", "editar_albaran",
-                 "borrar_albaran", "listar_albaranes"                  -> "albaranes";
-            case "crear_pedido", "editar_pedido",
-                 "borrar_pedido", "listar_pedidos"                     -> "pedidos";
-            case "crear_tarifa", "editar_tarifa",
-                 "borrar_tarifa", "listar_tarifas"                     -> "tarifas";
-            case "crear_material", "editar_material", "borrar_material",
-                 "listar_materiales", "actualizar_stock",
-                 "consultar_materiales"                                -> "materiales";
-            case "crear_empleado", "editar_empleado",
-                 "borrar_empleado", "listar_empleados"                 -> "empleados";
-            case "calcular_nomina", "editar_nomina",
-                 "borrar_nomina", "listar_nominas"                     -> "nominas";
-            case "agendar_evento"                                      -> "calendario";
-            default -> null;
-        };
     }
 }

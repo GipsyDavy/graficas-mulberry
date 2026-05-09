@@ -62,10 +62,9 @@ public class AlbaranesView extends VBox {
         Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
         Button btnPreview    = btn("👁 Previsualizar",    "#6B2D5E", this::previsualizar);
-        Button btnActualizar = btn("🔄 Actualizar",      "#1ABC9C", this::cargar);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnActualizar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
