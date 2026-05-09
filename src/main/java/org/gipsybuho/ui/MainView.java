@@ -1,10 +1,13 @@
 package org.gipsybuho.ui;
 
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
@@ -16,12 +19,18 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import javafx.util.Duration;
+import org.gipsybuho.App;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.model.User;
+import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -32,13 +41,83 @@ public class MainView extends BorderPane {
     private final StackPane contentArea = new StackPane();
     private VBox sidebar;
     private final IAView iaView;
+    private final AuthService authService;
+    private final User loggedInUser;
+    private final Stage primaryStage;
+    private final Runnable onLockScreenRequested; // Nuevo campo para el callback de bloqueo
 
-    public MainView(Stage stage) {
+    private Timeline sessionTimeoutTimeline;
+    private static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Valor por defecto si no se encuentra en la DB
+
+    public MainView(Stage stage, AuthService authService, User loggedInUser, Runnable onLockScreenRequested) {
+        this.primaryStage = stage;
+        this.authService = authService;
+        this.loggedInUser = loggedInUser;
+        this.onLockScreenRequested = onLockScreenRequested; // Asignar el callback
         this.iaView = new IAView();
         setLeft(buildSidebar());
         setCenter(contentArea);
         getStyleClass().add("main-view");
-        mostrarVista(new DashboardView());
+        mostrarVista(new DashboardView(loggedInUser)); // Se pasa el usuario al Dashboard
+
+        // Inicializar el temporizador de inactividad
+        initializeSessionTimeout();
+
+        // Añadir listeners de actividad a la escena una vez que esté disponible
+        Platform.runLater(() -> {
+            if (getScene() != null) {
+                getScene().addEventFilter(InputEvent.ANY, this::resetSessionTimeout);
+            }
+        });
+    }
+
+    private void initializeSessionTimeout() {
+        int timeoutMinutes = DEFAULT_SESSION_TIMEOUT_MINUTES;
+        try {
+            String timeoutStr = DatabaseManager.getConfig("session_timeout_minutes");
+            if (!timeoutStr.isBlank()) {
+                timeoutMinutes = Integer.parseInt(timeoutStr);
+            }
+        } catch (NumberFormatException e) {
+            System.err.println("Error al leer 'session_timeout_minutes' de la configuración. Usando valor por defecto: " + DEFAULT_SESSION_TIMEOUT_MINUTES + " minutos.");
+        }
+
+        sessionTimeoutTimeline = new Timeline(new KeyFrame(Duration.minutes(timeoutMinutes), event -> {
+            // El temporizador ha expirado, cerrar sesión
+            Platform.runLater(this::logoutDueToInactivity);
+        }));
+        sessionTimeoutTimeline.setCycleCount(1); // Solo se ejecuta una vez
+        sessionTimeoutTimeline.playFromStart(); // Iniciar el temporizador
+    }
+
+    private void resetSessionTimeout(InputEvent event) {
+        if (sessionTimeoutTimeline != null) {
+            sessionTimeoutTimeline.playFromStart(); // Reiniciar el temporizador
+        }
+    }
+
+    private void logoutDueToInactivity() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Sesión Expirada");
+        alert.setHeaderText("Su sesión ha expirado debido a inactividad.");
+        alert.setContentText("Por favor, inicie sesión de nuevo.");
+        alert.showAndWait();
+
+        performLogout();
+    }
+
+    private void performLogout() {
+        if (sessionTimeoutTimeline != null) {
+            sessionTimeoutTimeline.stop(); // Detener el temporizador al cerrar sesión
+        }
+        authService.logAccess(loggedInUser.getId(), loggedInUser.getUsername(), "logout");
+        if (Platform.getApplication() instanceof App) {
+            try {
+                ((App) Platform.getApplication()).showLoginScreen();
+            } catch (IOException e) {
+                System.err.println("Error al volver a la pantalla de login: " + e.getMessage());
+            }
+        }
     }
 
     private VBox buildSidebar() {
@@ -63,6 +142,17 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
         sidebar.getChildren().add(logoBox);
 
+        // Información del usuario logueado y último acceso
+        Label userInfoLabel = new Label("Bienvenido, " + loggedInUser.getUsername());
+        userInfoLabel.getStyleClass().add("sidebar-user-info");
+        VBox.setMargin(userInfoLabel, new Insets(10, 0, 0, 10)); // Margen para separar del logo
+
+        Label lastLoginLabel = new Label(authService.getLastLoginInfo(loggedInUser.getUsername()));
+        lastLoginLabel.getStyleClass().add("sidebar-last-login");
+        VBox.setMargin(lastLoginLabel, new Insets(0, 0, 10, 10)); // Margen inferior para separar del separador
+
+        sidebar.getChildren().addAll(userInfoLabel, lastLoginLabel);
+
         // Separador
         Region sep = new Region();
         sep.getStyleClass().add("sidebar-sep");
@@ -71,7 +161,7 @@ public class MainView extends BorderPane {
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
-        navMenu.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
+        navMenu.getChildren().add(navBtn("🏠  Panel principal", () -> new DashboardView(loggedInUser)));
         navMenu.getChildren().addAll(
             navGrupo("CLIENTES",
                 navBtn("👥  Clientes",            ClientesView::new)
@@ -98,6 +188,7 @@ public class MainView extends BorderPane {
                 navBtnEspecial("🤖  Asistente IA",
                     () -> mostrarVista(iaView),
                     IAView::new),
+                navBtn("👥  Gestión de Usuarios", () -> new UserManagementView(authService)), // Nuevo botón
                 navBtn("📥  Importar Backup",     ImportBackupView::new),
                 navBtn("💾  Exportar / Backup",   ExportView::new),
                 navBtn("⚙  Configuración",        ConfiguracionView::new)
@@ -112,23 +203,33 @@ public class MainView extends BorderPane {
         VBox.setVgrow(scroll, Priority.ALWAYS);
         sidebar.getChildren().add(scroll);
 
-        Button btnSalir = new Button("⏻  Cerrar");
+        // Botón de Bloquear Pantalla
+        Button btnLock = new Button("🔒  Bloquear Pantalla");
+        btnLock.setMaxWidth(Double.MAX_VALUE);
+        btnLock.setStyle(
+            "-fx-background-color:#3498DB; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-font-size:10px; -fx-padding:5 10; -fx-background-radius:0; -fx-cursor:hand;");
+        btnLock.setOnAction(e -> {
+            if (onLockScreenRequested != null) {
+                onLockScreenRequested.run();
+            }
+        });
+        sidebar.getChildren().add(btnLock);
+
+        Button btnSalir = new Button("⏻  Cerrar Sesión");
         btnSalir.setMaxWidth(Double.MAX_VALUE);
         btnSalir.setStyle(
             "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
             "-fx-font-size:10px; -fx-padding:5 10; -fx-background-radius:0; -fx-cursor:hand;");
         btnSalir.setOnAction(e -> {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Deseas cerrar Gráficas Mulberry?\n" +
-                "Se cerrarán también todas las ventanas emergentes abiertas y se " +
-                "detendrá el proceso de Ollama si está activo.",
+                "¿Deseas cerrar la sesión actual?",
                 ButtonType.YES, ButtonType.NO);
-            conf.setTitle("Cerrar aplicación");
+            conf.setTitle("Cerrar Sesión");
             conf.setHeaderText(null);
             if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
             conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-                ModuloWindowManager.cerrarTodas();
-                Platform.exit();
+                performLogout();
             });
         });
         sidebar.getChildren().add(btnSalir);
@@ -149,7 +250,7 @@ public class MainView extends BorderPane {
      * opción de abrir en ventana emergente (también crea una nueva instancia).
      */
     private StackPane navBtn(String texto, Supplier<javafx.scene.Parent> factory) {
-        return navBtnImpl(texto, () -> mostrarVista(factory.get()), factory);
+        return navBtnImpl(texto, () -> mostrarVista(factory.get()), factory, texto);
     }
 
     /**
@@ -158,11 +259,11 @@ public class MainView extends BorderPane {
      */
     private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
                                      Supplier<javafx.scene.Parent> popupFactory) {
-        return navBtnImpl(texto, accionPrincipal, popupFactory);
+        return navBtnImpl(texto, accionPrincipal, popupFactory, texto);
     }
 
     private StackPane navBtnImpl(String texto, Runnable accionPrincipal,
-                                  Supplier<javafx.scene.Parent> popupFactory) {
+                                  Supplier<javafx.scene.Parent> popupFactory, String titulo) {
         Label lbl = new Label(texto);
         lbl.setMaxWidth(Double.MAX_VALUE);
         lbl.getStyleClass().add("nav-btn");
@@ -187,7 +288,7 @@ public class MainView extends BorderPane {
         });
 
         // ── Clic derecho: menú contextual ────────────────────────────────
-        ContextMenu ctx = buildContextMenu(texto, popupFactory, pane);
+        ContextMenu ctx = buildContextMenu(titulo, popupFactory, pane);
         pane.setOnContextMenuRequested(e ->
             ctx.show(pane, e.getScreenX(), e.getScreenY()));
 
@@ -230,8 +331,8 @@ public class MainView extends BorderPane {
         arrow.getStyleClass().add("nav-group-arrow");
 
         Label lblTitulo = new Label(titulo);
-        lblTitulo.getStyleClass().add("nav-group-title");
         lblTitulo.setMaxWidth(Double.MAX_VALUE);
+        lblTitulo.getStyleClass().add("nav-group-title");
         HBox.setHgrow(lblTitulo, Priority.ALWAYS);
 
         HBox header = new HBox(8, arrow, lblTitulo);

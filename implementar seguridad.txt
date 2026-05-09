@@ -1,0 +1,10 @@
+se puede implementar algun tipo de seguridad en  
+  la aplicacion para ver ultimo acceso a la        
+  aplicacion, quien fue la ultima person a que     
+  accedio, un sistema de usuario y contraseña, que 
+   todos los usuarios tengan los mismos permisos y 
+   que se puedan ir creando usuarios segun         
+  necesidades y algun tipo de seguridad tipo       
+  firewall o similiar para evitar acceso de        
+  terceros a la aplicacion mientras se esta        
+  utilizando????  

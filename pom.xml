@@ -40,6 +40,13 @@
             <version>3.45.1.0</version>
         </dependency>
 
+        <!-- jBCrypt para hashing de contraseñas -->
+        <dependency>
+            <groupId>org.mindrot</groupId>
+            <artifactId>jbcrypt</artifactId>
+            <version>0.4</version>
+        </dependency>
+
         <!-- PDF Generation (OpenPDF - fork libre de iText) -->
         <dependency>
             <groupId>com.github.librepdf</groupId>

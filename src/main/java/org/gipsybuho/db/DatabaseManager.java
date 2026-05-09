@@ -2,8 +2,11 @@ package org.gipsybuho.db;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import org.mindrot.jbcrypt.BCrypt; // Importar jBCrypt
 
 public class DatabaseManager {
 
@@ -35,6 +38,7 @@ public class DatabaseManager {
         createTables(conn);
         runMigrations(conn);
         insertDatosIniciales(conn);
+        insertDefaultAdminUser(conn); // Llamada al nuevo método
     }
 
     private static void runMigrations(Connection conn) {
@@ -71,12 +75,17 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_playlist', '')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_volumen', '50')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_loop', '1')",
-            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_autoplay', '0')"
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_autoplay', '0')",
+            // Nuevas migraciones para las columnas de intentos de login
+            "ALTER TABLE usuarios ADD COLUMN failed_login_attempts INTEGER DEFAULT 0",
+            "ALTER TABLE usuarios ADD COLUMN last_failed_login TEXT"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
                 st.execute(sql);
-            } catch (SQLException ignored) {}
+            } catch (SQLException ignored) {
+                // Ignorar errores si la columna ya existe (ej. al ejecutar varias veces)
+            }
         }
     }
 
@@ -92,6 +101,28 @@ public class DatabaseManager {
 
     private static void createTables(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) {
+            // Nueva tabla de usuarios con columnas adicionales para intentos de login
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    last_login TEXT,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    failed_login_attempts INTEGER DEFAULT 0,
+                    last_failed_login TEXT
+                )""");
+
+            // Nueva tabla de log de accesos
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS log_accesos (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    user_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
+                    username TEXT NOT NULL,
+                    event_type TEXT NOT NULL,
+                    timestamp TEXT DEFAULT (datetime('now'))
+                )""");
+
             st.execute("""
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -372,7 +403,10 @@ public class DatabaseManager {
                 ('musica_playlist', ''),
                 ('musica_volumen', '50'),
                 ('musica_loop', '1'),
-                ('musica_autoplay', '0')
+                ('musica_autoplay', '0'),
+                ('session_timeout_minutes', '30'),
+                ('max_login_attempts', '5'),
+                ('login_lockout_minutes', '5')
                 """);
 
             // Tarifas de ejemplo para serigrafía
@@ -404,6 +438,26 @@ public class DatabaseManager {
                 (9, 'Hilo poliéster negro 5000m', 'HIL-POL-NEG', 'bordado', 12.0, 3.0, 'ud', 6.50),
                 (10, 'Quitatintas industrial', 'LIM-QUI-01', 'consumibles', 4.0, 1.0, 'L', 9.80)
                 """);
+        }
+    }
+
+    private static void insertDefaultAdminUser(Connection conn) throws SQLException {
+        // Verificar si ya existen usuarios
+        String countSql = "SELECT COUNT(*) FROM usuarios";
+        try (Statement st = conn.createStatement();
+             ResultSet rs = st.executeQuery(countSql)) {
+            if (rs.next() && rs.getInt(1) == 0) {
+                // No hay usuarios, insertar el administrador por defecto
+                String insertSql = "INSERT INTO usuarios (username, password_hash, created_at, failed_login_attempts) VALUES (?, ?, datetime('now'), 0)";
+                try (PreparedStatement ps = conn.prepareStatement(insertSql)) {
+                    ps.setString(1, "admin");
+                    // Hashear la contraseña con BCrypt
+                    String hashedPassword = BCrypt.hashpw("admin123", BCrypt.gensalt());
+                    ps.setString(2, hashedPassword);
+                    ps.executeUpdate();
+                    System.out.println("Usuario 'admin' creado con contraseña 'admin123' (hasheada). ¡Cámbiala lo antes posible!");
+                }
+            }
         }
     }
 
