@@ -12,7 +12,6 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.MusicService;
-import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
 
@@ -73,10 +72,9 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         Tab tabEmpresa      = new Tab("🏢  Mi empresa",  buildTabEmpresa());
         Tab tabPreferencias = new Tab("⚙  Preferencias", buildTabPreferencias());
         Tab tabMusica       = new Tab("🎵  Música",       buildTabMusica());
-        Tab tabModelosIA    = new Tab("🤖  Modelos IA",   buildTabModelosIA());
         Tab tabAcercaDe     = new Tab("ℹ  Acerca de",     buildTabAcercaDe());
 
-        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabModelosIA, tabAcercaDe);
+        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabAcercaDe);
         getChildren().addAll(titulo, tabs);
     }
 
@@ -664,84 +662,7 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
     }
 
     // ═════════════════════════════════════════════════════════════════════════
-    // TAB 5 — MODELOS IA
-    // ═════════════════════════════════════════════════════════════════════════
-
-    private static final String[][] MODELOS_INFO = {
-        {"llama4",      "~5.6 GB",  "Meta Llama 4 Scout — Multimodal, el más reciente"},
-        {"llama3.2",    "~2.0 GB",  "Meta Llama 3.2 — Rápido y equilibrado (recomendado)"},
-        {"llama3.1",    "~4.7 GB",  "Meta Llama 3.1 — Más preciso que 3.2"},
-        {"mistral",     "~4.1 GB",  "Mistral 7B — Muy eficiente en español"},
-        {"phi4",        "~9.1 GB",  "Microsoft Phi-4 — Excelente razonamiento"},
-        {"phi3.5",      "~2.2 GB",  "Microsoft Phi-3.5 — Ligero y rápido"},
-        {"qwen2.5",     "~4.7 GB",  "Qwen 2.5 — Multilingüe, muy bueno en español"},
-        {"gemma3",      "~3.3 GB",  "Google Gemma 3 — Eficiente"},
-        {"deepseek-r1", "~4.7 GB",  "DeepSeek R1 — Razonamiento avanzado"},
-    };
-
-    private ScrollPane buildTabModelosIA() {
-        VBox contenido = new VBox(20);
-        contenido.setPadding(new Insets(20));
-
-        Label titulo = new Label("Modelos de Inteligencia Artificial");
-        titulo.getStyleClass().add("config-section-title");
-        Label desc = new Label(
-            "Gestiona los modelos de IA disponibles en Ollama. " +
-            "Puedes descargar nuevos modelos o eliminar los que ya no necesites para liberar espacio en disco.");
-        desc.getStyleClass().add("config-section-desc");
-        desc.setWrapText(true);
-
-        // Tabla de modelos disponibles con tamaños
-        Label lblTabla = new Label("Modelos disponibles:");
-        lblTabla.getStyleClass().add("config-section-title");
-
-        GridPane gridModelos = new GridPane();
-        gridModelos.setHgap(20);
-        gridModelos.setVgap(8);
-        gridModelos.setPadding(new Insets(10));
-        gridModelos.setStyle(
-            "-fx-background-color:#F8F8F8; -fx-border-color:#DDD; " +
-            "-fx-border-radius:6; -fx-background-radius:6;");
-
-        ColumnConstraints cMod = new ColumnConstraints(); cMod.setMinWidth(120);
-        ColumnConstraints cTam = new ColumnConstraints(); cTam.setMinWidth(80);
-        ColumnConstraints cDes = new ColumnConstraints(); cDes.setHgrow(Priority.ALWAYS);
-        gridModelos.getColumnConstraints().addAll(cMod, cTam, cDes);
-
-        Label hNombre = new Label("Modelo"); hNombre.setStyle("-fx-font-weight:bold;");
-        Label hTam    = new Label("Tamaño"); hTam.setStyle("-fx-font-weight:bold;");
-        Label hDesc   = new Label("Descripción"); hDesc.setStyle("-fx-font-weight:bold;");
-        gridModelos.addRow(0, hNombre, hTam, hDesc);
-
-        for (int i = 0; i < MODELOS_INFO.length; i++) {
-            Label lNom = new Label(MODELOS_INFO[i][0]);
-            lNom.setStyle("-fx-font-weight:bold; -fx-text-fill:#6B2D5E;");
-            Label lTam = new Label(MODELOS_INFO[i][1]);
-            lTam.setStyle("-fx-text-fill:#F39C12; -fx-font-weight:bold;");
-            Label lDes = new Label(MODELOS_INFO[i][2]);
-            gridModelos.addRow(i + 1, lNom, lTam, lDes);
-        }
-
-        Button btnGestionar = new Button("⬇  Gestionar y descargar modelos");
-        btnGestionar.getStyleClass().add("config-save-btn");
-        btnGestionar.setOnAction(e -> {
-            if (getScene() == null) return;
-            Stage owner = (Stage) getScene().getWindow();
-            new ModelosGestionDialog(owner, new OllamaService()).showAndWait();
-        });
-
-        VBox panel = new VBox(12, titulo, desc, new Separator(), lblTabla, gridModelos, new Separator(), btnGestionar);
-        panel.getStyleClass().add("config-panel");
-        contenido.getChildren().add(panel);
-
-        ScrollPane scroll = new ScrollPane(contenido);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        return scroll;
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // TAB 6 — ACERCA DE
+    // TAB 5 — ACERCA DE
     // ═════════════════════════════════════════════════════════════════════════
 
     private ScrollPane buildTabAcercaDe() {

@@ -397,7 +397,7 @@ public class ModelosGestionDialog extends Stage {
         Label lblNombre = new Label(modelo.nombre);
         lblNombre.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
-        Label lblTam = new Label(modelo.tamano());
+        Label lblTam = new Label(modelo.nombre + "  ·  " + modelo.tamano());
         lblTam.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
 
         VBox info = new VBox(2, lblNombre, lblTam);
