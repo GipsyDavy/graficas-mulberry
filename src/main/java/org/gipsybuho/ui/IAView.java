@@ -3,31 +3,42 @@ package org.gipsybuho.ui;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.gipsybuho.model.AccionERP;
 import org.gipsybuho.service.ChatExportService;
 import org.gipsybuho.service.ChatExportService.MensajeChat;
 import org.gipsybuho.service.ContextoERPService;
+import org.gipsybuho.service.JsonInterceptorService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.OllamaService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.util.AppConstants; // Importar AppConstants
 
 import java.io.File;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import javafx.animation.KeyFrame;
+import javafx.animation.Timeline;
+import javafx.util.Duration;
 
 public class IAView extends VBox {
 
-    private final OllamaService      ia              = new OllamaService();
+    private final OllamaService      ia             = new OllamaService();
     private final ContextoERPService contextoService = new ContextoERPService();
+    private final Map<String, Stage> modulosAbiertos = new HashMap<>();
     private VBox chatBox;
     private ScrollPane scroll;
     private TextArea txtInput;
@@ -64,7 +75,7 @@ public class IAView extends VBox {
 
         btnInstalarOllama = new Button("⬇  Instalar Ollama");
         btnInstalarOllama.setStyle(
-            "-fx-background-color: #6B2D5E; -fx-text-fill: white; -fx-font-weight: bold; " +
+            "-fx-background-color: " + AppConstants.COLOR_MULBERRY_HEX + "; -fx-text-fill: " + AppConstants.COLOR_WHITE_HEX + "; -fx-font-weight: bold; " +
             "-fx-padding: 5 14; -fx-background-radius: 4; -fx-cursor: hand;");
         btnInstalarOllama.setVisible(false);
         btnInstalarOllama.setManaged(false);
@@ -72,13 +83,13 @@ public class IAView extends VBox {
 
         Button btnModelos = new Button("⚙  Modelos");
         btnModelos.setStyle(
-            "-fx-background-color:#5D4A7A; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-background-color:#5D4A7A; -fx-text-fill:" + AppConstants.COLOR_WHITE_HEX + "; -fx-font-weight:bold; " +
             "-fx-padding:5 12; -fx-background-radius:4; -fx-cursor:hand;");
         btnModelos.setOnAction(e -> abrirGestionModelos());
 
         Button btnExportar = new Button("💾 Exportar chat");
         btnExportar.setStyle(
-            "-fx-background-color:#2C7A3C; -fx-text-fill:white; -fx-font-weight:bold; " +
+            "-fx-background-color:#2C7A3C; -fx-text-fill:" + AppConstants.COLOR_WHITE_HEX + "; -fx-font-weight:bold; " +
             "-fx-padding:5 12; -fx-background-radius:4; -fx-cursor:hand;");
         btnExportar.setOnAction(e -> exportarChat());
 
@@ -121,7 +132,7 @@ public class IAView extends VBox {
 
         scroll = new ScrollPane(chatBox);
         scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color:white; -fx-border-color:#E2E8F0;");
+        scroll.setStyle("-fx-background-color:" + AppConstants.COLOR_WHITE_HEX + "; -fx-border-color:#E2E8F0;");
         scroll.setPrefHeight(400);
 
         addMensajeSistema("¡Hola! Soy el asistente IA de Gráficas Mulberry. Puedo ayudarte con consultas sobre presupuestos, precios, materiales, nóminas y mucho más.\n\nEscribe tu pregunta abajo para comenzar.");
@@ -144,7 +155,7 @@ public class IAView extends VBox {
         });
 
         btnEnviar = new Button("Enviar ▶");
-        btnEnviar.setStyle("-fx-background-color:#6B2D5E;-fx-text-fill:white;-fx-font-weight:bold;-fx-padding:10 20;");
+        btnEnviar.setStyle("-fx-background-color:" + AppConstants.COLOR_MULBERRY_HEX + ";-fx-text-fill:" + AppConstants.COLOR_WHITE_HEX + ";-fx-font-weight:bold;-fx-padding:10 20;");
         btnEnviar.setOnAction(e -> enviar());
         btnEnviar.setMinHeight(80);
 
@@ -170,7 +181,7 @@ public class IAView extends VBox {
         };
         for (String p : preguntas) {
             Button chip = new Button(p.length() > 45 ? p.substring(0, 42) + "..." : p);
-            chip.setStyle("-fx-background-color:#F0E6EF;-fx-text-fill:#6B2D5E;-fx-font-size:11;-fx-padding:4 10;-fx-border-radius:20;-fx-background-radius:20;");
+            chip.setStyle("-fx-background-color:#F0E6EF;-fx-text-fill:" + AppConstants.COLOR_MULBERRY_HEX + ";-fx-font-size:11;-fx-padding:4 10;-fx-border-radius:20;-fx-background-radius:20;");
             chip.setOnAction(e -> { txtInput.setText(p); enviar(); });
             chips.getChildren().add(chip);
         }
@@ -204,7 +215,7 @@ public class IAView extends VBox {
         chatBox.getChildren().add(burbuja.row());
         TextFlow tf = burbuja.textFlow();
         Text cursor = new Text("▊");
-        cursor.setFill(Color.web("#6B2D5E"));
+        cursor.setFill(Color.web(AppConstants.COLOR_MULBERRY_HEX));
         tf.getChildren().add(cursor);
         scrollAbajo();
 
@@ -240,12 +251,12 @@ public class IAView extends VBox {
                 },
                 error -> {
                     tf.getChildren().clear();
-                    Text errText = new Text("""
-                        ⚠ %s
-                        Asegúrate de que Ollama esté en ejecución:
-                          1. Descarga Ollama desde ollama.com
-                          2. Ejecuta: ollama pull llama3.2
-                          3. Ollama se inicia automáticamente al ejecutarse""".formatted(error));
+                    Text errText = new Text(
+                        "⚠ " + error + "\n\n" +
+                        "Asegúrate de que Ollama esté en ejecución:\n" +
+                        "  1. Descarga Ollama desde ollama.com\n" +
+                        "  2. Ejecuta: ollama pull llama3.2\n" +
+                        "  3. Ollama se inicia automáticamente al ejecutarse");
                     errText.setFill(Color.RED);
                     tf.getChildren().add(errText);
                     SoundService.play(SoundService.Sound.ERROR);
@@ -265,11 +276,11 @@ public class IAView extends VBox {
 
     private void addBurbujaUsuario(String texto) {
         Text t = new Text(texto);
-        t.setFill(Color.WHITE);
+        t.setFill(Color.web(AppConstants.COLOR_WHITE_HEX));
         TextFlow tf = new TextFlow(t);
         tf.setMaxWidth(500);
         tf.setPadding(new Insets(10, 14, 10, 14));
-        tf.setStyle("-fx-background-color:#6B2D5E; -fx-background-radius:16 16 4 16;");
+        tf.setStyle("-fx-background-color:" + AppConstants.COLOR_MULBERRY_HEX + "; -fx-background-radius:16 16 4 16;");
 
         HBox row = new HBox(tf);
         row.setAlignment(Pos.CENTER_RIGHT);
