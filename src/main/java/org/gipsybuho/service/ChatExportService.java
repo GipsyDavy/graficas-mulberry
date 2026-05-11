@@ -27,7 +27,8 @@ import java.util.List;
 
 public class ChatExportService {
 
-    public record MensajeChat(String rol, String texto) {}
+    // Cambiamos "texto" por "contenido" para ser consistentes
+    public record MensajeChat(String rol, String contenido) {}
 
     private static final Color MULBERRY = new Color(107, 45,  94);
     private static final Color LILA     = new Color(240, 230, 239);
@@ -79,7 +80,7 @@ public class ChatExportService {
                     tabla.setSpacingBefore(8);
                     tabla.setSpacingAfter(4);
                     tabla.addCell(celda(new Phrase("Tú", fLblUser),   MULBERRY, 10, 7, 10, 2));
-                    tabla.addCell(celda(new Phrase(msg.texto(), fTxtUser), MULBERRY, 10, 1, 10, 10));
+                    tabla.addCell(celda(new Phrase(msg.contenido(), fTxtUser), MULBERRY, 10, 1, 10, 10));
                     doc.add(tabla);
                 }
                 case "ia" -> {
@@ -89,11 +90,11 @@ public class ChatExportService {
                     tabla.setSpacingBefore(8);
                     tabla.setSpacingAfter(4);
                     tabla.addCell(celda(new Phrase("Asistente IA", fLblIA), LILA, 10, 7, 10, 2));
-                    tabla.addCell(celda(new Phrase(msg.texto(), fTxtIA),    LILA, 10, 1, 10, 10));
+                    tabla.addCell(celda(new Phrase(msg.contenido(), fTxtIA),    LILA, 10, 1, 10, 10));
                     doc.add(tabla);
                 }
                 case "sistema" -> {
-                    Paragraph p = new Paragraph(msg.texto(), fSistema);
+                    Paragraph p = new Paragraph(msg.contenido(), fSistema);
                     p.setAlignment(Element.ALIGN_CENTER);
                     p.setSpacingBefore(8);
                     p.setSpacingAfter(8);
@@ -153,7 +154,7 @@ public class ChatExportService {
                     rLabel.setColor("F0E6EF");
 
                     XWPFRun rMsg = par.createRun();
-                    rMsg.setText(msg.texto());
+                    rMsg.setText(msg.contenido());
                     rMsg.setFontSize(11);
                     rMsg.setColor("FFFFFF");
                 }
@@ -171,7 +172,7 @@ public class ChatExportService {
                     rLabel.setColor("5D4A7A");
 
                     XWPFRun rMsg = par.createRun();
-                    rMsg.setText(msg.texto());
+                    rMsg.setText(msg.contenido());
                     rMsg.setFontSize(11);
                     rMsg.setColor("1A1A2E");
                 }
@@ -181,7 +182,7 @@ public class ChatExportService {
                     par.setSpacingBefore(80);
                     par.setSpacingAfter(80);
                     XWPFRun r = par.createRun();
-                    r.setText(msg.texto());
+                    r.setText(msg.contenido());
                     r.setItalic(true);
                     r.setFontSize(9);
                     r.setColor("888888");
