@@ -20,15 +20,13 @@ import java.util.function.Consumer;
 
 /**
  * OllamaService: Motor de IA de Gráficas Mulberry.
- * Versión de COMPATIBILIDAD TOTAL con ModelosGestionDialog.java
+ * Versión Final: 100% Desacoplada, compatible con ModelosGestionDialog e IAView.
  */
 public class OllamaService {
 
     /**
-     * Clase interna ModelInfo.
-     * IMPORTANTE: Tu diálogo usa 'modelo.nombre' y 'modelo.tamano()'.
-     * Para que funcione tanto como variable (.nombre) como método (.tamano()),
-     * definimos esta clase estándar.
+     * Estructura de datos para modelos instalados.
+     * Diseñada para que coincida con el acceso de campo (.nombre) y método (.tamano()) de la UI.
      */
     public static class ModelInfo {
         public final String nombre;
@@ -38,20 +36,15 @@ public class OllamaService {
             this.nombre = nombre;
             this.tamano = tamano;
         }
-
         public String tamano() { return tamano; }
     }
-
-    private static final String SYSTEM_PROMPT = """
-        Eres Mulberry Assistant, el asistente IA especializado del ERP Gráficas Mulberry.
-        Tu objetivo es ayudar al usuario con consultas sobre el sistema, datos y procesos.
-        """;
 
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
     private String modeloActual;
     private volatile String contextoERP = null;
     private final List<String[]> historial = new ArrayList<>();
+    private static final int MAX_HISTORIAL = 10;
 
     public OllamaService() {
         this.httpClient = HttpClient.newBuilder()
@@ -61,9 +54,12 @@ public class OllamaService {
         this.modeloActual = AppConstants.OLLAMA_MODEL;
     }
 
+    // =========================================================================
+    // GESTIÓN DE MODELOS (API /tags, /pull, /delete)
+    // =========================================================================
+
     /**
-     * MÉTODO CLAVE: getModelosConDetalles
-     * Coincide exactamente con la llamada en tu ModelosGestionDialog.
+     * Obtiene los modelos instalados. Coincide con la llamada en ModelosGestionDialog.
      */
     public List<ModelInfo> getModelosConDetalles() {
         List<ModelInfo> lista = new ArrayList<>();
@@ -85,14 +81,13 @@ public class OllamaService {
                 }
             }
         } catch (Exception e) {
-            System.err.println("Error listando modelos: " + e.getMessage());
+            System.err.println("Error en comunicación con Ollama: " + e.getMessage());
         }
         return lista;
     }
 
     /**
-     * MÉTODO CLAVE: eliminarModelo
-     * Coincide con la llamada de confirmación de borrado en tu Dialog.
+     * Elimina un modelo del servidor local.
      */
     public boolean eliminarModelo(String nombre) {
         try {
@@ -108,8 +103,7 @@ public class OllamaService {
     }
 
     /**
-     * MÉTODO CLAVE: pullModeloStreaming
-     * Gestiona la descarga y envía el array [progreso, completado, total]
+     * Descarga modelos con streaming de progreso.
      */
     public void pullModeloStreaming(String nombre, Consumer<String> onEstado, Consumer<double[]> onProgreso, Runnable onExito, Consumer<String> onError) {
         Thread.ofVirtual().start(() -> {
@@ -117,11 +111,13 @@ public class OllamaService {
                 ObjectNode payload = mapper.createObjectNode();
                 payload.put("name", nombre);
                 payload.put("stream", true);
+
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/pull"))
                         .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
 
                 HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
                     String line;
                     while ((line = reader.readLine()) != null) {
@@ -138,13 +134,16 @@ public class OllamaService {
                     }
                     Platform.runLater(onExito);
                 }
-            } catch (Exception e) { Platform.runLater(() -> onError.accept(e.getMessage())); }
+            } catch (Exception e) {
+                Platform.runLater(() -> onError.accept(e.getMessage()));
+            }
         });
     }
 
-    /**
-     * Envío de chat para IAView
-     */
+    // =========================================================================
+    // LÓGICA DE CHAT (Streaming y Contexto)
+    // =========================================================================
+
     public void enviarConsulta(String prompt, Consumer<String> onResponse, Consumer<String> onError) {
         Thread.ofVirtual().start(() -> {
             try {
@@ -152,33 +151,62 @@ public class OllamaService {
                 payload.put("model", modeloActual);
                 payload.put("stream", true);
 
-                StringBuilder fullPrompt = new StringBuilder(SYSTEM_PROMPT);
-                if (contextoERP != null) fullPrompt.append("\nContexto: ").append(contextoERP);
+                // Centralizamos el prompt de sistema en AppConstants como sugeriste
+                StringBuilder fullPrompt = new StringBuilder(AppConstants.SYSTEM_PROMPT_IA);
+
+                if (contextoERP != null) {
+                    fullPrompt.append("\n[CONTEXTO ERP]\n").append(contextoERP);
+                }
+
+                synchronized (historial) {
+                    for (String[] msg : historial) {
+                        fullPrompt.append("\nUsuario: ").append(msg[0]).append("\nAsistente: ").append(msg[1]);
+                    }
+                }
                 fullPrompt.append("\nUsuario: ").append(prompt);
                 payload.put("prompt", fullPrompt.toString());
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(AppConstants.OLLAMA_API_URL))
-                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
+                        .header("Content-Type", "application/json")
+                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+                        .build();
 
                 HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+
+                if (response.statusCode() != 200) {
+                    Platform.runLater(() -> onError.accept("Error Ollama: " + response.statusCode()));
+                    return;
+                }
+
                 try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
                     String line;
+                    StringBuilder fullAiResponse = new StringBuilder();
                     while ((line = reader.readLine()) != null) {
                         JsonNode node = mapper.readTree(line);
                         if (node.has("response")) {
                             String fragment = node.get("response").asText();
+                            fullAiResponse.append(fragment);
                             Platform.runLater(() -> onResponse.accept(fragment));
                         }
                     }
+                    synchronized (historial) {
+                        if (historial.size() >= MAX_HISTORIAL) historial.remove(0);
+                        historial.add(new String[]{prompt, fullAiResponse.toString()});
+                    }
                 }
-            } catch (Exception e) { Platform.runLater(() -> onError.accept(e.getMessage())); }
+            } catch (Exception e) {
+                Platform.runLater(() -> onError.accept("Fallo: " + e.getMessage()));
+            }
         });
     }
 
-    // Getters y Setters necesarios
+    // =========================================================================
+    // UTILIDADES
+    // =========================================================================
+
     public void setModeloActual(String m) { this.modeloActual = m; }
     public String getModeloActual() { return modeloActual; }
     public void setContextoERP(String c) { this.contextoERP = c; }
-    public void limpiarHistorial() { historial.clear(); }
+    public void limpiarHistorial() { synchronized(historial) { historial.clear(); } }
 }

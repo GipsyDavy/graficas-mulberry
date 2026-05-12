@@ -27,6 +27,84 @@ import java.util.List;
 
 public class ChatExportService {
 
+    public void exportarChat(List<MensajeChat> mensajes, File archivo) throws Exception {
+        if (archivo == null || mensajes == null) return;
+
+        String nombreLower = archivo.getName().toLowerCase();
+
+        if (nombreLower.endsWith(".pdf")) {
+            // Llamar a la versión con estilos de tabla y colores
+            exportarPDF(archivo, mensajes);
+        } else if (nombreLower.endsWith(".docx")) {
+            // Llamar a la versión con fondos de párrafo
+            exportarWord(archivo, mensajes);
+        } else {
+            throw new IllegalArgumentException("Formato no compatible");
+        }
+    }
+
+    private void exportarAWord(List<MensajeChat> mensajes, File archivo) throws Exception {
+        try (XWPFDocument doc = new XWPFDocument()) {
+            XWPFParagraph title = doc.createParagraph();
+            title.setAlignment(ParagraphAlignment.CENTER);
+            XWPFRun titleRun = title.createRun();
+            titleRun.setText("Historial de Chat - Mulberry Assistant");
+            titleRun.setBold(true);
+            titleRun.setFontSize(16);
+
+            for (MensajeChat msg : mensajes) {
+                XWPFParagraph p = doc.createParagraph();
+                XWPFRun r = p.createRun();
+
+                // Formato para el nombre del remitente
+                r.setBold(true);
+                r.setText(msg.rol().toUpperCase() + ": ");
+
+                // Contenido del mensaje
+                XWPFRun r2 = p.createRun();
+                r2.setText(msg.contenido());
+            }
+
+            try (FileOutputStream out = new FileOutputStream(archivo)) {
+                doc.write(out);
+            }
+        }
+    }
+
+    private void exportarAPDF(List<MensajeChat> mensajes, File archivo) throws Exception {
+        Document document = new Document(PageSize.A4);
+        PdfWriter.getInstance(document, new FileOutputStream(archivo));
+        document.open();
+
+        // Título del documento
+        Font fontTitulo = new Font(Font.HELVETICA, 18, Font.BOLD);
+        document.add(new Paragraph("Historial de Chat - Mulberry Assistant", fontTitulo));
+        document.add(new Paragraph("Fecha: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))));
+        document.add(new Paragraph(" ")); // Espacio
+
+        for (MensajeChat msg : mensajes) {
+            // Estilo según el rol
+            Font fontRol = new Font(Font.HELVETICA, 10, Font.BOLD);
+            String prefix = msg.rol().toUpperCase() + ": ";
+
+            Paragraph p = new Paragraph();
+            p.add(new Phrase(prefix, fontRol));
+            p.add(new Phrase(msg.contenido(), new Font(Font.HELVETICA, 11)));
+            p.setSpacingBefore(10f);
+
+            document.add(p);
+        }
+
+        document.close();
+    }
+
+    /**
+     * Alias en inglés para evitar errores si IAView llama a 'exportChat'
+     */
+    public void exportChat(List<MensajeChat> mensajes, File archivo) throws Exception {
+        exportarChat(mensajes, archivo);
+    }
+
     // Cambiamos "texto" por "contenido" para ser consistentes
     public record MensajeChat(String rol, String contenido) {}
 
