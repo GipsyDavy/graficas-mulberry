@@ -85,7 +85,6 @@ Puedo utilizar las siguientes herramientas MCP cuando sea necesario:
 - filesystem: Leer, escribir y explorar archivos locales.
 - git: Operaciones git locales.
 - github: Interactuar con repositorios, PRs e issues de GitHub.
-- google_search / brave-search: Búsquedas actualizadas en internet para resolver dudas técnicas, investigar librerías o consultar documentación oficial.
 - sequential-thinking: Razonamiento paso a paso estructurado.
 - memory: Memoria persistente entre sesiones.
 - playwright: Automatización web y pruebas.
