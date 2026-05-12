@@ -18,147 +18,167 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
 
+/**
+ * OllamaService: Motor de IA de Gráficas Mulberry.
+ * Versión de COMPATIBILIDAD TOTAL con ModelosGestionDialog.java
+ */
 public class OllamaService {
 
-    // Recuperamos el SYSTEM_PROMPT original que no estaba en AppConstants
+    /**
+     * Clase interna ModelInfo.
+     * IMPORTANTE: Tu diálogo usa 'modelo.nombre' y 'modelo.tamano()'.
+     * Para que funcione tanto como variable (.nombre) como método (.tamano()),
+     * definimos esta clase estándar.
+     */
+    public static class ModelInfo {
+        public final String nombre;
+        private final String tamano;
+
+        public ModelInfo(String nombre, String tamano) {
+            this.nombre = nombre;
+            this.tamano = tamano;
+        }
+
+        public String tamano() { return tamano; }
+    }
+
     private static final String SYSTEM_PROMPT = """
         Eres Mulberry Assistant, el asistente IA especializado del ERP Gráficas Mulberry.
         Tu objetivo es ayudar al usuario con consultas sobre el sistema, datos y procesos.
-        Eres educado, profesional y eficiente.
         """;
 
     private final HttpClient httpClient;
     private final ObjectMapper mapper;
     private String modeloActual;
-    private boolean routingAutomatico = true;
     private volatile String contextoERP = null;
-
     private final List<String[]> historial = new ArrayList<>();
-    private static final int MAX_HISTORIAL = 10;
 
     public OllamaService() {
         this.httpClient = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(10))
                 .build();
         this.mapper = new ObjectMapper();
-        // Usamos el modelo por defecto de las constantes
-        this.modeloActual = "phi3:mini";
+        this.modeloActual = AppConstants.OLLAMA_MODEL;
     }
 
-    public void chatStreaming(String prompt, Consumer<String> onChunk, Runnable onComplete, Consumer<String> onError, Consumer<String> onModelo) {
-        Thread.ofVirtual().start(() -> {
-            try {
-                ObjectNode rootNode = mapper.createObjectNode();
-                rootNode.put("model", modeloActual);
-                rootNode.put("prompt", construirPromptConContexto(prompt));
-                rootNode.put("stream", true);
-
-                // Usamos las URLs de AppConstants
-                HttpRequest request = HttpRequest.newBuilder()
-                        .uri(URI.create(AppConstants.OLLAMA_API_URL))
-                        .header("Content-Type", "application/json")
-                        .POST(HttpRequest.BodyPublishers.ofString(rootNode.toString()))
-                        .build();
-
-                HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-
-                if (response.statusCode() == 200) {
-                    StringBuilder respuestaCompleta = new StringBuilder();
-                    try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
-                        String line;
-                        while ((line = reader.readLine()) != null) {
-                            JsonNode node = mapper.readTree(line);
-                            if (node.has("response")) {
-                                String chunk = node.get("response").asText();
-                                respuestaCompleta.append(chunk);
-                                onChunk.accept(chunk);
-                            }
-                            if (node.has("model")) {
-                                onModelo.accept(node.get("model").asText());
-                            }
-                        }
-                    }
-                    guardarEnHistorial(prompt, respuestaCompleta.toString());
-                    onComplete.run();
-                } else {
-                    Platform.runLater(() -> onError.accept("Error Ollama: " + response.statusCode()));
-                }
-            } catch (InterruptedException e) {
-                // CORRECCIÓN SONARQUBE
-                Thread.currentThread().interrupt();
-                Platform.runLater(() -> onError.accept("Hilo interrumpido"));
-            } catch (Exception e) {
-                Platform.runLater(() -> onError.accept(e.getMessage()));
-            }
-        });
-    }
-
-    private String construirPromptConContexto(String prompt) {
-        StringBuilder sb = new StringBuilder();
-        sb.append("System: ").append(SYSTEM_PROMPT).append("\n");
-        if (contextoERP != null && !contextoERP.isEmpty()) {
-            sb.append("Contexto ERP: ").append(contextoERP).append("\n");
-        }
-        synchronized (historial) {
-            for (String[] par : historial) {
-                sb.append("Usuario: ").append(par[0]).append("\n");
-                sb.append("Asistente: ").append(par[1]).append("\n");
-            }
-        }
-        sb.append("Usuario: ").append(prompt).append("\nAsistente: ");
-        return sb.toString();
-    }
-
-    private void guardarEnHistorial(String user, String assistant) {
-        synchronized (historial) {
-            if (historial.size() >= MAX_HISTORIAL) historial.remove(0);
-            historial.add(new String[]{user, assistant});
-        }
-    }
-
-    public boolean verificarConexion() {
-        try {
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(AppConstants.OLLAMA_BASE_URL))
-                    .GET()
-                    .timeout(Duration.ofSeconds(2))
-                    .build();
-            return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).statusCode() == 200;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    public List<String> getModelosDisponibles() {
-        List<String> modelos = new ArrayList<>();
+    /**
+     * MÉTODO CLAVE: getModelosConDetalles
+     * Coincide exactamente con la llamada en tu ModelosGestionDialog.
+     */
+    public List<ModelInfo> getModelosConDetalles() {
+        List<ModelInfo> lista = new ArrayList<>();
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/tags"))
-                    .GET()
-                    .build();
+                    .GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
             if (response.statusCode() == 200) {
                 JsonNode root = mapper.readTree(response.body());
                 if (root.has("models")) {
-                    root.get("models").forEach(m -> modelos.add(m.get("name").asText()));
+                    root.get("models").forEach(m -> {
+                        String name = m.get("name").asText();
+                        long sizeBytes = m.has("size") ? m.get("size").asLong() : 0;
+                        String sizeStr = String.format("%.2f GB", sizeBytes / (1024.0 * 1024.0 * 1024.0));
+                        lista.add(new ModelInfo(name, sizeStr));
+                    });
                 }
             }
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
         } catch (Exception e) {
-            // Error silencioso para no bloquear la UI
+            System.err.println("Error listando modelos: " + e.getMessage());
         }
-        return modelos;
+        return lista;
     }
 
-    public void setModeloActual(String modelo) { this.modeloActual = modelo; this.routingAutomatico = false; }
-    public void habilitarRouting()  { this.routingAutomatico = true; }
-    public boolean isRoutingAutomatico() { return routingAutomatico; }
+    /**
+     * MÉTODO CLAVE: eliminarModelo
+     * Coincide con la llamada de confirmación de borrado en tu Dialog.
+     */
+    public boolean eliminarModelo(String nombre) {
+        try {
+            ObjectNode payload = mapper.createObjectNode();
+            payload.put("name", nombre);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/delete"))
+                    .header("Content-Type", "application/json")
+                    .method("DELETE", HttpRequest.BodyPublishers.ofString(payload.toString()))
+                    .build();
+            return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).statusCode() == 200;
+        } catch (Exception e) { return false; }
+    }
+
+    /**
+     * MÉTODO CLAVE: pullModeloStreaming
+     * Gestiona la descarga y envía el array [progreso, completado, total]
+     */
+    public void pullModeloStreaming(String nombre, Consumer<String> onEstado, Consumer<double[]> onProgreso, Runnable onExito, Consumer<String> onError) {
+        Thread.ofVirtual().start(() -> {
+            try {
+                ObjectNode payload = mapper.createObjectNode();
+                payload.put("name", nombre);
+                payload.put("stream", true);
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/pull"))
+                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
+
+                HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        JsonNode node = mapper.readTree(line);
+                        if (node.has("status")) {
+                            String s = node.get("status").asText();
+                            Platform.runLater(() -> onEstado.accept(s));
+                        }
+                        if (node.has("completed") && node.has("total")) {
+                            double c = node.get("completed").asDouble();
+                            double t = node.get("total").asDouble();
+                            Platform.runLater(() -> onProgreso.accept(new double[]{t > 0 ? c/t : 0, c, t}));
+                        }
+                    }
+                    Platform.runLater(onExito);
+                }
+            } catch (Exception e) { Platform.runLater(() -> onError.accept(e.getMessage())); }
+        });
+    }
+
+    /**
+     * Envío de chat para IAView
+     */
+    public void enviarConsulta(String prompt, Consumer<String> onResponse, Consumer<String> onError) {
+        Thread.ofVirtual().start(() -> {
+            try {
+                ObjectNode payload = mapper.createObjectNode();
+                payload.put("model", modeloActual);
+                payload.put("stream", true);
+
+                StringBuilder fullPrompt = new StringBuilder(SYSTEM_PROMPT);
+                if (contextoERP != null) fullPrompt.append("\nContexto: ").append(contextoERP);
+                fullPrompt.append("\nUsuario: ").append(prompt);
+                payload.put("prompt", fullPrompt.toString());
+
+                HttpRequest request = HttpRequest.newBuilder()
+                        .uri(URI.create(AppConstants.OLLAMA_API_URL))
+                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
+
+                HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+                try (BufferedReader reader = new BufferedReader(new InputStreamReader(response.body()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        JsonNode node = mapper.readTree(line);
+                        if (node.has("response")) {
+                            String fragment = node.get("response").asText();
+                            Platform.runLater(() -> onResponse.accept(fragment));
+                        }
+                    }
+                }
+            } catch (Exception e) { Platform.runLater(() -> onError.accept(e.getMessage())); }
+        });
+    }
+
+    // Getters y Setters necesarios
+    public void setModeloActual(String m) { this.modeloActual = m; }
     public String getModeloActual() { return modeloActual; }
-    public void setContextoERP(String contexto)  { this.contextoERP = contexto; }
-    public void clearContextoERP()               { this.contextoERP = null; }
-    public void limpiarHistorial()               { synchronized (historial) { historial.clear(); } }
+    public void setContextoERP(String c) { this.contextoERP = c; }
+    public void limpiarHistorial() { historial.clear(); }
 }
