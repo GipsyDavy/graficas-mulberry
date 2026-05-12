@@ -19,3 +19,63 @@
     -c-tab-bg:          #EDE3EB;
     -c-card-bg:         white;
 }
+/* --- Estilos comunes para ConfiguracionView --- */
+.label {
+    -fx-text-fill: -c-text;
+}
+
+.config-section-title {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-primary;
+}
+
+.config-section-desc {
+    -fx-text-fill: -c-text-secondary;
+    -fx-font-size: 12px;
+}
+
+.config-panel {
+    -fx-background-color: -c-card-bg;
+    -fx-background-radius: 8;
+    -fx-padding: 15;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 8;
+}
+
+.config-save-btn {
+    -fx-background-color: -c-primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-padding: 8 20;
+    -fx-background-radius: 5;
+}
+
+.config-save-btn:hover {
+    -fx-background-color: -c-primary-dark;
+}
+
+.text-field, .text-area {
+    -fx-text-fill: -c-text;
+    -fx-background-color: -c-border, -c-card-bg;
+    -fx-background-insets: 0, 1;
+    -fx-background-radius: 4;
+}
+
+.text-field:focused, .text-area:focused {
+    -fx-background-color: -c-primary, -c-card-bg;
+}
+
+.tab-pane .tab-header-area .tab-header-background {
+    -fx-background-color: transparent;
+}
+
+.tab {
+    -fx-background-color: -c-tab-bg;
+}
+
+.tab:selected {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-primary transparent transparent transparent;
+    -fx-border-width: 3 0 0 0;
+}

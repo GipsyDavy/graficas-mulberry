@@ -30,16 +30,20 @@ import javafx.stage.Screen;
 public class ConfiguracionView extends VBox {
 
     // ── Datos de cada tema ─────────────────────────────────────────────────────
+    // ── Datos de cada tema (Actualizado con Gipsy) ──────────────────────────────
+    // ── Datos de cada tema (Sincronizados con los archivos CSS) ────────────────
     private record Tema(String id, String nombre,
                         String primary, String sidebar, String bg, String accent) {}
 
     private static final List<Tema> TEMAS = List.of(
-        new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
-        new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
-new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
-        new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
-        new Tema("rojo",     "Rojo",        "#A03030", "#4A1010", "#FBF3F3", "#FF8888"),
-        new Tema("claro",    "Claro",       "#4A5568", "#2D3748", "#F7F8FA", "#90CDF4")
+            new Tema("gipsy",    "Gipsy",       "#8B2635", "#0F0F12", "#0F0F12", "#A33141"),
+            new Tema("carmesi",  "Carmesí",     "#B71C1C", "#1A0000", "#1A0D0D", "#FF5252"),
+            new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
+            new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
+            new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
+            new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
+            new Tema("rojo",     "Rojo",        "#A03030", "#4A1010", "#FBF3F3", "#FF8888"),
+            new Tema("claro",    "Claro",       "#4A5568", "#2D3748", "#F7F8FA", "#90CDF4")
     );
 
     private static final List<String> FUENTES = List.of(
@@ -100,6 +104,8 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         }
 
         seccionTema.getChildren().addAll(tituloTema, descTema, temaCards);
+        seccionTema.getStyleClass().add("config-panel");
+        seccionTema.setPadding(new Insets(15));
 
         // ── Sección: tipografía ───────────────────────────────────────────────
         VBox seccionFuente = new VBox(10);
@@ -139,13 +145,10 @@ new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
         });
 
         seccionFuente.getChildren().addAll(tituloFuente, descFuente, gridFuente, btnAplicarFuente);
-
+        seccionFuente.getStyleClass().add("config-panel");
+        seccionFuente.setPadding(new Insets(15));
         // ── Separador visual ──────────────────────────────────────────────────
-        contenido.getChildren().addAll(
-            seccionTema,
-            new Separator(),
-            seccionFuente
-        );
+        contenido.getChildren().addAll(seccionTema, seccionFuente);
 
         ScrollPane scroll = new ScrollPane(contenido);
         scroll.setFitToWidth(true);
