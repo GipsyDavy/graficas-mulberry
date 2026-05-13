@@ -9,9 +9,12 @@ import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
+import javafx.scene.control.cell.TextFieldTableCell;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ClienteDAO;
+import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportarClientesService;
@@ -25,20 +28,35 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public class ClientesView extends VBox {
 
     private final ClienteDAO dao = new ClienteDAO();
+    private final ColumnConfigDAO columnConfigDAO = new ColumnConfigDAO();
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
+    private static final String TABLE_NAME = "clientes";
 
-    // Columnas base — sus IDs coinciden con los nombres de propiedad en Cliente
-    private static final Set<String> COLS_BASE_IDS = Set.of(
-        "nombre", "apellidos", "tipo", "nif", "telefono", "email", "ciudad"
-    );
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("nombre", "Nombre");
+        COLUMNAS_BASE.put("apellidos", "Apellidos");
+        COLUMNAS_BASE.put("tipo", "Tipo");
+        COLUMNAS_BASE.put("nif", "NIF/CIF");
+        COLUMNAS_BASE.put("telefono", "Teléfono");
+        COLUMNAS_BASE.put("email", "Email");
+        COLUMNAS_BASE.put("ciudad", "Ciudad");
+        COLUMNAS_BASE.put("direccion", "Dirección");
+        COLUMNAS_BASE.put("cp", "C.P.");
+        COLUMNAS_BASE.put("notas", "Notas");
+        COLUMNAS_BASE.put("created_at", "Creado");
+    }
+    private static final Set<String> COLS_BASE_IDS = COLUMNAS_BASE.keySet();
 
     public ClientesView() {
         getStyleClass().add("content-view");
@@ -68,10 +86,11 @@ public class ClientesView extends VBox {
         Button btnImportar = btn("📥 Importar",       "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnColumnas = btn("⚙ Columnas", "#34495E", this::configurarColumnas);
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -82,6 +101,7 @@ public class ClientesView extends VBox {
     private TableView<Cliente> buildTabla() {
         tabla.getStyleClass().add("data-table");
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
+        tabla.setEditable(true);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
         tabla.getColumns().addAll(
             col("Nombre",    "nombre",    160),
@@ -102,34 +122,41 @@ public class ClientesView extends VBox {
      */
     private void actualizarColumnasDinamicas() {
         try {
-            // Conjunto de IDs de columnas ya presentes en la tabla
-            Set<String> presentes = new java.util.HashSet<>();
-            for (TableColumn<Cliente, ?> c : tabla.getColumns()) {
-                Object ud = c.getUserData();
-                if (ud instanceof String s) presentes.add(s);
-                else presentes.add(c.getId());
+            columnConfigDAO.syncTable(TABLE_NAME, COLUMNAS_BASE);
+            Map<String, String> labels = columnConfigDAO.visibleLabels(TABLE_NAME);
+            for (TableColumn<Cliente, ?> column : tabla.getColumns()) {
+                Object key = column.getUserData();
+                if (key instanceof String colName && COLS_BASE_IDS.contains(colName)) {
+                    column.setText(labels.getOrDefault(colName, COLUMNAS_BASE.get(colName)));
+                }
             }
 
-            List<String> extras = dao.obtenerColumnasExtra();
-            for (String col : extras) {
-                if (presentes.contains(col)) continue;
+            tabla.getColumns().removeIf(column -> {
+                Object key = column.getUserData();
+                return key instanceof String colName && !COLS_BASE_IDS.contains(colName);
+            });
 
-                // Formatear la cabecera: quitar prefijo "ext_" y convertir _ en espacios
-                String titulo = col.startsWith("ext_") ? col.substring(4) : col;
-                titulo = titulo.replace("_", " ");
-                titulo = titulo.isEmpty() ? col
-                    : Character.toUpperCase(titulo.charAt(0)) + titulo.substring(1);
-
-                final String colKey = col;
-                TableColumn<Cliente, String> tc = new TableColumn<>(titulo);
+            for (ColumnConfig config : columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_BASE_IDS)) {
+                final String colKey = config.columnName();
+                TableColumn<Cliente, String> tc = new TableColumn<>(config.label());
                 tc.setUserData(colKey);
                 tc.setCellValueFactory(data ->
                     new SimpleStringProperty(nvl(data.getValue().getExtra(colKey))));
+                tc.setCellFactory(TextFieldTableCell.forTableColumn());
+                tc.setOnEditCommit(event -> {
+                    Cliente cliente = event.getRowValue();
+                    cliente.setExtra(colKey, event.getNewValue());
+                    try {
+                        dao.save(cliente);
+                    } catch (Exception e) {
+                        mostrarError(e);
+                        cargar();
+                    }
+                });
                 tc.setPrefWidth(130);
                 tabla.getColumns().add(tc);
-                presentes.add(colKey);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) { mostrarError(e); }
     }
 
     // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -170,6 +197,19 @@ public class ClientesView extends VBox {
         });
     }
 
+    private void configurarColumnas() {
+        try {
+            List<String> stylesheets = getScene() != null ? getScene().getStylesheets() : List.of();
+            boolean changed = new ColumnConfiguratorDialog(TABLE_NAME, "Clientes", COLUMNAS_BASE, stylesheets).show();
+            if (changed) {
+                actualizarColumnasDinamicas();
+                cargar();
+            }
+        } catch (Exception e) {
+            mostrarError(e);
+        }
+    }
+
     private Optional<Cliente> dialogo(Cliente c) {
         Dialog<Cliente> dlg = new Dialog<>();
         dlg.setTitle(c.getId() == 0 ? "Nuevo cliente" : "Editar cliente");
@@ -192,6 +232,7 @@ public class ClientesView extends VBox {
         TextField fEmail     = tf(c.getEmail());
         TextArea  fNotas     = new TextArea(nvl(c.getNotas()));
         fNotas.setPrefRowCount(3);
+        Map<String, TextField> extraFields = new LinkedHashMap<>();
 
         int r = 0;
         grid.addRow(r++, lbl("Nombre *"), fNombre, lbl("Apellidos"), fApellido);
@@ -200,6 +241,25 @@ public class ClientesView extends VBox {
         grid.addRow(r++, lbl("Ciudad"), fCiudad, lbl("C.P."), fCp);
         grid.add(lbl("Dirección"), 0, r); grid.add(fDireccion, 1, r, 3, 1); r++;
         grid.add(lbl("Notas"), 0, r);     grid.add(fNotas,     1, r, 3, 1);
+        r++;
+
+        try {
+            List<ColumnConfig> extras = columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_BASE_IDS);
+            if (!extras.isEmpty()) {
+                Separator separator = new Separator();
+                grid.add(separator, 0, r++, 4, 1);
+                grid.add(lbl("Datos adicionales"), 0, r++, 4, 1);
+                for (ColumnConfig config : extras) {
+                    TextField field = tf(c.getExtra(config.columnName()));
+                    extraFields.put(config.columnName(), field);
+                    grid.add(lbl(config.label()), 0, r);
+                    grid.add(field, 1, r, 3, 1);
+                    r++;
+                }
+            }
+        } catch (Exception e) {
+            mostrarError(e);
+        }
 
         dlg.getDialogPane().setContent(grid);
 
@@ -219,6 +279,7 @@ public class ClientesView extends VBox {
                 c.setTelefono(fTelefono.getText().trim());
                 c.setEmail(fEmail.getText().trim());
                 c.setNotas(fNotas.getText().trim());
+                extraFields.forEach((key, field) -> c.setExtra(key, field.getText().trim()));
                 return c;
             }
             return null;

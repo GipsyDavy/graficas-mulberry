@@ -30,7 +30,9 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class PresupuestosView extends VBox {
@@ -39,6 +41,24 @@ public class PresupuestosView extends VBox {
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final ObservableList<Presupuesto> datos = FXCollections.observableArrayList();
     private final TableView<Presupuesto> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("numero", "Número");
+        COLUMNAS_BASE.put("cliente_id", "Cliente");
+        COLUMNAS_BASE.put("fecha", "Fecha");
+        COLUMNAS_BASE.put("fecha_validez", "Validez");
+        COLUMNAS_BASE.put("estado", "Estado");
+        COLUMNAS_BASE.put("base_imponible", "Base imponible");
+        COLUMNAS_BASE.put("iva_porcentaje", "IVA %");
+        COLUMNAS_BASE.put("iva_importe", "IVA");
+        COLUMNAS_BASE.put("total", "Total");
+        COLUMNAS_BASE.put("notas", "Notas");
+        COLUMNAS_BASE.put("condiciones", "Condiciones");
+        COLUMNAS_BASE.put("created_at", "Creado");
+    }
+    private final DynamicColumnRuntime<Presupuesto> dynamicColumns =
+        new DynamicColumnRuntime<>("presupuestos", "Presupuestos", COLUMNAS_BASE, tabla, datos, Presupuesto::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public PresupuestosView() {
         getStyleClass().add("content-view");
@@ -51,6 +71,7 @@ public class PresupuestosView extends VBox {
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -61,9 +82,10 @@ public class PresupuestosView extends VBox {
         Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
         Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnFacturar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnFacturar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -75,6 +97,7 @@ public class PresupuestosView extends VBox {
 
         TableColumn<Presupuesto, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
@@ -93,6 +116,7 @@ public class PresupuestosView extends VBox {
 
         TableColumn<Presupuesto, Double> colTotal = new TableColumn<>("Total");
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
+        colTotal.setUserData("total");
         colTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -113,7 +137,7 @@ public class PresupuestosView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void nuevo() {
@@ -129,7 +153,7 @@ public class PresupuestosView extends VBox {
             p.setCondiciones(DatabaseManager.getConfig("empresa_nombre") +
                 " · Presupuesto válido por 30 días. Precios sin IVA.");
             dialogoPresupuesto(p, clientes).ifPresent(pr -> {
-                try { dao.save(pr); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(pr); dynamicColumns.saveFormFields(pr, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -141,7 +165,7 @@ public class PresupuestosView extends VBox {
             Presupuesto p = dao.findById(sel.getId());
             List<Cliente> clientes = clienteDAO.findAll();
             dialogoPresupuesto(p, clientes).ifPresent(pr -> {
-                try { dao.save(pr); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(pr); dynamicColumns.saveFormFields(pr, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -209,6 +233,8 @@ public class PresupuestosView extends VBox {
         gGeneral.addRow(2, lbl("Fecha"), fFecha, lbl("Validez hasta"), fValidez);
         gGeneral.add(lbl("Notas"), 0, 3); gGeneral.add(fNotas, 1, 3, 3, 1);
         gGeneral.add(lbl("Condiciones"), 0, 4); gGeneral.add(fCondiciones, 1, 4, 3, 1);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(gGeneral, 5, p, dialogExtraFields);
         tabs.getTabs().add(new Tab("Datos generales", gGeneral));
 
         // Tab 2: Servicios / Técnicas (líneas de trabajo)
@@ -487,6 +513,7 @@ public class PresupuestosView extends VBox {
     private <T> TableColumn<Presupuesto, T> col(String t, String campo, double ancho) {
         TableColumn<Presupuesto, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setUserData(toDbColumn(campo));
         c.setPrefWidth(ancho); return c;
     }
 
@@ -830,6 +857,13 @@ public class PresupuestosView extends VBox {
 
     private TextField tf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "clienteNombre" -> "cliente_id";
+            case "fechaValidez" -> "fecha_validez";
+            default -> campo;
+        };
+    }
     private String nvl(String s) { return s != null ? s : ""; }
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }

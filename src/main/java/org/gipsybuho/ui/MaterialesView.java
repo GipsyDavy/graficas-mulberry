@@ -32,8 +32,10 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 public class MaterialesView extends VBox {
@@ -58,6 +60,21 @@ public class MaterialesView extends VBox {
     // ── Stock tab ─────────────────────────────────────────────────────────────
     private final ObservableList<Material> datos = FXCollections.observableArrayList();
     private final TableView<Material>      tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("nombre", "Nombre");
+        COLUMNAS_BASE.put("referencia", "Referencia");
+        COLUMNAS_BASE.put("categoria", "Categoría");
+        COLUMNAS_BASE.put("stock_actual", "Stock actual");
+        COLUMNAS_BASE.put("stock_minimo", "Stock mín.");
+        COLUMNAS_BASE.put("unidad", "Unidad");
+        COLUMNAS_BASE.put("precio_unidad", "Precio/ud.");
+        COLUMNAS_BASE.put("proveedor", "Proveedor");
+        COLUMNAS_BASE.put("updated_at", "Actualizado");
+    }
+    private final DynamicColumnRuntime<Material> dynamicColumns =
+        new DynamicColumnRuntime<>("materiales", "Materiales", COLUMNAS_BASE, tabla, datos, Material::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkSoloAlerta;
 
     // ── Consumo tab ───────────────────────────────────────────────────────────
@@ -101,6 +118,7 @@ public class MaterialesView extends VBox {
         getChildren().addAll(titulo, tabs);
 
         cargar();
+        dynamicColumns.apply();
         cargarConsumo();
         cargarPagos();
     }
@@ -121,9 +139,10 @@ public class MaterialesView extends VBox {
         Button btnImportar = btn("📂 Importar",       "#1ABC9C", this::importar);
         Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -148,6 +167,7 @@ public class MaterialesView extends VBox {
 
         TableColumn<Material, Double> colStock = new TableColumn<>("Stock actual");
         colStock.setCellValueFactory(new PropertyValueFactory<>("stockActual"));
+        colStock.setUserData("stock_actual");
         colStock.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -160,6 +180,7 @@ public class MaterialesView extends VBox {
 
         TableColumn<Material, Double> colMin = new TableColumn<>("Stock mín.");
         colMin.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
+        colMin.setUserData("stock_minimo");
         colMin.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -170,6 +191,7 @@ public class MaterialesView extends VBox {
 
         TableColumn<Material, Double> colPrecio = new TableColumn<>("Precio/ud.");
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnidad"));
+        colPrecio.setUserData("precio_unidad");
         colPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -189,14 +211,15 @@ public class MaterialesView extends VBox {
         try {
             datos.setAll(chkSoloAlerta != null && chkSoloAlerta.isSelected()
                 ? dao.findBajoStock() : dao.findAll());
+            dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
     }
 
-    private void nuevo()   { dialogo(new Material()).ifPresent(m -> { try { dao.save(m); cargar(); } catch (Exception e) { mostrarError(e); } }); }
+    private void nuevo()   { dialogo(new Material()).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } }); }
     private void editar()  {
         Material sel = tabla.getSelectionModel().getSelectedItem();
         if (sel == null) { alerta("Selecciona un material para editar."); return; }
-        dialogo(sel).ifPresent(m -> { try { dao.save(m); cargar(); } catch (Exception e) { mostrarError(e); } });
+        dialogo(sel).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } });
     }
     private void borrar() {
         Material sel = tabla.getSelectionModel().getSelectedItem();
@@ -245,6 +268,8 @@ public class MaterialesView extends VBox {
         grid.addRow(1, lbl("Categoría"), fCat, lbl("Unidad"), fUnidad);
         grid.addRow(2, lbl("Stock actual"), fStock, lbl("Stock mínimo"), fStockMin);
         grid.addRow(3, lbl("Precio/ud. (€)"), fPrecio, lbl("Proveedor"), fProveedor);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(grid, 4, m, dialogExtraFields);
         dlg.getDialogPane().setContent(grid);
         Node ok = dlg.getDialogPane().lookupButton(ButtonType.OK);
         ok.setDisable(fNombre.getText().isBlank());
@@ -1025,6 +1050,7 @@ public class MaterialesView extends VBox {
         TableColumn<Material, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
         c.setPrefWidth(ancho);
+        c.setUserData(toDbColumn(campo));
         return c;
     }
 
@@ -1086,6 +1112,14 @@ public class MaterialesView extends VBox {
 
     private TextField tf(String v)    { return new TextField(v != null ? v : ""); }
     private Label     lbl(String t)   { return new Label(t); }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "stockActual" -> "stock_actual";
+            case "stockMinimo" -> "stock_minimo";
+            case "precioUnidad" -> "precio_unidad";
+            default -> campo;
+        };
+    }
     private double parseDouble(String s) {
         try { return Double.parseDouble(s.replace(",", ".")); } catch (Exception e) { return 0; }
     }

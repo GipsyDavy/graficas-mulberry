@@ -6,11 +6,13 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.regex.Pattern;
 import org.mindrot.jbcrypt.BCrypt; // Importar jBCrypt
 
 public class DatabaseManager {
 
     private static final String DB_URL = buildDbUrl();
+    private static final Pattern SQL_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static Connection connection;
 
     private static String buildDbUrl() {
@@ -296,6 +298,17 @@ public class DatabaseManager {
                 )""");
 
             st.execute("""
+                CREATE TABLE IF NOT EXISTS column_configs (
+                    table_name TEXT NOT NULL,
+                    column_name TEXT NOT NULL,
+                    label TEXT NOT NULL,
+                    base_column INTEGER DEFAULT 0,
+                    visible INTEGER DEFAULT 1,
+                    created_at TEXT DEFAULT (datetime('now')),
+                    PRIMARY KEY (table_name, column_name)
+                )""");
+
+            st.execute("""
                 CREATE TABLE IF NOT EXISTS notas_calendario (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     fecha TEXT NOT NULL,
@@ -516,5 +529,24 @@ public class DatabaseManager {
 
     private static int parseConfigInt(String clave, int defecto) {
         try { return Integer.parseInt(getConfig(clave)); } catch (NumberFormatException e) { return defecto; }
+    }
+
+    public static void addColumn(String tabla, String columna) throws SQLException {
+        requireSqlIdentifier(tabla);
+        requireSqlIdentifier(columna);
+        try (Statement st = getConnection().createStatement()) {
+            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(columna) + " TEXT");
+        }
+    }
+
+    public static String quoteIdentifier(String identifier) {
+        requireSqlIdentifier(identifier);
+        return "\"" + identifier + "\"";
+    }
+
+    public static void requireSqlIdentifier(String identifier) {
+        if (identifier == null || !SQL_IDENTIFIER.matcher(identifier).matches()) {
+            throw new IllegalArgumentException("Identificador SQL no válido: " + identifier);
+        }
     }
 }

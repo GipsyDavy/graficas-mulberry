@@ -31,7 +31,9 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class AlbaranesView extends VBox {
@@ -40,6 +42,20 @@ public class AlbaranesView extends VBox {
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final ObservableList<Albaran> datos = FXCollections.observableArrayList();
     private final TableView<Albaran> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("numero", "Número");
+        COLUMNAS_BASE.put("cliente_id", "Cliente");
+        COLUMNAS_BASE.put("fecha", "Fecha");
+        COLUMNAS_BASE.put("factura_id", "Factura ref.");
+        COLUMNAS_BASE.put("pedido_id", "Pedido ref.");
+        COLUMNAS_BASE.put("estado", "Estado");
+        COLUMNAS_BASE.put("observaciones", "Observaciones");
+        COLUMNAS_BASE.put("created_at", "Creado");
+    }
+    private final DynamicColumnRuntime<Albaran> dynamicColumns =
+        new DynamicColumnRuntime<>("albaranes", "Albaranes", COLUMNAS_BASE, tabla, datos, Albaran::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public AlbaranesView() {
         getStyleClass().add("content-view");
@@ -52,6 +68,7 @@ public class AlbaranesView extends VBox {
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -62,9 +79,10 @@ public class AlbaranesView extends VBox {
         Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
         Button btnPreview    = btn("👁 Previsualizar",    "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",          "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -76,6 +94,7 @@ public class AlbaranesView extends VBox {
 
         TableColumn<Albaran, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
@@ -103,7 +122,7 @@ public class AlbaranesView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void nuevo() {
@@ -115,7 +134,7 @@ public class AlbaranesView extends VBox {
             a.setFecha(LocalDate.now().toString());
             a.setEstado("pendiente");
             dialogoAlbaran(a, clientes).ifPresent(alb -> {
-                try { dao.save(alb); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(alb); dynamicColumns.saveFormFields(alb, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -127,7 +146,7 @@ public class AlbaranesView extends VBox {
             Albaran a = dao.findById(sel.getId());
             List<Cliente> clientes = clienteDAO.findAll();
             dialogoAlbaran(a, clientes).ifPresent(alb -> {
-                try { dao.save(alb); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(alb); dynamicColumns.saveFormFields(alb, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -175,6 +194,8 @@ public class AlbaranesView extends VBox {
         gGeneral.addRow(0, lbl("Número"), fNumero, lbl("Estado"), fEstado);
         gGeneral.addRow(1, lbl("Cliente *"), fCliente, lbl("Fecha entrega"), fFecha);
         gGeneral.add(lbl("Observaciones"), 0, 2); gGeneral.add(fObs, 1, 2, 3, 1);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(gGeneral, 3, a, dialogExtraFields);
         tabs.getTabs().add(new Tab("Datos generales", gGeneral));
 
         // Tab 2: Líneas
@@ -327,6 +348,7 @@ public class AlbaranesView extends VBox {
     private <T> TableColumn<Albaran, T> col(String t, String campo, double ancho) {
         TableColumn<Albaran, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setUserData(toDbColumn(campo));
         c.setPrefWidth(ancho); return c;
     }
 
@@ -624,6 +646,14 @@ public class AlbaranesView extends VBox {
 
     private TextField tf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "clienteNombre" -> "cliente_id";
+            case "facturaNumero" -> "factura_id";
+            case "pedidoNumero" -> "pedido_id";
+            default -> campo;
+        };
+    }
     private String nvl(String s) { return s != null ? s : ""; }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch (Exception e) { return def; } }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }

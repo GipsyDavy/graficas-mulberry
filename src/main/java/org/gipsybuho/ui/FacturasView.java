@@ -28,7 +28,9 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class FacturasView extends VBox {
@@ -37,6 +39,25 @@ public class FacturasView extends VBox {
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final ObservableList<Factura> datos = FXCollections.observableArrayList();
     private final TableView<Factura> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("numero", "Número");
+        COLUMNAS_BASE.put("presupuesto_id", "Presupuesto");
+        COLUMNAS_BASE.put("cliente_id", "Cliente");
+        COLUMNAS_BASE.put("fecha", "Fecha");
+        COLUMNAS_BASE.put("fecha_vencimiento", "Vencimiento");
+        COLUMNAS_BASE.put("estado", "Estado");
+        COLUMNAS_BASE.put("forma_pago", "Forma de pago");
+        COLUMNAS_BASE.put("base_imponible", "Base imponible");
+        COLUMNAS_BASE.put("iva_porcentaje", "IVA %");
+        COLUMNAS_BASE.put("iva_importe", "IVA");
+        COLUMNAS_BASE.put("total", "Total");
+        COLUMNAS_BASE.put("notas", "Notas");
+        COLUMNAS_BASE.put("created_at", "Creado");
+    }
+    private final DynamicColumnRuntime<Factura> dynamicColumns =
+        new DynamicColumnRuntime<>("facturas", "Facturas", COLUMNAS_BASE, tabla, datos, Factura::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public FacturasView() {
         getStyleClass().add("content-view");
@@ -49,6 +70,7 @@ public class FacturasView extends VBox {
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -60,9 +82,10 @@ public class FacturasView extends VBox {
         Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
         Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview);
+        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -74,6 +97,7 @@ public class FacturasView extends VBox {
 
         TableColumn<Factura, String> colEstado = new TableColumn<>("Estado");
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
+        colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
@@ -91,6 +115,7 @@ public class FacturasView extends VBox {
 
         TableColumn<Factura, Double> colTotal = new TableColumn<>("Total");
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
+        colTotal.setUserData("total");
         colTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -112,7 +137,7 @@ public class FacturasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void editar() {
@@ -121,7 +146,7 @@ public class FacturasView extends VBox {
         try {
             Factura f = dao.findById(sel.getId());
             dialogoFactura(f).ifPresent(actualizada -> {
-                try { dao.save(actualizada); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(actualizada); dynamicColumns.saveFormFields(actualizada, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -157,6 +182,8 @@ public class FacturasView extends VBox {
         gDatos.addRow(1, lbl("Fecha"),         fFecha,     lbl("Vencimiento"), fVto);
         gDatos.addRow(2, lbl("Forma de pago"), fFormaPago, lbl("IVA (%)"),     fIva);
         gDatos.add(lbl("Notas"), 0, 3); gDatos.add(fNotas, 1, 3, 3, 1);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(gDatos, 4, f, dialogExtraFields);
         tabs.getTabs().add(new Tab("Datos generales", gDatos));
 
         // Tab 2 — Servicios / Técnicas
@@ -453,6 +480,7 @@ public class FacturasView extends VBox {
     private <T> TableColumn<Factura, T> col(String t, String campo, double ancho) {
         TableColumn<Factura, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setUserData(toDbColumn(campo));
         c.setPrefWidth(ancho); return c;
     }
 
@@ -768,6 +796,14 @@ public class FacturasView extends VBox {
 
     private TextField tf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "clienteNombre" -> "cliente_id";
+            case "fechaVencimiento" -> "fecha_vencimiento";
+            case "formaPago" -> "forma_pago";
+            default -> campo;
+        };
+    }
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }

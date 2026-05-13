@@ -13,7 +13,7 @@ import javafx.scene.text.FontWeight;
 import org.gipsybuho.model.User;
 import org.gipsybuho.service.AuthService;
 
-import java.sql.SQLException;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class LoginScreen extends VBox {
@@ -76,16 +76,16 @@ public class LoginScreen extends VBox {
         }
 
         try {
-            User loggedInUser = authService.login(username, password);
-            if (loggedInUser != null) {
+            Optional<User> loggedInUser = authService.login(username, password);
+            if (loggedInUser.isPresent()) {
                 messageLabel.setTextFill(Color.GREEN);
                 messageLabel.setText("Inicio de sesión exitoso.");
-                onLoginSuccess.accept(loggedInUser); // Notificar al App.java
+                onLoginSuccess.accept(loggedInUser.get()); // Notificar al App.java
             } else {
                 messageLabel.setTextFill(Color.RED);
                 messageLabel.setText("Usuario o contraseña incorrectos.");
             }
-        } catch (SQLException e) {
+        } catch (RuntimeException e) {
             messageLabel.setTextFill(Color.RED);
             messageLabel.setText("Error de base de datos: " + e.getMessage());
             e.printStackTrace();

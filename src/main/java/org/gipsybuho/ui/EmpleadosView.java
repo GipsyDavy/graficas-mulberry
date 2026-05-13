@@ -26,7 +26,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class EmpleadosView extends VBox {
@@ -39,6 +41,26 @@ public class EmpleadosView extends VBox {
     private final EmpleadoDAO dao = new EmpleadoDAO();
     private final ObservableList<Empleado> datos = FXCollections.observableArrayList();
     private final TableView<Empleado> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("nombre", "Nombre");
+        COLUMNAS_BASE.put("apellidos", "Apellidos");
+        COLUMNAS_BASE.put("apellido", "Apellido");
+        COLUMNAS_BASE.put("nif", "NIF");
+        COLUMNAS_BASE.put("categoria", "Categoría");
+        COLUMNAS_BASE.put("salario_base", "Salario base");
+        COLUMNAS_BASE.put("fecha_alta", "Fecha alta");
+        COLUMNAS_BASE.put("fecha_baja", "Fecha baja");
+        COLUMNAS_BASE.put("iban", "IBAN");
+        COLUMNAS_BASE.put("irpf", "IRPF");
+        COLUMNAS_BASE.put("activo", "Estado");
+        COLUMNAS_BASE.put("telefono", "Teléfono");
+        COLUMNAS_BASE.put("email", "Email");
+        COLUMNAS_BASE.put("direccion", "Dirección");
+    }
+    private final DynamicColumnRuntime<Empleado> dynamicColumns =
+        new DynamicColumnRuntime<>("empleados", "Empleados", COLUMNAS_BASE, tabla, datos, Empleado::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkMostrarBajas;
 
     public EmpleadosView() {
@@ -52,6 +74,7 @@ public class EmpleadosView extends VBox {
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -65,9 +88,10 @@ public class EmpleadosView extends VBox {
         Button btnImportar  = btn("📥 Importar",       "#2980B9", this::importar);
         Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         return bar;
     }
@@ -96,9 +120,11 @@ public class EmpleadosView extends VBox {
             }
         });
         colEstado.setPrefWidth(140);
+        colEstado.setUserData("activo");
 
         TableColumn<Empleado, Double> colSalario = new TableColumn<>("Salario base");
         colSalario.setCellValueFactory(new PropertyValueFactory<>("salarioBase"));
+        colSalario.setUserData("salario_base");
         colSalario.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -108,6 +134,7 @@ public class EmpleadosView extends VBox {
 
         TableColumn<Empleado, Double> colIrpf = new TableColumn<>("IRPF");
         colIrpf.setCellValueFactory(new PropertyValueFactory<>("irpf"));
+        colIrpf.setUserData("irpf");
         colIrpf.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -137,6 +164,7 @@ public class EmpleadosView extends VBox {
                 datos.setAll(dao.findAllIncluirBajas());
             else
                 datos.setAll(dao.findAll());
+            dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
     }
 
@@ -147,7 +175,7 @@ public class EmpleadosView extends VBox {
         e.setIrpf(15.0);
         e.setSalarioBase(1200.0);
         dialogo(e).ifPresent(emp -> {
-            try { dao.save(emp); cargar(); } catch (Exception ex) { mostrarError(ex); }
+            try { dao.save(emp); dynamicColumns.saveFormFields(emp, dialogExtraFields); cargar(); } catch (Exception ex) { mostrarError(ex); }
         });
     }
 
@@ -157,7 +185,7 @@ public class EmpleadosView extends VBox {
         try {
             Empleado e = dao.findById(sel.getId());
             dialogo(e).ifPresent(emp -> {
-                try { dao.save(emp); cargar(); } catch (Exception ex) { mostrarError(ex); }
+                try { dao.save(emp); dynamicColumns.saveFormFields(emp, dialogExtraFields); cargar(); } catch (Exception ex) { mostrarError(ex); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -230,6 +258,8 @@ public class EmpleadosView extends VBox {
         grid.add(lbl("Dirección"), 0, 6); grid.add(fDireccion, 1, 6, 3, 1);
         // Fila 7: Activo
         grid.add(chkActivo, 1, 7);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(grid, 8, e, dialogExtraFields);
 
         // Hacer que los campos de texto se expandan
         for (int col : new int[]{1, 3}) {
@@ -510,6 +540,7 @@ public class EmpleadosView extends VBox {
     private <T> TableColumn<Empleado, T> col(String t, String campo, double ancho) {
         TableColumn<Empleado, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setUserData(toDbColumn(campo));
         c.setPrefWidth(ancho); return c;
     }
 
@@ -556,6 +587,14 @@ public class EmpleadosView extends VBox {
 
     private TextField tf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "fechaAlta" -> "fecha_alta";
+            case "fechaBaja" -> "fecha_baja";
+            case "salarioBase" -> "salario_base";
+            default -> campo;
+        };
+    }
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }

@@ -25,7 +25,9 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 public class TarifasView extends VBox {
@@ -34,6 +36,20 @@ public class TarifasView extends VBox {
     private final TarifaDAO dao = new TarifaDAO();
     private final ObservableList<Tarifa> datos = FXCollections.observableArrayList();
     private final TableView<Tarifa> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("tecnica", "Técnica");
+        COLUMNAS_BASE.put("nombre", "Nombre");
+        COLUMNAS_BASE.put("descripcion", "Descripción");
+        COLUMNAS_BASE.put("precio_unit", "Precio/ud.");
+        COLUMNAS_BASE.put("precio_setup", "Setup");
+        COLUMNAS_BASE.put("minimo_unidades", "Mín. uds.");
+        COLUMNAS_BASE.put("activa", "Activa");
+        COLUMNAS_BASE.put("updated_at", "Actualizado");
+    }
+    private final DynamicColumnRuntime<Tarifa> dynamicColumns =
+        new DynamicColumnRuntime<>("tarifas", "Tarifas", COLUMNAS_BASE, tabla, datos, Tarifa::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public TarifasView() {
         getStyleClass().add("content-view");
@@ -48,6 +64,7 @@ public class TarifasView extends VBox {
         getChildren().addAll(titulo, sub, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -57,8 +74,9 @@ public class TarifasView extends VBox {
         Button btnImportar   = btn("📥 Importar",      "#27AE60", this::importar);
         Button btnExportar   = btn("📤 Exportar",      "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",       "#34495E", dynamicColumns::configure);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -71,13 +89,16 @@ public class TarifasView extends VBox {
         TableColumn<Tarifa, String> colTecnica = new TableColumn<>("Técnica");
         colTecnica.setCellValueFactory(new PropertyValueFactory<>("tecnica"));
         colTecnica.setPrefWidth(120);
+        colTecnica.setUserData("tecnica");
 
         TableColumn<Tarifa, String> colNombre = new TableColumn<>("Nombre");
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombre"));
         colNombre.setPrefWidth(220);
+        colNombre.setUserData("nombre");
 
         TableColumn<Tarifa, Double> colPrecio = new TableColumn<>("Precio/ud.");
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
+        colPrecio.setUserData("precio_unit");
         colPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -87,6 +108,7 @@ public class TarifasView extends VBox {
 
         TableColumn<Tarifa, Double> colSetup = new TableColumn<>("Setup");
         colSetup.setCellValueFactory(new PropertyValueFactory<>("precioSetup"));
+        colSetup.setUserData("precio_setup");
         colSetup.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -96,6 +118,7 @@ public class TarifasView extends VBox {
 
         TableColumn<Tarifa, Integer> colMin = new TableColumn<>("Mín. uds.");
         colMin.setCellValueFactory(new PropertyValueFactory<>("minimoUnidades"));
+        colMin.setUserData("minimo_unidades");
 
         tabla.getColumns().addAll(colTecnica, colNombre, colPrecio, colSetup, colMin);
         tabla.setPlaceholder(new Label("No hay tarifas registradas"));
@@ -103,12 +126,12 @@ public class TarifasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void nueva() {
         dialogo(new Tarifa()).ifPresent(t -> {
-            try { dao.save(t); cargar(); } catch (Exception e) { mostrarError(e); }
+            try { dao.save(t); dynamicColumns.saveFormFields(t, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
         });
     }
 
@@ -116,7 +139,7 @@ public class TarifasView extends VBox {
         Tarifa sel = tabla.getSelectionModel().getSelectedItem();
         if (sel == null) { alerta("Selecciona una tarifa para editar."); return; }
         dialogo(sel).ifPresent(t -> {
-            try { dao.save(t); cargar(); } catch (Exception e) { mostrarError(e); }
+            try { dao.save(t); dynamicColumns.saveFormFields(t, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
         });
     }
 
@@ -153,6 +176,8 @@ public class TarifasView extends VBox {
         grid.addRow(3, lbl("Precio/ud. (€) *"), fPrecioUnit);
         grid.addRow(4, lbl("Setup (€)"), fPrecioSetup);
         grid.addRow(5, lbl("Mínimo uds."), fMinimo);
+        dialogExtraFields = new LinkedHashMap<>();
+        dynamicColumns.addFormFields(grid, 6, t, dialogExtraFields);
 
         dlg.getDialogPane().setContent(grid);
 

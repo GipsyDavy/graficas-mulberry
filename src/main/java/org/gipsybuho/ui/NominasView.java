@@ -28,7 +28,9 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 public class NominasView extends VBox {
 
@@ -37,6 +39,31 @@ public class NominasView extends VBox {
     private final NominaService nominaService = new NominaService();
     private final ObservableList<Nomina> datos = FXCollections.observableArrayList();
     private final TableView<Nomina> tabla = new TableView<>(datos);
+    private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
+    static {
+        COLUMNAS_BASE.put("empleado_id", "Empleado");
+        COLUMNAS_BASE.put("mes", "Mes");
+        COLUMNAS_BASE.put("anio", "Año");
+        COLUMNAS_BASE.put("salario_base", "Salario base");
+        COLUMNAS_BASE.put("complementos", "Complementos");
+        COLUMNAS_BASE.put("horas_extra_normales", "H. extra normales");
+        COLUMNAS_BASE.put("precio_hora_extra", "Precio hora extra");
+        COLUMNAS_BASE.put("horas_extra_festivas", "H. extra festivas");
+        COLUMNAS_BASE.put("precio_hora_festiva", "Precio hora festiva");
+        COLUMNAS_BASE.put("percepciones_no_salariales", "No salarial");
+        COLUMNAS_BASE.put("total_bruto", "Bruto");
+        COLUMNAS_BASE.put("irpf_porcentaje", "IRPF %");
+        COLUMNAS_BASE.put("irpf_importe", "IRPF");
+        COLUMNAS_BASE.put("ss_trabajador", "SS trabajador");
+        COLUMNAS_BASE.put("total_deducciones", "Deducciones");
+        COLUMNAS_BASE.put("neto", "Neto");
+        COLUMNAS_BASE.put("ss_empresa", "SS empresa");
+        COLUMNAS_BASE.put("coste_total_empresa", "Coste empresa");
+        COLUMNAS_BASE.put("created_at", "Creado");
+    }
+    private final DynamicColumnRuntime<Nomina> dynamicColumns =
+        new DynamicColumnRuntime<>("nominas", "Nóminas", COLUMNAS_BASE, tabla, datos, Nomina::getId);
+    private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public NominasView() {
         getStyleClass().add("content-view");
@@ -51,6 +78,7 @@ public class NominasView extends VBox {
         getChildren().addAll(titulo, sub, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
+        dynamicColumns.apply();
     }
 
     private HBox buildToolbar() {
@@ -61,9 +89,10 @@ public class NominasView extends VBox {
         Button btnExportar = btn("📤 Exportar",              "#8E44AD", this::exportar);
         Button btnGenMes    = btn("⚡ Generar mes para todos","#9B59B6", this::generarMesCompleto);
         Button btnPreview   = btn("👁 Previsualizar",         "#6B2D5E", this::previsualizar);
+        Button btnColumnas  = btn("⚙ Columnas",               "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview);
+        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -75,6 +104,7 @@ public class NominasView extends VBox {
 
         TableColumn<Nomina, Double> colNeto = new TableColumn<>("Neto");
         colNeto.setCellValueFactory(new PropertyValueFactory<>("neto"));
+        colNeto.setUserData("neto");
         colNeto.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -85,6 +115,7 @@ public class NominasView extends VBox {
 
         TableColumn<Nomina, Double> colBruto = new TableColumn<>("Bruto");
         colBruto.setCellValueFactory(new PropertyValueFactory<>("totalBruto"));
+        colBruto.setUserData("total_bruto");
         colBruto.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -94,6 +125,7 @@ public class NominasView extends VBox {
 
         TableColumn<Nomina, Double> colCosteEmp = new TableColumn<>("Coste empresa");
         colCosteEmp.setCellValueFactory(new PropertyValueFactory<>("costeTotalEmpresa"));
+        colCosteEmp.setUserData("coste_total_empresa");
         colCosteEmp.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
                 super.updateItem(v, empty);
@@ -112,7 +144,7 @@ public class NominasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void nueva() {
@@ -120,7 +152,7 @@ public class NominasView extends VBox {
             List<Empleado> empleados = empleadoDAO.findAll();
             if (empleados.isEmpty()) { alerta("Añade empleados antes de crear nóminas."); return; }
             dialogoNomina(null, empleados).ifPresent(n -> {
-                try { dao.save(n); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(n); dynamicColumns.saveFormFields(n, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -132,7 +164,7 @@ public class NominasView extends VBox {
             List<Empleado> empleados = empleadoDAO.findAll();
             Nomina n = dao.findById(sel.getId());
             dialogoNomina(n, empleados).ifPresent(nm -> {
-                try { dao.save(nm); cargar(); } catch (Exception e) { mostrarError(e); }
+                try { dao.save(nm); dynamicColumns.saveFormFields(nm, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
         } catch (Exception e) { mostrarError(e); }
     }
@@ -288,6 +320,8 @@ public class NominasView extends VBox {
         );
         resumen.setPadding(new Insets(8));
         resumen.setStyle("-fx-background-color:#F5F5F5; -fx-border-radius:4; -fx-background-radius:4;");
+        dialogExtraFields = new LinkedHashMap<>();
+        r = dynamicColumns.addFormFields(grid, r, nomina != null ? nomina : new Nomina(), dialogExtraFields);
         grid.add(resumen, 0, r, 4, 1);
 
         recalc.run();
@@ -562,6 +596,7 @@ public class NominasView extends VBox {
     private <T> TableColumn<Nomina, T> col(String t, String campo, double ancho) {
         TableColumn<Nomina, T> c = new TableColumn<>(t);
         c.setCellValueFactory(new PropertyValueFactory<>(campo));
+        c.setUserData(toDbColumn(campo));
         c.setPrefWidth(ancho); return c;
     }
 
@@ -608,6 +643,15 @@ public class NominasView extends VBox {
     }
 
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
+    private String toDbColumn(String campo) {
+        return switch (campo) {
+            case "empleadoNombre" -> "empleado_id";
+            case "periodo" -> "mes";
+            case "totalBruto" -> "total_bruto";
+            case "costeTotalEmpresa" -> "coste_total_empresa";
+            default -> campo;
+        };
+    }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s.trim()); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }

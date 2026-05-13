@@ -105,7 +105,7 @@ public class App extends Application implements LoginController.LoginCallback, L
         MusicService.setLoop(!"0".equals(musicaLoop));
         boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
-        MainView mainView = new MainView(primaryStage, authService, currentUser, this::showLockScreen);
+        MainView mainView = new MainView(primaryStage, authService, currentUser, this::showLockScreen, this::showLoginScreenSafely);
         mainAppScene = new Scene(mainView, 1280, 800);
         mainAppScene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
@@ -166,6 +166,15 @@ public class App extends Application implements LoginController.LoginCallback, L
                 System.err.println("Error fatal: no se pudo cargar ni la pantalla de bloqueo ni la de login.");
                 Platform.exit();
             }
+        }
+    }
+
+    private void showLoginScreenSafely() {
+        try {
+            showLoginScreen();
+        } catch (IOException e) {
+            System.err.println("Error al volver a la pantalla de login: " + e.getMessage());
+            Platform.exit();
         }
     }
 

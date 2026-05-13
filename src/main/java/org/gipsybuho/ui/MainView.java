@@ -24,13 +24,11 @@ import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import javafx.util.Duration;
-import org.gipsybuho.App;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.User;
 import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -45,15 +43,17 @@ public class MainView extends BorderPane {
     private final User loggedInUser;
     private final Stage primaryStage;
     private final Runnable onLockScreenRequested; // Nuevo campo para el callback de bloqueo
+    private final Runnable onLogoutRequested;
 
     private Timeline sessionTimeoutTimeline;
     private static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Valor por defecto si no se encuentra en la DB
 
-    public MainView(Stage stage, AuthService authService, User loggedInUser, Runnable onLockScreenRequested) {
+    public MainView(Stage stage, AuthService authService, User loggedInUser, Runnable onLockScreenRequested, Runnable onLogoutRequested) {
         this.primaryStage = stage;
         this.authService = authService;
         this.loggedInUser = loggedInUser;
         this.onLockScreenRequested = onLockScreenRequested; // Asignar el callback
+        this.onLogoutRequested = onLogoutRequested;
         this.iaView = new IAView();
         setLeft(buildSidebar());
         setCenter(contentArea);
@@ -111,12 +111,8 @@ public class MainView extends BorderPane {
             sessionTimeoutTimeline.stop(); // Detener el temporizador al cerrar sesión
         }
         authService.logAccess(loggedInUser.getId(), loggedInUser.getUsername(), "logout");
-        if (Platform.getApplication() instanceof App) {
-            try {
-                ((App) Platform.getApplication()).showLoginScreen();
-            } catch (IOException e) {
-                System.err.println("Error al volver a la pantalla de login: " + e.getMessage());
-            }
+        if (onLogoutRequested != null) {
+            onLogoutRequested.run();
         }
     }
 

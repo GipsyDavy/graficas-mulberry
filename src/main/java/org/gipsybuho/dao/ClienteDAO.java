@@ -54,7 +54,7 @@ public class ClienteDAO {
         List<String> extraKeys = new ArrayList<>(c.getExtras().keySet());
         cols.addAll(extraKeys);
 
-        String sql = "INSERT INTO clientes (" + String.join(",", cols) + ") VALUES (" +
+        String sql = "INSERT INTO clientes (" + quotedColumns(cols) + ") VALUES (" +
             String.join(",", Collections.nCopies(cols.size(), "?")) + ")";
 
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -114,6 +114,12 @@ public class ClienteDAO {
             }
         }
         return extras;
+    }
+
+    private String quotedColumns(List<String> columns) {
+        return columns.stream()
+            .map(DatabaseManager::quoteIdentifier)
+            .collect(java.util.stream.Collectors.joining(","));
     }
 
     private void setBase(PreparedStatement ps, Cliente c) throws SQLException {
