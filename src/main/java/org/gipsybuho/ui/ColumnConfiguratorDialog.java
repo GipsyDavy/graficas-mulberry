@@ -30,6 +30,7 @@ public class ColumnConfiguratorDialog {
     private final String tableName;
     private final String moduleName;
     private final Map<String, String> baseColumns;
+    private final Set<String> ignoredColumns;
     private final List<String> stylesheets;
     private final ObservableList<ColumnConfig> configs = FXCollections.observableArrayList();
     private boolean changed;
@@ -39,14 +40,20 @@ public class ColumnConfiguratorDialog {
     }
 
     public ColumnConfiguratorDialog(String tableName, String moduleName, Map<String, String> baseColumns, List<String> stylesheets) {
+        this(tableName, moduleName, baseColumns, Set.of(), stylesheets);
+    }
+
+    public ColumnConfiguratorDialog(String tableName, String moduleName, Map<String, String> baseColumns,
+                                    Set<String> ignoredColumns, List<String> stylesheets) {
         this.tableName = tableName;
         this.moduleName = moduleName;
         this.baseColumns = baseColumns;
+        this.ignoredColumns = Set.copyOf(ignoredColumns);
         this.stylesheets = new ArrayList<>(stylesheets);
     }
 
     public boolean show() throws SQLException {
-        dao.syncTable(tableName, baseColumns);
+        dao.syncTable(tableName, baseColumns, ignoredColumns);
         load();
 
         Dialog<Boolean> dialog = new Dialog<>();
@@ -73,16 +80,19 @@ public class ColumnConfiguratorDialog {
 
         Button add = new Button("+ Añadir");
         Button rename = new Button("Renombrar");
+        Button show = new Button("Mostrar");
         Button hide = new Button("Ocultar");
         add.setMaxWidth(Double.MAX_VALUE);
         rename.setMaxWidth(Double.MAX_VALUE);
+        show.setMaxWidth(Double.MAX_VALUE);
         hide.setMaxWidth(Double.MAX_VALUE);
 
         add.setOnAction(e -> addColumn());
         rename.setOnAction(e -> renameColumn(listView.getSelectionModel().getSelectedItem()));
+        show.setOnAction(e -> showColumn(listView.getSelectionModel().getSelectedItem()));
         hide.setOnAction(e -> hideColumn(listView.getSelectionModel().getSelectedItem()));
 
-        VBox actions = new VBox(8, add, rename, hide);
+        VBox actions = new VBox(8, add, rename, show, hide);
         HBox.setHgrow(listView, Priority.ALWAYS);
         HBox content = new HBox(12, listView, actions);
         content.setPadding(new Insets(12));
@@ -99,7 +109,9 @@ public class ColumnConfiguratorDialog {
 
     private void load() throws SQLException {
         List<ColumnConfig> all = dao.findAll(tableName);
-        configs.setAll(all);
+        configs.setAll(all.stream()
+            .filter(config -> !ignoredColumns.contains(config.columnName()))
+            .toList());
     }
 
     private void addColumn() {
@@ -109,7 +121,9 @@ public class ColumnConfiguratorDialog {
         input.setContentText("Nombre de la columna:");
         input.showAndWait().ifPresent(label -> {
             try {
-                dao.addDynamicColumn(tableName, label, Set.copyOf(baseColumns.keySet()));
+                Set<String> reserved = new java.util.HashSet<>(baseColumns.keySet());
+                reserved.addAll(ignoredColumns);
+                dao.addDynamicColumn(tableName, label, reserved);
                 changed = true;
                 load();
             } catch (Exception ex) {
@@ -158,6 +172,21 @@ public class ColumnConfiguratorDialog {
                 showError(ex);
             }
         });
+    }
+
+    private void showColumn(ColumnConfig selected) {
+        if (selected == null) return;
+        if (selected.visible()) {
+            new Alert(Alert.AlertType.INFORMATION, "La columna seleccionada ya está visible.", ButtonType.OK).showAndWait();
+            return;
+        }
+        try {
+            dao.showDynamic(tableName, selected.columnName());
+            changed = true;
+            load();
+        } catch (Exception ex) {
+            showError(ex);
+        }
     }
 
     private void showError(Exception ex) {

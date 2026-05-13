@@ -10,12 +10,13 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
 import javafx.stage.FileChooser;
+import javafx.stage.Stage;
+import javafx.stage.Window;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.*;
 import org.gipsybuho.util.AppConstants;
 
-import java.awt.Desktop;
 import java.io.File;
-import java.net.URI;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -37,6 +38,7 @@ public class IAView extends VBox {
     private final ComboBox<String> cbModelo;
     private final Button btnInstalarOllama;
     private final CheckBox cbContexto;
+    private final ToggleButton btnVoz;
 
     public IAView() {
         getStyleClass().add("content-view");
@@ -58,6 +60,7 @@ public class IAView extends VBox {
 
         // CORRECCIÓN: 'TEXT_CB_CONTEXTO_ERP' no existe en AppConstants. Usamos literal o una similar.
         this.cbContexto = new CheckBox("Incluir contexto del ERP");
+        this.btnVoz = new ToggleButton();
 
         HBox estadoBar = buildEstadoBar();
         this.txtInput = new TextArea();
@@ -76,6 +79,7 @@ public class IAView extends VBox {
         // CORRECCIÓN: 'TEXT_PROMPT_MODELO' no existe en AppConstants.
         cbModelo.setPromptText("Seleccionar modelo");
         cbModelo.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
             if (cbModelo.getValue() != null) ia.setModeloActual(cbModelo.getValue());
         });
 
@@ -86,14 +90,30 @@ public class IAView extends VBox {
 
         cbContexto.setSelected(true);
 
+        btnVoz.setSelected("1".equals(DatabaseManager.getConfig("ia_voz_activada")));
+        actualizarBotonVoz();
+        btnVoz.setTooltip(new Tooltip("Activar o silenciar la lectura por voz del asistente IA"));
+        btnVoz.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
+            DatabaseManager.setConfig("ia_voz_activada", btnVoz.isSelected() ? "1" : "0");
+            actualizarBotonVoz();
+            if (!btnVoz.isSelected()) {
+                TextToSpeechService.stop();
+            }
+        });
+
         Button btnModelos = new Button(AppConstants.TEXT_BTN_GESTION_MODELOS);
-        btnModelos.setOnAction(e -> abrirGestionModelos());
+        btnModelos.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.WINDOW_OPEN);
+            abrirGestionModelos();
+        });
 
         Button btnExportar = new Button(AppConstants.TEXT_BTN_EXPORTAR);
         btnExportar.setOnAction(e -> exportarChat());
 
         Button btnLimpiar = new Button(AppConstants.TEXT_BTN_LIMPIAR);
         btnLimpiar.setOnAction(e -> {
+            TextToSpeechService.stop();
             chatBox.getChildren().clear();
             ia.limpiarHistorial();
             addMensajeSistema(AppConstants.MSG_CHAT_REINICIADO);
@@ -102,11 +122,15 @@ public class IAView extends VBox {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox bar = new HBox(10, lblEstado, btnInstalarOllama, spacer, cbContexto, cbModelo, btnModelos, btnExportar, btnLimpiar);
+        HBox bar = new HBox(10, lblEstado, btnInstalarOllama, spacer, cbContexto, btnVoz, cbModelo, btnModelos, btnExportar, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle(AppConstants.STYLE_ESTADO_BAR);
         return bar;
+    }
+
+    private void actualizarBotonVoz() {
+        btnVoz.setText(btnVoz.isSelected() ? "🔊 Voz" : "🔇 Voz");
     }
 
     private ScrollPane buildChat(VBox chatBox) {
@@ -143,7 +167,10 @@ public class IAView extends VBox {
         for (String s : sugerencias) {
             Button b = new Button(s);
             b.setStyle("-fx-background-radius: 15; -fx-cursor: hand;");
-            b.setOnAction(e -> { txtInput.setText(s); enviar(); });
+            b.setOnAction(e -> {
+                txtInput.setText(s);
+                enviar();
+            });
             chips.getChildren().add(b);
         }
 
@@ -156,6 +183,8 @@ public class IAView extends VBox {
 
         txtInput.clear();
         btnEnviar.setDisable(true);
+        TextToSpeechService.stop();
+        SoundService.play(SoundService.Sound.CHAT_SEND);
         addBurbujaUsuario(prompt);
 
         BurbujaIA burbuja = crearBurbujaIA();
@@ -182,6 +211,7 @@ public class IAView extends VBox {
                         err -> Platform.runLater(() -> {
                             quitarSpinner(burbuja.container());
                             // Corregido: Usamos el prefijo existente en AppConstants
+                            SoundService.play(SoundService.Sound.ERROR);
                             addMensajeSistema(AppConstants.MSG_ERROR_PREFIX + err);
                             btnEnviar.setDisable(false);
                         })
@@ -190,22 +220,42 @@ public class IAView extends VBox {
                 Platform.runLater(() -> {
                     quitarSpinner(burbuja.container());
                     btnEnviar.setDisable(false);
+                    SoundService.play(SoundService.Sound.CHAT_RECEIVE);
+                    if (btnVoz.isSelected()) {
+                        TextToSpeechService.speak(respuestaFull.toString());
+                    }
                 });
             } catch (Exception e) {
-                Platform.runLater(() -> btnEnviar.setDisable(false));
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    btnEnviar.setDisable(false);
+                });
             }
         });
     }
 
     private void verificarOllama() {
         Thread.ofVirtual().start(() -> {
+            if (OllamaManager.isInstalled() && !OllamaManager.isRunning()) {
+                OllamaManager.startIfNeeded();
+            }
             List<OllamaService.ModelInfo> modelos = ia.getModelosConDetalles();
             boolean ok = !modelos.isEmpty();
             Platform.runLater(() -> {
+                btnInstalarOllama.setVisible(false);
+                btnInstalarOllama.setManaged(false);
                 if (ok) {
                     lblEstado.setText(AppConstants.TEXT_ESTADO_CONECTADO);
                     lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_SUCCESS_HEX + "; -fx-font-weight: bold;");
                     cbModelo.getItems().setAll(modelos.stream().map(m -> m.nombre).toList());
+                    if (!cbModelo.getItems().isEmpty() && cbModelo.getValue() == null) {
+                        cbModelo.getSelectionModel().selectFirst();
+                        ia.setModeloActual(cbModelo.getValue());
+                    }
+                } else if (OllamaManager.isRunning() || OllamaManager.isInstalled()) {
+                    lblEstado.setText("Ollama instalado, sin modelos IA");
+                    lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_ERROR_HEX + "; -fx-font-weight: bold;");
+                    cbModelo.getItems().clear();
                 } else {
                     lblEstado.setText(AppConstants.TEXT_ESTADO_DESCONECTADO);
                     lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_ERROR_HEX + "; -fx-font-weight: bold;");
@@ -221,6 +271,7 @@ public class IAView extends VBox {
         List<ChatExportService.MensajeChat> mensajes = extraerMensajesChat();
 
         if (mensajes.isEmpty()) {
+            SoundService.play(SoundService.Sound.ERROR);
             addMensajeSistema("No hay mensajes para exportar.");
             return;
         }
@@ -246,11 +297,15 @@ public class IAView extends VBox {
                     service.exportarChat(mensajes, file);
 
                     Platform.runLater(() ->
-                            addMensajeSistema("✅ Historial guardado correctamente: " + file.getName())
+                            {
+                                SoundService.play(SoundService.Sound.COMPLETE);
+                                addMensajeSistema("✅ Historial guardado correctamente: " + file.getName());
+                            }
                     );
                 } catch (Exception e) {
                     e.printStackTrace();
                     Platform.runLater(() -> {
+                        SoundService.play(SoundService.Sound.ERROR);
                         Alert alert = new Alert(Alert.AlertType.ERROR);
                         alert.setTitle(AppConstants.TEXT_ERROR_EXPORTAR_TITULO);
                         alert.setHeaderText("Fallo en la exportación");
@@ -338,17 +393,24 @@ public class IAView extends VBox {
     }
 
     private void abrirGestionModelos() {
-        System.out.println(AppConstants.DEBUG_GESTION_MODELOS);
+        Stage owner = obtenerStageActual();
+        ModelosGestionDialog dialog = new ModelosGestionDialog(owner, ia);
+        dialog.showAndWait();
+        if (dialog.isHuboCambios()) {
+            verificarOllama();
+        }
     }
 
     private void abrirInstalador() {
-        System.out.println(AppConstants.DEBUG_REDIR_OLLAMA);
-        Thread.ofVirtual().start(() -> {
-            try {
-                if (Desktop.isDesktopSupported()) {
-                    Desktop.getDesktop().browse(new URI("https://ollama.com/download"));
-                }
-            } catch (Exception e) { e.printStackTrace(); }
-        });
+        SoundService.play(SoundService.Sound.WINDOW_OPEN);
+        Stage owner = obtenerStageActual();
+        OllamaInstallerDialog dialog = new OllamaInstallerDialog(owner);
+        dialog.showAndWait();
+        verificarOllama();
+    }
+
+    private Stage obtenerStageActual() {
+        Window window = getScene() != null ? getScene().getWindow() : null;
+        return window instanceof Stage stage ? stage : null;
     }
 }

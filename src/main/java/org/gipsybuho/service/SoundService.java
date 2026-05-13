@@ -8,7 +8,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class SoundService {
 
     public enum Sound {
+        HOVER,        // Paso del cursor por controles principales
         CLICK,        // Click de botón (corto, sutil)
+        NAVIGATE,     // Navegación por módulos
+        WINDOW_OPEN,  // Apertura de ventana o módulo
+        CHAT_SEND,    // Mensaje enviado al asistente
+        CHAT_RECEIVE, // Respuesta recibida del asistente
         SUCCESS,      // Operación exitosa (arpeggio ascendente 2 notas)
         ERROR,        // Error o advertencia (tono descendente)
         START,        // Inicio de proceso (sweep ascendente)
@@ -20,6 +25,7 @@ public class SoundService {
     private static boolean muted  = false;
 
     private static final AtomicBoolean clickPlaying = new AtomicBoolean(false);
+    private static long lastHoverMs;
 
     private static final ExecutorService pool = Executors.newCachedThreadPool(r -> {
         Thread t = new Thread(r, "sound");
@@ -31,6 +37,11 @@ public class SoundService {
 
     public static void play(Sound sound) {
         if (muted || volume < 0.01f) return;
+        if (sound == Sound.HOVER) {
+            long now = System.currentTimeMillis();
+            if (now - lastHoverMs < 90) return;
+            lastHoverMs = now;
+        }
         // Para clicks rápidos: descartar si ya hay uno sonando
         if (sound == Sound.CLICK) {
             if (!clickPlaying.compareAndSet(false, true)) return;
@@ -58,7 +69,12 @@ public class SoundService {
 
     private static byte[] generatePCM(Sound sound) {
         return switch (sound) {
+            case HOVER        -> tone(1180, 24, 0.13f, 0f, 0f);
             case CLICK        -> genClick();
+            case NAVIGATE     -> arpeggio(new int[]{640, 820}, 42, 0.25f);
+            case WINDOW_OPEN  -> arpeggio(new int[]{420, 620, 840}, 54, 0.26f);
+            case CHAT_SEND    -> arpeggio(new int[]{740, 980}, 48, 0.24f);
+            case CHAT_RECEIVE -> arpeggio(new int[]{620, 780, 930}, 58, 0.22f);
             case SUCCESS      -> arpeggio(new int[]{523, 659}, 110, 0.38f);
             case ERROR        -> tone(320, 280, 0.40f, 12f, 0.18f);
             case START        -> sweep(380, 720, 160, 0.35f);

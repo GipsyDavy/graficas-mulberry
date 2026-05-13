@@ -466,13 +466,19 @@ public class FacturasView extends VBox {
     }
 
     private void borrar() {
-        Factura sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una factura."); return; }
+        List<Factura> seleccionadas = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionadas.isEmpty()) { alerta("Selecciona una o varias facturas."); return; }
+        String mensaje = seleccionadas.size() == 1
+            ? "¿Eliminar permanentemente la factura " + seleccionadas.get(0).getNumero() + "?"
+            : "¿Eliminar permanentemente " + seleccionadas.size() + " facturas seleccionadas?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar permanentemente la factura " + sel.getNumero() + "?", ButtonType.YES, ButtonType.NO);
+            mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Factura factura : seleccionadas) dao.delete(factura.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 

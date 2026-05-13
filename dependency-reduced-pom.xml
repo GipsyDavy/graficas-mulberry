@@ -3,7 +3,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>org.gipsybuho</groupId>
   <artifactId>GraficasMulberry</artifactId>
-  <version>8.4.0</version>
+  <version>8.5.2</version>
   <build>
     <plugins>
       <plugin>
@@ -18,8 +18,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>3.11.0</version>
         <configuration>
-          <source>21</source>
-          <target>21</target>
+          <release>21</release>
           <encoding>UTF-8</encoding>
         </configuration>
       </plugin>
@@ -42,6 +41,10 @@
           </execution>
         </executions>
       </plugin>
+      <plugin>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <version>3.2.3</version>
+      </plugin>
     </plugins>
   </build>
   <profiles>
@@ -61,6 +64,7 @@
                 </goals>
                 <configuration>
                   <outputDirectory>${project.build.directory}/lib</outputDirectory>
+                  <includeScope>runtime</includeScope>
                   <overWriteReleases>false</overWriteReleases>
                   <overWriteIfNewer>true</overWriteIfNewer>
                 </configuration>
@@ -109,6 +113,28 @@
       </dependencies>
     </profile>
   </profiles>
+  <dependencies>
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter</artifactId>
+      <version>5.10.3</version>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <artifactId>junit-jupiter-api</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-params</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+        <exclusion>
+          <artifactId>junit-jupiter-engine</artifactId>
+          <groupId>org.junit.jupiter</groupId>
+        </exclusion>
+      </exclusions>
+    </dependency>
+  </dependencies>
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <javafx.version>21.0.4</javafx.version>

@@ -144,13 +144,19 @@ public class TarifasView extends VBox {
     }
 
     private void borrar() {
-        Tarifa sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una tarifa para borrar."); return; }
+        List<Tarifa> seleccionadas = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionadas.isEmpty()) { alerta("Selecciona una o varias tarifas para borrar."); return; }
+        String mensaje = seleccionadas.size() == 1
+            ? "¿Eliminar la tarifa \"" + seleccionadas.get(0).getNombre() + "\"?"
+            : "¿Eliminar " + seleccionadas.size() + " tarifas seleccionadas?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar la tarifa \"" + sel.getNombre() + "\"?", ButtonType.YES, ButtonType.NO);
+            mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Tarifa tarifa : seleccionadas) dao.delete(tarifa.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 

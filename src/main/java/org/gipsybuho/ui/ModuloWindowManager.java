@@ -13,6 +13,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.gipsybuho.service.SoundService;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -46,6 +47,7 @@ public class ModuloWindowManager {
                                       List<String> cssSheets) {
         Stage existente = ventanas.get(titulo);
         if (existente != null && existente.isShowing()) {
+            SoundService.play(SoundService.Sound.NOTIFICATION);
             existente.toFront();
             return;
         }
@@ -82,6 +84,7 @@ public class ModuloWindowManager {
 
         ventanas.put(titulo, stage);
         stage.show();
+        SoundService.play(SoundService.Sound.WINDOW_OPEN);
     }
 
     public static boolean estaAbierto(String titulo) {

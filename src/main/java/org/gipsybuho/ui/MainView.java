@@ -1,7 +1,5 @@
 package org.gipsybuho.ui;
 
-import javafx.animation.KeyFrame;
-import javafx.animation.Timeline;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
@@ -19,15 +17,11 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import javafx.scene.input.InputEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import javafx.util.Duration;
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserPermissions;
-import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
 
 import java.util.ArrayList;
@@ -38,84 +32,24 @@ import java.util.function.Supplier;
 public class MainView extends BorderPane {
 
     private final StackPane contentArea = new StackPane();
+    private final VisualAssistantView visualAssistant;
     private VBox sidebar;
     private final IAView iaView;
-    private final AuthService authService;
     private final User loggedInUser;
     private final Stage primaryStage;
-    private final Runnable onLockScreenRequested; // Nuevo campo para el callback de bloqueo
-    private final Runnable onLogoutRequested;
 
-    private Timeline sessionTimeoutTimeline;
-    private static final int DEFAULT_SESSION_TIMEOUT_MINUTES = 30; // Valor por defecto si no se encuentra en la DB
-
-    public MainView(Stage stage, AuthService authService, User loggedInUser, Runnable onLockScreenRequested, Runnable onLogoutRequested) {
+    public MainView(Stage stage, User loggedInUser) {
         this.primaryStage = stage;
-        this.authService = authService;
         this.loggedInUser = loggedInUser;
-        this.onLockScreenRequested = onLockScreenRequested; // Asignar el callback
-        this.onLogoutRequested = onLogoutRequested;
         this.iaView = new IAView();
+        this.visualAssistant = new VisualAssistantView();
         setLeft(buildSidebar());
-        setCenter(contentArea);
+        setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");
-        mostrarVista(loggedInUser.hasPermission(UserPermissions.DASHBOARD)
-            ? new DashboardView(loggedInUser)
-            : accesoLimitado());
-
-        // Inicializar el temporizador de inactividad
-        initializeSessionTimeout();
-
-        // Añadir listeners de actividad a la escena una vez que esté disponible
-        Platform.runLater(() -> {
-            if (getScene() != null) {
-                getScene().addEventFilter(InputEvent.ANY, this::resetSessionTimeout);
-            }
-        });
-    }
-
-    private void initializeSessionTimeout() {
-        int timeoutMinutes = DEFAULT_SESSION_TIMEOUT_MINUTES;
-        try {
-            String timeoutStr = DatabaseManager.getConfig("session_timeout_minutes");
-            if (!timeoutStr.isBlank()) {
-                timeoutMinutes = Integer.parseInt(timeoutStr);
-            }
-        } catch (NumberFormatException e) {
-            System.err.println("Error al leer 'session_timeout_minutes' de la configuración. Usando valor por defecto: " + DEFAULT_SESSION_TIMEOUT_MINUTES + " minutos.");
-        }
-
-        sessionTimeoutTimeline = new Timeline(new KeyFrame(Duration.minutes(timeoutMinutes), event -> {
-            // El temporizador ha expirado, cerrar sesión
-            Platform.runLater(this::logoutDueToInactivity);
-        }));
-        sessionTimeoutTimeline.setCycleCount(1); // Solo se ejecuta una vez
-        sessionTimeoutTimeline.playFromStart(); // Iniciar el temporizador
-    }
-
-    private void resetSessionTimeout(InputEvent event) {
-        if (sessionTimeoutTimeline != null) {
-            sessionTimeoutTimeline.playFromStart(); // Reiniciar el temporizador
-        }
-    }
-
-    private void logoutDueToInactivity() {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
-        alert.setTitle("Sesión Expirada");
-        alert.setHeaderText("Su sesión ha expirado debido a inactividad.");
-        alert.setContentText("Por favor, inicie sesión de nuevo.");
-        alert.showAndWait();
-
-        performLogout();
-    }
-
-    private void performLogout() {
-        if (sessionTimeoutTimeline != null) {
-            sessionTimeoutTimeline.stop(); // Detener el temporizador al cerrar sesión
-        }
-        authService.logAccess(loggedInUser.getId(), loggedInUser.getUsername(), "logout");
-        if (onLogoutRequested != null) {
-            onLogoutRequested.run();
+        if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
+            mostrarVista(new DashboardView(loggedInUser), "Panel principal");
+        } else {
+            mostrarVista(accesoLimitado(), "Acceso limitado");
         }
     }
 
@@ -141,22 +75,30 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
         sidebar.getChildren().add(logoBox);
 
-        // Información del usuario logueado y último acceso
-        Label userInfoLabel = new Label("Bienvenido, " + loggedInUser.getUsername());
+        Label userInfoLabel = new Label("Usuario: " + loggedInUser.getUsername());
         userInfoLabel.getStyleClass().add("sidebar-user-info");
         VBox.setMargin(userInfoLabel, new Insets(10, 0, 0, 10)); // Margen para separar del logo
 
-        Label lastLoginLabel = new Label(authService.getLastLoginInfo(loggedInUser.getUsername()));
-        lastLoginLabel.getStyleClass().add("sidebar-last-login");
-        VBox.setMargin(lastLoginLabel, new Insets(0, 0, 10, 10)); // Margen inferior para separar del separador
-
-        sidebar.getChildren().addAll(userInfoLabel, lastLoginLabel);
+        sidebar.getChildren().add(userInfoLabel);
 
         // Separador
         Region sep = new Region();
         sep.getStyleClass().add("sidebar-sep");
         sep.setPrefHeight(1);
         sidebar.getChildren().add(sep);
+
+        Button btnAsistenteVisual = new Button();
+        btnAsistenteVisual.getStyleClass().add("sidebar-assistant-btn");
+        btnAsistenteVisual.setMaxWidth(Double.MAX_VALUE);
+        actualizarBotonAsistente(btnAsistenteVisual);
+        visualAssistant.activoProperty().addListener((obs, old, activo) ->
+            actualizarBotonAsistente(btnAsistenteVisual));
+        btnAsistenteVisual.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
+        btnAsistenteVisual.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
+            visualAssistant.setActivo(!visualAssistant.isActivo());
+        });
+        sidebar.getChildren().add(btnAsistenteVisual);
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
@@ -185,12 +127,14 @@ public class MainView extends BorderPane {
             ),
             navGrupo("SISTEMA",
                 navBtnEspecial(UserPermissions.IA, "🤖  Asistente IA",
-                    () -> mostrarVista(iaView),
+                    () -> mostrarVista(iaView, "🤖  Asistente IA"),
                     IAView::new),
                 navBtn(UserPermissions.IMPORTAR_BACKUP, "📥  Importar Backup", ImportBackupView::new),
                 navBtn(UserPermissions.EXPORTAR_BACKUP, "💾  Exportar / Backup", ExportView::new),
                 navBtn(UserPermissions.CONFIGURACION, "⚙  Configuración",
-                    () -> new ConfiguracionView(authService, loggedInUser))
+                    ConfiguracionView::new),
+                navBtn("🧭  Configuración asistente visual",
+                    () -> new VisualAssistantConfigView(visualAssistant))
             )
         );
 
@@ -202,43 +146,46 @@ public class MainView extends BorderPane {
         VBox.setVgrow(scroll, Priority.ALWAYS);
         sidebar.getChildren().add(scroll);
 
-        // Botón de Bloquear Pantalla
-        Button btnLock = new Button("🔒  Bloquear Pantalla");
-        btnLock.setMaxWidth(Double.MAX_VALUE);
-        btnLock.setStyle(
-            "-fx-background-color:#3498DB; -fx-text-fill:white; -fx-font-weight:bold; " +
-            "-fx-font-size:10px; -fx-padding:5 10; -fx-background-radius:0; -fx-cursor:hand;");
-        btnLock.setOnAction(e -> {
-            if (onLockScreenRequested != null) {
-                onLockScreenRequested.run();
+        Button btnCerrarApp = new Button("⏻  Salir");
+        btnCerrarApp.getStyleClass().add("sidebar-exit-btn");
+        btnCerrarApp.setMaxWidth(Double.MAX_VALUE);
+        btnCerrarApp.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
+        btnCerrarApp.setOnAction(e -> {
+            if (confirmarSalida()) {
+                Platform.exit();
             }
         });
-        sidebar.getChildren().add(btnLock);
+        sidebar.getChildren().add(btnCerrarApp);
 
-        Button btnSalir = new Button("⏻  Cerrar Sesión");
-        btnSalir.setMaxWidth(Double.MAX_VALUE);
-        btnSalir.setStyle(
-            "-fx-background-color:#E74C3C; -fx-text-fill:white; -fx-font-weight:bold; " +
-            "-fx-font-size:10px; -fx-padding:5 10; -fx-background-radius:0; -fx-cursor:hand;");
-        btnSalir.setOnAction(e -> {
-            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Deseas cerrar la sesión actual?",
-                ButtonType.YES, ButtonType.NO);
-            conf.setTitle("Cerrar Sesión");
-            conf.setHeaderText(null);
-            if (getScene() != null) conf.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-                performLogout();
-            });
-        });
-        sidebar.getChildren().add(btnSalir);
-
-        Label version = new Label("v8.4.0 · Almería, España");
+        Label version = new Label("v8.5.2 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
 
         return sidebar;
+    }
+
+    private void actualizarBotonAsistente(Button boton) {
+        boton.setText(visualAssistant.isActivo()
+            ? "🧭  Desactivar asistente"
+            : "🧭  Activar asistente");
+    }
+
+    public boolean confirmarSalida() {
+        Alert confirmacion = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "¿Deseas cerrar la aplicación?",
+            ButtonType.YES,
+            ButtonType.NO
+        );
+        confirmacion.setTitle("Salir");
+        confirmacion.setHeaderText(null);
+        if (getScene() != null) {
+            confirmacion.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        return confirmacion.showAndWait()
+            .filter(ButtonType.YES::equals)
+            .isPresent();
     }
 
     // ── Constructores de botón ────────────────────────────────────────────────
@@ -249,7 +196,7 @@ public class MainView extends BorderPane {
      * opción de abrir en ventana emergente (también crea una nueva instancia).
      */
     private StackPane navBtn(String texto, Supplier<javafx.scene.Parent> factory) {
-        return navBtnImpl(texto, () -> mostrarVista(factory.get()), factory, texto);
+        return navBtnImpl(texto, () -> mostrarVista(factory.get(), texto), factory, texto);
     }
 
     private StackPane navBtn(String permiso, String texto, Supplier<javafx.scene.Parent> factory) {
@@ -278,6 +225,7 @@ public class MainView extends BorderPane {
 
         StackPane pane = new StackPane(lbl);
         pane.getStyleClass().add("nav-btn-pane");
+        pane.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
         // Tooltip de ayuda para el clic derecho
         Tooltip tip = new Tooltip("Clic para abrir · Clic derecho → ventana emergente");
@@ -287,7 +235,7 @@ public class MainView extends BorderPane {
         // ── Clic izquierdo: abrir en área principal ──────────────────────
         pane.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
-                SoundService.play(SoundService.Sound.CLICK);
+                SoundService.play(SoundService.Sound.NAVIGATE);
                 sidebar.lookupAll(".nav-btn-pane")
                        .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
                 pane.getStyleClass().add("nav-btn-active");
@@ -311,6 +259,8 @@ public class MainView extends BorderPane {
         MenuItem miVentana = new MenuItem("🪟  Abrir en ventana aparte");
         miVentana.setStyle("-fx-font-weight: bold;");
         miVentana.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.WINDOW_OPEN);
+            visualAssistant.decir("Ventana emergente: este módulo se abre separado para que puedas trabajar sin perder la pantalla actual.");
             List<String> css = getScene() != null
                 ? new ArrayList<>(getScene().getStylesheets())
                 : List.of();
@@ -323,11 +273,11 @@ public class MainView extends BorderPane {
         // Elemento secundario: abrir en área principal y marcar activo
         MenuItem miPrincipal = new MenuItem("↩  Abrir en área principal");
         miPrincipal.setOnAction(e -> {
-            SoundService.play(SoundService.Sound.CLICK);
+            SoundService.play(SoundService.Sound.NAVIGATE);
             sidebar.lookupAll(".nav-btn-pane")
                    .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
             pane.getStyleClass().add("nav-btn-active");
-            mostrarVista(factory.get());
+            mostrarVista(factory.get(), titulo);
         });
         ctx.getItems().add(miPrincipal);
 
@@ -360,6 +310,7 @@ public class MainView extends BorderPane {
         header.getStyleClass().add("nav-group-header");
         header.setAlignment(Pos.CENTER_LEFT);
         header.setMaxWidth(Double.MAX_VALUE);
+        header.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
         VBox contenido = new VBox();
         contenido.getStyleClass().add("nav-group-content");
@@ -369,10 +320,14 @@ public class MainView extends BorderPane {
 
         header.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
+                SoundService.play(SoundService.Sound.NAVIGATE);
                 boolean expand = !contenido.isVisible();
                 contenido.setVisible(expand);
                 contenido.setManaged(expand);
                 arrow.setText(expand ? "▼" : "▶");
+                visualAssistant.decir(expand
+                    ? "Grupo " + titulo + ": aquí tienes los módulos relacionados con esta área."
+                    : "Grupo " + titulo + " contraído.");
             }
         });
 
@@ -381,8 +336,10 @@ public class MainView extends BorderPane {
         return grupo;
     }
 
-    private void mostrarVista(Node vista) {
+    private void mostrarVista(Node vista, String titulo) {
         contentArea.getChildren().setAll(vista);
+        SoundService.play(SoundService.Sound.WINDOW_OPEN);
+        visualAssistant.decirModulo(titulo);
     }
 
     private void addIfAllowed(VBox parent, StackPane node) {

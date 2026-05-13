@@ -170,14 +170,20 @@ public class NominasView extends VBox {
     }
 
     private void borrar() {
-        Nomina sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una nómina para borrar."); return; }
+        List<Nomina> seleccionadas = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionadas.isEmpty()) { alerta("Selecciona una o varias nóminas para borrar."); return; }
+        String mensaje = seleccionadas.size() == 1
+            ? "¿Eliminar la nómina de " + seleccionadas.get(0).getEmpleadoNombre() + " - " + seleccionadas.get(0).getPeriodo() + "?"
+            : "¿Eliminar " + seleccionadas.size() + " nóminas seleccionadas?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar la nómina de " + sel.getEmpleadoNombre() + " - " + sel.getPeriodo() + "?",
+            mensaje,
             ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Nomina nomina : seleccionadas) dao.delete(nomina.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 

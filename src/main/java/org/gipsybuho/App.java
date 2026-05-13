@@ -2,41 +2,29 @@ package org.gipsybuho;
 
 import javafx.application.Application;
 import javafx.application.Platform;
-import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
-import org.gipsybuho.dao.LogAccessDAO;
 import org.gipsybuho.dao.NotaCalendarioDAO;
-import org.gipsybuho.dao.UserDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.User;
-import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
-import org.gipsybuho.ui.InitialAdminSetupView;
-import org.gipsybuho.ui.LockScreenController;
-import org.gipsybuho.ui.LoginController;
 import org.gipsybuho.ui.MainView;
 
-import java.io.IOException;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Objects;
 
-public class App extends Application implements LoginController.LoginCallback, LockScreenController.LockScreenCallback {
+public class App extends Application {
 
-    private AuthService authService;
-    private UserDAO userDAO; // Mantener una referencia a UserDAO
     private Stage primaryStage;
     private User currentUser;
-    private Scene mainAppScene;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -55,10 +43,6 @@ public class App extends Application implements LoginController.LoginCallback, L
         OllamaManager.startAsync();
         DatabaseManager.initialize();
 
-        userDAO = new UserDAO(); // Instanciar UserDAO aquí
-        LogAccessDAO logAccessDAO = new LogAccessDAO();
-        this.authService = new AuthService(userDAO, logAccessDAO);
-
         String volStr = DatabaseManager.getConfig("audio_volumen");
         if (!volStr.isBlank()) {
             try { SoundService.setVolume(Integer.parseInt(volStr) / 100f); }
@@ -67,50 +51,23 @@ public class App extends Application implements LoginController.LoginCallback, L
         String mutedStr = DatabaseManager.getConfig("audio_muted");
         SoundService.setMuted("1".equals(mutedStr));
 
-        if (authService.hasUsers() && authService.hasInitialAdmin()) {
-            showLoginScreen();
-        } else {
-            showInitialAdminSetupScreen();
-        }
+        showMainApplication();
     }
 
-    private void showInitialAdminSetupScreen() {
-        InitialAdminSetupView setupView = new InitialAdminSetupView(authService, this::showLoginScreenSafely);
-        Scene scene = new Scene(setupView, 520, 430);
-        scene.getStylesheets().add(Objects.requireNonNull(
-            getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
-        TemaManager.aplicarTodo(scene);
+    private void showMainApplication() {
+        this.currentUser = new User(
+            0,
+            "Sistema",
+            "",
+            null,
+            java.time.LocalDateTime.now(),
+            0,
+            null,
+            true,
+            User.ROLE_INITIAL_ADMIN,
+            User.ALL_PERMISSIONS
+        );
 
-        primaryStage.setTitle("Gráficas Mulberry — Primer inicio");
-        primaryStage.setScene(scene);
-        primaryStage.setMinWidth(520);
-        primaryStage.setMinHeight(430);
-        primaryStage.show();
-    }
-
-    public void showLoginScreen() throws IOException {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/gipsybuho/ui/LoginView.fxml"));
-        Parent loginRoot = fxmlLoader.load();
-        LoginController loginController = fxmlLoader.getController();
-        loginController.setAuthService(authService);
-        loginController.setUserDAO(userDAO); // Inyectar UserDAO
-        loginController.setLoginCallback(this);
-
-        Scene scene = new Scene(loginRoot, 450, 400);
-        scene.getStylesheets().add(Objects.requireNonNull(
-            getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
-        TemaManager.aplicarTodo(scene);
-
-        primaryStage.setTitle("Gráficas Mulberry — Iniciar Sesión");
-        primaryStage.setScene(scene);
-        primaryStage.setMinWidth(450);
-        primaryStage.setMinHeight(400);
-        primaryStage.show();
-    }
-
-    @Override
-    public void onLoginSuccess(User loggedInUser) {
-        this.currentUser = loggedInUser;
         String musicaPlaylist = DatabaseManager.getConfig("musica_playlist");
         if (!musicaPlaylist.isBlank()) {
             MusicService.setPlaylist(java.util.Arrays.asList(musicaPlaylist.split("\\|")));
@@ -124,8 +81,8 @@ public class App extends Application implements LoginController.LoginCallback, L
         MusicService.setLoop(!"0".equals(musicaLoop));
         boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
-        MainView mainView = new MainView(primaryStage, authService, currentUser, this::showLockScreen, this::showLoginScreenSafely);
-        mainAppScene = new Scene(mainView, 1280, 800);
+        MainView mainView = new MainView(primaryStage, currentUser);
+        Scene mainAppScene = new Scene(mainView, 1280, 800);
         mainAppScene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
 
@@ -135,6 +92,11 @@ public class App extends Application implements LoginController.LoginCallback, L
         primaryStage.setScene(mainAppScene);
         primaryStage.setMinWidth(1024);
         primaryStage.setMinHeight(680);
+        primaryStage.setOnCloseRequest(event -> {
+            if (!mainView.confirmarSalida()) {
+                event.consume();
+            }
+        });
 
         try {
             Image icon = new Image(Objects.requireNonNull(
@@ -156,54 +118,6 @@ public class App extends Application implements LoginController.LoginCallback, L
         if (musicaAutoplay && !MusicService.getPlaylist().isEmpty()) {
             Platform.runLater(MusicService::play);
         }
-    }
-
-    public void showLockScreen() {
-        try {
-            FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/org/gipsybuho/ui/LockScreenView.fxml"));
-            Parent lockRoot = fxmlLoader.load();
-            LockScreenController lockController = fxmlLoader.getController();
-            lockController.setAuthService(authService);
-            lockController.setLockedUser(currentUser);
-            lockController.setCallback(this);
-
-            Scene lockScene = new Scene(lockRoot, 450, 400);
-            lockScene.getStylesheets().add(Objects.requireNonNull(
-                getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
-            TemaManager.aplicarTodo(lockScene);
-
-            primaryStage.setTitle("Gráficas Mulberry — Bloqueado");
-            primaryStage.setScene(lockScene);
-            primaryStage.setMinWidth(450);
-            primaryStage.setMinHeight(400);
-            primaryStage.show();
-        } catch (IOException e) {
-            System.err.println("Error al cargar la pantalla de bloqueo: " + e.getMessage());
-            try {
-                showLoginScreen();
-            } catch (IOException ex) {
-                System.err.println("Error fatal: no se pudo cargar ni la pantalla de bloqueo ni la de login.");
-                Platform.exit();
-            }
-        }
-    }
-
-    private void showLoginScreenSafely() {
-        try {
-            showLoginScreen();
-        } catch (IOException e) {
-            System.err.println("Error al volver a la pantalla de login: " + e.getMessage());
-            Platform.exit();
-        }
-    }
-
-    @Override
-    public void onUnlockSuccess() {
-        primaryStage.setScene(mainAppScene);
-        primaryStage.setTitle("Gráficas Mulberry — Sistema de Gestión");
-        primaryStage.setMinWidth(1024);
-        primaryStage.setMinHeight(680);
-        primaryStage.show();
     }
 
     private void notificarRecordatoriosProximos() {

@@ -171,13 +171,19 @@ public class PresupuestosView extends VBox {
     }
 
     private void borrar() {
-        Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto para borrar."); return; }
+        List<Presupuesto> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios presupuestos para borrar."); return; }
+        String mensaje = seleccionados.size() == 1
+            ? "¿Eliminar el presupuesto " + seleccionados.get(0).getNumero() + "?"
+            : "¿Eliminar " + seleccionados.size() + " presupuestos seleccionados?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar el presupuesto " + sel.getNumero() + "?", ButtonType.YES, ButtonType.NO);
+            mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Presupuesto presupuesto : seleccionados) dao.delete(presupuesto.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 

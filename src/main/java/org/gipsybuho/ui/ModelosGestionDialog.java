@@ -114,7 +114,9 @@ public class ModelosGestionDialog extends Stage {
     private ProgressBar progressBar;
     private Label lblProgreso;
     private Button btnDescargar;
+    private Button btnDescargarSeleccionados;
     private VBox descPanel;
+    private final Map<String, CheckBox> modeloChecks = new LinkedHashMap<>();
     private boolean huboCambios = false;
 
     public ModelosGestionDialog(Stage owner, OllamaService ia) {
@@ -197,11 +199,17 @@ public class ModelosGestionDialog extends Stage {
         Label lblTitulo = new Label("Descargar nuevo modelo");
         lblTitulo.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
-        Label lblPop = new Label("Haz clic en un modelo para ver su descripción y compatibilidad con tu equipo:");
+        Label lblPop = new Label("Haz clic en un modelo para ver su descripción. Marca uno o varios para descargarlos:");
         lblPop.setStyle("-fx-font-size:11px; -fx-text-fill:#777;");
 
         FlowPane chips = new FlowPane(8, 6);
+        modeloChecks.clear();
         for (String nombre : CATALOGO.keySet()) {
+            CheckBox check = new CheckBox();
+            check.setFocusTraversable(false);
+            check.selectedProperty().addListener((obs, oldValue, selected) -> actualizarBotonSeleccionados());
+            modeloChecks.put(nombre, check);
+
             Button chip = new Button(nombre);
             chip.setStyle(
                 "-fx-background-color:#F0E6EF; -fx-text-fill:#6B2D5E; " +
@@ -210,8 +218,20 @@ public class ModelosGestionDialog extends Stage {
                 txtModelo.setText(nombre);
                 actualizarDescripcion(nombre);
             });
-            chips.getChildren().add(chip);
+
+            HBox item = new HBox(4, check, chip);
+            item.setAlignment(Pos.CENTER_LEFT);
+            item.setPadding(new Insets(2, 4, 2, 4));
+            item.setStyle("-fx-background-color:#FBF7FA; -fx-border-color:#E5D4E1; -fx-border-radius:18; -fx-background-radius:18;");
+            chips.getChildren().add(item);
         }
+
+        btnDescargarSeleccionados = new Button("⬇  Descargar seleccionados");
+        btnDescargarSeleccionados.setStyle(
+            "-fx-background-color:#6B2D5E; -fx-text-fill:white; " +
+            "-fx-font-weight:bold; -fx-padding:7 18; -fx-background-radius:4;");
+        btnDescargarSeleccionados.setDisable(true);
+        btnDescargarSeleccionados.setOnAction(e -> iniciarDescargaSeleccionados());
 
         // Panel de descripción del modelo seleccionado
         descPanel = new VBox(8);
@@ -261,7 +281,7 @@ public class ModelosGestionDialog extends Stage {
         lblProgreso.setVisible(false);
         lblProgreso.setManaged(false);
 
-        return new VBox(8, lblTitulo, lblPop, chips, descPanel, lblCustom, inputRow, progressBar, lblProgreso);
+        return new VBox(8, lblTitulo, lblPop, chips, btnDescargarSeleccionados, descPanel, lblCustom, inputRow, progressBar, lblProgreso);
     }
 
     private HBox buildBotonesBottom() {
@@ -473,6 +493,7 @@ public class ModelosGestionDialog extends Stage {
         }
 
         btnDescargar.setDisable(true);
+        btnDescargarSeleccionados.setDisable(true);
         progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
         mostrarProgreso(true);
         lblProgreso.setText("Conectando con Ollama...");
@@ -493,6 +514,7 @@ public class ModelosGestionDialog extends Stage {
                 progressBar.setProgress(1.0);
                 lblProgreso.setText("✅ Modelo «" + nombre + "» descargado correctamente.");
                 btnDescargar.setDisable(false);
+                actualizarBotonSeleccionados();
                 txtModelo.clear();
                 huboCambios = true;
                 cargarModelosInstalados();
@@ -501,8 +523,78 @@ public class ModelosGestionDialog extends Stage {
                 progressBar.setProgress(0);
                 lblProgreso.setText("❌ Error: " + error);
                 btnDescargar.setDisable(false);
+                actualizarBotonSeleccionados();
             }
         );
+    }
+
+    private void iniciarDescargaSeleccionados() {
+        List<String> seleccionados = modeloChecks.entrySet().stream()
+            .filter(e -> e.getValue().isSelected())
+            .map(Map.Entry::getKey)
+            .toList();
+        if (seleccionados.isEmpty()) return;
+
+        btnDescargar.setDisable(true);
+        btnDescargarSeleccionados.setDisable(true);
+        modeloChecks.values().forEach(cb -> cb.setDisable(true));
+        mostrarProgreso(true);
+        descargarSiguiente(seleccionados, 0);
+    }
+
+    private void descargarSiguiente(List<String> modelos, int indice) {
+        if (indice >= modelos.size()) {
+            progressBar.setProgress(1.0);
+            lblProgreso.setText("✅ Modelos seleccionados descargados correctamente.");
+            modeloChecks.values().forEach(cb -> {
+                cb.setSelected(false);
+                cb.setDisable(false);
+            });
+            btnDescargar.setDisable(txtModelo.getText().trim().isEmpty());
+            actualizarBotonSeleccionados();
+            huboCambios = true;
+            cargarModelosInstalados();
+            return;
+        }
+
+        String nombre = modelos.get(indice);
+        progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
+        lblProgreso.setText("Descargando " + nombre + " (" + (indice + 1) + " de " + modelos.size() + ")...");
+
+        ia.pullModeloStreaming(
+            nombre,
+            estado -> lblProgreso.setText("Modelo " + (indice + 1) + "/" + modelos.size() + " · " + nombre + ": " + estado),
+            prog -> {
+                double pct  = prog[0];
+                double comp = prog[1];
+                double tot  = prog[2];
+                progressBar.setProgress(pct);
+                lblProgreso.setText(String.format(
+                    "Modelo %d/%d · %s: %.0f / %.0f MB  (%.0f%%)",
+                    indice + 1, modelos.size(), nombre,
+                    comp / 1_048_576, tot / 1_048_576, pct * 100));
+            },
+            () -> {
+                CheckBox check = modeloChecks.get(nombre);
+                if (check != null) check.setSelected(false);
+                huboCambios = true;
+                cargarModelosInstalados();
+                descargarSiguiente(modelos, indice + 1);
+            },
+            error -> {
+                progressBar.setProgress(0);
+                lblProgreso.setText("❌ Error descargando «" + nombre + "»: " + error);
+                modeloChecks.values().forEach(cb -> cb.setDisable(false));
+                btnDescargar.setDisable(txtModelo.getText().trim().isEmpty());
+                actualizarBotonSeleccionados();
+            }
+        );
+    }
+
+    private void actualizarBotonSeleccionados() {
+        if (btnDescargarSeleccionados == null) return;
+        boolean alguno = modeloChecks.values().stream().anyMatch(CheckBox::isSelected);
+        btnDescargarSeleccionados.setDisable(!alguno);
     }
 
     private void mostrarProgreso(boolean visible) {

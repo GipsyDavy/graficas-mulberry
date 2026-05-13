@@ -41,6 +41,7 @@ public class ClientesView extends VBox {
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
     private static final String TABLE_NAME = "clientes";
+    private static final Set<String> COLUMNAS_IGNORADAS = Set.of("apellido");
 
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
     static {
@@ -57,6 +58,9 @@ public class ClientesView extends VBox {
         COLUMNAS_BASE.put("created_at", "Creado");
     }
     private static final Set<String> COLS_BASE_IDS = COLUMNAS_BASE.keySet();
+    private static final Set<String> COLS_NO_DINAMICAS = java.util.stream.Stream
+        .concat(COLS_BASE_IDS.stream(), COLUMNAS_IGNORADAS.stream())
+        .collect(java.util.stream.Collectors.toUnmodifiableSet());
 
     public ClientesView() {
         getStyleClass().add("content-view");
@@ -122,7 +126,7 @@ public class ClientesView extends VBox {
      */
     private void actualizarColumnasDinamicas() {
         try {
-            columnConfigDAO.syncTable(TABLE_NAME, COLUMNAS_BASE);
+            columnConfigDAO.syncTable(TABLE_NAME, COLUMNAS_BASE, COLUMNAS_IGNORADAS);
             Map<String, String> labels = columnConfigDAO.visibleLabels(TABLE_NAME);
             for (TableColumn<Cliente, ?> column : tabla.getColumns()) {
                 Object key = column.getUserData();
@@ -136,7 +140,7 @@ public class ClientesView extends VBox {
                 return key instanceof String colName && !COLS_BASE_IDS.contains(colName);
             });
 
-            for (ColumnConfig config : columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_BASE_IDS)) {
+            for (ColumnConfig config : columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_NO_DINAMICAS)) {
                 final String colKey = config.columnName();
                 TableColumn<Cliente, String> tc = new TableColumn<>(config.label());
                 tc.setUserData(colKey);
@@ -187,20 +191,27 @@ public class ClientesView extends VBox {
     }
 
     private void borrar() {
-        Cliente sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un cliente para borrar."); return; }
+        List<Cliente> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios clientes para borrar."); return; }
+        String mensaje = seleccionados.size() == 1
+            ? "¿Eliminar el cliente \"" + seleccionados.get(0).getNombre() + "\"?"
+            : "¿Eliminar " + seleccionados.size() + " clientes seleccionados?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar el cliente \"" + sel.getNombre() + "\"?", ButtonType.YES, ButtonType.NO);
+            mensaje, ButtonType.YES, ButtonType.NO);
         conf.setTitle("Confirmar"); conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Cliente cliente : seleccionados) dao.delete(cliente.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 
     private void configurarColumnas() {
         try {
             List<String> stylesheets = getScene() != null ? getScene().getStylesheets() : List.of();
-            boolean changed = new ColumnConfiguratorDialog(TABLE_NAME, "Clientes", COLUMNAS_BASE, stylesheets).show();
+            boolean changed = new ColumnConfiguratorDialog(
+                TABLE_NAME, "Clientes", COLUMNAS_BASE, COLUMNAS_IGNORADAS, stylesheets).show();
             if (changed) {
                 actualizarColumnasDinamicas();
                 cargar();
@@ -244,7 +255,7 @@ public class ClientesView extends VBox {
         r++;
 
         try {
-            List<ColumnConfig> extras = columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_BASE_IDS);
+            List<ColumnConfig> extras = columnConfigDAO.findVisibleDynamic(TABLE_NAME, COLS_NO_DINAMICAS);
             if (!extras.isEmpty()) {
                 Separator separator = new Separator();
                 grid.add(separator, 0, r++, 4, 1);

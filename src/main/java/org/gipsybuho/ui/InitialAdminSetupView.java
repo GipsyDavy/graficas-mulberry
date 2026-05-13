@@ -2,7 +2,6 @@ package org.gipsybuho.ui;
 
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.Label;
@@ -10,12 +9,16 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
+import org.gipsybuho.model.User;
 import org.gipsybuho.service.AuthService;
+
+import java.util.Optional;
+import java.util.function.Consumer;
 
 public class InitialAdminSetupView extends VBox {
 
     private final AuthService authService;
-    private final Runnable onAdminCreated;
+    private final Consumer<User> onAdminCreated;
     private final TextField usernameField = new TextField();
     private final PasswordField passwordField = new PasswordField();
     private final PasswordField confirmPasswordField = new PasswordField();
@@ -23,7 +26,7 @@ public class InitialAdminSetupView extends VBox {
     private final TextField visibleConfirmPasswordField = new TextField();
     private final Label messageLabel = new Label();
 
-    public InitialAdminSetupView(AuthService authService, Runnable onAdminCreated) {
+    public InitialAdminSetupView(AuthService authService, Consumer<User> onAdminCreated) {
         this.authService = authService;
         this.onAdminCreated = onAdminCreated;
         initializeUI();
@@ -110,19 +113,24 @@ public class InitialAdminSetupView extends VBox {
             messageLabel.setText("La contraseña debe tener al menos 6 caracteres.");
             return;
         }
-        if (!authService.createInitialAdmin(username, password)) {
-            messageLabel.setText("No se pudo crear el usuario inicial.");
+        Optional<User> createdUser = authService.createInitialAdmin(username, password);
+        if (createdUser.isEmpty()) {
+            Optional<User> existingInitialAdmin = authService.getInitialAdmin();
+            if (existingInitialAdmin.isPresent()) {
+                openApplication(existingInitialAdmin.get());
+                return;
+            }
+            messageLabel.setText("No se pudo crear el usuario inicial. Revisa que el nombre no exista ya.");
             return;
         }
 
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Usuario inicial creado");
-        alert.setHeaderText("Usuario inicial creado correctamente");
-        alert.setContentText("La aplicación volverá al inicio de sesión para acceder con el usuario creado.");
-        alert.showAndWait();
+        openApplication(createdUser.get());
+    }
 
+    private void openApplication(User user) {
+        messageLabel.setText("");
         if (onAdminCreated != null) {
-            onAdminCreated.run();
+            onAdminCreated.accept(user);
         }
     }
 }

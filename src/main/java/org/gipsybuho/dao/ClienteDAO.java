@@ -144,7 +144,12 @@ public class ClienteDAO {
             switch (col) {
                 case "id"         -> c.setId(rs.getInt(i));
                 case "nombre"              -> c.setNombre(rs.getString(i));
-                case "apellidos", "apellido" -> c.setApellidos(rs.getString(i));
+                case "apellidos"           -> c.setApellidos(rs.getString(i));
+                case "apellido"            -> {
+                    if (c.getApellidos() == null || c.getApellidos().isBlank()) {
+                        c.setApellidos(rs.getString(i));
+                    }
+                }
                 case "tipo"       -> c.setTipo(rs.getString(i));
                 case "nif"        -> c.setNif(rs.getString(i));
                 case "direccion"  -> c.setDireccion(rs.getString(i));

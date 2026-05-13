@@ -134,20 +134,43 @@ public class AuthService {
         }
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
         User newUser = new User(username, hashedPassword, false, role, permissions);
-        userDAO.createUser(newUser);
+        if (!userDAO.createUser(newUser)) {
+            return false;
+        }
         logAccessDAO.logAccess(newUser.getId(), newUser.getUsername(), "user_registered");
         return true;
     }
 
-    public boolean createInitialAdmin(String username, String password) {
-        if (userDAO.hasInitialAdmin() || userDAO.findByUsername(username).isPresent()) {
-            return false;
+    public Optional<User> createInitialAdmin(String username, String password) {
+        if (userDAO.hasInitialAdmin()) {
+            return Optional.empty();
         }
+
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+        Optional<User> existingUser = userDAO.findByUsername(username);
+        if (existingUser.isPresent()) {
+            User user = existingUser.get();
+            user.setPasswordHash(hashedPassword);
+            user.setInitialAdmin(true);
+            user.setRole(User.ROLE_INITIAL_ADMIN);
+            user.setPermissions(User.ALL_PERMISSIONS);
+            user.setFailedLoginAttempts(0);
+            user.setLastFailedLogin(null);
+            userDAO.updateUser(user);
+            logAccessDAO.logAccess(user.getId(), user.getUsername(), "initial_admin_promoted");
+            userDAO.updateLastLogin(user.getId());
+            user.setLastLogin(LocalDateTime.now());
+            return Optional.of(user);
+        }
+
         User newUser = new User(username, hashedPassword, true, User.ROLE_INITIAL_ADMIN, User.ALL_PERMISSIONS);
-        userDAO.createUser(newUser);
+        if (!userDAO.createUser(newUser)) {
+            return Optional.empty();
+        }
         logAccessDAO.logAccess(newUser.getId(), newUser.getUsername(), "initial_admin_created");
-        return true;
+        userDAO.updateLastLogin(newUser.getId());
+        newUser.setLastLogin(LocalDateTime.now());
+        return Optional.of(newUser);
     }
 
     public boolean hasUsers() {
@@ -156,6 +179,10 @@ public class AuthService {
 
     public boolean hasInitialAdmin() {
         return userDAO.hasInitialAdmin();
+    }
+
+    public Optional<User> getInitialAdmin() {
+        return userDAO.findInitialAdmin();
     }
 
     /**

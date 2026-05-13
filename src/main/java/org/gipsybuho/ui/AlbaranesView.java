@@ -158,13 +158,19 @@ public class AlbaranesView extends VBox {
     }
 
     private void borrar() {
-        Albaran sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un albarán para borrar."); return; }
+        List<Albaran> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios albaranes para borrar."); return; }
+        String mensaje = seleccionados.size() == 1
+            ? "¿Eliminar el albarán " + seleccionados.get(0).getNumero() + "?"
+            : "¿Eliminar " + seleccionados.size() + " albaranes seleccionados?";
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Eliminar el albarán " + sel.getNumero() + "?", ButtonType.YES, ButtonType.NO);
+            mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+            try {
+                for (Albaran albaran : seleccionados) dao.delete(albaran.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
 

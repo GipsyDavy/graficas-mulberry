@@ -19,13 +19,24 @@ public class ColumnConfigDAO {
     public record ColumnConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible) {}
 
     public void syncTable(String tableName, Map<String, String> baseColumns) throws SQLException {
+        syncTable(tableName, baseColumns, Set.of());
+    }
+
+    public void syncTable(String tableName, Map<String, String> baseColumns, Set<String> ignoredColumns) throws SQLException {
         DatabaseManager.requireSqlIdentifier(tableName);
         ensureConfigTable();
+        Set<String> ignored = ignoredColumns.stream()
+            .map(column -> column.toLowerCase(Locale.ROOT))
+            .collect(java.util.stream.Collectors.toSet());
         for (Map.Entry<String, String> entry : baseColumns.entrySet()) {
             upsertConfig(tableName, entry.getKey(), entry.getValue(), true, true);
         }
         for (String column : physicalColumns(tableName)) {
             if ("id".equalsIgnoreCase(column) || baseColumns.containsKey(column)) continue;
+            if (ignored.contains(column)) {
+                upsertConfig(tableName, column, defaultLabel(column), false, false);
+                continue;
+            }
             upsertConfig(tableName, column, defaultLabel(column), false, true);
         }
     }
@@ -103,6 +114,18 @@ public class ColumnConfigDAO {
         ensureConfigTable();
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
                 "UPDATE column_configs SET visible=0 WHERE table_name=? AND column_name=? AND base_column=0")) {
+            ps.setString(1, tableName);
+            ps.setString(2, columnName);
+            ps.executeUpdate();
+        }
+    }
+
+    public void showDynamic(String tableName, String columnName) throws SQLException {
+        DatabaseManager.requireSqlIdentifier(tableName);
+        DatabaseManager.requireSqlIdentifier(columnName);
+        ensureConfigTable();
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                "UPDATE column_configs SET visible=1 WHERE table_name=? AND column_name=? AND base_column=0")) {
             ps.setString(1, tableName);
             ps.setString(2, columnName);
             ps.executeUpdate();

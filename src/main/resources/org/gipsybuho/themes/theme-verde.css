@@ -6,7 +6,9 @@
     -c-sidebar-sep:     #2D4A3E;
     -c-accent:          #74C69D;
     -c-muted:           #8AB8A0;
-    -c-sidebar-text:    #A8CCB8;
+    -c-sidebar-text:    white;
+    -c-sidebar-nav-text: white;
+    -c-sidebar-version-text: white;
     -c-bg:              #F0F7F4;
     -c-border:          #B7D5C5;
     -c-text-secondary:  #4A7A60;

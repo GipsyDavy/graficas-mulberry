@@ -222,10 +222,16 @@ public class MaterialesView extends VBox {
         dialogo(sel).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } });
     }
     private void borrar() {
-        Material sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un material para borrar."); return; }
-        conf("¿Eliminar el material \"" + sel.getNombre() + "\"?", () -> {
-            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+        List<Material> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios materiales para borrar."); return; }
+        String mensaje = seleccionados.size() == 1
+            ? "¿Eliminar el material \"" + seleccionados.get(0).getNombre() + "\"?"
+            : "¿Eliminar " + seleccionados.size() + " materiales seleccionados?";
+        conf(mensaje, () -> {
+            try {
+                for (Material material : seleccionados) dao.delete(material.getId());
+                cargar();
+            } catch (Exception e) { mostrarError(e); }
         });
     }
     private void ajustarEntrada() { ajustarStock("entrada"); }

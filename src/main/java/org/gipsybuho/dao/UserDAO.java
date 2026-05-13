@@ -42,7 +42,21 @@ public class UserDAO {
         return Optional.empty();
     }
 
-    public void createUser(User user) {
+    public Optional<User> findInitialAdmin() {
+        String sql = "SELECT " + USER_COLUMNS + " FROM usuarios WHERE initial_admin = 1 ORDER BY id LIMIT 1";
+        try (Connection conn = DatabaseManager.getConnection();
+             Statement stmt = conn.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
+            if (rs.next()) {
+                return Optional.of(mapResultSetToUser(rs));
+            }
+        } catch (SQLException e) {
+            System.err.println("Error al buscar usuario inicial: " + e.getMessage());
+        }
+        return Optional.empty();
+    }
+
+    public boolean createUser(User user) {
         String sql = "INSERT INTO usuarios (username, password_hash, created_at, failed_login_attempts, initial_admin, role, permissions) VALUES (?, ?, ?, ?, ?, ?, ?)";
         try (Connection conn = DatabaseManager.getConnection();
              PreparedStatement pstmt = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
@@ -59,9 +73,11 @@ public class UserDAO {
             if (rs.next()) {
                 user.setId(rs.getInt(1));
             }
+            return user.getId() > 0;
         } catch (SQLException e) {
             System.err.println("Error al crear usuario: " + e.getMessage());
         }
+        return false;
     }
 
     public void updateUser(User user) {

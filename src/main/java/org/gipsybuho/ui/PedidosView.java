@@ -581,12 +581,15 @@ public class PedidosView extends VBox {
     }
 
     private void eliminarPedido() {
-        Pedido sel = tablaPedidos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pedido para eliminar."); return; }
-        conf("¿Eliminar el pedido " + sel.getNumero() + " de " + sel.getClienteNombre()
-            + "?\nSe eliminarán también todos sus pagos.", () -> {
+        List<Pedido> seleccionados = new ArrayList<>(tablaPedidos.getSelectionModel().getSelectedItems());
+        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios pedidos para eliminar."); return; }
+        String mensaje = seleccionados.size() == 1
+            ? "¿Eliminar el pedido " + seleccionados.get(0).getNumero() + " de " + seleccionados.get(0).getClienteNombre()
+                + "?\nSe eliminarán también todos sus pagos."
+            : "¿Eliminar " + seleccionados.size() + " pedidos seleccionados?\nSe eliminarán también todos sus pagos.";
+        conf(mensaje, () -> {
             try {
-                pedidoDao.delete(sel.getId());
+                for (Pedido pedido : seleccionados) pedidoDao.delete(pedido.getId());
                 datosPagosPedido.clear();
                 lblPedidoSeleccionado.setText("Selecciona un pedido para ver sus pagos");
                 cargarPedidos();

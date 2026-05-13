@@ -11,8 +11,6 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
-import org.gipsybuho.model.User;
-import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
@@ -30,19 +28,11 @@ import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 
 public class ConfiguracionView extends VBox {
-    private final AuthService authService;
-    private final User loggedInUser;
-
-    // ── Datos de cada tema ─────────────────────────────────────────────────────
-    // ── Datos de cada tema (Actualizado con Gipsy) ──────────────────────────────
     // ── Datos de cada tema (Sincronizados con los archivos CSS) ────────────────
     private record Tema(String id, String nombre,
                         String primary, String sidebar, String bg, String accent) {}
 
     private static final List<Tema> TEMAS = List.of(
-            new Tema("gipsy",    "Gipsy",       "#8B2635", "#0F0F12", "#0F0F12", "#A33141"),
-            new Tema("carmesi",  "Carmesí",     "#B71C1C", "#1A0000", "#1A0D0D", "#FF5252"),
-            new Tema("oscuro",   "Oscuro",      "#7B93D0", "#1A1D2E", "#242638", "#A8BEFF"),
             new Tema("mulberry", "Mulberry",    "#6B2D5E", "#2D1A28", "#F5F0F4", "#E891D0"),
             new Tema("azul",     "Azul marino", "#1A56A6", "#0D2845", "#EFF4FB", "#64AFFF"),
             new Tema("verde",    "Verde",       "#2D6A4F", "#1B4332", "#F0F7F4", "#74C69D"),
@@ -65,12 +55,6 @@ public class ConfiguracionView extends VBox {
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public ConfiguracionView() {
-        this(null, null);
-    }
-
-    public ConfiguracionView(AuthService authService, User loggedInUser) {
-        this.authService = authService;
-        this.loggedInUser = loggedInUser;
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(16);
@@ -89,9 +73,6 @@ public class ConfiguracionView extends VBox {
         Tab tabAcercaDe     = new Tab("ℹ  Acerca de",     buildTabAcercaDe());
 
         tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabAcercaDe);
-        if (authService != null && loggedInUser != null && loggedInUser.isInitialAdmin()) {
-            tabs.getTabs().add(new Tab("👥  Usuarios", new UserManagementView(authService, loggedInUser)));
-        }
         getChildren().addAll(titulo, tabs);
     }
 
@@ -119,6 +100,22 @@ public class ConfiguracionView extends VBox {
         seccionTema.getChildren().addAll(tituloTema, descTema, temaCards);
         seccionTema.getStyleClass().add("config-panel");
         seccionTema.setPadding(new Insets(15));
+
+        // ── Sección: modo oscuro ─────────────────────────────────────────────
+        VBox seccionModo = new VBox(10);
+        Label tituloModo = new Label("Modo oscuro");
+        tituloModo.getStyleClass().add("config-section-title");
+        CheckBox chkModoOscuro = new CheckBox("Ejecutar la aplicación en modo oscuro");
+        chkModoOscuro.setSelected(TemaManager.isModoOscuroActivo());
+        chkModoOscuro.setOnAction(e -> {
+            if (getScene() != null) {
+                TemaManager.aplicarModoOscuro(getScene(), chkModoOscuro.isSelected());
+                mostrarToast(chkModoOscuro.isSelected() ? "Modo oscuro activado" : "Modo oscuro desactivado");
+            }
+        });
+        seccionModo.getChildren().addAll(tituloModo, chkModoOscuro);
+        seccionModo.getStyleClass().add("config-panel");
+        seccionModo.setPadding(new Insets(15));
 
         // ── Sección: tipografía ───────────────────────────────────────────────
         VBox seccionFuente = new VBox(10);
@@ -161,7 +158,7 @@ public class ConfiguracionView extends VBox {
         seccionFuente.getStyleClass().add("config-panel");
         seccionFuente.setPadding(new Insets(15));
         // ── Separador visual ──────────────────────────────────────────────────
-        contenido.getChildren().addAll(seccionTema, seccionFuente);
+        contenido.getChildren().addAll(seccionTema, seccionModo, seccionFuente);
 
         ScrollPane scroll = new ScrollPane(contenido);
         scroll.setFitToWidth(true);
@@ -698,7 +695,7 @@ public class ConfiguracionView extends VBox {
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 8.4.0");
+        Label lblVersion = new Label("Versión 8.5.2");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);
