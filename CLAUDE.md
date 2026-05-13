@@ -153,7 +153,7 @@ Usar las siguientes herramientas cuando estén disponibles en el entorno:
   - Claude Code instalado: `claude --version`
   - Claude Code operativo: `claude -p "ping"`
   - Gemini instalado: `gemini --version`
-  - Gemini operativo: `gemini -p "ping"`
+  - Gemini operativo: `gemini -p "ping"` con timeout mínimo de 3 minutos (180 segundos) para esta y posteriores sesiones.
   - Integraciones del IDE activas para Claude Code, Gemini Code Assist y Codex, si se van a usar desde el IDE.
 - La integración se considera completamente operativa solo si los agentes requeridos pueden responder y, cuando proceda, leer/editar archivos en el workspace.
 - Si un agente está instalado pero falla por cuota, autenticación, clave API, red o permisos, se considera temporalmente no operativo y debe aplicarse la regla de suplencia.

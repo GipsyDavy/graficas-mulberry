@@ -11,16 +11,21 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.gipsybuho.model.User;
+import org.gipsybuho.model.UserPermissions;
 import org.gipsybuho.service.AuthService;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 public class UserManagementView extends VBox {
 
     private final AuthService authService;
+    private final User currentUser;
     private final TableView<User> userTable = new TableView<>();
     private final ObservableList<User> userList = FXCollections.observableArrayList();
+    private final List<CheckBox> permissionChecks = new ArrayList<>();
 
     private final TextField usernameField = new TextField();
     private final PasswordField passwordField = new PasswordField();
@@ -28,12 +33,22 @@ public class UserManagementView extends VBox {
     private final Label messageLabel = new Label();
 
     public UserManagementView(AuthService authService) {
+        this(authService, null);
+    }
+
+    public UserManagementView(AuthService authService, User currentUser) {
         this.authService = authService;
+        this.currentUser = currentUser;
         initializeUI();
         loadUsers();
     }
 
     private void initializeUI() {
+        if (currentUser != null && !currentUser.isInitialAdmin()) {
+            this.getChildren().setAll(new Label("No tienes permisos para gestionar usuarios."));
+            return;
+        }
+
         this.setPadding(new Insets(20));
         this.setSpacing(15);
         this.getStyleClass().add("user-management-view");
@@ -66,7 +81,11 @@ public class UserManagementView extends VBox {
         });
         createdAtCol.setPrefWidth(180);
 
-        userTable.getColumns().addAll(idCol, usernameCol, lastLoginCol, createdAtCol);
+        TableColumn<User, String> roleCol = new TableColumn<>("Rol");
+        roleCol.setCellValueFactory(cellData -> new ReadOnlyStringWrapper(cellData.getValue().getRole()));
+        roleCol.setPrefWidth(140);
+
+        userTable.getColumns().addAll(idCol, usernameCol, roleCol, lastLoginCol, createdAtCol);
         userTable.setItems(userList);
         userTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         userTable.setPlaceholder(new Label("No hay usuarios registrados."));
@@ -85,10 +104,19 @@ public class UserManagementView extends VBox {
         createUserPane.add(passwordField, 1, 2);
         createUserPane.add(new Label("Confirmar Contraseña:"), 0, 3);
         createUserPane.add(confirmPasswordField, 1, 3);
+        createUserPane.add(new Label("Permisos:"), 0, 4);
+        VBox permisosBox = new VBox(4);
+        UserPermissions.AVAILABLE.forEach((permiso, label) -> {
+            CheckBox checkBox = new CheckBox(label);
+            checkBox.setUserData(permiso);
+            permissionChecks.add(checkBox);
+            permisosBox.getChildren().add(checkBox);
+        });
+        createUserPane.add(permisosBox, 1, 4);
 
         Button createUserButton = new Button("Crear Usuario");
         createUserButton.setOnAction(e -> handleCreateUser());
-        createUserPane.add(createUserButton, 1, 4);
+        createUserPane.add(createUserButton, 1, 5);
 
         // --- Botones de Acción para Usuarios Seleccionados ---
         HBox actionButtons = new HBox(10);
@@ -130,11 +158,18 @@ public class UserManagementView extends VBox {
             return;
         }
 
-        if (authService.registerUser(username, password)) {
+        String permissions = buildSelectedPermissions();
+        if (permissions.isBlank()) {
+            messageLabel.setText("Selecciona al menos un permiso para el nuevo usuario.");
+            return;
+        }
+
+        if (authService.registerUser(username, password, User.ROLE_USER, permissions)) {
             messageLabel.setText("Usuario '" + username + "' creado exitosamente.");
             usernameField.clear();
             passwordField.clear();
             confirmPasswordField.clear();
+            permissionChecks.forEach(checkBox -> checkBox.setSelected(false));
             loadUsers(); // Recargar la tabla de usuarios
         } else {
             messageLabel.setText("Error: El nombre de usuario '" + username + "' ya existe.");
@@ -148,8 +183,8 @@ public class UserManagementView extends VBox {
             return;
         }
 
-        if (selectedUser.getUsername().equals("admin")) {
-            messageLabel.setText("No se puede eliminar el usuario 'admin'.");
+        if (selectedUser.isInitialAdmin()) {
+            messageLabel.setText("No se puede eliminar el usuario inicial con todos los permisos.");
             return;
         }
 
@@ -221,5 +256,15 @@ public class UserManagementView extends VBox {
                 messageLabel.setText("Error al cambiar la contraseña.");
             }
         });
+    }
+
+    private String buildSelectedPermissions() {
+        List<String> selected = new ArrayList<>();
+        for (CheckBox checkBox : permissionChecks) {
+            if (checkBox.isSelected()) {
+                selected.add(String.valueOf(checkBox.getUserData()));
+            }
+        }
+        return String.join(",", selected);
     }
 }

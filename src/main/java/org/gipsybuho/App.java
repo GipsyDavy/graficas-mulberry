@@ -19,6 +19,7 @@ import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
+import org.gipsybuho.ui.InitialAdminSetupView;
 import org.gipsybuho.ui.LockScreenController;
 import org.gipsybuho.ui.LoginController;
 import org.gipsybuho.ui.MainView;
@@ -66,7 +67,25 @@ public class App extends Application implements LoginController.LoginCallback, L
         String mutedStr = DatabaseManager.getConfig("audio_muted");
         SoundService.setMuted("1".equals(mutedStr));
 
-        showLoginScreen();
+        if (authService.hasUsers() && authService.hasInitialAdmin()) {
+            showLoginScreen();
+        } else {
+            showInitialAdminSetupScreen();
+        }
+    }
+
+    private void showInitialAdminSetupScreen() {
+        InitialAdminSetupView setupView = new InitialAdminSetupView(authService, this::showLoginScreenSafely);
+        Scene scene = new Scene(setupView, 520, 430);
+        scene.getStylesheets().add(Objects.requireNonNull(
+            getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
+        TemaManager.aplicarTodo(scene);
+
+        primaryStage.setTitle("Gráficas Mulberry — Primer inicio");
+        primaryStage.setScene(scene);
+        primaryStage.setMinWidth(520);
+        primaryStage.setMinHeight(430);
+        primaryStage.show();
     }
 
     public void showLoginScreen() throws IOException {

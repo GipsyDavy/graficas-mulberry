@@ -125,14 +125,37 @@ public class AuthService {
      * @return true si el usuario fue registrado exitosamente, false si el nombre de usuario ya existe.
      */
     public boolean registerUser(String username, String password) {
+        return registerUser(username, password, User.ROLE_USER, "");
+    }
+
+    public boolean registerUser(String username, String password, String role, String permissions) {
         if (userDAO.findByUsername(username).isPresent()) {
             return false; // El nombre de usuario ya existe
         }
         String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
-        User newUser = new User(username, hashedPassword);
+        User newUser = new User(username, hashedPassword, false, role, permissions);
         userDAO.createUser(newUser);
         logAccessDAO.logAccess(newUser.getId(), newUser.getUsername(), "user_registered");
         return true;
+    }
+
+    public boolean createInitialAdmin(String username, String password) {
+        if (userDAO.hasInitialAdmin() || userDAO.findByUsername(username).isPresent()) {
+            return false;
+        }
+        String hashedPassword = BCrypt.hashpw(password, BCrypt.gensalt());
+        User newUser = new User(username, hashedPassword, true, User.ROLE_INITIAL_ADMIN, User.ALL_PERMISSIONS);
+        userDAO.createUser(newUser);
+        logAccessDAO.logAccess(newUser.getId(), newUser.getUsername(), "initial_admin_created");
+        return true;
+    }
+
+    public boolean hasUsers() {
+        return userDAO.countUsers() > 0;
+    }
+
+    public boolean hasInitialAdmin() {
+        return userDAO.hasInitialAdmin();
     }
 
     /**

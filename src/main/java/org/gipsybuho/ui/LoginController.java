@@ -2,9 +2,12 @@ package org.gipsybuho.ui;
 
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
+import javafx.scene.control.CheckBox;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
+import javafx.util.StringConverter;
 import org.gipsybuho.dao.UserDAO; // Importar UserDAO
 import org.gipsybuho.db.DatabaseManager; // Importar DatabaseManager para getConfig
 import org.gipsybuho.model.User;
@@ -17,9 +20,13 @@ import java.util.Optional;
 public class LoginController {
 
     @FXML
-    private TextField usernameField;
+    private ComboBox<User> userComboBox;
     @FXML
     private PasswordField passwordField;
+    @FXML
+    private TextField visiblePasswordField;
+    @FXML
+    private CheckBox showPasswordCheckBox;
     @FXML
     private Button loginButton;
     @FXML
@@ -29,12 +36,38 @@ public class LoginController {
     private UserDAO userDAO; // Añadir UserDAO para verificar el estado de bloqueo
     private LoginCallback loginCallback;
 
+    @FXML
+    private void initialize() {
+        if (visiblePasswordField != null && passwordField != null && showPasswordCheckBox != null) {
+            visiblePasswordField.textProperty().bindBidirectional(passwordField.textProperty());
+            visiblePasswordField.visibleProperty().bind(showPasswordCheckBox.selectedProperty());
+            visiblePasswordField.managedProperty().bind(showPasswordCheckBox.selectedProperty());
+            passwordField.visibleProperty().bind(showPasswordCheckBox.selectedProperty().not());
+            passwordField.managedProperty().bind(showPasswordCheckBox.selectedProperty().not());
+        }
+
+        if (userComboBox != null) {
+            userComboBox.setConverter(new StringConverter<>() {
+                @Override
+                public String toString(User user) {
+                    return user == null ? "" : user.getUsername();
+                }
+
+                @Override
+                public User fromString(String string) {
+                    return null;
+                }
+            });
+        }
+    }
+
     public void setAuthService(AuthService authService) {
         this.authService = authService;
     }
 
     public void setUserDAO(UserDAO userDAO) { // Setter para UserDAO
         this.userDAO = userDAO;
+        cargarUsuarios();
     }
 
     public void setLoginCallback(LoginCallback loginCallback) {
@@ -43,11 +76,12 @@ public class LoginController {
 
     @FXML
     private void handleLogin() {
-        String username = usernameField.getText();
+        User selectedUser = userComboBox.getValue();
+        String username = selectedUser != null ? selectedUser.getUsername() : "";
         String password = passwordField.getText();
 
         if (username.isEmpty() || password.isEmpty()) {
-            errorMessageLabel.setText("Por favor, introduce usuario y contraseña.");
+            errorMessageLabel.setText("Por favor, selecciona usuario e introduce contraseña.");
             return;
         }
 
@@ -80,6 +114,16 @@ public class LoginController {
             } else {
                 errorMessageLabel.setText("Usuario o contraseña incorrectos.");
             }
+        }
+    }
+
+    private void cargarUsuarios() {
+        if (userDAO == null || userComboBox == null) {
+            return;
+        }
+        userComboBox.getItems().setAll(userDAO.getAllUsers());
+        if (!userComboBox.getItems().isEmpty()) {
+            userComboBox.getSelectionModel().selectFirst();
         }
     }
 

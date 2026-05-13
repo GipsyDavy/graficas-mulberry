@@ -26,6 +26,7 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.User;
+import org.gipsybuho.model.UserPermissions;
 import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
 
@@ -58,7 +59,9 @@ public class MainView extends BorderPane {
         setLeft(buildSidebar());
         setCenter(contentArea);
         getStyleClass().add("main-view");
-        mostrarVista(new DashboardView(loggedInUser)); // Se pasa el usuario al Dashboard
+        mostrarVista(loggedInUser.hasPermission(UserPermissions.DASHBOARD)
+            ? new DashboardView(loggedInUser)
+            : accesoLimitado());
 
         // Inicializar el temporizador de inactividad
         initializeSessionTimeout();
@@ -157,37 +160,37 @@ public class MainView extends BorderPane {
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
-        navMenu.getChildren().add(navBtn("🏠  Panel principal", () -> new DashboardView(loggedInUser)));
+        addIfAllowed(navMenu, navBtn(UserPermissions.DASHBOARD, "🏠  Panel principal", () -> new DashboardView(loggedInUser)));
         navMenu.getChildren().addAll(
             navGrupo("CLIENTES",
-                navBtn("👥  Clientes",            ClientesView::new)
+                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new)
             ),
             navGrupo("COMERCIAL",
-                navBtn("📋  Presupuestos",        PresupuestosView::new),
-                navBtn("🧾  Facturas",            FacturasView::new),
-                navBtn("📋  Albaranes",           AlbaranesView::new),
-                navBtn("📦  Pedidos",             PedidosView::new)
+                navBtn(UserPermissions.PRESUPUESTOS, "📋  Presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.FACTURAS, "🧾  Facturas", FacturasView::new),
+                navBtn(UserPermissions.ALBARANES, "📋  Albaranes", AlbaranesView::new),
+                navBtn(UserPermissions.PEDIDOS, "📦  Pedidos", PedidosView::new)
             ),
             navGrupo("ALMACÉN",
-                navBtn("💰  Tarifas",             TarifasView::new),
-                navBtn("📦  Materiales",          MaterialesView::new)
+                navBtn(UserPermissions.TARIFAS, "💰  Tarifas", TarifasView::new),
+                navBtn(UserPermissions.MATERIALES, "📦  Materiales", MaterialesView::new)
             ),
             navGrupo("PERSONAL",
-                navBtn("👤  Empleados",           EmpleadosView::new),
-                navBtn("💼  Nóminas",             NominasView::new)
+                navBtn(UserPermissions.EMPLEADOS, "👤  Empleados", EmpleadosView::new),
+                navBtn(UserPermissions.NOMINAS, "💼  Nóminas", NominasView::new)
             ),
             navGrupo("ANALÍTICA",
-                navBtn("📊  Estadísticas",        EstadisticasView::new),
-                navBtn("📅  Calendario",          CalendarioView::new)
+                navBtn(UserPermissions.ESTADISTICAS, "📊  Estadísticas", EstadisticasView::new),
+                navBtn(UserPermissions.CALENDARIO, "📅  Calendario", CalendarioView::new)
             ),
             navGrupo("SISTEMA",
-                navBtnEspecial("🤖  Asistente IA",
+                navBtnEspecial(UserPermissions.IA, "🤖  Asistente IA",
                     () -> mostrarVista(iaView),
                     IAView::new),
-                navBtn("👥  Gestión de Usuarios", () -> new UserManagementView(authService)), // Nuevo botón
-                navBtn("📥  Importar Backup",     ImportBackupView::new),
-                navBtn("💾  Exportar / Backup",   ExportView::new),
-                navBtn("⚙  Configuración",        ConfiguracionView::new)
+                navBtn(UserPermissions.IMPORTAR_BACKUP, "📥  Importar Backup", ImportBackupView::new),
+                navBtn(UserPermissions.EXPORTAR_BACKUP, "💾  Exportar / Backup", ExportView::new),
+                navBtn(UserPermissions.CONFIGURACION, "⚙  Configuración",
+                    () -> new ConfiguracionView(authService, loggedInUser))
             )
         );
 
@@ -230,7 +233,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnSalir);
 
-        Label version = new Label("v7.0.0 · Almería, España");
+        Label version = new Label("v8.4.0 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -249,6 +252,10 @@ public class MainView extends BorderPane {
         return navBtnImpl(texto, () -> mostrarVista(factory.get()), factory, texto);
     }
 
+    private StackPane navBtn(String permiso, String texto, Supplier<javafx.scene.Parent> factory) {
+        return loggedInUser.hasPermission(permiso) ? navBtn(texto, factory) : null;
+    }
+
     /**
      * Botón especial: permite separar la acción de clic izquierdo (p.ej. reusar
      * una instancia existente) de la fábrica usada para crear ventanas emergentes.
@@ -256,6 +263,11 @@ public class MainView extends BorderPane {
     private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
                                      Supplier<javafx.scene.Parent> popupFactory) {
         return navBtnImpl(texto, accionPrincipal, popupFactory, texto);
+    }
+
+    private StackPane navBtnEspecial(String permiso, String texto, Runnable accionPrincipal,
+                                     Supplier<javafx.scene.Parent> popupFactory) {
+        return loggedInUser.hasPermission(permiso) ? navBtnEspecial(texto, accionPrincipal, popupFactory) : null;
     }
 
     private StackPane navBtnImpl(String texto, Runnable accionPrincipal,
@@ -323,6 +335,19 @@ public class MainView extends BorderPane {
     }
 
     private VBox navGrupo(String titulo, StackPane... botones) {
+        List<StackPane> visibles = new ArrayList<>();
+        for (StackPane boton : botones) {
+            if (boton != null) {
+                visibles.add(boton);
+            }
+        }
+        if (visibles.isEmpty()) {
+            VBox empty = new VBox();
+            empty.setManaged(false);
+            empty.setVisible(false);
+            return empty;
+        }
+
         Label arrow = new Label("▶");
         arrow.getStyleClass().add("nav-group-arrow");
 
@@ -338,7 +363,7 @@ public class MainView extends BorderPane {
 
         VBox contenido = new VBox();
         contenido.getStyleClass().add("nav-group-content");
-        contenido.getChildren().addAll(botones);
+        contenido.getChildren().addAll(visibles);
         contenido.setVisible(false);
         contenido.setManaged(false);
 
@@ -358,5 +383,19 @@ public class MainView extends BorderPane {
 
     private void mostrarVista(Node vista) {
         contentArea.getChildren().setAll(vista);
+    }
+
+    private void addIfAllowed(VBox parent, StackPane node) {
+        if (node != null) {
+            parent.getChildren().add(node);
+        }
+    }
+
+    private Parent accesoLimitado() {
+        Label label = new Label("Este usuario no tiene permisos para ver módulos asignados.");
+        label.getStyleClass().add("view-title");
+        StackPane pane = new StackPane(label);
+        pane.setPadding(new Insets(24));
+        return pane;
     }
 }

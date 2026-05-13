@@ -11,6 +11,8 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.model.User;
+import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
@@ -28,6 +30,8 @@ import javafx.geometry.Rectangle2D;
 import javafx.stage.Screen;
 
 public class ConfiguracionView extends VBox {
+    private final AuthService authService;
+    private final User loggedInUser;
 
     // ── Datos de cada tema ─────────────────────────────────────────────────────
     // ── Datos de cada tema (Actualizado con Gipsy) ──────────────────────────────
@@ -61,6 +65,12 @@ public class ConfiguracionView extends VBox {
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public ConfiguracionView() {
+        this(null, null);
+    }
+
+    public ConfiguracionView(AuthService authService, User loggedInUser) {
+        this.authService = authService;
+        this.loggedInUser = loggedInUser;
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(16);
@@ -79,6 +89,9 @@ public class ConfiguracionView extends VBox {
         Tab tabAcercaDe     = new Tab("ℹ  Acerca de",     buildTabAcercaDe());
 
         tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabAcercaDe);
+        if (authService != null && loggedInUser != null && loggedInUser.isInitialAdmin()) {
+            tabs.getTabs().add(new Tab("👥  Usuarios", new UserManagementView(authService, loggedInUser)));
+        }
         getChildren().addAll(titulo, tabs);
     }
 
@@ -685,7 +698,7 @@ public class ConfiguracionView extends VBox {
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 6.4.0");
+        Label lblVersion = new Label("Versión 8.4.0");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);

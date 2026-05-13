@@ -2,6 +2,8 @@
 
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
+<?import javafx.scene.control.CheckBox?>
+<?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.PasswordField?>
 <?import javafx.scene.control.TextField?>
@@ -21,9 +23,11 @@
         </VBox.margin>
     </Label>
     <Label text="Usuario:" textFill="#555555" />
-    <TextField fx:id="usernameField" promptText="Introduce tu usuario" maxWidth="250.0" />
+    <ComboBox fx:id="userComboBox" promptText="Selecciona usuario" maxWidth="250.0" prefWidth="250.0" />
     <Label text="Contraseña:" textFill="#555555" />
     <PasswordField fx:id="passwordField" promptText="Introduce tu contraseña" maxWidth="250.0" />
+    <TextField fx:id="visiblePasswordField" promptText="Introduce tu contraseña" maxWidth="250.0" managed="false" visible="false" />
+    <CheckBox fx:id="showPasswordCheckBox" text="Mostrar contraseña" textFill="#555555" />
     <Button fx:id="loginButton" onAction="#handleLogin" text="Entrar" maxWidth="250.0">
         <VBox.margin>
             <Insets top="10.0" />

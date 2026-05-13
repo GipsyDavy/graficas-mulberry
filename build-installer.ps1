@@ -15,7 +15,7 @@ $PROJECT   = $PSScriptRoot
 
 # ── 1. Compilar con Maven ───────────────────────────────────────────────────
 Write-Host "`n=== 1/3  Compilando con Maven ===" -ForegroundColor Cyan
-& $MVN package -Ppackage-windows -f "$PROJECT\pom.xml"
+& $MVN clean package -Ppackage-windows -f "$PROJECT\pom.xml"
 if ($LASTEXITCODE -ne 0) { Write-Error "Fallo en la compilacion Maven"; exit 1 }
 
 # ── 2. Preparar estructura para jpackage ────────────────────────────────────
@@ -55,7 +55,7 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "7.0.0" `
+    --app-version "8.4.0" `
     --vendor "Graficas Mulberry S.L." `
     --description "Sistema de gestion para Graficas Mulberry" `
     --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
