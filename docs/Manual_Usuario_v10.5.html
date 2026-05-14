@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Manual de usuario completo - Gráficas Mulberry v10.5</title>
+<style>
+:root{--m:#6D2B6E;--md:#4A1A4B;--ml:#9B5C9C;--p:#F3E8F3;--a:#D4A017;--t:#1E1E1E;--mut:#5f5f5f;--b:#ddd;--bg:#f7f8fa;--ok:#2E7D32;--wr:#C77700;--er:#B3261E;--side:310px;--top:58px}
+*{box-sizing:border-box}html{scroll-behavior:smooth;scroll-padding-top:76px}body{margin:0;font-family:"Segoe UI",Arial,sans-serif;color:var(--t);line-height:1.62;background:#fff;font-size:14px}
+.top{position:fixed;inset:0 0 auto 0;height:var(--top);z-index:20;background:linear-gradient(90deg,var(--md),var(--m));color:#fff;display:flex;align-items:center;gap:18px;padding:0 22px;box-shadow:0 2px 10px #0002}.brand{font-weight:800;white-space:nowrap}.tag{font-size:11px;border:1px solid #ffffff55;background:#ffffff22;border-radius:20px;padding:3px 10px;margin-left:8px}.search{flex:1;max-width:520px}.search input{width:100%;border:0;border-radius:18px;padding:8px 14px;outline:0}.top button{background:#ffffff22;color:white;border:1px solid #ffffff44;border-radius:18px;padding:7px 14px;font-weight:700;cursor:pointer}
+.shell{display:flex;padding-top:var(--top);min-height:100vh}.toc{width:var(--side);position:sticky;top:var(--top);height:calc(100vh - var(--top));overflow:auto;background:var(--bg);border-right:1px solid var(--b);padding:14px 12px 70px;flex-shrink:0}.toc h4{font-size:11px;text-transform:uppercase;letter-spacing:.8px;color:var(--m);margin:16px 10px 5px}.toc a{display:block;text-decoration:none;color:#555;padding:6px 11px;border-radius:7px;font-size:13px}.toc a:hover,.toc a.active{background:var(--p);color:var(--md);font-weight:700}.main{max-width:1120px;padding:30px 44px 90px}
+.cover{background:linear-gradient(135deg,var(--md),var(--m) 60%,var(--ml));color:white;border-radius:14px;padding:52px 44px;margin-bottom:34px;display:grid;grid-template-columns:1fr auto;gap:28px;align-items:center}.cover h1{font-size:38px;line-height:1.1;margin:0}.cover p{color:#ffffffe0;margin:10px 0 0}.cover .stamp{display:inline-block;margin-top:22px;border:1px solid #ffffff55;background:#ffffff22;border-radius:26px;padding:7px 18px;font-weight:800;letter-spacing:1.5px}.mascot{width:128px;height:128px;border-radius:50%;background:white;color:var(--m);display:flex;align-items:center;justify-content:center;font-size:34px;font-weight:900;box-shadow:0 10px 28px #0004}
+h1.sec{color:var(--md);border-bottom:3px solid var(--m);padding-bottom:8px;margin:48px 0 16px;font-size:27px}h2{color:var(--m);border-left:4px solid var(--ml);padding-left:11px;margin:28px 0 10px;font-size:19px}h3{color:var(--md);font-size:15px;margin:22px 0 8px}p,li,td{color:var(--mut)}strong{color:var(--t)}.num{display:inline-block;background:var(--m);color:white;font-size:12px;border-radius:16px;padding:3px 9px;margin-right:9px}
+.call{border-left:5px solid var(--m);background:var(--p);padding:13px 16px;border-radius:7px;margin:16px 0}.call.ok{border-color:var(--ok);background:#eaf7ea}.call.warn{border-color:var(--wr);background:#fff5e2}.call.bad{border-color:var(--er);background:#fdecec}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:13px;margin:14px 0}.card{border:1px solid var(--b);border-radius:8px;background:white;padding:14px;box-shadow:0 1px 7px #0000000d}.card strong{display:block;color:var(--md);margin-bottom:4px}
+table{width:100%;border-collapse:collapse;margin:14px 0;font-size:13px}th{background:var(--m);color:white;text-align:left;padding:9px 11px}td{border-bottom:1px solid var(--b);padding:8px 11px;vertical-align:top}tr:nth-child(even) td{background:#fafafa}.wide td:first-child{font-weight:700;color:var(--md);width:220px}
+ol{padding-left:24px}.steps li{margin:6px 0}.btnlist{display:grid;gap:8px;margin:12px 0}.btnrow{display:grid;grid-template-columns:190px 1fr;gap:12px;background:var(--bg);border-left:4px solid var(--m);border-radius:7px;padding:9px 11px}.btnrow .b{font-weight:800;color:var(--md)}
+.shot{margin:16px 0 22px;border:1px solid var(--b);border-radius:8px;background:#fff;overflow:hidden;box-shadow:0 2px 12px #00000012}.shot img{display:block;width:100%;height:auto}.shot figcaption{font-size:12px;color:#666;background:#fafafa;border-top:1px solid var(--b);padding:8px 11px}
+kbd{background:#f1f3f5;border:1px solid #ccc;border-bottom:2px solid #aaa;border-radius:4px;padding:1px 6px;font-family:Consolas,monospace}.foot{margin-top:56px;border-top:1px solid var(--b);padding-top:20px;text-align:center;color:#888;font-size:12px}
+@media(max-width:900px){.toc{display:none}.main{padding:20px 16px 60px}.cover{grid-template-columns:1fr}.top{gap:10px}.brand{font-size:13px}}@media print{.top,.toc{display:none}.shell{padding:0}.main{max-width:none;padding:0}.cover{border-radius:0;page-break-after:always}h1.sec{page-break-before:always}.card,.call,table{page-break-inside:avoid}}
+</style>
+</head>
+<body>
+<div class="top"><div class="brand">Gráficas Mulberry <span class="tag">v10.5</span></div><div class="search"><input id="q" type="search" placeholder="Buscar en el manual..."></div><button onclick="window.print()">Imprimir desde navegador</button></div>
+<div class="shell">
+<nav class="toc">
+<h4>Inicio</h4>
+<a href="#objetivo">1 · Objetivo</a><a href="#arranque">2 · Arranque y navegación</a><a href="#acciones-comunes">3 · Acciones comunes</a>
+<h4>Módulos</h4>
+<a href="#dashboard">4 · Panel principal</a><a href="#clientes">5 · Clientes</a><a href="#presupuestos">6 · Presupuestos</a><a href="#facturas">7 · Facturas</a><a href="#albaranes">8 · Albaranes</a><a href="#pedidos">9 · Pedidos y pagos</a><a href="#tarifas">10 · Tarifas</a><a href="#materiales">11 · Materiales</a><a href="#empleados">12 · Empleados</a><a href="#nominas">13 · Nóminas</a><a href="#estadisticas">14 · Estadísticas</a><a href="#calendario">15 · Calendario</a>
+<h4>Sistema</h4>
+<a href="#ia">16 · Asistente IA</a><a href="#ollama">17 · Ollama y modelos</a><a href="#configuracion">18 · Configuración</a><a href="#asistente-visual">19 · Asistente visual</a><a href="#musica">20 · Reproductor</a><a href="#exportar">21 · Exportar / Backup</a><a href="#importar-backup">22 · Importar Backup</a><a href="#importar-ia">23 · Importación con IA</a><a href="#columnas">24 · Columnas dinámicas</a><a href="#pdf">25 · Vista previa PDF</a><a href="#problemas">26 · Problemas frecuentes</a>
+</nav>
+<main class="main">
+<section class="cover"><div><h1>Manual completo de usuario</h1><p>Guía paso a paso de Gráficas Mulberry v10.5, organizada por pantalla y módulo. Cada apartado explica cómo acceder, qué contiene, cómo crear, editar, borrar, previsualizar, imprimir, importar y exportar cuando la función existe en esa pantalla.</p><span class="stamp">VERSIÓN 10.5</span></div><div class="mascot">GM</div></section>
+
+<h1 class="sec" id="objetivo"><span class="num">1</span>Objetivo y forma correcta de usar este manual</h1>
+<p>Este manual está escrito para el usuario final. La estructura sigue el recorrido real dentro de la aplicación: primero se explica cómo entrar y moverse; después se documenta cada módulo en su propio apartado; por último se explican herramientas transversales como IA, copias, importaciones, columnas dinámicas y vista previa PDF.</p>
+<p>Cuando una acción se repite en varios módulos, se vuelve a explicar dentro del módulo correspondiente. Esto evita que el usuario tenga que saltar a otra parte del manual para saber cómo crear, editar, borrar, imprimir, importar o exportar desde la pantalla en la que está trabajando.</p>
+<div class="call ok"><strong>Datos locales.</strong><br>La información de trabajo se guarda en una base de datos SQLite local en <kbd>%LOCALAPPDATA%\GraficasMulberry\graficas_mulberry.db</kbd>. Para protegerla, usa <strong>Exportar / Backup</strong> de forma periódica.</div>
+
+<h1 class="sec" id="arranque"><span class="num">2</span>Arranque, navegación y acceso a pantallas</h1>
+<h2>Abrir la aplicación</h2>
+<ol class="steps">
+<li>Abre Gráficas Mulberry desde el acceso directo de Windows o desde el menú Inicio.</li>
+<li>Espera a que aparezca el panel principal. La aplicación entra directamente al entorno de trabajo.</li>
+<li>Comprueba la versión visible en la interfaz: v10.5.0.</li>
+<li>Antes de trabajar por primera vez, entra en <strong>Configuración</strong> y revisa datos de empresa, preferencias y copias.</li>
+</ol>
+<h2>Acceder a un módulo</h2>
+<ol class="steps">
+<li>Localiza el menú lateral.</li>
+<li>Elige el grupo correspondiente: Clientes, Comercial, Almacén, Personal, Analítica o Sistema.</li>
+<li>Haz clic en el módulo deseado.</li>
+<li>Comprueba el título superior de la pantalla cargada.</li>
+<li>Trabaja en el área central o abre el módulo en ventana aparte si necesitas compararlo con otra pantalla.</li>
+</ol>
+<h2>Abrir un módulo en ventana aparte</h2>
+<ol class="steps">
+<li>Abre el menú contextual del botón del módulo.</li>
+<li>Selecciona <strong>Abrir en ventana aparte</strong>.</li>
+<li>La pantalla se abre en una ventana independiente.</li>
+<li>Usa esta opción para consultar datos sin abandonar la pantalla central.</li>
+<li>Si quieres volver al área principal, usa <strong>Abrir en área principal</strong>.</li>
+</ol>
+<table class="wide"><tbody>
+<tr><td>Área principal</td><td>Zona central donde se carga el módulo seleccionado.</td></tr>
+<tr><td>Ventana aparte</td><td>Ventana independiente para comparar o consultar otro módulo.</td></tr>
+<tr><td>Salir</td><td>Cierra la aplicación y libera servicios auxiliares.</td></tr>
+</tbody></table>
+
+<h1 class="sec" id="acciones-comunes"><span class="num">3</span>Acciones comunes en tablas, formularios y documentos</h1>
+<h2>Seleccionar y leer una tabla</h2>
+<ol class="steps">
+<li>Abre el módulo que contiene la tabla.</li>
+<li>Lee los encabezados de columnas para saber qué dato representa cada una.</li>
+<li>Usa <strong>Buscar</strong> para filtrar por texto visible.</li>
+<li>Haz clic sobre una fila para seleccionarla.</li>
+<li>Antes de pulsar Editar, Borrar, PDF o Exportar, confirma que la fila seleccionada es la correcta.</li>
+<li>Si no ves una columna, pulsa <strong>Columnas</strong> y comprueba si está oculta.</li>
+</ol>
+<h2>Crear registros</h2>
+<ol class="steps">
+<li>Pulsa <strong>Nuevo</strong> o <strong>Nueva</strong>.</li>
+<li>Rellena los campos obligatorios.</li>
+<li>Completa los campos recomendados para evitar documentos incompletos.</li>
+<li>Revisa fechas, importes, estado, cliente, empleado o material según el módulo.</li>
+<li>Pulsa <strong>Guardar</strong>.</li>
+<li>Comprueba que el registro aparece en la tabla.</li>
+</ol>
+<h2>Editar registros</h2>
+<ol class="steps">
+<li>Busca el registro.</li>
+<li>Selecciona la fila.</li>
+<li>Pulsa <strong>Editar</strong>.</li>
+<li>Modifica los campos necesarios.</li>
+<li>Guarda.</li>
+<li>Verifica el resultado en la tabla.</li>
+</ol>
+<h2>Borrar o anular</h2>
+<p>Cuando una pantalla no tiene botón específico de anulación, usa el estado del documento o una observación para dejar constancia. Borra solo registros erróneos, duplicados o de prueba.</p>
+<ol class="steps">
+<li>Selecciona el registro.</li>
+<li>Comprueba si está relacionado con documentos históricos.</li>
+<li>Si conviene conservar trazabilidad, cambia estado o añade nota de anulación.</li>
+<li>Si debe eliminarse, pulsa <strong>Borrar</strong> o <strong>Eliminar</strong>.</li>
+<li>Lee la confirmación.</li>
+<li>Confirma únicamente si estás seguro.</li>
+</ol>
+<h2>Previsualizar, imprimir y generar PDF</h2>
+<ol class="steps">
+<li>Selecciona el documento o informe.</li>
+<li>Pulsa <strong>PDF</strong>, <strong>Vista previa</strong>, <strong>Previsualizar</strong> o <strong>Exportar PDF</strong>.</li>
+<li>En la vista previa, usa Anterior, Siguiente, Zoom + y Zoom -.</li>
+<li>Revisa empresa, cliente, fecha, número, líneas, impuestos y totales.</li>
+<li>Si hay errores, vuelve al módulo, edita y genera de nuevo.</li>
+<li>Cuando esté correcto, pulsa <strong>Imprimir</strong>.</li>
+</ol>
+<h2>Importar y exportar</h2>
+<ol class="steps">
+<li>Para importar, entra en el módulo destino y pulsa <strong>Importar</strong>.</li>
+<li>Selecciona formato y archivo.</li>
+<li>Revisa mensajes y resumen.</li>
+<li>Comprueba la tabla tras importar.</li>
+<li>Para exportar, pulsa <strong>Exportar</strong>.</li>
+<li>Elige formato y destino si se solicita.</li>
+<li>Comprueba el archivo generado o el registro de exportación.</li>
+</ol>
+
+<h1 class="sec" id="dashboard"><span class="num">4</span>Panel principal</h1>
+<p>El panel principal es la pantalla de inicio operativo. Resume actividad, muestra recordatorios próximos y sirve como punto de orientación al abrir la aplicación.</p>
+<figure class="shot"><img src="capturas/01-panel-principal.png" alt="Captura del panel principal de Gráficas Mulberry"><figcaption>Panel principal con menú lateral, tarjetas de resumen y recordatorios próximos.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Pulsa <strong>Panel principal</strong> en el menú lateral.</li><li>Revisa tarjetas de resumen y recordatorios.</li><li>Si no aparecen recordatorios, revisa Calendario y preferencias de recordatorios en Configuración.</li></ol>
+<h2>Qué revisar</h2>
+<table class="wide"><tbody><tr><td>Resumen de actividad</td><td>Indicadores generales del estado de la aplicación y del trabajo registrado.</td></tr><tr><td>Próximos recordatorios</td><td>Eventos o notas del calendario en el período configurado.</td></tr><tr><td>Sin recordatorios</td><td>Indica que no hay avisos próximos o que el rango configurado no los incluye.</td></tr></tbody></table>
+
+<h1 class="sec" id="clientes"><span class="num">5</span>Clientes</h1>
+<p>Clientes centraliza personas y empresas usadas en presupuestos, pedidos, albaranes y facturas.</p>
+<figure class="shot"><img src="capturas/02-clientes.png" alt="Captura del módulo Clientes"><figcaption>Módulo Clientes con búsqueda, tabla principal y botones Nuevo, Editar, Borrar, Importar, Exportar, Previsualizar y Columnas.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>En el menú lateral, abre el grupo <strong>Clientes</strong>.</li><li>Pulsa <strong>Clientes</strong>.</li><li>La tabla muestra los clientes registrados.</li></ol>
+<h2>Tabla de clientes</h2>
+<table class="wide"><tbody><tr><td>Nombre y apellidos</td><td>Identificación principal del cliente.</td></tr><tr><td>Tipo</td><td>Persona, empresa u otra clasificación disponible.</td></tr><tr><td>NIF/CIF</td><td>Dato fiscal usado en documentos.</td></tr><tr><td>Teléfono / Email</td><td>Contacto operativo.</td></tr><tr><td>Ciudad, dirección y C.P.</td><td>Datos fiscales, de entrega o contacto.</td></tr><tr><td>Notas</td><td>Observaciones internas.</td></tr><tr><td>Creado</td><td>Fecha de alta.</td></tr><tr><td>Columnas dinámicas</td><td>Campos propios añadidos por el usuario o importados desde archivos.</td></tr></tbody></table>
+<h2>Crear un cliente</h2>
+<ol class="steps"><li>Pulsa <strong>Nuevo</strong>.</li><li>Rellena nombre o razón social.</li><li>Completa apellidos si procede.</li><li>Selecciona tipo de cliente.</li><li>Introduce NIF/CIF, teléfono, email, dirección, C.P. y ciudad.</li><li>Añade notas internas si necesitas recordar condiciones o preferencias.</li><li>Pulsa <strong>Guardar</strong>.</li><li>Comprueba que aparece en la tabla.</li></ol>
+<h2>Editar un cliente</h2>
+<ol class="steps"><li>Busca el cliente.</li><li>Selecciona su fila.</li><li>Pulsa <strong>Editar</strong>.</li><li>Actualiza los campos necesarios.</li><li>Guarda.</li><li>Revisa que los cambios aparecen en la tabla.</li></ol>
+<h2>Borrar o conservar historial</h2>
+<ol class="steps"><li>Selecciona el cliente.</li><li>Antes de borrar, comprueba si tiene documentos históricos.</li><li>Si tiene facturas, presupuestos o pedidos, conserva el registro y usa notas para indicar baja o no usar.</li><li>Si es un duplicado o error, pulsa <strong>Borrar</strong>.</li><li>Confirma solo si no afecta al historial.</li></ol>
+<h2>Importar clientes</h2>
+<ol class="steps"><li>Pulsa <strong>Importar</strong>.</li><li>Selecciona el formato indicado por la aplicación.</li><li>Elige el archivo.</li><li>Si el archivo contiene columnas nuevas, la aplicación puede crearlas.</li><li>Revisa el resumen de importación.</li><li>Comprueba la tabla y configura columnas si es necesario.</li></ol>
+<h2>Exportar clientes</h2>
+<ol class="steps"><li>Pulsa <strong>Exportar</strong>.</li><li>Selecciona formato.</li><li>Guarda el archivo.</li><li>Abre el archivo exportado para comprobar que contiene los datos esperados.</li></ol>
+<h2>Personalizar columnas en Clientes</h2>
+<ol class="steps"><li>Pulsa <strong>Columnas</strong>.</li><li>Usa Añadir para crear campos propios.</li><li>Usa Renombrar para cambiar etiquetas.</li><li>Usa Ocultar o Mostrar para controlar la tabla.</li><li>Vuelve a la tabla y rellena valores si la columna es editable.</li></ol>
+
+<h1 class="sec" id="presupuestos"><span class="num">6</span>Presupuestos</h1>
+<p>Presupuestos permite crear ofertas detalladas para clientes, con datos generales, servicios/técnicas, materiales de stock, totales y documento PDF.</p>
+<figure class="shot"><img src="capturas/03-presupuestos.png" alt="Captura del módulo Presupuestos"><figcaption>Módulo Presupuestos con listado, acciones de documento y acceso a datos generales, servicios/técnicas y materiales.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre el grupo <strong>Comercial</strong>.</li><li>Pulsa <strong>Presupuestos</strong>.</li><li>Revisa la tabla de presupuestos registrados.</li></ol>
+<h2>Pestañas y tablas</h2>
+<table class="wide"><tbody><tr><td>Datos generales</td><td>Cliente, número, fecha, estado, condiciones y observaciones.</td></tr><tr><td>Servicios / Técnicas</td><td>Líneas de trabajo con descripción, técnica, cantidad, precio unitario, descuento y total.</td></tr><tr><td>Materiales del stock</td><td>Selector de material, disponibilidad, precio, cantidad, botón Añadir al presupuesto y total de materiales.</td></tr></tbody></table>
+<h2>Crear un presupuesto</h2>
+<ol class="steps"><li>Pulsa <strong>Nuevo</strong>.</li><li>En Datos generales, selecciona cliente.</li><li>Revisa fecha, número y estado.</li><li>Añade condiciones u observaciones.</li><li>En Servicios / Técnicas, introduce cada trabajo: descripción, técnica, cantidad, precio y descuento.</li><li>En Materiales del stock, selecciona material, revisa disponibilidad, indica cantidad y pulsa <strong>Añadir al presupuesto</strong>.</li><li>Comprueba total de servicios, materiales, impuestos y total final.</li><li>Guarda.</li></ol>
+<h2>Editar un presupuesto</h2>
+<ol class="steps"><li>Busca el presupuesto.</li><li>Selecciona la fila.</li><li>Pulsa <strong>Editar</strong>.</li><li>Modifica datos generales, líneas o materiales.</li><li>Revisa totales después de cualquier cambio.</li><li>Guarda.</li><li>Vuelve a generar PDF si ya habías entregado una versión anterior.</li></ol>
+<h2>Anular o borrar un presupuesto</h2>
+<ol class="steps"><li>Selecciona el presupuesto.</li><li>Si se envió al cliente, cambia estado o añade observación de anulación en lugar de borrarlo.</li><li>Si es prueba o duplicado, usa <strong>Borrar</strong>.</li><li>Confirma la eliminación solo si no necesitas historial.</li></ol>
+<h2>Previsualizar, imprimir o entregar</h2>
+<ol class="steps"><li>Selecciona el presupuesto.</li><li>Pulsa <strong>PDF</strong> o <strong>Vista previa</strong>.</li><li>Revisa cliente, fecha, líneas, materiales, IVA y total.</li><li>Usa zoom si necesitas ver detalle.</li><li>Imprime o guarda el documento desde la vista previa.</li></ol>
+<h2>Importar y exportar presupuestos</h2>
+<ol class="steps"><li>Para importar, pulsa <strong>Importar</strong>, selecciona archivo y confirma. Los presupuestos importados se añaden o actualizan.</li><li>Para exportar, pulsa <strong>Exportar</strong>, elige formato y guarda.</li><li>Revisa siempre el resultado en la tabla.</li></ol>
+
+<h1 class="sec" id="facturas"><span class="num">7</span>Facturas</h1>
+<p>Facturas genera documentos de venta con datos de cliente, líneas de servicios, materiales de stock, impuestos, totales y PDF imprimible.</p>
+<figure class="shot"><img src="capturas/04-facturas.png" alt="Captura del módulo Facturas"><figcaption>Módulo Facturas con tabla de facturas, acciones de edición, importación, exportación y generación de PDF.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>En Comercial, pulsa <strong>Facturas</strong>.</li><li>Revisa el listado.</li><li>Usa Buscar para localizar facturas por cliente, número o dato visible.</li></ol>
+<h2>Pestañas</h2>
+<table class="wide"><tbody><tr><td>Datos generales</td><td>Número, serie, cliente, fecha, vencimiento, estado de cobro y observaciones.</td></tr><tr><td>Servicios / Técnicas</td><td>Trabajos facturados con cantidad, precio, descuento e impuestos.</td></tr><tr><td>Materiales del stock</td><td>Materiales añadidos a la factura y total de materiales.</td></tr></tbody></table>
+<h2>Crear factura</h2>
+<ol class="steps"><li>Pulsa <strong>Nueva factura</strong> o <strong>Nuevo</strong>.</li><li>Selecciona cliente.</li><li>Revisa número, serie y fecha.</li><li>Añade servicios en Servicios / Técnicas.</li><li>Si corresponde, añade materiales desde Materiales del stock con <strong>Añadir a la factura</strong>.</li><li>Comprueba base imponible, descuentos, impuestos y total.</li><li>Guarda.</li></ol>
+<h2>Editar factura</h2>
+<ol class="steps"><li>Selecciona la factura.</li><li>Pulsa <strong>Editar factura</strong> o <strong>Editar</strong>.</li><li>Modifica cabecera, servicios o materiales.</li><li>Revisa total e impuestos.</li><li>Guarda.</li><li>Genera de nuevo el PDF si el documento ya estaba emitido.</li></ol>
+<h2>Anular o borrar factura</h2>
+<p>Las facturas deben conservar trazabilidad. Si la factura tiene validez fiscal o ya se entregó, no la borres sin criterio administrativo. Usa observaciones, estado o corrección documental según proceda.</p>
+<ol class="steps"><li>Selecciona la factura.</li><li>Revisa si fue entregada o cobrada.</li><li>Si debe conservarse, cambia estado o añade observación de anulación.</li><li>Si es prueba, pulsa Borrar y confirma.</li></ol>
+<h2>Previsualizar e imprimir factura</h2>
+<ol class="steps"><li>Selecciona factura.</li><li>Pulsa <strong>PDF</strong> o <strong>Vista previa</strong>.</li><li>Comprueba datos de empresa, cliente, NIF/CIF, número, fecha, líneas, IVA y total.</li><li>Pulsa <strong>Imprimir</strong> si todo es correcto.</li></ol>
+<h2>Importar y exportar facturas</h2>
+<ol class="steps"><li>Pulsa <strong>Importar</strong> para añadir o actualizar facturas desde archivo.</li><li>Revisa el resumen y la tabla.</li><li>Pulsa <strong>Exportar</strong> para guardar facturas en formato disponible.</li></ol>
+
+<h1 class="sec" id="albaranes"><span class="num">8</span>Albaranes</h1>
+<p>Albaranes documenta entregas de trabajos, artículos o materiales al cliente.</p>
+<figure class="shot"><img src="capturas/05-albaranes.png" alt="Captura del módulo Albaranes"><figcaption>Módulo Albaranes con listado de entregas y acciones para crear, editar, importar, exportar y generar documento.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>En Comercial, pulsa <strong>Albaranes</strong>.</li><li>Consulta la tabla.</li><li>Selecciona una fila para editar, borrar, exportar o generar documento.</li></ol>
+<h2>Crear albarán</h2>
+<ol class="steps"><li>Pulsa <strong>Nuevo</strong>.</li><li>En Datos generales, selecciona cliente, fecha, número, dirección y observaciones.</li><li>En Artículos, añade líneas entregadas con descripción y cantidad.</li><li>Si usas materiales, revisa disponibilidad.</li><li>Guarda.</li></ol>
+<h2>Editar, anular o borrar</h2>
+<ol class="steps"><li>Selecciona el albarán.</li><li>Pulsa Editar para modificar cabecera o artículos.</li><li>Si la entrega se cancela, deja observación o estado si existe.</li><li>Borra solo albaranes de prueba o erróneos.</li></ol>
+<h2>Imprimir o exportar</h2>
+<ol class="steps"><li>Selecciona el albarán.</li><li>Pulsa PDF o vista previa.</li><li>Revisa cliente, artículos y cantidades.</li><li>Imprime o guarda.</li><li>Para listado externo, pulsa Exportar.</li></ol>
+<h2>Importar</h2>
+<ol class="steps"><li>Pulsa Importar.</li><li>Selecciona archivo.</li><li>Confirma. Los albaranes importados se añaden o actualizan.</li><li>Revisa el resultado en la tabla.</li></ol>
+
+<h1 class="sec" id="pedidos"><span class="num">9</span>Pedidos y control de pagos</h1>
+<p>Pedidos permite controlar trabajos aceptados, estados, importes, entregas y pagos vinculados.</p>
+<figure class="shot"><img src="capturas/06-pedidos-pagos.png" alt="Captura del módulo Pedidos y control de pagos"><figcaption>Módulo Pedidos con pestañas para el listado de pedidos y el control de pagos asociados.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>En Comercial, pulsa <strong>Pedidos</strong>.</li><li>Usa la pestaña Pedidos para gestionar trabajos.</li><li>Usa Control de pagos para cobros y vencimientos.</li></ol>
+<h2>Crear pedido</h2>
+<ol class="steps"><li>Pulsa Nuevo.</li><li>Selecciona cliente.</li><li>Rellena número, fecha, entrega, descripción, estado, total y observaciones.</li><li>Guarda.</li><li>Comprueba que aparece en la tabla.</li></ol>
+<h2>Editar pedido</h2>
+<ol class="steps"><li>Busca y selecciona el pedido.</li><li>Pulsa Editar.</li><li>Actualiza estado, fecha de entrega, total u observaciones.</li><li>Guarda.</li></ol>
+<h2>Anular o borrar pedido</h2>
+<ol class="steps"><li>Selecciona el pedido.</li><li>Si se canceló, cambia estado o añade observación.</li><li>Si nunca fue real, usa Borrar.</li><li>Antes de borrar, comprueba si tiene pagos asociados.</li></ol>
+<h2>Añadir pago</h2>
+<ol class="steps"><li>Selecciona el pedido.</li><li>Abre la pestaña <strong>Control de pagos</strong>.</li><li>Pulsa <strong>Añadir pago</strong>.</li><li>Introduce importe, fecha, método y observaciones.</li><li>Guarda.</li><li>Comprueba pagado y pendiente.</li></ol>
+<h2>Fraccionar y confirmar cobro</h2>
+<ol class="steps"><li>Usa <strong>Fraccionar pago</strong> si el cliente pagará en varios vencimientos.</li><li>Cuando recibas dinero, selecciona el pago.</li><li>Pulsa <strong>Confirmar cobro</strong>.</li><li>Indica la fecha en que se recibió.</li><li>Revisa que el pago pasa a cobrado.</li></ol>
+<h2>Importar y exportar pedidos</h2>
+<ol class="steps"><li>Pulsa Importar para cargar pedidos desde archivo.</li><li>Pulsa Exportar para sacar listados.</li><li>Revisa pagos y estados tras cualquier importación.</li></ol>
+
+<h1 class="sec" id="tarifas"><span class="num">10</span>Tarifas</h1>
+<p>Tarifas guarda precios por técnica de impresión, servicio, categoría o unidad de trabajo.</p>
+<figure class="shot"><img src="capturas/07-tarifas.png" alt="Captura del módulo Tarifas"><figcaption>Módulo Tarifas con precios por técnica de impresión y acciones de mantenimiento de tarifas.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre Almacén.</li><li>Pulsa Tarifas.</li><li>Revisa precios por técnica.</li></ol>
+<h2>Crear tarifa</h2>
+<ol class="steps"><li>Pulsa Nuevo.</li><li>Introduce técnica o servicio.</li><li>Añade descripción, precio, unidad, categoría y observaciones.</li><li>Guarda.</li></ol>
+<h2>Editar, borrar, importar y exportar</h2>
+<ol class="steps"><li>Para editar, selecciona tarifa y pulsa Editar.</li><li>Actualiza precio o descripción y guarda.</li><li>Para borrar, selecciona y confirma solo si ya no se usa.</li><li>Para importar, pulsa Importar y selecciona archivo.</li><li>Para exportar, pulsa Exportar y guarda listado.</li></ol>
+
+<h1 class="sec" id="materiales"><span class="num">11</span>Materiales</h1>
+<p>Materiales controla stock, proveedores, pagos de compra y reglas de consumo por técnica.</p>
+<figure class="shot"><img src="capturas/08-materiales.png" alt="Captura del módulo Materiales"><figcaption>Módulo Materiales con pestañas de stock, pagos y consumo por técnica.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre Almacén.</li><li>Pulsa Materiales.</li><li>Elige Stock, Pagos o Consumo por técnica.</li></ol>
+<h2>Gestionar stock</h2>
+<ol class="steps"><li>En la pestaña Stock, pulsa Nuevo para crear material.</li><li>Rellena nombre, referencia, proveedor, unidad, precio, stock actual y stock mínimo.</li><li>Guarda.</li><li>Activa <strong>Solo materiales con stock bajo</strong> para revisar compras necesarias.</li></ol>
+<h2>Editar o borrar material</h2>
+<ol class="steps"><li>Selecciona material.</li><li>Pulsa Editar para corregir stock, proveedor, precio o mínimo.</li><li>Guarda.</li><li>Borra solo si no forma parte del historial de facturas o consumos.</li></ol>
+<h2>Registrar pagos de materiales</h2>
+<ol class="steps"><li>Abre la pestaña Pagos.</li><li>Añade un pago.</li><li>Indica proveedor, importe, fecha y notas.</li><li>Guarda.</li><li>Revisa la tabla de pagos.</li></ol>
+<h2>Configurar consumo por técnica</h2>
+<ol class="steps"><li>Abre Consumo por técnica.</li><li>Selecciona técnica y material.</li><li>Define cuánto se consume por unidad.</li><li>Guarda la regla.</li><li>Comprueba estas reglas antes de facturar, porque pueden afectar al stock.</li></ol>
+<h2>Importar y exportar materiales</h2>
+<ol class="steps"><li>Pulsa Importar para cargar inventario.</li><li>Revisa columnas y stock.</li><li>Pulsa Exportar para guardar listado.</li></ol>
+
+<h1 class="sec" id="empleados"><span class="num">12</span>Empleados</h1>
+<p>Empleados almacena datos del personal y sirve de base para nóminas.</p>
+<figure class="shot"><img src="capturas/09-empleados.png" alt="Captura del módulo Empleados"><figcaption>Módulo Empleados con tabla de personal, estado activo y filtro para empleados dados de baja.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre Personal.</li><li>Pulsa Empleados.</li><li>Usa Buscar o el filtro de empleados dados de baja.</li></ol>
+<h2>Crear empleado</h2>
+<ol class="steps"><li>Pulsa Nuevo.</li><li>Rellena nombre, apellidos, documento, teléfono, email, puesto, salario, fecha de alta y observaciones.</li><li>Marca Activo si corresponde.</li><li>Guarda.</li></ol>
+<h2>Editar o dar de baja</h2>
+<ol class="steps"><li>Selecciona empleado.</li><li>Pulsa Editar.</li><li>Actualiza datos laborales o contacto.</li><li>Para baja, desmarca Activo o registra observación.</li><li>Activa Mostrar empleados dados de baja para verlos de nuevo.</li></ol>
+<h2>Borrar, importar y exportar</h2>
+<ol class="steps"><li>Borra solo empleados creados por error.</li><li>Importa empleados desde archivo si tienes listado externo.</li><li>Exporta para revisión o copia administrativa.</li></ol>
+
+<h1 class="sec" id="nominas"><span class="num">13</span>Nóminas</h1>
+<p>Nóminas permite registrar y calcular documentos laborales según parámetros salariales.</p>
+<figure class="shot"><img src="capturas/10-nominas.png" alt="Captura del módulo Nóminas"><figcaption>Módulo Nóminas con filtros de año/mes y campos salariales para el cálculo.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre Personal.</li><li>Pulsa Nóminas.</li><li>Filtra por año y mes si necesitas un período concreto.</li></ol>
+<h2>Crear nómina</h2>
+<ol class="steps"><li>Comprueba antes que el empleado existe en Empleados.</li><li>Pulsa Nueva.</li><li>Selecciona año, mes y empleado.</li><li>Introduce salario base, precio/hora, horas extra normales, horas extra festivas, complementos, no salarial e IRPF.</li><li>Revisa cálculos.</li><li>Guarda.</li></ol>
+<h2>Editar, borrar e imprimir</h2>
+<ol class="steps"><li>Selecciona nómina.</li><li>Pulsa Editar para corregir importes o período.</li><li>Borra solo nóminas erróneas o duplicadas.</li><li>Pulsa PDF o vista previa para generar documento.</li><li>Revisa antes de imprimir.</li></ol>
+<h2>Importar y exportar</h2>
+<ol class="steps"><li>Usa Importar para cargar nóminas desde formato admitido.</li><li>Usa Exportar para guardar listados o documentación.</li></ol>
+
+<h1 class="sec" id="estadisticas"><span class="num">14</span>Estadísticas y análisis</h1>
+<p>Estadísticas muestra análisis visual de ingresos, gastos, materiales, clientes y producción.</p>
+<figure class="shot"><img src="capturas/11-estadisticas.png" alt="Captura del módulo Estadísticas"><figcaption>Módulo Estadísticas con selector de año, previsualización y exportación PDF.</figcaption></figure>
+<h2>Acceder y consultar</h2>
+<ol class="steps"><li>Abre Analítica.</li><li>Pulsa Estadísticas.</li><li>Selecciona el año.</li><li>Revisa tarjetas, gráficos y datos agregados.</li></ol>
+<h2>Previsualizar y exportar PDF</h2>
+<ol class="steps"><li>Pulsa Previsualizar para revisar el informe.</li><li>Comprueba que el año y datos son correctos.</li><li>Pulsa Exportar PDF para guardar informe.</li><li>Abre el PDF generado si necesitas verificarlo.</li></ol>
+
+<h1 class="sec" id="calendario"><span class="num">15</span>Calendario</h1>
+<p>Calendario permite organizar notas y recordatorios.</p>
+<figure class="shot"><img src="capturas/12-calendario.png" alt="Captura del módulo Calendario"><figcaption>Módulo Calendario con navegación mensual, botón Hoy y notas guardadas.</figcaption></figure>
+<h2>Acceder y moverse</h2>
+<ol class="steps"><li>Abre Analítica.</li><li>Pulsa Calendario.</li><li>Usa las flechas para cambiar de mes.</li><li>Pulsa Hoy para volver a la fecha actual.</li></ol>
+<h2>Crear y borrar notas</h2>
+<ol class="steps"><li>Selecciona un día.</li><li>Escribe la nota o recordatorio.</li><li>Guarda.</li><li>Revisa la zona Notas guardadas.</li><li>Para eliminar, usa el botón de cierre o eliminación de la nota.</li></ol>
+<h2>Ver recordatorios en el panel</h2>
+<ol class="steps"><li>Configura antelación de recordatorios en Configuración.</li><li>Vuelve al Panel principal.</li><li>Comprueba Próximos recordatorios.</li></ol>
+
+<h1 class="sec" id="ia"><span class="num">16</span>Asistente IA</h1>
+<p>El Asistente IA permite consultar dudas, redactar textos y apoyarse en contexto de la aplicación mediante Ollama.</p>
+<figure class="shot"><img src="capturas/13-asistente-ia.png" alt="Captura del Asistente IA"><figcaption>Asistente IA con opción de instalar Ollama e incluir contexto del ERP.</figcaption></figure>
+<h2>Acceder</h2>
+<ol class="steps"><li>Abre Sistema.</li><li>Pulsa Asistente IA.</li><li>Comprueba si Ollama está disponible.</li></ol>
+<h2>Usar el chat</h2>
+<ol class="steps"><li>Escribe tu consulta.</li><li>Marca Incluir contexto del ERP si la pregunta está relacionada con la aplicación.</li><li>Envía.</li><li>Lee la respuesta y verifica datos importantes antes de aplicarlos.</li></ol>
+<h2>Cuando no responde</h2>
+<ol class="steps"><li>Comprueba Ollama.</li><li>Instala Ollama si falta.</li><li>Revisa que haya un modelo disponible.</li><li>Reinicia el servicio si fuese necesario.</li></ol>
+
+<h1 class="sec" id="ollama"><span class="num">17</span>Ollama y gestión de modelos</h1>
+<figure class="shot"><img src="capturas/19-ollama-instalador.png" alt="Captura del instalador de Ollama"><figcaption>Instalador interno de Ollama con pasos de preparación, descarga, instalación y modelo, incluyendo el asistente visual reducido.</figcaption></figure>
+<h2>Instalar Ollama</h2>
+<ol class="steps"><li>Desde Asistente IA, pulsa Instalar Ollama.</li><li>En el diálogo, pulsa Instalar Ollama.</li><li>Deja marcada la opción de asistente visual si quieres acompañamiento.</li><li>Observa el registro de progreso.</li><li>Cierra cuando finalice.</li></ol>
+<h2>Gestionar modelos</h2>
+<figure class="shot"><img src="capturas/20-modelos-ia.png" alt="Captura de la gestión de modelos IA"><figcaption>Gestión de modelos IA: modelos instalados, modelos sugeridos, descarga, eliminación y descripción de uso.</figcaption></figure>
+<ol class="steps"><li>Abre Gestión de modelos.</li><li>Consulta modelos instalados.</li><li>Para descargar, marca modelos sugeridos o escribe nombre.</li><li>Pulsa Descargar o Descargar seleccionados.</li><li>Para liberar espacio, selecciona un modelo instalado y pulsa Eliminar.</li></ol>
+
+<h1 class="sec" id="configuracion"><span class="num">18</span>Configuración</h1>
+<p>Configuración controla apariencia, empresa, preferencias, música e información del sistema.</p>
+<figure class="shot"><img src="capturas/14-configuracion.png" alt="Captura del módulo Configuración"><figcaption>Configuración general con pestañas de apariencia, empresa, preferencias, música y acerca de.</figcaption></figure>
+<h2>Apariencia</h2>
+<ol class="steps"><li>Abre Configuración.</li><li>En Apariencia, elige tema de color.</li><li>Activa modo oscuro si lo necesitas.</li><li>Selecciona fuente y tamaño.</li><li>Pulsa Aplicar tipografía.</li><li>Pulsa Guardar cambios.</li></ol>
+<h2>Mi empresa</h2>
+<ol class="steps"><li>Abre la pestaña Mi empresa.</li><li>Rellena razón social, NIF, dirección, teléfono, email, web e IBAN.</li><li>Añade logo o textos si la pantalla lo permite.</li><li>Guarda.</li><li>Genera un documento de prueba para comprobar cabecera y pie.</li></ol>
+<h2>Preferencias</h2>
+<ol class="steps"><li>Abre Preferencias.</li><li>Ajusta valores por defecto de facturación y presupuestos.</li><li>Ajusta recordatorios del calendario.</li><li>Pulsa los botones de guardar preferencias correspondientes.</li></ol>
+<h2>Acerca de</h2>
+<ol class="steps"><li>Abre Acerca de.</li><li>Consulta versión 10.5.0, sistema e información de soporte.</li></ol>
+
+<h1 class="sec" id="asistente-visual"><span class="num">19</span>Asistente visual</h1>
+<p>El asistente visual muestra personajes, ayudas, animaciones y voz opcional.</p>
+<figure class="shot"><img src="capturas/15-asistente-visual.png" alt="Captura de configuración del asistente visual"><figcaption>Configuración del asistente visual: visibilidad, voz, tamaño, posición y modo instalador.</figcaption></figure>
+<h2>Configurar</h2>
+<ol class="steps"><li>Abre Configuración asistente visual.</li><li>Marca Mostrar asistente visual.</li><li>Selecciona personaje.</li><li>Ajusta tamaño.</li><li>Marca Leer ayudas por voz si quieres audio.</li><li>Marca Mostrar en instalación de Ollama y modelos si quieres verlo dentro del instalador.</li><li>Pulsa Restablecer posición si queda mal colocado.</li></ol>
+<h2>Usar</h2>
+<ol class="steps"><li>Mantén visible el asistente durante el trabajo.</li><li>Pasa por controles para recibir ayuda contextual.</li><li>Usa el botón del menú lateral para activarlo o desactivarlo.</li></ol>
+
+<h1 class="sec" id="musica"><span class="num">20</span>Reproductor de música</h1>
+<h2>Crear lista de reproducción</h2>
+<ol class="steps"><li>Abre Configuración.</li><li>Entra en Música.</li><li>Pulsa + Añadir MP3.</li><li>Selecciona uno o varios archivos.</li><li>Haz doble clic en una pista para reproducirla.</li></ol>
+<h2>Controlar reproducción</h2>
+<ol class="steps"><li>Ajusta volumen.</li><li>Marca Repetir lista en bucle si quieres reproducción continua.</li><li>Marca Reproducir automáticamente al iniciar la aplicación si lo deseas.</li><li>Para quitar una pista, selecciónala y pulsa Quitar seleccionado.</li><li>Pulsa Guardar configuración de música.</li></ol>
+
+<h1 class="sec" id="exportar"><span class="num">21</span>Exportar / Backup</h1>
+<figure class="shot"><img src="capturas/16-exportar-backup.png" alt="Captura del módulo Exportar y Backup"><figcaption>Exportar / Backup muestra la base de datos activa, registros principales y registro de exportaciones.</figcaption></figure>
+<h2>Crear copia completa</h2>
+<ol class="steps"><li>Abre Sistema.</li><li>Pulsa Exportar / Backup.</li><li>Revisa base de datos activa, tamaño y registros principales.</li><li>Pulsa Exportar.</li><li>Elige formato si se solicita: SQLite, ZIP CSV, SQL o JSON.</li><li>Guarda el archivo.</li><li>Revisa el registro de exportación.</li><li>Pulsa Abrir carpeta si quieres localizar la copia.</li></ol>
+<h2>Cuándo hacer backup</h2>
+<table class="wide"><tbody><tr><td>Antes de actualizar</td><td>Crea una copia completa.</td></tr><tr><td>Antes de importar</td><td>Haz backup para poder volver atrás.</td></tr><tr><td>Trabajo diario</td><td>Haz copia periódica si la aplicación contiene datos importantes.</td></tr></tbody></table>
+
+<h1 class="sec" id="importar-backup"><span class="num">22</span>Importar Backup</h1>
+<figure class="shot"><img src="capturas/17-importar-backup.png" alt="Captura del módulo Importar Backup"><figcaption>Importar Backup muestra la base actual y advierte que la restauración reemplaza los datos actuales.</figcaption></figure>
+<h2>Restaurar copia</h2>
+<ol class="steps"><li>Antes de restaurar, crea backup del estado actual.</li><li>Abre Importar Backup.</li><li>Revisa base actual, tamaño y registros.</li><li>Pulsa Importar.</li><li>Selecciona archivo de backup.</li><li>Lee la advertencia de sustitución de datos.</li><li>Confirma solo si el archivo es correcto.</li><li>Revisa el registro de importación.</li><li>Abre módulos clave para comprobar datos restaurados.</li></ol>
+<div class="call bad"><strong>Precaución.</strong><br>Importar un backup puede reemplazar los datos actuales. No lo hagas sin copia previa.</div>
+
+<h1 class="sec" id="importar-ia"><span class="num">23</span>Importación de datos con IA</h1>
+<figure class="shot"><img src="capturas/18-importacion-ia.png" alt="Captura del módulo Importación de datos con IA"><figcaption>Importación con IA guía la selección de archivo, detección de tipo, mapeo, vista previa e importación.</figcaption></figure>
+<h2>Importar archivo con ayuda de IA</h2>
+<ol class="steps"><li>Abre Importación de datos con IA.</li><li>Selecciona archivo CSV, TXT, Excel o JSON.</li><li>Revisa columnas encontradas.</li><li>Pulsa Detectar tipo de datos o elige manualmente clientes, materiales, empleados o tarifas.</li><li>Si Ollama está disponible, deja que sugiera mapeo.</li><li>En Revisión y ajuste, compara columna del archivo y campo destino.</li><li>Corrige asignaciones incorrectas.</li><li>Revisa vista previa.</li><li>Confirma importación.</li><li>Consulta el registro.</li></ol>
+<h2>Qué revisar antes de confirmar</h2>
+<table class="wide"><tbody><tr><td>Clientes</td><td>Nombre, NIF/CIF, email, teléfono, dirección.</td></tr><tr><td>Materiales</td><td>Nombre, stock, unidad, proveedor, precio.</td></tr><tr><td>Empleados</td><td>Nombre, apellidos, puesto, salario, activo.</td></tr><tr><td>Tarifas</td><td>Técnica, descripción, precio, unidad y categoría.</td></tr></tbody></table>
+
+<h1 class="sec" id="columnas"><span class="num">24</span>Columnas dinámicas</h1>
+<h2>Añadir columna</h2>
+<ol class="steps"><li>Abre un módulo con botón Columnas.</li><li>Pulsa Columnas.</li><li>Pulsa + Añadir.</li><li>Escribe nombre claro.</li><li>Guarda.</li><li>Vuelve a la tabla y rellena valores si procede.</li></ol>
+<h2>Renombrar, ocultar y mostrar</h2>
+<ol class="steps"><li>Selecciona la columna.</li><li>Pulsa Renombrar para cambiar etiqueta.</li><li>Pulsa Ocultar para retirarla de la vista.</li><li>Pulsa Mostrar para recuperarla.</li><li>Ten en cuenta que ocultar no equivale necesariamente a borrar datos.</li></ol>
+
+<h1 class="sec" id="pdf"><span class="num">25</span>Vista previa PDF</h1>
+<h2>Usar la ventana</h2>
+<ol class="steps"><li>Abre un documento desde Presupuestos, Facturas, Albaranes, Nóminas o Estadísticas.</li><li>Usa Anterior y Siguiente para cambiar página.</li><li>Usa Zoom + y Zoom - para revisar detalles.</li><li>Comprueba página actual y total.</li><li>Pulsa Imprimir si el documento está correcto.</li></ol>
+
+<h1 class="sec" id="problemas"><span class="num">26</span>Problemas frecuentes</h1>
+<table><thead><tr><th>Situación</th><th>Acción recomendada</th></tr></thead><tbody>
+<tr><td>No veo un registro</td><td>Limpia filtros, revisa Buscar y comprueba que estás en el módulo correcto.</td></tr>
+<tr><td>No puedo editar</td><td>Selecciona una fila antes de pulsar Editar.</td></tr>
+<tr><td>No sé si borrar</td><td>No borres si tiene historial; usa estado o notas.</td></tr>
+<tr><td>PDF con datos antiguos</td><td>Actualiza Configuración → Mi empresa y genera de nuevo.</td></tr>
+<tr><td>Importación incorrecta</td><td>Restaura backup previo o corrige mapeo e importa de nuevo.</td></tr>
+<tr><td>Ollama no responde</td><td>Instala Ollama, revisa modelos o reinicia el servicio.</td></tr>
+<tr><td>No aparece una columna</td><td>Abre Columnas y usa Mostrar.</td></tr>
+<tr><td>Stock bajo inesperado</td><td>Revisa stock mínimo, consumo por técnica y facturas recientes.</td></tr>
+<tr><td>No suena música</td><td>Revisa volumen, ruta de MP3 y configuración guardada.</td></tr>
+</tbody></table>
+<div class="foot">Manual completo de usuario · Gráficas Mulberry v10.5 · HTML interactivo</div>
+</main></div>
+<script>
+const links=[...document.querySelectorAll('.toc a')],secs=[...document.querySelectorAll('h1.sec')];function act(){let c=secs[0],y=scrollY+85;for(const s of secs){if(s.offsetTop<=y)c=s}links.forEach(a=>a.classList.toggle('active',a.getAttribute('href')==='#'+c.id))}addEventListener('scroll',act,{passive:true});act();const q=document.getElementById('q');q.addEventListener('input',()=>{const v=q.value.toLowerCase().trim();links.forEach(a=>a.style.display=!v||a.textContent.toLowerCase().includes(v)?'':'none')});document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='k'){e.preventDefault();q.focus();q.select()}});
+</script>
+</body>
+</html>
