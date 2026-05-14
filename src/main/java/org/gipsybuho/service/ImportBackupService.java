@@ -9,6 +9,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.sql.*;
 import java.util.*;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -22,17 +23,24 @@ public class ImportBackupService {
         "pedidos", "pagos_pedido", "nominas", "notas_calendario",
         "albaranes", "lineas_albaran"
     };
+    private static final Set<String> TABLAS_PERMITIDAS =
+        Collections.unmodifiableSet(new HashSet<>(Arrays.asList(TABLAS_ORDEN)));
+    private static final Pattern IDENTIFICADOR_SQL = Pattern.compile("[\\p{L}_][\\p{L}\\p{N}_]*");
 
     // ─── 1. RESTAURAR DESDE .db ───────────────────────────────────────────────
 
     public static void restaurarSQLite(Path origen) throws Exception {
         Connection conn = DatabaseManager.getConnection();
-        String backupPath = origen.toAbsolutePath().toString().replace("'", "''");
+        Path backup = origen.toAbsolutePath().normalize();
+        if (!Files.isRegularFile(backup)) {
+            throw new FileNotFoundException("No existe el archivo de backup: " + backup);
+        }
         desactivarFK(conn);
         conn.setAutoCommit(false);
         try {
-            try (Statement st = conn.createStatement()) {
-                st.execute("ATTACH DATABASE '" + backupPath + "' AS backup_db");
+            try (PreparedStatement ps = conn.prepareStatement("ATTACH DATABASE ? AS backup_db")) {
+                ps.setString(1, backup.toString());
+                ps.execute();
             }
             try {
                 for (String tabla : TABLAS_ORDEN) {
@@ -43,10 +51,11 @@ public class ImportBackupService {
                     List<String> cols = new ArrayList<>(colsMain);
                     cols.retainAll(new HashSet<>(colsBackup));
                     if (cols.isEmpty()) continue;
-                    String colList = cols.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(", "));
+                    String colList = cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", "));
+                    String tablaSql = quoteIdentifier(tabla);
                     try (Statement st = conn.createStatement()) {
-                        st.execute("INSERT OR REPLACE INTO \"" + tabla + "\" (" + colList + ") " +
-                                   "SELECT " + colList + " FROM backup_db.\"" + tabla + "\"");
+                        st.execute("INSERT OR REPLACE INTO " + tablaSql + " (" + colList + ") " +
+                                   "SELECT " + colList + " FROM backup_db." + tablaSql);
                     }
                 }
                 conn.commit();
@@ -110,22 +119,14 @@ public class ImportBackupService {
         Connection conn  = DatabaseManager.getConnection();
 
         try (Statement st = conn.createStatement()) {
-            StringBuilder buffer    = new StringBuilder();
-            boolean       inStatement = false;
-
-            for (String linea : contenido.split("\n")) {
-                String trimmed = linea.trim();
-                if (!inStatement && (trimmed.startsWith("--") || trimmed.isEmpty())) continue;
-
-                buffer.append(linea).append("\n");
-                inStatement = true;
-
-                if (trimmed.endsWith(";")) {
-                    String stmt = buffer.toString().trim();
-                    if (stmt.endsWith(";")) stmt = stmt.substring(0, stmt.length() - 1).trim();
-                    if (!stmt.isEmpty() && !esDestructivo(stmt)) st.execute(stmt);
-                    buffer.setLength(0);
-                    inStatement = false;
+            for (String stmt : dividirSentenciasSql(contenido)) {
+                if (!stmt.isBlank()) {
+                    if (esStatementSeguro(stmt)) {
+                        st.execute(stmt);
+                    } else {
+                        String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                        System.err.println("[Backup .sql] Sentencia rechazada por filtro de seguridad: " + resumen);
+                    }
                 }
             }
         } catch (Exception e) {
@@ -171,11 +172,12 @@ public class ImportBackupService {
 
         List<String> cols = new ArrayList<>();
         arr.get(0).fieldNames().forEachRemaining(cols::add);
+        cols = filtrarColumnasExistentes(conn, tabla, cols);
         if (cols.isEmpty()) return;
 
-        String colNames     = String.join(", ", cols);
+        String colNames     = cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", "));
         String placeholders = String.join(", ", Collections.nCopies(cols.size(), "?"));
-        String sql = "INSERT OR REPLACE INTO " + tabla + " (" + colNames + ") VALUES (" + placeholders + ")";
+        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" + colNames + ") VALUES (" + placeholders + ")";
 
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             for (JsonNode fila : arr) {
@@ -359,12 +361,13 @@ public class ImportBackupService {
 
     private static int importarFilasEnTabla(Connection conn, String tabla, List<String[]> filas) throws Exception {
         if (filas.size() < 2) return 0;
+        validarTablaPermitida(tabla);
 
         // Leer restricciones NOT NULL y defaults declarados en el esquema
         Map<String, Boolean> notNullCols = new LinkedHashMap<>();
         Map<String, String>  schemaDflt  = new LinkedHashMap<>();
         try (ResultSet rs = conn.createStatement()
-                .executeQuery("PRAGMA table_info(\"" + tabla + "\")")) {
+                .executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
             while (rs.next()) {
                 String cn = rs.getString("name").toLowerCase();
                 notNullCols.put(cn, rs.getInt("notnull") == 1);
@@ -380,8 +383,8 @@ public class ImportBackupService {
 
         asegurarColumnas(conn, tabla, cols);
 
-        String sql = "INSERT OR REPLACE INTO \"" + tabla + "\" (" +
-            cols.stream().map(c -> "\"" + c + "\"").collect(Collectors.joining(", ")) +
+        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+            cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", ")) +
             ") VALUES (" + String.join(", ", Collections.nCopies(cols.size(), "?")) + ")";
 
         int count = 0;
@@ -451,14 +454,16 @@ public class ImportBackupService {
     }
 
     private static void asegurarColumnas(Connection conn, String tabla, List<String> columnas) throws SQLException {
+        validarTablaPermitida(tabla);
         Set<String> existentes = new HashSet<>();
-        try (ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(\"" + tabla + "\")")) {
+        try (ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
             while (rs.next()) existentes.add(rs.getString("name").toLowerCase());
         }
         for (String col : columnas) {
             if (col == null || col.isBlank()) continue;
+            validarIdentificador(col);
             if (!existentes.contains(col.toLowerCase())) {
-                conn.createStatement().execute("ALTER TABLE \"" + tabla + "\" ADD COLUMN \"" + col + "\" TEXT");
+                conn.createStatement().execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(col) + " TEXT");
             }
         }
     }
@@ -503,10 +508,11 @@ public class ImportBackupService {
     private static int importarTablaJSON(Connection conn, String tabla, JsonNode arr) throws Exception {
         List<String> cols = new ArrayList<>();
         arr.get(0).fieldNames().forEachRemaining(cols::add);
+        cols = filtrarColumnasExistentes(conn, tabla, cols);
         if (cols.isEmpty()) return 0;
 
-        String sql = "INSERT OR REPLACE INTO " + tabla + " (" +
-            String.join(", ", cols) + ") VALUES (" +
+        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+            cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", ")) + ") VALUES (" +
             String.join(", ", Collections.nCopies(cols.size(), "?")) + ")";
 
         int count = 0;
@@ -1865,7 +1871,108 @@ public class ImportBackupService {
         try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
     }
 
+    private static List<String> dividirSentenciasSql(String contenido) {
+        List<String> sentencias = new ArrayList<>();
+        StringBuilder actual = new StringBuilder();
+        boolean enComillaSimple = false;
+        boolean enComillaDoble = false;
+        boolean enComentarioLinea = false;
+
+        for (int i = 0; i < contenido.length(); i++) {
+            char c = contenido.charAt(i);
+            char siguiente = i + 1 < contenido.length() ? contenido.charAt(i + 1) : '\0';
+
+            if (enComentarioLinea) {
+                if (c == '\n') enComentarioLinea = false;
+                actual.append(c);
+                continue;
+            }
+
+            if (!enComillaSimple && !enComillaDoble && c == '-' && siguiente == '-') {
+                enComentarioLinea = true;
+                actual.append(c).append(siguiente);
+                i++;
+                continue;
+            }
+
+            if (c == '\'' && !enComillaDoble) {
+                actual.append(c);
+                if (enComillaSimple && siguiente == '\'') {
+                    actual.append(siguiente);
+                    i++;
+                } else {
+                    enComillaSimple = !enComillaSimple;
+                }
+                continue;
+            }
+
+            if (c == '"' && !enComillaSimple) {
+                actual.append(c);
+                if (enComillaDoble && siguiente == '"') {
+                    actual.append(siguiente);
+                    i++;
+                } else {
+                    enComillaDoble = !enComillaDoble;
+                }
+                continue;
+            }
+
+            if (c == ';' && !enComillaSimple && !enComillaDoble) {
+                String stmt = limpiarComentariosSql(actual.toString()).trim();
+                if (!stmt.isEmpty()) sentencias.add(stmt);
+                actual.setLength(0);
+                continue;
+            }
+
+            actual.append(c);
+        }
+
+        String resto = limpiarComentariosSql(actual.toString()).trim();
+        if (!resto.isEmpty()) sentencias.add(resto);
+        return sentencias;
+    }
+
+    private static String limpiarComentariosSql(String sql) {
+        StringBuilder limpio = new StringBuilder();
+        for (String linea : sql.split("\\R")) {
+            String trimmed = linea.trim();
+            if (!trimmed.startsWith("--")) {
+                limpio.append(linea).append('\n');
+            }
+        }
+        return limpio.toString();
+    }
+
+    private static List<String> filtrarColumnasExistentes(Connection conn, String tabla, List<String> columnas) throws SQLException {
+        validarTablaPermitida(tabla);
+        Set<String> existentes = new HashSet<>(obtenerColumnas(conn, "main", tabla));
+        return columnas.stream()
+            .filter(Objects::nonNull)
+            .filter(c -> existentes.contains(c))
+            .peek(ImportBackupService::validarIdentificador)
+            .collect(Collectors.toList());
+    }
+
+    private static String quoteIdentifier(String identifier) {
+        validarIdentificador(identifier);
+        return "\"" + identifier.replace("\"", "\"\"") + "\"";
+    }
+
+    private static void validarTablaPermitida(String tabla) {
+        if (!TABLAS_PERMITIDAS.contains(tabla)) {
+            throw new IllegalArgumentException("Tabla no permitida: " + tabla);
+        }
+    }
+
+    private static void validarIdentificador(String identifier) {
+        if (identifier == null || !IDENTIFICADOR_SQL.matcher(identifier).matches()) {
+            throw new IllegalArgumentException("Identificador SQL no válido: " + identifier);
+        }
+    }
+
     private static boolean tablaExisteEn(Connection conn, String schema, String tabla) {
+        validarIdentificador(schema);
+        validarTablaPermitida(tabla);
         try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT 1 FROM " + schema + ".sqlite_master WHERE type='table' AND name=?")) {
             ps.setString(1, tabla);
@@ -1876,18 +1983,53 @@ public class ImportBackupService {
     }
 
     private static List<String> obtenerColumnas(Connection conn, String schema, String tabla) throws SQLException {
+        validarIdentificador(schema);
+        validarTablaPermitida(tabla);
         List<String> cols = new ArrayList<>();
         try (ResultSet rs = conn.createStatement().executeQuery(
-                "PRAGMA " + schema + ".table_info(\"" + tabla + "\")")) {
+                "PRAGMA " + schema + ".table_info(" + quoteIdentifier(tabla) + ")")) {
             while (rs.next()) cols.add(rs.getString("name"));
         }
         return cols;
     }
 
-    private static boolean esDestructivo(String stmt) {
-        String upper = stmt.toUpperCase().trim();
-        return upper.startsWith("DROP ") || upper.startsWith("DROP\t") ||
-               upper.startsWith("DELETE ") || upper.startsWith("DELETE\t") ||
-               upper.startsWith("TRUNCATE ") || upper.startsWith("TRUNCATE\t");
+    /**
+     * Whitelist de sentencias SQL aceptadas al restaurar un volcado .sql.
+     * Acepta exactamente lo que ExportService.exportarSQL emite: control de
+     * transacción, PRAGMA foreign_keys, DROP TABLE IF EXISTS, CREATE TABLE e
+     * INSERT INTO sobre identificadores SQLite válidos. Rechaza ATTACH, DETACH,
+     * PRAGMA arbitrarios, UPDATE, DELETE, TRUNCATE y cualquier otra cosa.
+     */
+    private static final String IDENT = "(?:\"[A-Za-z_][A-Za-z0-9_]*\"|[A-Za-z_][A-Za-z0-9_]*)";
+    private static final String CAPTURA_IDENT = "\"?([A-Za-z_][A-Za-z0-9_]*)\"?";
+
+    private static final Pattern STATEMENT_SEGURO = Pattern.compile(
+        "(?is)^\\s*(?:" +
+        "BEGIN(?:\\s+TRANSACTION)?|" +
+        "COMMIT(?:\\s+TRANSACTION)?|" +
+        "END(?:\\s+TRANSACTION)?|" +
+        "ROLLBACK(?:\\s+TRANSACTION)?|" +
+        "PRAGMA\\s+foreign_keys\\s*=\\s*(?:ON|OFF|0|1|TRUE|FALSE)|" +
+        "DROP\\s+TABLE\\s+IF\\s+EXISTS\\s+" + IDENT + "|" +
+        "CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?" + IDENT + "\\s*\\(.*|" +
+        "INSERT(?:\\s+OR\\s+(?:REPLACE|IGNORE))?\\s+INTO\\s+" + IDENT + "(?:\\s*\\(|\\s+)(?s:.*)" +
+        ")\\s*$"
+    );
+    private static final Pattern TABLA_DROP = Pattern.compile("(?is)^\\s*DROP\\s+TABLE\\s+IF\\s+EXISTS\\s+" + CAPTURA_IDENT + "\\s*$");
+    private static final Pattern TABLA_CREATE = Pattern.compile("(?is)^\\s*CREATE\\s+TABLE\\s+(?:IF\\s+NOT\\s+EXISTS\\s+)?" + CAPTURA_IDENT + "\\s*\\(.*");
+    private static final Pattern TABLA_INSERT = Pattern.compile("(?is)^\\s*INSERT(?:\\s+OR\\s+(?:REPLACE|IGNORE))?\\s+INTO\\s+" + CAPTURA_IDENT + "(?:\\s*\\(|\\s+).*");
+
+    private static boolean esStatementSeguro(String stmt) {
+        if (!STATEMENT_SEGURO.matcher(stmt).matches()) return false;
+        String tabla = extraerTabla(stmt);
+        return tabla == null || TABLAS_PERMITIDAS.contains(tabla);
+    }
+
+    private static String extraerTabla(String stmt) {
+        for (Pattern pattern : List.of(TABLA_DROP, TABLA_CREATE, TABLA_INSERT)) {
+            var matcher = pattern.matcher(stmt);
+            if (matcher.matches()) return matcher.group(1);
+        }
+        return null;
     }
 }
