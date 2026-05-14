@@ -39,6 +39,7 @@ public class IAView extends VBox {
     private final Button btnInstalarOllama;
     private final CheckBox cbContexto;
     private final ToggleButton btnVoz;
+    private final ComboBox<String> cbVozTts;
 
     public IAView() {
         getStyleClass().add("content-view");
@@ -61,6 +62,7 @@ public class IAView extends VBox {
         // CORRECCIÓN: 'TEXT_CB_CONTEXTO_ERP' no existe en AppConstants. Usamos literal o una similar.
         this.cbContexto = new CheckBox("Incluir contexto del ERP");
         this.btnVoz = new ToggleButton();
+        this.cbVozTts = new ComboBox<>();
 
         HBox estadoBar = buildEstadoBar();
         this.txtInput = new TextArea();
@@ -89,6 +91,16 @@ public class IAView extends VBox {
         btnInstalarOllama.setOnAction(e -> abrirInstalador());
 
         cbContexto.setSelected(true);
+
+        cbVozTts.getItems().setAll(TextToSpeechService.nombresVoces());
+        cbVozTts.setValue(TextToSpeechService.getVozSeleccionada());
+        cbVozTts.setTooltip(new Tooltip("Seleccionar voz española del asistente"));
+        cbVozTts.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.CLICK);
+            if (cbVozTts.getValue() != null) {
+                TextToSpeechService.setVozSeleccionada(cbVozTts.getValue());
+            }
+        });
 
         btnVoz.setSelected("1".equals(DatabaseManager.getConfig("ia_voz_activada")));
         actualizarBotonVoz();
@@ -122,7 +134,7 @@ public class IAView extends VBox {
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
 
-        HBox bar = new HBox(10, lblEstado, btnInstalarOllama, spacer, cbContexto, btnVoz, cbModelo, btnModelos, btnExportar, btnLimpiar);
+        HBox bar = new HBox(10, lblEstado, btnInstalarOllama, spacer, cbContexto, btnVoz, cbVozTts, cbModelo, btnModelos, btnExportar, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
         bar.setStyle(AppConstants.STYLE_ESTADO_BAR);

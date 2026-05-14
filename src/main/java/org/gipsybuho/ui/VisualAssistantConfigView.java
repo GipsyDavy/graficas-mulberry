@@ -11,6 +11,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.TextToSpeechService;
 
 public class VisualAssistantConfigView extends VBox {
 
@@ -49,6 +50,15 @@ public class VisualAssistantConfigView extends VBox {
             assistant.setVozActiva(selected);
         });
 
+        ComboBox<String> cbVozTts = new ComboBox<>();
+        cbVozTts.getItems().setAll(TextToSpeechService.nombresVoces());
+        cbVozTts.setValue(TextToSpeechService.getVozSeleccionada());
+        cbVozTts.valueProperty().addListener((obs, old, selected) -> {
+            if (selected == null) return;
+            SoundService.play(SoundService.Sound.CLICK);
+            TextToSpeechService.setVozSeleccionada(selected);
+        });
+
         ComboBox<String> cbPersonaje = new ComboBox<>();
         cbPersonaje.getItems().setAll(VisualAssistantView.nombresPersonajes());
         cbPersonaje.setValue(assistant.getPersonajeActual());
@@ -85,7 +95,7 @@ public class VisualAssistantConfigView extends VBox {
         grid.add(label("Estado:"), 0, 0);
         grid.add(chkActivo, 1, 0);
         grid.add(label("Voz:"), 0, 1);
-        grid.add(chkVoz, 1, 1);
+        grid.add(new HBox(10, chkVoz, cbVozTts), 1, 1);
         grid.add(label("Personaje:"), 0, 2);
         grid.add(cbPersonaje, 1, 2);
         grid.add(label("Tamaño:"), 0, 3);

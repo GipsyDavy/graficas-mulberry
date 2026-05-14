@@ -69,6 +69,16 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 
 if ($LASTEXITCODE -ne 0) { Write-Error "jpackage fallo"; exit 1 }
 
+# Recursos TTS offline: Piper + voces es_ES empaquetadas dentro de la app.
+$TtsSrc = "$PROJECT\installer\tts"
+$TtsDest = "$PROJECT\output\GraficasMulberry\app\tts"
+if (Test-Path $TtsSrc) {
+    Write-Host "   Copiando voces TTS es_ES..." -ForegroundColor Gray
+    Remove-Item $TtsDest -Recurse -Force -ErrorAction SilentlyContinue
+    New-Item $TtsDest -ItemType Directory | Out-Null
+    Copy-Item "$TtsSrc\*" $TtsDest -Recurse -Force
+}
+
 # ── 4. Compilar instalador con Inno Setup ───────────────────────────────────
 Write-Host "`n=== 3/3  Creando instalador .exe con Inno Setup ===" -ForegroundColor Cyan
 Set-Location $PROJECT

@@ -145,7 +145,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnCerrarApp);
 
-        Label version = new Label("v9.1 · Almería, España");
+        Label version = new Label("v9.5 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
