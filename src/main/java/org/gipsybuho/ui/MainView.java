@@ -87,19 +87,6 @@ public class MainView extends BorderPane {
         sep.setPrefHeight(1);
         sidebar.getChildren().add(sep);
 
-        Button btnAsistenteVisual = new Button();
-        btnAsistenteVisual.getStyleClass().add("sidebar-assistant-btn");
-        btnAsistenteVisual.setMaxWidth(Double.MAX_VALUE);
-        actualizarBotonAsistente(btnAsistenteVisual);
-        visualAssistant.activoProperty().addListener((obs, old, activo) ->
-            actualizarBotonAsistente(btnAsistenteVisual));
-        btnAsistenteVisual.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
-        btnAsistenteVisual.setOnAction(e -> {
-            SoundService.play(SoundService.Sound.CLICK);
-            visualAssistant.setActivo(!visualAssistant.isActivo());
-        });
-        sidebar.getChildren().add(btnAsistenteVisual);
-
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
         addIfAllowed(navMenu, navBtn(UserPermissions.DASHBOARD, "🏠  Panel principal", () -> new DashboardView(loggedInUser)));
@@ -134,7 +121,8 @@ public class MainView extends BorderPane {
                 navBtn(UserPermissions.CONFIGURACION, "⚙  Configuración",
                     ConfiguracionView::new),
                 navBtn("🧭  Configuración asistente visual",
-                    () -> new VisualAssistantConfigView(visualAssistant))
+                    () -> new VisualAssistantConfigView(visualAssistant)),
+                buildBotonAsistenteVisual()
             )
         );
 
@@ -157,7 +145,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnCerrarApp);
 
-        Label version = new Label("v8.5.2 · Almería, España");
+        Label version = new Label("v9.1 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -165,10 +153,28 @@ public class MainView extends BorderPane {
         return sidebar;
     }
 
-    private void actualizarBotonAsistente(Button boton) {
-        boton.setText(visualAssistant.isActivo()
+    private void actualizarBotonAsistente(Label label) {
+        label.setText(visualAssistant.isActivo()
             ? "🧭  Desactivar asistente"
             : "🧭  Activar asistente");
+    }
+
+    private StackPane buildBotonAsistenteVisual() {
+        Label label = new Label();
+        label.setMaxWidth(Double.MAX_VALUE);
+        label.getStyleClass().add("nav-btn");
+        StackPane boton = new StackPane(label);
+        boton.getStyleClass().add("nav-btn-pane");
+        actualizarBotonAsistente(label);
+        visualAssistant.activoProperty().addListener((obs, old, activo) ->
+            actualizarBotonAsistente(label));
+        boton.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
+        boton.setOnMouseClicked(e -> {
+            if (e.getButton() != MouseButton.PRIMARY) return;
+            SoundService.play(SoundService.Sound.CLICK);
+            visualAssistant.setActivo(!visualAssistant.isActivo());
+        });
+        return boton;
     }
 
     public boolean confirmarSalida() {
@@ -264,7 +270,7 @@ public class MainView extends BorderPane {
             List<String> css = getScene() != null
                 ? new ArrayList<>(getScene().getStylesheets())
                 : List.of();
-            ModuloWindowManager.abrirEnVentana(titulo, factory, css);
+            ModuloWindowManager.abrirEnVentana(titulo, factory, css, visualAssistant::instalarAyudaAutomatica);
         });
 
         ctx.getItems().add(miVentana);
@@ -338,6 +344,9 @@ public class MainView extends BorderPane {
 
     private void mostrarVista(Node vista, String titulo) {
         contentArea.getChildren().setAll(vista);
+        if (vista instanceof Parent parent) {
+            visualAssistant.instalarAyudaAutomatica(parent);
+        }
         SoundService.play(SoundService.Sound.WINDOW_OPEN);
         visualAssistant.decirModulo(titulo);
     }

@@ -573,7 +573,17 @@ public class ConfiguracionView extends VBox {
         lblVolVal.setStyle("-fx-text-fill: -c-text; -fx-font-weight: bold;");
         sliderVol.valueProperty().addListener((obs, ov, nv) -> {
             MusicService.setVolumen(nv.floatValue() / 100f);
-            lblVolVal.setText((int) Math.round(nv.doubleValue()) + "%");
+            int valor = (int) Math.round(nv.doubleValue());
+            lblVolVal.setText(valor + "%");
+            if (!sliderVol.isValueChanging()) {
+                DatabaseManager.setConfig("musica_volumen", String.valueOf(valor));
+            }
+        });
+        sliderVol.valueChangingProperty().addListener((obs, wasChanging, changing) -> {
+            if (!changing) {
+                DatabaseManager.setConfig("musica_volumen",
+                    String.valueOf((int) Math.round(sliderVol.getValue())));
+            }
         });
 
         Label lblVolLabel = new Label("Volumen música:");
@@ -601,7 +611,7 @@ public class ConfiguracionView extends VBox {
             DatabaseManager.setConfig("musica_playlist",
                 String.join("|", paths));
             DatabaseManager.setConfig("musica_volumen",
-                String.valueOf((int) sliderVol.getValue()));
+                String.valueOf((int) Math.round(sliderVol.getValue())));
             DatabaseManager.setConfig("musica_loop",
                 chkLoop.isSelected() ? "1" : "0");
             DatabaseManager.setConfig("musica_autoplay",
@@ -695,7 +705,7 @@ public class ConfiguracionView extends VBox {
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 8.5.2");
+        Label lblVersion = new Label("Versión 9.1");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);

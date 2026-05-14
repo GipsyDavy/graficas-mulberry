@@ -20,6 +20,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -45,6 +46,11 @@ public class ModuloWindowManager {
      */
     public static void abrirEnVentana(String titulo, Supplier<Parent> factory,
                                       List<String> cssSheets) {
+        abrirEnVentana(titulo, factory, cssSheets, null);
+    }
+
+    public static void abrirEnVentana(String titulo, Supplier<Parent> factory,
+                                      List<String> cssSheets, Consumer<Parent> onVistaCreada) {
         Stage existente = ventanas.get(titulo);
         if (existente != null && existente.isShowing()) {
             SoundService.play(SoundService.Sound.NOTIFICATION);
@@ -53,6 +59,9 @@ public class ModuloWindowManager {
         }
 
         Parent vista = factory.get();
+        if (onVistaCreada != null) {
+            onVistaCreada.accept(vista);
+        }
         Scene scene = new Scene(vista, 1150, 750);
         if (cssSheets != null && !cssSheets.isEmpty()) {
             scene.getStylesheets().addAll(cssSheets);
