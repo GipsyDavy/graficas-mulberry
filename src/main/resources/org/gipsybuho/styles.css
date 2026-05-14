@@ -291,6 +291,35 @@
     -fx-background-color: -c-row-hover;
 }
 
+.root.modo-oscuro .data-table {
+    -fx-background-color: #25212A;
+    -fx-border-color: #4A3D4E;
+}
+
+.root.modo-oscuro .data-table .table-row-cell {
+    -fx-background-color: #29232E;
+    -fx-border-color: transparent transparent #403544 transparent;
+}
+
+.root.modo-oscuro .data-table .table-row-cell:odd {
+    -fx-background-color: #302A35;
+}
+
+.root.modo-oscuro .data-table .table-row-cell:hover {
+    -fx-background-color: #3A3140;
+}
+
+.root.modo-oscuro .data-table .table-row-cell:selected {
+    -fx-background-color: #44334C;
+}
+
+.root.modo-oscuro .data-table .virtual-flow,
+.root.modo-oscuro .data-table .clipped-container,
+.root.modo-oscuro .data-table .sheet,
+.root.modo-oscuro .data-table .placeholder {
+    -fx-background-color: #29232E;
+}
+
 /* ── FORMULARIOS ─────────────────────────────────────────── */
 .text-field, .text-area, .combo-box {
     -fx-background-color: -c-card-bg;

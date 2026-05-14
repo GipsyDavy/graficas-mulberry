@@ -546,19 +546,16 @@ public class VisualAssistantView extends StackPane {
         rotPiernaIzq = new Rotate(0, 6,   0);
         rotPiernaDer = new Rotate(0, 6,   0);
 
-        Group brazoIzqG  = brazoGroup("#1E3A1E", "#E8C8A0", 19.5, 61, rotBrazoIzq);
-        Group brazoDerG  = brazoGroup("#1E3A1E", "#E8C8A0", 69.5, 61, rotBrazoDer);
+        Group brazoIzqG  = brazoGroup("#2F6B35", "#E8C8A0", 19.5, 61, rotBrazoIzq);
+        Group brazoDerG  = brazoGroup("#2F6B35", "#E8C8A0", 69.5, 61, rotBrazoDer);
         Group piernaIzqG = piernaBotaGroup(31, 83, rotPiernaIzq);
         Group piernaDerG = piernaBotaGroup(57, 83, rotPiernaDer);
 
         // Tricornio
         Rectangle corona    = rect(36,  8, 28, 16,  4, "#0D1A0D");
-        Polygon   alaIzq    = polygon("#0D1A0D", 36, 24,  6, 20, 10, 30, 38, 30);
-        Polygon   alaDer    = polygon("#0D1A0D", 64, 24, 94, 20, 90, 30, 62, 30);
-        Polygon   bandaIzq  = polygon("#B8860B", 36, 24,  6, 20, 10, 23, 37, 26);
-        Polygon   bandaDer  = polygon("#B8860B", 64, 24, 94, 20, 90, 23, 63, 26);
+        Polygon   alaIzq    = polygon("#0D1A0D", 36, 24, 22, 22, 24, 29, 38, 30);
+        Polygon   alaDer    = polygon("#0D1A0D", 64, 24, 78, 22, 76, 29, 62, 30);
         Rectangle visorFront = rect(40, 24, 20, 5, 2, "#0D1A0D");
-        Polygon   bandaFront = polygon("#B8860B", 41, 24, 59, 24, 58, 26, 42, 26);
 
         // Cara
         Circle    cabeza    = circle(50, 39, 17, "#E8C8A0");
@@ -569,17 +566,21 @@ public class VisualAssistantView extends StackPane {
 
         // Cuerpo
         Rectangle cuello    = rect(44, 55, 12,  7, 3, "#E8C8A0");
-        Rectangle torso     = rect(25, 61, 50, 22, 8, "#1E3A1E");
+        Rectangle torso     = rect(25, 61, 50, 22, 8, "#2F6B35");
         Rectangle cinturon  = rect(25, 77, 50,  5, 2, "#3D2800");
         Rectangle hebilla   = rect(46, 77,  8,  5, 1, "#B8860B");
+        Rectangle funda     = rect(72, 75, 10, 17, 3, "#1A1A1A");
+        Rectangle empunadura = rect(70, 73,  9,  5, 2, "#2A2A2A");
+        Rectangle cierre    = rect(71, 79,  9,  3, 1, "#3D2800");
+        Group pistolaFunda = new Group(funda, empunadura, cierre);
+        pistolaFunda.setRotate(-8);
 
         Group g = new Group(
             piernaIzqG, piernaDerG,
             brazoIzqG, brazoDerG,
-            cuello, torso, cinturon, hebilla,
+            cuello, torso, cinturon, hebilla, pistolaFunda,
             cabeza, ojoIzq, ojoDer, bigoteIzq, bigoteDer,
-            alaIzq, alaDer, visorFront,
-            bandaIzq, bandaDer, bandaFront, corona
+            alaIzq, alaDer, visorFront, corona
         );
         return escalar(g);
     }
@@ -608,7 +609,7 @@ public class VisualAssistantView extends StackPane {
     private Group piernaBotaGroup(double tx, double ty, Rotate rot) {
         Rectangle pierna = new Rectangle(0, 0, 12, 14);
         pierna.setArcWidth(4); pierna.setArcHeight(4);
-        pierna.setFill(Color.web("#1E5C1E"));
+        pierna.setFill(Color.web("#347A3C"));
         Rectangle bota = new Rectangle(-2, 14, 16, 8);
         bota.setArcWidth(3); bota.setArcHeight(3);
         bota.setFill(Color.web("#111111"));
