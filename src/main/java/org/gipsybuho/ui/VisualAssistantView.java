@@ -61,10 +61,7 @@ public class VisualAssistantView extends StackPane {
     private static final double BUBBLE_MAX_WIDTH = 360;
 
     public static final Map<String, String> PERSONAJES = Map.of(
-        "Búho", "Búho",
-        "Robot", "Robot",
-        "Guía", "Guía",
-        "Técnico", "Técnico",
+        "Vampi", "Vampi",
         "David", "David",
         "Gema", "Gema",
         "Sonia", "Sonia",
@@ -86,14 +83,15 @@ public class VisualAssistantView extends StackPane {
     private FadeTransition parpadeoAnimacion;
     private double dragOffsetX;
     private double dragOffsetY;
-    private Rotate rotBrazoIzq, rotBrazoDer, rotPiernaIzq, rotPiernaDer, rotLlave;
-    private Circle robLuz;
+    private Rotate rotBrazoIzq, rotBrazoDer, rotPiernaIzq, rotPiernaDer;
+    private Group vampiGrupo, vampiAlaIzq, vampiAlaDer, vampiCabeza;
+    private Circle vampiOjoIzq, vampiOjoDer;
     private Group metalCabeza, metalPelo, metalTorso, metalBrazoAlto;
     private Group soniaCabeza, soniaManoIzq, soniaManoDer, soniaMicrofono;
     private Rectangle soniaPantalla;
     private Group davidCabeza, davidTorso, davidRadio, davidLinterna;
     private Circle davidLinternaLuz;
-    private Timeline animExtremidades, animPersonaje;
+    private Timeline animExtremidades, animPersonaje, animVampiAviso;
     private Node ultimoNodoAyuda;
     private long ultimaAyudaMs;
     private boolean posicionInicializada;
@@ -131,7 +129,8 @@ public class VisualAssistantView extends StackPane {
         this.body.setPrefSize(410, 156);
         getChildren().add(this.body);
 
-        personajeActual = valorConfig(KEY_PERSONAJE, "Búho");
+        String personajeGuardado = valorConfig(KEY_PERSONAJE, "Vampi");
+        personajeActual = PERSONAJES.containsKey(personajeGuardado) ? personajeGuardado : "Vampi";
         tamanoActual = (int) parseDouble(DatabaseManager.getConfig(KEY_TAMANO), 58);
         vozActiva = "1".equals(DatabaseManager.getConfig(KEY_VOZ));
         activo.set(!"0".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
@@ -260,7 +259,7 @@ public class VisualAssistantView extends StackPane {
         } else if ("Guardia Civil".equals(personajeActual)) {
             personajeActual = "David";
         }
-        this.personajeActual = PERSONAJES.containsKey(personajeActual) ? personajeActual : "Búho";
+        this.personajeActual = PERSONAJES.containsKey(personajeActual) ? personajeActual : "Vampi";
         DatabaseManager.setConfig(KEY_PERSONAJE, this.personajeActual);
         actualizarPersonaje();
         animarSaludo();
@@ -440,14 +439,12 @@ public class VisualAssistantView extends StackPane {
     private void actualizarPersonaje() {
         detenerAnimacionPersonaje();
         Node avatar = switch (personajeActual) {
-            case "Robot" -> crearRobot();
-            case "Guía" -> crearGuia();
-            case "Técnico" -> crearTecnico();
+            case "Vampi" -> crearVampi();
             case "David", "Guardia Civil" -> crearGuardiaCivil();
             case "Gema", "Metalera" -> crearMetalera();
             case "Sonia" -> crearSonia();
             case "Ana" -> crearAna();
-            default -> crearBuho();
+            default -> crearVampi();
         };
         personaje.getChildren().setAll(avatar);
         iniciarAnimacionesPersonaje();
@@ -461,114 +458,36 @@ public class VisualAssistantView extends StackPane {
         Platform.runLater(this::ajustarAlContenedor);
     }
 
-    private Node crearBuho() {
-        Group g = new Group();
-        Ellipse cuerpo = ellipse(50, 55, 31, 37, "#6B2D5E");
-        Polygon alaIzq = polygon("#8F5F86", 22, 44, 5, 68, 28, 75);
-        Polygon alaDer = polygon("#8F5F86", 78, 44, 95, 68, 72, 75);
-        Polygon orejaIzq = polygon("#4B2142", 29, 23, 38, 7, 47, 29);
-        Polygon orejaDer = polygon("#4B2142", 71, 23, 62, 7, 53, 29);
-        Circle ojoIzq = circle(39, 46, 12, "#FFFFFF");
-        Circle ojoDer = circle(61, 46, 12, "#FFFFFF");
-        Circle pupilaIzq = circle(39, 48, 4, "#1C1320");
-        Circle pupilaDer = circle(61, 48, 4, "#1C1320");
-        Polygon pico = polygon("#F2A93B", 50, 53, 43, 63, 57, 63);
-        Ellipse pecho = ellipse(50, 72, 15, 18, "#F4D9EC");
-        g.getChildren().addAll(alaIzq, alaDer, orejaIzq, orejaDer, cuerpo, pecho, ojoIzq, ojoDer, pupilaIzq, pupilaDer, pico);
-        return escalar(g);
-    }
+    private Node crearVampi() {
+        Polygon alaIzq = polygon("#2A1633", 48, 42, 10, 24, 22, 53, 6, 72, 42, 65);
+        Polygon alaDer = polygon("#2A1633", 52, 42, 90, 24, 78, 53, 94, 72, 58, 65);
+        Polygon membranaIzq = polygon("#5C2A66", 44, 47, 20, 36, 28, 57, 18, 66, 43, 61);
+        Polygon membranaDer = polygon("#5C2A66", 56, 47, 80, 36, 72, 57, 82, 66, 57, 61);
+        Ellipse cuerpo = ellipse(50, 62, 20, 28, "#332039");
+        Circle cabeza = circle(50, 38, 20, "#3D2545");
+        Polygon orejaIzq = polygon("#2A1633", 36, 25, 30, 7, 45, 22);
+        Polygon orejaDer = polygon("#2A1633", 64, 25, 70, 7, 55, 22);
+        vampiOjoIzq = circle(43, 36, 5, "#F7E6FF");
+        vampiOjoDer = circle(57, 36, 5, "#F7E6FF");
+        Circle pupilaIzq = circle(43, 37, 2, "#111111");
+        Circle pupilaDer = circle(57, 37, 2, "#111111");
+        Ellipse hocico = ellipse(50, 47, 8, 5, "#6F4A78");
+        Polygon colmilloIzq = polygon("#FFFFFF", 44, 51, 48, 51, 46, 58);
+        Polygon colmilloDer = polygon("#FFFFFF", 52, 51, 56, 51, 54, 58);
+        Circle sangreIzq = circle(46, 57, 2.2, "#B11226");
+        Circle sangreDer = circle(54, 57, 2.0, "#B11226");
+        Ellipse gotaSangre = ellipse(54.5, 60, 1.8, 3.2, "#8B0E1A");
 
-    private Node crearRobot() {
-        rotBrazoIzq  = new Rotate(0, 5.5, 0);
-        rotBrazoDer  = new Rotate(0, 5.5, 0);
-        rotPiernaIzq = new Rotate(0, 6,   0);
-        rotPiernaDer = new Rotate(0, 6,   0);
-        robLuz = circle(50, 2, 4, "#F2C94C");
-
-        Group brazoIzqG  = brazoGroup("#A9D5FF", "#64748B", 19.5, 63, rotBrazoIzq);
-        Group brazoDerG  = brazoGroup("#A9D5FF", "#64748B", 69.5, 63, rotBrazoDer);
-        Group piernaIzqG = piernaGroup("#1A2538", 31, 83, rotPiernaIzq);
-        Group piernaDerG = piernaGroup("#1A2538", 57, 83, rotPiernaDer);
-
-        Rectangle antena = rect(47, 5, 6, 13, 2, "#64748B");
-        Rectangle cuello = rect(43, 57, 14,  7, 3, "#64748B");
-        Rectangle cuerpo = rect(25, 63, 50, 22, 7, "#2F80ED");
-        Rectangle cabeza = rect(22, 17, 56, 40, 10, "#A9D5FF");
-        cabeza.setStroke(Color.web("#2F80ED"));
-        cabeza.setStrokeWidth(3);
-        Circle orejaIzq = circle(21, 37, 6, "#2F80ED");
-        Circle orejaDer = circle(79, 37, 6, "#2F80ED");
-        Circle ojoIzq   = circle(40, 35, 5, "#1A2538");
-        Circle ojoDer   = circle(60, 35, 5, "#1A2538");
-        Rectangle boca  = rect(38, 49, 24, 5, 3, "#1A2538");
-
-        Group g = new Group(
-            piernaIzqG, piernaDerG, brazoIzqG, brazoDerG,
-            cuello, cuerpo, orejaIzq, orejaDer, cabeza,
-            antena, robLuz, ojoIzq, ojoDer, boca
+        vampiAlaIzq = new Group(alaIzq, membranaIzq);
+        vampiAlaDer = new Group(alaDer, membranaDer);
+        vampiCabeza = new Group(
+            orejaIzq, orejaDer, cabeza, vampiOjoIzq, vampiOjoDer, pupilaIzq, pupilaDer,
+            hocico, colmilloIzq, colmilloDer, sangreIzq, sangreDer, gotaSangre
         );
-        return escalar(g);
-    }
-
-    private Node crearGuia() {
-        rotBrazoIzq  = new Rotate(0, 5.5, 0);
-        rotBrazoDer  = new Rotate(0, 5.5, 0);
-        rotPiernaIzq = new Rotate(0, 6,   0);
-        rotPiernaDer = new Rotate(0, 6,   0);
-
-        Group brazoIzqG  = brazoGroup("#27AE60", "#F2C7A5", 20.5, 60, rotBrazoIzq);
-        Group brazoDerG  = brazoGroup("#27AE60", "#F2C7A5", 68.5, 60, rotBrazoDer);
-        Group piernaIzqG = piernaGroup("#2C3E50", 31, 81, rotPiernaIzq);
-        Group piernaDerG = piernaGroup("#2C3E50", 57, 81, rotPiernaDer);
-
-        Ellipse   pelo    = ellipse(50, 20, 24, 12, "#4A2A22");
-        Circle    cabeza  = circle(50, 34, 20, "#F2C7A5");
-        Circle    ojoIzq  = circle(43, 32, 3.5, "#1F2933");
-        Circle    ojoDer  = circle(57, 32, 3.5, "#1F2933");
-        Rectangle sonrisa = rect(43, 44, 14, 3, 2, "#B85C5C");
-        Rectangle cuello  = rect(45, 53, 10, 8, 3, "#F2C7A5");
-        Rectangle torso   = rect(26, 60, 48, 23, 10, "#27AE60");
-        Polygon   camisa  = polygon("#FFFFFF", 36, 61, 64, 61, 50, 76);
-        Polygon   corbata = polygon("#6B2D5E", 50, 63, 44, 80, 56, 80);
-
-        Group g = new Group(
-            brazoIzqG, brazoDerG, cuello, torso, camisa, corbata,
-            piernaIzqG, piernaDerG,
-            cabeza, pelo, ojoIzq, ojoDer, sonrisa
+        vampiGrupo = new Group(
+            vampiAlaIzq, vampiAlaDer, cuerpo, vampiCabeza
         );
-        return escalar(g);
-    }
-
-    private Node crearTecnico() {
-        rotBrazoIzq  = new Rotate(0, 5.5, 0);
-        rotBrazoDer  = new Rotate(0, 5.5, 0);
-        rotPiernaIzq = new Rotate(0, 6,   0);
-        rotPiernaDer = new Rotate(0, 6,   0);
-        rotLlave     = new Rotate(0, 80, 84);
-
-        Group brazoIzqG  = brazoGroup("#34495E", "#E8B58F", 19.5, 68, rotBrazoIzq);
-        Group brazoDerG  = brazoGroup("#34495E", "#E8B58F", 69.5, 68, rotBrazoDer);
-        Group piernaIzqG = piernaGroup("#2C3E50", 31, 89, rotPiernaIzq);
-        Group piernaDerG = piernaGroup("#2C3E50", 57, 89, rotPiernaDer);
-
-        Rectangle casco  = rect(28, 18, 44, 20, 9, "#F39C12");
-        Rectangle visera = rect(24, 34, 52,  7, 3, "#D98200");
-        Circle    cabeza = circle(50, 44, 20, "#E8B58F");
-        Circle    ojoIzq = circle(43, 42, 3.5, "#17202A");
-        Circle    ojoDer = circle(57, 42, 3.5, "#17202A");
-        Rectangle boca   = rect(43, 53, 14, 3, 2, "#8E4B3A");
-        Rectangle cuello = rect(45, 62, 10, 7, 3, "#E8B58F");
-        Rectangle torso  = rect(25, 68, 50, 23, 8, "#34495E");
-        Rectangle peto   = rect(36, 68, 28, 23, 5, "#F39C12");
-        Polygon   llave  = polygon("#BDC3C7", 71, 82, 85, 69, 90, 74, 78, 87, 87, 93, 82, 98);
-        llave.getTransforms().add(rotLlave);
-
-        Group g = new Group(
-            brazoIzqG, brazoDerG, cuello, torso, peto,
-            piernaIzqG, piernaDerG,
-            cabeza, casco, visera, ojoIzq, ojoDer, boca, llave
-        );
-        return escalar(g);
+        return escalar(vampiGrupo);
     }
 
     private Node crearGuardiaCivil() {
@@ -959,6 +878,23 @@ public class VisualAssistantView extends StackPane {
         saludo.setCycleCount(2);
         saludo.setOnFinished(e -> personaje.setRotate(0));
         saludo.play();
+        if (vampiAlaIzq != null && vampiAlaDer != null) {
+            Timeline saludoVampi = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                    new KeyValue(vampiAlaIzq.rotateProperty(), -10),
+                    new KeyValue(vampiAlaDer.rotateProperty(), 10)),
+                new KeyFrame(Duration.millis(120),
+                    new KeyValue(vampiAlaIzq.rotateProperty(), 28),
+                    new KeyValue(vampiAlaDer.rotateProperty(), -28)),
+                new KeyFrame(Duration.millis(240),
+                    new KeyValue(vampiAlaIzq.rotateProperty(), -12),
+                    new KeyValue(vampiAlaDer.rotateProperty(), 12)),
+                new KeyFrame(Duration.millis(360),
+                    new KeyValue(vampiAlaIzq.rotateProperty(), 24),
+                    new KeyValue(vampiAlaDer.rotateProperty(), -24))
+            );
+            saludoVampi.play();
+        }
     }
 
     private void animarHabla() {
@@ -1005,16 +941,22 @@ public class VisualAssistantView extends StackPane {
     private void detenerAnimacionPersonaje() {
         if (animExtremidades != null) { animExtremidades.stop(); animExtremidades = null; }
         if (animPersonaje    != null) { animPersonaje.stop();    animPersonaje    = null; }
-        rotBrazoIzq = rotBrazoDer = rotPiernaIzq = rotPiernaDer = rotLlave = null;
+        if (animVampiAviso   != null) { animVampiAviso.stop();   animVampiAviso   = null; }
+        rotBrazoIzq = rotBrazoDer = rotPiernaIzq = rotPiernaDer = null;
+        vampiGrupo = vampiAlaIzq = vampiAlaDer = vampiCabeza = null;
+        vampiOjoIzq = vampiOjoDer = null;
         metalCabeza = metalPelo = metalTorso = metalBrazoAlto = null;
         soniaCabeza = soniaManoIzq = soniaManoDer = soniaMicrofono = null;
         soniaPantalla = null;
         davidCabeza = davidTorso = davidRadio = davidLinterna = null;
         davidLinternaLuz = null;
-        robLuz = null;
     }
 
     private void iniciarAnimacionesPersonaje() {
+        if (vampiGrupo != null) {
+            iniciarAnimacionVampi();
+            return;
+        }
         if (davidCabeza != null) {
             iniciarAnimacionDavid();
             return;
@@ -1044,25 +986,60 @@ public class VisualAssistantView extends StackPane {
             animExtremidades.setCycleCount(Animation.INDEFINITE);
             animExtremidades.play();
         }
-        if (robLuz != null) {
-            animPersonaje = new Timeline(
-                new KeyFrame(Duration.ZERO,        new KeyValue(robLuz.fillProperty(), Color.web("#F2C94C"))),
-                new KeyFrame(Duration.millis(500),  new KeyValue(robLuz.fillProperty(), Color.web("#FFFFFF"))),
-                new KeyFrame(Duration.seconds(1),   new KeyValue(robLuz.fillProperty(), Color.web("#F2C94C"))),
-                new KeyFrame(Duration.seconds(3),   new KeyValue(robLuz.fillProperty(), Color.web("#F2C94C")))
-            );
-            animPersonaje.setCycleCount(Animation.INDEFINITE);
-            animPersonaje.play();
-        }
-        if (rotLlave != null) {
-            animPersonaje = new Timeline(
-                new KeyFrame(Duration.ZERO,       new KeyValue(rotLlave.angleProperty(), -15)),
-                new KeyFrame(Duration.seconds(1), new KeyValue(rotLlave.angleProperty(),  15)),
-                new KeyFrame(Duration.seconds(2), new KeyValue(rotLlave.angleProperty(), -15))
-            );
-            animPersonaje.setCycleCount(Animation.INDEFINITE);
-            animPersonaje.play();
-        }
+    }
+
+    private void iniciarAnimacionVampi() {
+        animExtremidades = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(vampiAlaIzq.rotateProperty(), -8),
+                new KeyValue(vampiAlaDer.rotateProperty(), 8)),
+            new KeyFrame(Duration.millis(360),
+                new KeyValue(vampiAlaIzq.rotateProperty(), 20),
+                new KeyValue(vampiAlaDer.rotateProperty(), -20)),
+            new KeyFrame(Duration.millis(720),
+                new KeyValue(vampiAlaIzq.rotateProperty(), -8),
+                new KeyValue(vampiAlaDer.rotateProperty(), 8))
+        );
+        animExtremidades.setCycleCount(Animation.INDEFINITE);
+        animExtremidades.play();
+
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(vampiCabeza.translateYProperty(), 0),
+                new KeyValue(vampiCabeza.rotateProperty(), 0),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 1),
+                new KeyValue(vampiGrupo.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(360),
+                new KeyValue(vampiCabeza.translateYProperty(), -1.5),
+                new KeyValue(vampiCabeza.rotateProperty(), -2),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
+            new KeyFrame(Duration.millis(720),
+                new KeyValue(vampiCabeza.translateYProperty(), 0),
+                new KeyValue(vampiCabeza.rotateProperty(), 2),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
+            new KeyFrame(Duration.seconds(4.8),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
+            new KeyFrame(Duration.seconds(4.9),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 0.12),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 0.12)),
+            new KeyFrame(Duration.seconds(5.05),
+                new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
+                new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
+            new KeyFrame(Duration.seconds(8.6),
+                new KeyValue(vampiGrupo.rotateProperty(), 0)),
+            new KeyFrame(Duration.seconds(8.95),
+                new KeyValue(vampiGrupo.rotateProperty(), 180)),
+            new KeyFrame(Duration.seconds(9.3),
+                new KeyValue(vampiGrupo.rotateProperty(), 360)),
+            new KeyFrame(Duration.seconds(9.45),
+                new KeyValue(vampiGrupo.rotateProperty(), 0))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
     }
 
     private void iniciarAnimacionMetalera() {
@@ -1210,11 +1187,38 @@ public class VisualAssistantView extends StackPane {
         if (lower.contains("error") || lower.contains("aviso") || lower.contains("importante")) {
             body.getStyleClass().add("visual-assistant-alert");
             llamarAtencion();
+            animarVampiAviso();
         } else if (lower.contains("consulta") || lower.contains("asistente ia")) {
             body.getStyleClass().add("visual-assistant-thinking");
         } else if (lower.contains("activado") || lower.contains("listo")) {
             body.getStyleClass().add("visual-assistant-happy");
         }
+    }
+
+    private void animarVampiAviso() {
+        if (vampiOjoIzq == null || vampiOjoDer == null || vampiAlaIzq == null || vampiAlaDer == null) return;
+        if (animVampiAviso != null) animVampiAviso.stop();
+        animVampiAviso = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(vampiOjoIzq.fillProperty(), Color.web("#F7E6FF")),
+                new KeyValue(vampiOjoDer.fillProperty(), Color.web("#F7E6FF")),
+                new KeyValue(vampiAlaIzq.rotateProperty(), -8),
+                new KeyValue(vampiAlaDer.rotateProperty(), 8)),
+            new KeyFrame(Duration.millis(140),
+                new KeyValue(vampiOjoIzq.fillProperty(), Color.web("#FF2D55")),
+                new KeyValue(vampiOjoDer.fillProperty(), Color.web("#FF2D55")),
+                new KeyValue(vampiAlaIzq.rotateProperty(), 32),
+                new KeyValue(vampiAlaDer.rotateProperty(), -32)),
+            new KeyFrame(Duration.millis(620),
+                new KeyValue(vampiOjoIzq.fillProperty(), Color.web("#FF2D55")),
+                new KeyValue(vampiOjoDer.fillProperty(), Color.web("#FF2D55"))),
+            new KeyFrame(Duration.millis(900),
+                new KeyValue(vampiOjoIzq.fillProperty(), Color.web("#F7E6FF")),
+                new KeyValue(vampiOjoDer.fillProperty(), Color.web("#F7E6FF")),
+                new KeyValue(vampiAlaIzq.rotateProperty(), -8),
+                new KeyValue(vampiAlaDer.rotateProperty(), 8))
+        );
+        animVampiAviso.play();
     }
 
     private void restaurarPosicion() {

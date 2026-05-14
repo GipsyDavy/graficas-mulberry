@@ -84,7 +84,10 @@ public class IAView extends VBox {
         cbModelo.setPromptText("Seleccionar modelo");
         cbModelo.setOnAction(e -> {
             SoundService.play(SoundService.Sound.CLICK);
-            if (cbModelo.getValue() != null) ia.setModeloActual(cbModelo.getValue());
+            if (cbModelo.getValue() != null) {
+                ia.setModeloActual(cbModelo.getValue());
+                actualizarEstadoConModelo();
+            }
         });
 
         btnInstalarOllama.setStyle("-fx-background-color: #" + AppConstants.COLOR_MULBERRY_HEX + "; -fx-text-fill: white;");
@@ -318,13 +321,13 @@ public class IAView extends VBox {
                 btnInstalarOllama.setVisible(false);
                 btnInstalarOllama.setManaged(false);
                 if (ok) {
-                    lblEstado.setText(AppConstants.TEXT_ESTADO_CONECTADO);
                     lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_SUCCESS_HEX + "; -fx-font-weight: bold;");
                     cbModelo.getItems().setAll(modelos.stream().map(m -> m.nombre).toList());
                     if (!cbModelo.getItems().isEmpty() && cbModelo.getValue() == null) {
                         cbModelo.getSelectionModel().selectFirst();
                         ia.setModeloActual(cbModelo.getValue());
                     }
+                    actualizarEstadoConModelo();
                 } else if (OllamaManager.isRunning() || OllamaManager.isInstalled()) {
                     lblEstado.setText("Ollama instalado, sin modelos IA");
                     lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_ERROR_HEX + "; -fx-font-weight: bold;");
@@ -337,6 +340,15 @@ public class IAView extends VBox {
                 }
             });
         });
+    }
+
+    private void actualizarEstadoConModelo() {
+        String modelo = ia.getModeloActual();
+        if (modelo == null || modelo.isBlank()) {
+            lblEstado.setText(AppConstants.TEXT_ESTADO_CONECTADO);
+        } else {
+            lblEstado.setText(AppConstants.TEXT_ESTADO_CONECTADO + " — " + modelo);
+        }
     }
 
     private void exportarChat() {
