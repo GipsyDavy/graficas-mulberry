@@ -98,6 +98,11 @@ public class IAView extends VBox {
         cbVozTts.setOnAction(e -> {
             SoundService.play(SoundService.Sound.CLICK);
             if (cbVozTts.getValue() != null) {
+                if (TextToSpeechService.esOpcionInstalacion(cbVozTts.getValue())) {
+                    mostrarSugerenciaInstalacionVoces();
+                    cbVozTts.setValue(TextToSpeechService.getVozSeleccionada());
+                    return;
+                }
                 TextToSpeechService.setVozSeleccionada(cbVozTts.getValue());
             }
         });
@@ -419,6 +424,17 @@ public class IAView extends VBox {
         OllamaInstallerDialog dialog = new OllamaInstallerDialog(owner);
         dialog.showAndWait();
         verificarOllama();
+    }
+
+    private void mostrarSugerenciaInstalacionVoces() {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Voces naturales de Windows");
+        alert.setHeaderText("Instala voces naturales es-ES desde Windows");
+        alert.setContentText(TextToSpeechService.mensajeInstalacionVocesNaturales());
+        if (getScene() != null) {
+            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        alert.showAndWait();
     }
 
     private Stage obtenerStageActual() {

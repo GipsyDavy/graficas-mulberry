@@ -12,6 +12,7 @@ import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
+import javafx.beans.value.ChangeListener;
 import javafx.geometry.Bounds;
 import javafx.geometry.Pos;
 import javafx.scene.Group;
@@ -86,6 +87,8 @@ public class VisualAssistantView extends StackPane {
     private Timeline animExtremidades, animPersonaje;
     private Node ultimoNodoAyuda;
     private long ultimaAyudaMs;
+    private boolean posicionInicializada;
+    private final ChangeListener<Bounds> parentBoundsListener = (obs, oldBounds, newBounds) -> ajustarAlContenedor();
     private final Set<Parent> raicesConAyuda = Collections.newSetFromMap(new WeakHashMap<>());
 
     public VisualAssistantView() {
@@ -144,11 +147,20 @@ public class VisualAssistantView extends StackPane {
             body.getStyleClass().remove("visual-assistant-dragging");
             body.setScaleX(1.0);
             body.setScaleY(1.0);
+            guardarPosicionActual();
         });
         setOnMouseMoved(e -> inclinarHaciaCursor(e.getX()));
         setOnMouseExited(e -> personaje.setRotate(0));
 
-        parentProperty().addListener((obs, oldParent, parent) -> restaurarPosicion());
+        parentProperty().addListener((obs, oldParent, parent) -> {
+            if (oldParent != null) {
+                oldParent.layoutBoundsProperty().removeListener(parentBoundsListener);
+            }
+            if (parent != null) {
+                parent.layoutBoundsProperty().addListener(parentBoundsListener);
+            }
+            restaurarPosicion();
+        });
         sceneProperty().addListener((obs, old, scene) -> {
             if (scene != null) restaurarPosicion();
         });
@@ -252,6 +264,7 @@ public class VisualAssistantView extends StackPane {
 
     public void restablecerPosicion() {
         colocarAbajoDerecha();
+        guardarPosicionActual();
         llamarAtencion();
     }
 
@@ -428,6 +441,7 @@ public class VisualAssistantView extends StackPane {
         personaje.setPrefSize(tamanoActual + 28, tamanoActual + 46);
         personaje.setMaxSize(tamanoActual + 28, tamanoActual + 46);
         actualizarPersonaje();
+        Platform.runLater(this::ajustarAlContenedor);
     }
 
     private Node crearBuho() {
@@ -854,7 +868,22 @@ public class VisualAssistantView extends StackPane {
             Platform.runLater(this::restaurarPosicion);
             return;
         }
-        colocarAbajoDerecha();
+        double x = parseDouble(DatabaseManager.getConfig(KEY_POS_X), Double.NaN);
+        double y = parseDouble(DatabaseManager.getConfig(KEY_POS_Y), Double.NaN);
+        if (Double.isNaN(x) || Double.isNaN(y)) {
+            colocarAbajoDerecha();
+        } else {
+            relocateClamped(x, y);
+        }
+        posicionInicializada = true;
+    }
+
+    private void ajustarAlContenedor() {
+        if (!posicionInicializada) {
+            restaurarPosicion();
+            return;
+        }
+        relocateClamped(getLayoutX(), getLayoutY());
     }
 
     private void colocarAbajoDerecha() {
@@ -879,6 +908,11 @@ public class VisualAssistantView extends StackPane {
         double maxX = Math.max(0, parentBounds.getWidth() - ownBounds.getWidth() - 12);
         double maxY = Math.max(0, parentBounds.getHeight() - ownBounds.getHeight() - 12);
         relocate(Math.max(8, Math.min(x, maxX)), Math.max(8, Math.min(y, maxY)));
+    }
+
+    private void guardarPosicionActual() {
+        DatabaseManager.setConfig(KEY_POS_X, String.valueOf(getLayoutX()));
+        DatabaseManager.setConfig(KEY_POS_Y, String.valueOf(getLayoutY()));
     }
 
     private String valorConfig(String clave, String defecto) {

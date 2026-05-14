@@ -56,6 +56,11 @@ public class VisualAssistantConfigView extends VBox {
         cbVozTts.valueProperty().addListener((obs, old, selected) -> {
             if (selected == null) return;
             SoundService.play(SoundService.Sound.CLICK);
+            if (TextToSpeechService.esOpcionInstalacion(selected)) {
+                mostrarSugerenciaInstalacionVoces();
+                cbVozTts.setValue(TextToSpeechService.getVozSeleccionada());
+                return;
+            }
             TextToSpeechService.setVozSeleccionada(selected);
         });
 
@@ -110,5 +115,16 @@ public class VisualAssistantConfigView extends VBox {
         Label label = new Label(texto);
         label.getStyleClass().add("config-form-label");
         return label;
+    }
+
+    private void mostrarSugerenciaInstalacionVoces() {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle("Voces naturales de Windows");
+        alert.setHeaderText("Instala voces naturales es-ES desde Windows");
+        alert.setContentText(TextToSpeechService.mensajeInstalacionVocesNaturales());
+        if (getScene() != null) {
+            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        alert.showAndWait();
     }
 }
