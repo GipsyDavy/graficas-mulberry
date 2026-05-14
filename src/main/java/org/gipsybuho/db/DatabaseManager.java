@@ -87,6 +87,7 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_tamano', '58')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_x', '24')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_y', '24')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_instalador_animado', '1')",
             // Nuevas migraciones para las columnas de intentos de login
             "ALTER TABLE usuarios ADD COLUMN failed_login_attempts INTEGER DEFAULT 0",
             "ALTER TABLE usuarios ADD COLUMN last_failed_login TEXT",
@@ -440,6 +441,7 @@ public class DatabaseManager {
                 ('asistente_visual_tamano', '58'),
                 ('asistente_visual_x', '24'),
                 ('asistente_visual_y', '24'),
+                ('asistente_visual_instalador_animado', '1'),
                 ('session_timeout_minutes', '30'),
                 ('max_login_attempts', '5'),
                 ('login_lockout_minutes', '5')

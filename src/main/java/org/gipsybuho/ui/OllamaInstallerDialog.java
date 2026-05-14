@@ -8,6 +8,7 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.OllamaManager;
 
 import java.io.*;
@@ -30,8 +31,11 @@ public class OllamaInstallerDialog extends Stage {
     private final Button      btnInstalar = new Button("⬇   Instalar Ollama");
     private final Button      btnCerrar   = new Button("Cerrar");
     private final Label[]     stepIcons   = new Label[4];
+    private final VisualAssistantView installerAssistant = new VisualAssistantView(true);
 
     private volatile boolean instalacionCompleta = false;
+    private String ultimoMensajeAsistente = "";
+    private long ultimoMensajeAsistenteMs = 0;
 
     // ── Constructor ───────────────────────────────────────────────────────────
 
@@ -42,7 +46,7 @@ public class OllamaInstallerDialog extends Stage {
         setResizable(false);
 
         VBox root = buildUI();
-        Scene scene = new Scene(root, 600, 560);
+        Scene scene = new Scene(root, 640, 620);
         if (owner != null && owner.getScene() != null) {
             scene.getStylesheets().addAll(owner.getScene().getStylesheets());
         }
@@ -61,6 +65,28 @@ public class OllamaInstallerDialog extends Stage {
             "local y privada. Ningún dato sale de tu equipo.\n\n" +
             "El asistente descargará Ollama y el modelo de lenguaje " + DEFAULT_MODEL + " (~2 GB).");
         desc.setStyle("-fx-text-fill: #555; -fx-font-size: 12px;");
+        desc.setWrapText(true);
+
+        boolean animacionesActivas = isInstallerAssistantEnabled();
+        installerAssistant.setVisible(animacionesActivas);
+        installerAssistant.setManaged(animacionesActivas);
+
+        VBox headerText = new VBox(6, titulo, desc);
+        HBox header = new HBox(14, headerText, installerAssistant);
+        header.setAlignment(Pos.CENTER_LEFT);
+        HBox.setHgrow(headerText, Priority.ALWAYS);
+
+        CheckBox chkAnimaciones = new CheckBox("Mostrar asistente visual durante la instalación");
+        chkAnimaciones.setSelected(animacionesActivas);
+        chkAnimaciones.setStyle("-fx-font-size: 11px; -fx-text-fill: #7A5A72;");
+        chkAnimaciones.selectedProperty().addListener((obs, old, selected) -> {
+            DatabaseManager.setConfig(VisualAssistantView.KEY_INSTALLER_ANIMATIONS, selected ? "1" : "0");
+            installerAssistant.setVisible(selected);
+            installerAssistant.setManaged(selected);
+            if (selected) {
+                installerAssistant.decir("Vuelvo a acompañar la instalación.");
+            }
+        });
 
         // Panel de pasos
         VBox stepsPanel = buildStepsPanel();
@@ -93,7 +119,7 @@ public class OllamaInstallerDialog extends Stage {
         botones.setAlignment(Pos.CENTER_RIGHT);
 
         VBox root = new VBox(14,
-            titulo, desc,
+            header, chkAnimaciones,
             new Separator(),
             stepsPanel,
             new Separator(),
@@ -139,13 +165,16 @@ public class OllamaInstallerDialog extends Stage {
     private void iniciarInstalacion() {
         btnInstalar.setDisable(true);
         log("▶ Iniciando proceso de instalación de Ollama...");
+        asistente("Preparando instalación de Ollama y sus módulos de IA.");
 
         Thread.ofVirtual().start(() -> {
             try {
                 // PASO 1: Descargar instalador
                 setStepPending(0);
+                asistente("Descargando el instalador oficial de Ollama.");
                 Path installerPath = descargarInstalador();
                 setStepOk(0);
+                asistente("Instalador descargado. Ahora toca instalar Ollama.");
 
                 // PASO 2: Instalar
                 setStepPending(1);
@@ -156,6 +185,7 @@ public class OllamaInstallerDialog extends Stage {
                 });
                 ejecutarInstalador(installerPath);
                 setStepOk(1);
+                asistente("Ollama ya está instalado. Voy a iniciar el servicio.");
 
                 // PASO 3: Iniciar servicio
                 log("▶ Iniciando servicio Ollama...");
@@ -164,8 +194,10 @@ public class OllamaInstallerDialog extends Stage {
 
                 // PASO 4: Descargar modelo
                 setStepPending(2);
+                asistente("Descargando el modelo " + DEFAULT_MODEL + ". Este paso puede tardar bastante.");
                 descargarModelo();
                 setStepOk(2);
+                asistente("Modelo instalado. Estoy verificando que el asistente IA responde.");
 
                 // PASO 5: Verificar
                 setStepPending(3);
@@ -185,6 +217,9 @@ public class OllamaInstallerDialog extends Stage {
                     log(ok
                         ? "✅ ¡Ollama listo! Cierra esta ventana y usa el Asistente IA."
                         : "⚠  Si el asistente no responde, reinicia Gráficas Mulberry.");
+                    asistente(ok
+                        ? "Instalación completada. Ollama y el modelo están listos."
+                        : "Instalación finalizada con aviso. Reinicia la aplicación si el asistente IA no responde.");
                 });
 
             } catch (InterruptedException ex) {
@@ -196,6 +231,7 @@ public class OllamaInstallerDialog extends Stage {
                     lblProgreso.setText("Error durante la instalación — revisa el registro");
                     btnInstalar.setDisable(false);
                     btnInstalar.setText("🔄  Reintentar");
+                    asistente("Error durante la instalación. Revisa el registro y puedes reintentar.");
                 });
             }
         });
@@ -258,6 +294,9 @@ public class OllamaInstallerDialog extends Stage {
                         progressBar.setProgress(pct);
                         lblProgreso.setText(String.format("Descargando instalador: %.1f / %.1f MB  (%.0f%%)",
                             d / 1_048_576.0, totalFinal / 1_048_576.0, pct * 100));
+                        if (pct >= 0.5 && pct < 0.52) {
+                            asistente("La descarga del instalador va por la mitad.");
+                        }
                     } else {
                         progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
                         lblProgreso.setText(String.format("Descargando instalador: %.1f MB…", d / 1_048_576.0));
@@ -291,6 +330,7 @@ public class OllamaInstallerDialog extends Stage {
 
         log("  Se abrirá el instalador de Ollama en una ventana separada.");
         log("  Sigue las instrucciones en pantalla y espera a que finalice.");
+        asistente("Sigue el instalador de Ollama en la ventana que se abre.");
 
         Process proc = new ProcessBuilder(realExe.toString())
             .redirectOutput(ProcessBuilder.Redirect.DISCARD)
@@ -311,9 +351,13 @@ public class OllamaInstallerDialog extends Stage {
             final String estado = ollamaDetectado
                 ? "Instalando Ollama — copiando archivos... (" + secs + " s)"
                 : "Esperando que el instalador de Ollama finalice... (" + secs + " s)";
+            final boolean detectadoFinal = ollamaDetectado;
             Platform.runLater(() -> {
                 progressBar.setProgress(ProgressIndicator.INDETERMINATE_PROGRESS);
                 lblProgreso.setText(estado);
+                if (detectadoFinal) {
+                    asistente("Ollama detectado. Esperando a que termine la copia de archivos.");
+                }
             });
         }
 
@@ -369,6 +413,9 @@ public class OllamaInstallerDialog extends Stage {
                         progressBar.setProgress(p / 100.0);
                         lblProgreso.setText("Descargando modelo: " + p + "%" +
                             (si.isEmpty() ? "" : "  (" + si + ")"));
+                        if (p == 25 || p == 50 || p == 75) {
+                            asistente("Descarga del modelo al " + p + "%. Continúo esperando.");
+                        }
                     });
                     // Log solo cada 10 %
                     String hito = (pct / 10) * 10 + "%";
@@ -413,6 +460,10 @@ public class OllamaInstallerDialog extends Stage {
         return null;
     }
 
+    private boolean isInstallerAssistantEnabled() {
+        return !"0".equals(DatabaseManager.getConfig(VisualAssistantView.KEY_INSTALLER_ANIMATIONS));
+    }
+
     private void setStepPending(int i) {
         Platform.runLater(() -> stepIcons[i].setText("⏳"));
     }
@@ -429,6 +480,20 @@ public class OllamaInstallerDialog extends Stage {
         Platform.runLater(() -> {
             logArea.appendText(msg + "\n");
             logArea.setScrollTop(Double.MAX_VALUE);
+        });
+    }
+
+    private void asistente(String mensaje) {
+        Platform.runLater(() -> {
+            if (isInstallerAssistantEnabled()) {
+                long ahora = System.currentTimeMillis();
+                if (mensaje.equals(ultimoMensajeAsistente) && ahora - ultimoMensajeAsistenteMs < 10_000) {
+                    return;
+                }
+                ultimoMensajeAsistente = mensaje;
+                ultimoMensajeAsistenteMs = ahora;
+                installerAssistant.decir(mensaje);
+            }
         });
     }
 

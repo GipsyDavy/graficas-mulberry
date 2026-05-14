@@ -1,5 +1,5 @@
 #define MyAppName "GraficasMulberry"
-#define MyAppVersion "10.0.0"
+#define MyAppVersion "10.5.0"
 #define MyAppPublisher "Graficas Mulberry"
 #define MyAppExeName "GraficasMulberry.exe"
 #define MyAppDir "output\GraficasMulberry"

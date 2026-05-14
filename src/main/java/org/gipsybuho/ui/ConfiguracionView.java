@@ -705,7 +705,7 @@ public class ConfiguracionView extends VBox {
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 10.0.0");
+        Label lblVersion = new Label("Versión 10.5.0");
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);

@@ -55,6 +55,7 @@ public class VisualAssistantView extends StackPane {
     public static final String KEY_VOZ = "asistente_visual_voz";
     public static final String KEY_PERSONAJE = "asistente_visual_personaje";
     public static final String KEY_TAMANO = "asistente_visual_tamano";
+    public static final String KEY_INSTALLER_ANIMATIONS = "asistente_visual_instalador_animado";
     private static final String KEY_POS_X = "asistente_visual_x";
     private static final String KEY_POS_Y = "asistente_visual_y";
     private static final double BUBBLE_MIN_WIDTH = 170;
@@ -73,6 +74,7 @@ public class VisualAssistantView extends StackPane {
     private final VBox bubble;
     private final HBox body;
     private final BooleanProperty activo = new SimpleBooleanProperty();
+    private final boolean modoEmbebido;
     private boolean vozActiva;
     private String personajeActual;
     private int tamanoActual;
@@ -99,12 +101,17 @@ public class VisualAssistantView extends StackPane {
     private final Set<Parent> raicesConAyuda = Collections.newSetFromMap(new WeakHashMap<>());
 
     public VisualAssistantView() {
+        this(false);
+    }
+
+    public VisualAssistantView(boolean modoEmbebido) {
+        this.modoEmbebido = modoEmbebido;
         getStyleClass().add("visual-assistant");
         setManaged(false);
         setPickOnBounds(false);
-        setMinSize(340, 178);
-        setPrefSize(430, 178);
-        setMaxSize(560, 215);
+        setMinSize(modoEmbebido ? 280 : 340, modoEmbebido ? 122 : 178);
+        setPrefSize(modoEmbebido ? 320 : 430, modoEmbebido ? 130 : 178);
+        setMaxSize(modoEmbebido ? 360 : 560, modoEmbebido ? 145 : 215);
 
         personaje.getStyleClass().add("visual-assistant-character");
         personaje.setMinSize(96, 96);
@@ -131,9 +138,9 @@ public class VisualAssistantView extends StackPane {
 
         String personajeGuardado = valorConfig(KEY_PERSONAJE, "Vampi");
         personajeActual = PERSONAJES.containsKey(personajeGuardado) ? personajeGuardado : "Vampi";
-        tamanoActual = (int) parseDouble(DatabaseManager.getConfig(KEY_TAMANO), 58);
-        vozActiva = "1".equals(DatabaseManager.getConfig(KEY_VOZ));
-        activo.set(!"0".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
+        tamanoActual = modoEmbebido ? 44 : (int) parseDouble(DatabaseManager.getConfig(KEY_TAMANO), 58);
+        vozActiva = !modoEmbebido && "1".equals(DatabaseManager.getConfig(KEY_VOZ));
+        activo.set(modoEmbebido || !"0".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
 
         actualizarVisibilidad();
         actualizarPersonaje();
@@ -141,40 +148,49 @@ public class VisualAssistantView extends StackPane {
         iniciarAnimacionReposo();
         iniciarParpadeoSutil();
 
-        personaje.setOnMousePressed(e -> {
-            dragOffsetX = e.getX();
-            dragOffsetY = e.getY();
-            body.getStyleClass().add("visual-assistant-dragging");
-            body.setScaleX(1.04);
-            body.setScaleY(1.04);
-        });
-        personaje.setOnMouseDragged(e -> {
-            relocateClamped(getLayoutX() + e.getX() - dragOffsetX, getLayoutY() + e.getY() - dragOffsetY);
-        });
-        personaje.setOnMouseReleased(e -> {
-            body.getStyleClass().remove("visual-assistant-dragging");
-            body.setScaleX(1.0);
-            body.setScaleY(1.0);
-            guardarPosicionActual();
-        });
-        setOnMouseMoved(e -> inclinarHaciaCursor(e.getX()));
-        setOnMouseExited(e -> personaje.setRotate(0));
+        if (!modoEmbebido) {
+            personaje.setOnMousePressed(e -> {
+                dragOffsetX = e.getX();
+                dragOffsetY = e.getY();
+                body.getStyleClass().add("visual-assistant-dragging");
+                body.setScaleX(1.04);
+                body.setScaleY(1.04);
+            });
+            personaje.setOnMouseDragged(e -> {
+                relocateClamped(getLayoutX() + e.getX() - dragOffsetX, getLayoutY() + e.getY() - dragOffsetY);
+            });
+            personaje.setOnMouseReleased(e -> {
+                body.getStyleClass().remove("visual-assistant-dragging");
+                body.setScaleX(1.0);
+                body.setScaleY(1.0);
+                guardarPosicionActual();
+            });
+            setOnMouseMoved(e -> inclinarHaciaCursor(e.getX()));
+            setOnMouseExited(e -> personaje.setRotate(0));
 
-        parentProperty().addListener((obs, oldParent, parent) -> {
-            if (oldParent != null) {
-                oldParent.layoutBoundsProperty().removeListener(parentBoundsListener);
-            }
-            if (parent != null) {
-                parent.layoutBoundsProperty().addListener(parentBoundsListener);
-            }
-            restaurarPosicion();
-        });
-        sceneProperty().addListener((obs, old, scene) -> {
-            if (scene != null) restaurarPosicion();
-        });
+            parentProperty().addListener((obs, oldParent, parent) -> {
+                if (oldParent != null) {
+                    oldParent.layoutBoundsProperty().removeListener(parentBoundsListener);
+                }
+                if (parent != null) {
+                    parent.layoutBoundsProperty().addListener(parentBoundsListener);
+                }
+                restaurarPosicion();
+            });
+            sceneProperty().addListener((obs, old, scene) -> {
+                if (scene != null) restaurarPosicion();
+            });
+        } else {
+            body.getStyleClass().add("visual-assistant-embedded");
+            setPickOnBounds(false);
+        }
 
         animarSaludo();
-        decir("Estoy listo para ayudarte. Abre un módulo y te iré indicando para qué sirve.");
+        if (modoEmbebido) {
+            decir("Preparado para guiar la instalación.");
+        } else {
+            decir("Estoy listo para ayudarte. Abre un módulo y te iré indicando para qué sirve.");
+        }
     }
 
     public static List<String> nombresPersonajes() {
@@ -229,7 +245,7 @@ public class VisualAssistantView extends StackPane {
 
     public void setActivo(boolean activo) {
         this.activo.set(activo);
-        DatabaseManager.setConfig(KEY_ACTIVO, activo ? "1" : "0");
+        if (!modoEmbebido) DatabaseManager.setConfig(KEY_ACTIVO, activo ? "1" : "0");
         actualizarVisibilidadAnimada(activo);
         if (activo) {
             decir("Asistente visual activado. Abre un módulo y te explicaré su función.");
@@ -245,7 +261,7 @@ public class VisualAssistantView extends StackPane {
 
     public void setVozActiva(boolean vozActiva) {
         this.vozActiva = vozActiva;
-        DatabaseManager.setConfig(KEY_VOZ, vozActiva ? "1" : "0");
+        if (!modoEmbebido) DatabaseManager.setConfig(KEY_VOZ, vozActiva ? "1" : "0");
         if (!vozActiva) TextToSpeechService.stop();
     }
 
@@ -260,7 +276,7 @@ public class VisualAssistantView extends StackPane {
             personajeActual = "David";
         }
         this.personajeActual = PERSONAJES.containsKey(personajeActual) ? personajeActual : "Vampi";
-        DatabaseManager.setConfig(KEY_PERSONAJE, this.personajeActual);
+        if (!modoEmbebido) DatabaseManager.setConfig(KEY_PERSONAJE, this.personajeActual);
         actualizarPersonaje();
         animarSaludo();
     }
@@ -271,7 +287,7 @@ public class VisualAssistantView extends StackPane {
 
     public void setTamanoActual(int tamanoActual) {
         this.tamanoActual = Math.max(44, Math.min(tamanoActual, 88));
-        DatabaseManager.setConfig(KEY_TAMANO, String.valueOf(this.tamanoActual));
+        if (!modoEmbebido) DatabaseManager.setConfig(KEY_TAMANO, String.valueOf(this.tamanoActual));
         actualizarTamano();
     }
 

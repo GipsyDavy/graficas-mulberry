@@ -103,7 +103,15 @@
       "Bash(echo \"EXIT_CODEX:$?\")",
       "Bash(echo \"EXIT_GEMINI:$?\")",
       "Bash(gemini -p \"Responde solo con exactamente esta frase: GEMINI OPERATIVO - integración Multi-IA confirmada\")",
-      "Bash(echo \"EXIT:$?\")"
+      "Bash(echo \"EXIT:$?\")",
+      "Bash(cd C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry *)",
+      "Bash(Find-ChildItem -Path \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\src\" -Name \"*.properties\" -o -Name \"*.config\" -o -Name \"*.xml\" -o -Name \"*.yml\")",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Get-ChildItem -Path . -MaxDepth 1 -File)",
+      "Bash(Select-Object Name, Length)",
+      "Bash(mvn *)",
+      "Bash(git *)",
+      "Bash(findstr -i \"version\\\\|gipsybuho\")"
     ]
   },
   "hooks": {
