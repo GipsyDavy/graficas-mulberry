@@ -29,6 +29,7 @@ public final class TextToSpeechService {
     private static Process currentProcess;
     private static Clip currentClip;
     private static Thread currentThread;
+    private static long playbackGeneration;
     private static List<WindowsVoice> cachedWindowsVoices;
     private static long cachedWindowsVoicesAt;
 
@@ -66,20 +67,23 @@ public final class TextToSpeechService {
         if (text == null || text.isBlank()) return;
 
         stop();
+        long generation = ++playbackGeneration;
 
         currentThread = Thread.ofVirtual().start(() -> {
             String selectedVoice = getVozSeleccionada();
             boolean usarWindows = isWindowsVoice(selectedVoice);
-            if (usarWindows || !speakWithPiper(normalizarTexto(text), selectedVoice)) {
-                speakWithWindows(text, selectedVoice);
+            if (!isActive(generation)) return;
+            if (usarWindows || !speakWithPiper(normalizarTexto(text), selectedVoice, generation)) {
+                if (isActive(generation)) {
+                    speakWithWindows(text, selectedVoice, generation);
+                }
             }
         });
     }
 
     public static synchronized void stop() {
-        if (currentProcess != null && currentProcess.isAlive()) {
-            currentProcess.destroy();
-        }
+        playbackGeneration++;
+        stopCurrentProcess();
         currentProcess = null;
 
         if (currentClip != null) {
@@ -94,7 +98,20 @@ public final class TextToSpeechService {
         }
     }
 
-    private static boolean speakWithPiper(String text, String selectedVoice) {
+    private static void stopCurrentProcess() {
+        if (currentProcess == null || !currentProcess.isAlive()) return;
+
+        currentProcess.descendants().forEach(ProcessHandle::destroyForcibly);
+        currentProcess.destroyForcibly();
+    }
+
+    private static synchronized boolean isActive(long generation) {
+        return generation == playbackGeneration && !Thread.currentThread().isInterrupted();
+    }
+
+    private static boolean speakWithPiper(String text, String selectedVoice, long generation) {
+        if (!isActive(generation)) return true;
+
         Path piperDir = findPiperDir();
         if (piperDir == null) return false;
 
@@ -118,6 +135,10 @@ public final class TextToSpeechService {
 
             Process process = pb.start();
             synchronized (TextToSpeechService.class) {
+                if (!isActive(generation)) {
+                    process.destroyForcibly();
+                    return true;
+                }
                 currentProcess = process;
             }
 
@@ -131,11 +152,13 @@ public final class TextToSpeechService {
                 if (currentProcess == process) currentProcess = null;
             }
 
+            if (!isActive(generation)) return true;
             if (exitCode != 0 || Files.size(wav) == 0) return false;
 
-            playWav(wav);
+            playWav(wav, generation);
             return true;
         } catch (Exception e) {
+            if (!isActive(generation)) return true;
             System.err.println("No se pudo usar la voz Piper del asistente IA: " + e.getMessage());
             return false;
         } finally {
@@ -148,9 +171,15 @@ public final class TextToSpeechService {
         }
     }
 
-    private static void playWav(Path wav) throws Exception {
+    private static void playWav(Path wav, long generation) throws Exception {
+        if (!isActive(generation)) return;
+
         Clip clip = AudioSystem.getClip();
         synchronized (TextToSpeechService.class) {
+            if (!isActive(generation)) {
+                clip.close();
+                return;
+            }
             currentClip = clip;
         }
 
@@ -158,6 +187,7 @@ public final class TextToSpeechService {
             clip.open(audio);
             clip.start();
             while (!Thread.currentThread().isInterrupted()
+                && isActive(generation)
                 && clip.isOpen()
                 && clip.getFramePosition() < clip.getFrameLength()) {
                 Thread.sleep(80);
@@ -210,7 +240,9 @@ public final class TextToSpeechService {
         return new VoiceFiles(model, Path.of(model + ".json"));
     }
 
-    private static void speakWithWindows(String text, String selectedVoice) {
+    private static void speakWithWindows(String text, String selectedVoice, long generation) {
+        if (!isActive(generation)) return;
+
         String preferredVoice = windowsVoiceName(selectedVoice)
             .orElseGet(() -> vozWindowsFemeninaPreferida()
                 .flatMap(TextToSpeechService::windowsVoiceName)
@@ -240,19 +272,31 @@ public final class TextToSpeechService {
         pb.environment().put("GM_TTS_PREFERRED", preferredVoice);
         pb.redirectErrorStream(true);
 
+        Process process = null;
         try {
-            currentProcess = pb.start();
-            currentProcess.waitFor();
+            process = pb.start();
+            synchronized (TextToSpeechService.class) {
+                if (!isActive(generation)) {
+                    process.destroyForcibly();
+                    return;
+                }
+                currentProcess = process;
+            }
+            process.waitFor();
         } catch (IOException e) {
-            currentProcess = null;
+            synchronized (TextToSpeechService.class) {
+                if (currentProcess == process) currentProcess = null;
+            }
             System.err.println("No se pudo iniciar la voz del asistente IA: " + e.getMessage());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            if (currentProcess != null && currentProcess.isAlive()) {
-                currentProcess.destroy();
+            synchronized (TextToSpeechService.class) {
+                stopCurrentProcess();
             }
         } finally {
-            currentProcess = null;
+            synchronized (TextToSpeechService.class) {
+                if (currentProcess == process) currentProcess = null;
+            }
         }
     }
 
