@@ -10,11 +10,14 @@ import java.util.regex.Pattern;
 
 public class DatabaseManager {
 
-    private static final String DB_URL = buildDbUrl();
     private static final Pattern SQL_IDENTIFIER = Pattern.compile("[A-Za-z_][A-Za-z0-9_]*");
     private static Connection connection;
 
     private static String buildDbUrl() {
+        String override = System.getProperty("graficas.mulberry.db.url");
+        if (override != null && !override.isBlank()) {
+            return override;
+        }
         String appData = System.getenv("LOCALAPPDATA");
         java.io.File dir = new java.io.File(
             (appData != null && !appData.isEmpty()) ? appData : System.getProperty("user.home"),
@@ -26,7 +29,7 @@ public class DatabaseManager {
 
     public static Connection getConnection() throws SQLException {
         if (connection == null || connection.isClosed()) {
-            connection = DriverManager.getConnection(DB_URL);
+            connection = DriverManager.getConnection(buildDbUrl());
             try (Statement st = connection.createStatement()) {
                 st.execute("PRAGMA foreign_keys = ON");
             }
