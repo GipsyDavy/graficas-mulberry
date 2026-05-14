@@ -9,7 +9,6 @@ import javafx.stage.Stage;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
-import org.gipsybuho.model.User;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.SoundService;
@@ -24,7 +23,6 @@ import java.util.Objects;
 public class App extends Application {
 
     private Stage primaryStage;
-    private User currentUser;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -55,19 +53,6 @@ public class App extends Application {
     }
 
     private void showMainApplication() {
-        this.currentUser = new User(
-            0,
-            "Sistema",
-            "",
-            null,
-            java.time.LocalDateTime.now(),
-            0,
-            null,
-            true,
-            User.ROLE_INITIAL_ADMIN,
-            User.ALL_PERMISSIONS
-        );
-
         String musicaPlaylist = DatabaseManager.getConfig("musica_playlist");
         if (!musicaPlaylist.isBlank()) {
             MusicService.setPlaylist(java.util.Arrays.asList(musicaPlaylist.split("\\|")));
@@ -81,7 +66,7 @@ public class App extends Application {
         MusicService.setLoop(!"0".equals(musicaLoop));
         boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
-        MainView mainView = new MainView(primaryStage, currentUser);
+        MainView mainView = new MainView(primaryStage);
         Scene mainAppScene = new Scene(mainView, 1280, 800);
         mainAppScene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());

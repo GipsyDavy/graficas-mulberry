@@ -20,8 +20,6 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
-import org.gipsybuho.model.User;
-import org.gipsybuho.model.UserPermissions;
 import org.gipsybuho.service.SoundService;
 
 import java.util.ArrayList;
@@ -35,22 +33,16 @@ public class MainView extends BorderPane {
     private final VisualAssistantView visualAssistant;
     private VBox sidebar;
     private final IAView iaView;
-    private final User loggedInUser;
     private final Stage primaryStage;
 
-    public MainView(Stage stage, User loggedInUser) {
+    public MainView(Stage stage) {
         this.primaryStage = stage;
-        this.loggedInUser = loggedInUser;
         this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");
-        if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
-            mostrarVista(new DashboardView(loggedInUser), "Panel principal");
-        } else {
-            mostrarVista(accesoLimitado(), "Acceso limitado");
-        }
+        mostrarVista(new DashboardView(), "Panel principal");
     }
 
     private VBox buildSidebar() {
@@ -75,12 +67,6 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
         sidebar.getChildren().add(logoBox);
 
-        Label userInfoLabel = new Label("Usuario: " + loggedInUser.getUsername());
-        userInfoLabel.getStyleClass().add("sidebar-user-info");
-        VBox.setMargin(userInfoLabel, new Insets(10, 0, 0, 10)); // Margen para separar del logo
-
-        sidebar.getChildren().add(userInfoLabel);
-
         // Separador
         Region sep = new Region();
         sep.getStyleClass().add("sidebar-sep");
@@ -89,37 +75,36 @@ public class MainView extends BorderPane {
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
-        addIfAllowed(navMenu, navBtn(UserPermissions.DASHBOARD, "🏠  Panel principal", () -> new DashboardView(loggedInUser)));
+        navMenu.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
         navMenu.getChildren().addAll(
             navGrupo("CLIENTES",
-                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new)
+                navBtn("👥  Clientes", ClientesView::new)
             ),
             navGrupo("COMERCIAL",
-                navBtn(UserPermissions.PRESUPUESTOS, "📋  Presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.FACTURAS, "🧾  Facturas", FacturasView::new),
-                navBtn(UserPermissions.ALBARANES, "📋  Albaranes", AlbaranesView::new),
-                navBtn(UserPermissions.PEDIDOS, "📦  Pedidos", PedidosView::new)
+                navBtn("📋  Presupuestos", PresupuestosView::new),
+                navBtn("🧾  Facturas", FacturasView::new),
+                navBtn("📋  Albaranes", AlbaranesView::new),
+                navBtn("📦  Pedidos", PedidosView::new)
             ),
             navGrupo("ALMACÉN",
-                navBtn(UserPermissions.TARIFAS, "💰  Tarifas", TarifasView::new),
-                navBtn(UserPermissions.MATERIALES, "📦  Materiales", MaterialesView::new)
+                navBtn("💰  Tarifas", TarifasView::new),
+                navBtn("📦  Materiales", MaterialesView::new)
             ),
             navGrupo("PERSONAL",
-                navBtn(UserPermissions.EMPLEADOS, "👤  Empleados", EmpleadosView::new),
-                navBtn(UserPermissions.NOMINAS, "💼  Nóminas", NominasView::new)
+                navBtn("👤  Empleados", EmpleadosView::new),
+                navBtn("💼  Nóminas", NominasView::new)
             ),
             navGrupo("ANALÍTICA",
-                navBtn(UserPermissions.ESTADISTICAS, "📊  Estadísticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO, "📅  Calendario", CalendarioView::new)
+                navBtn("📊  Estadísticas", EstadisticasView::new),
+                navBtn("📅  Calendario", CalendarioView::new)
             ),
             navGrupo("SISTEMA",
-                navBtnEspecial(UserPermissions.IA, "🤖  Asistente IA",
+                navBtnEspecial("🤖  Asistente IA",
                     () -> mostrarVista(iaView, "🤖  Asistente IA"),
                     IAView::new),
-                navBtn(UserPermissions.IMPORTAR_BACKUP, "📥  Importar Backup", ImportBackupView::new),
-                navBtn(UserPermissions.EXPORTAR_BACKUP, "💾  Exportar / Backup", ExportView::new),
-                navBtn(UserPermissions.CONFIGURACION, "⚙  Configuración",
-                    ConfiguracionView::new),
+                navBtn("📥  Importar Backup", ImportBackupView::new),
+                navBtn("💾  Exportar / Backup", ExportView::new),
+                navBtn("⚙  Configuración", ConfiguracionView::new),
                 navBtn("🧭  Configuración asistente visual",
                     () -> new VisualAssistantConfigView(visualAssistant)),
                 buildBotonAsistenteVisual()
@@ -205,10 +190,6 @@ public class MainView extends BorderPane {
         return navBtnImpl(texto, () -> mostrarVista(factory.get(), texto), factory, texto);
     }
 
-    private StackPane navBtn(String permiso, String texto, Supplier<javafx.scene.Parent> factory) {
-        return loggedInUser.hasPermission(permiso) ? navBtn(texto, factory) : null;
-    }
-
     /**
      * Botón especial: permite separar la acción de clic izquierdo (p.ej. reusar
      * una instancia existente) de la fábrica usada para crear ventanas emergentes.
@@ -216,11 +197,6 @@ public class MainView extends BorderPane {
     private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
                                      Supplier<javafx.scene.Parent> popupFactory) {
         return navBtnImpl(texto, accionPrincipal, popupFactory, texto);
-    }
-
-    private StackPane navBtnEspecial(String permiso, String texto, Runnable accionPrincipal,
-                                     Supplier<javafx.scene.Parent> popupFactory) {
-        return loggedInUser.hasPermission(permiso) ? navBtnEspecial(texto, accionPrincipal, popupFactory) : null;
     }
 
     private StackPane navBtnImpl(String texto, Runnable accionPrincipal,
@@ -351,17 +327,4 @@ public class MainView extends BorderPane {
         visualAssistant.decirModulo(titulo);
     }
 
-    private void addIfAllowed(VBox parent, StackPane node) {
-        if (node != null) {
-            parent.getChildren().add(node);
-        }
-    }
-
-    private Parent accesoLimitado() {
-        Label label = new Label("Este usuario no tiene permisos para ver módulos asignados.");
-        label.getStyleClass().add("view-title");
-        StackPane pane = new StackPane(label);
-        pane.setPadding(new Insets(24));
-        return pane;
-    }
 }

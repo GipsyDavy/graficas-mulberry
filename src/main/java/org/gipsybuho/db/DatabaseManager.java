@@ -88,12 +88,10 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_x', '24')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_y', '24')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_instalador_animado', '1')",
-            // Nuevas migraciones para las columnas de intentos de login
-            "ALTER TABLE usuarios ADD COLUMN failed_login_attempts INTEGER DEFAULT 0",
-            "ALTER TABLE usuarios ADD COLUMN last_failed_login TEXT",
-            "ALTER TABLE usuarios ADD COLUMN initial_admin INTEGER DEFAULT 0",
-            "ALTER TABLE usuarios ADD COLUMN role TEXT DEFAULT 'USUARIO'",
-            "ALTER TABLE usuarios ADD COLUMN permissions TEXT DEFAULT ''"
+            // Limpieza de tablas de autenticación (sistema reemplazado)
+            "DROP TABLE IF EXISTS log_accesos",
+            "DROP TABLE IF EXISTS usuarios",
+            "DELETE FROM config WHERE clave IN ('session_timeout_minutes','max_login_attempts','login_lockout_minutes')"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
@@ -117,30 +115,6 @@ public class DatabaseManager {
     private static void createTables(Connection conn) throws SQLException {
         try (Statement st = conn.createStatement()) {
             // Nueva tabla de usuarios con columnas adicionales para intentos de login
-            st.execute("""
-                CREATE TABLE IF NOT EXISTS usuarios (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    username TEXT UNIQUE NOT NULL,
-                    password_hash TEXT NOT NULL,
-                    last_login TEXT,
-                    created_at TEXT DEFAULT (datetime('now')),
-                    failed_login_attempts INTEGER DEFAULT 0,
-                    last_failed_login TEXT,
-                    initial_admin INTEGER DEFAULT 0,
-                    role TEXT DEFAULT 'USUARIO',
-                    permissions TEXT DEFAULT ''
-                )""");
-
-            // Nueva tabla de log de accesos
-            st.execute("""
-                CREATE TABLE IF NOT EXISTS log_accesos (
-                    id INTEGER PRIMARY KEY AUTOINCREMENT,
-                    user_id INTEGER REFERENCES usuarios(id) ON DELETE SET NULL,
-                    username TEXT NOT NULL,
-                    event_type TEXT NOT NULL,
-                    timestamp TEXT DEFAULT (datetime('now'))
-                )""");
-
             st.execute("""
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -441,10 +415,7 @@ public class DatabaseManager {
                 ('asistente_visual_tamano', '58'),
                 ('asistente_visual_x', '24'),
                 ('asistente_visual_y', '24'),
-                ('asistente_visual_instalador_animado', '1'),
-                ('session_timeout_minutes', '30'),
-                ('max_login_attempts', '5'),
-                ('login_lockout_minutes', '5')
+                ('asistente_visual_instalador_animado', '1')
                 """);
 
             // Tarifas de ejemplo para serigrafía

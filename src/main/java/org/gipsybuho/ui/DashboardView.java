@@ -6,23 +6,16 @@ import javafx.scene.control.Label;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.NotaCalendario;
-import org.gipsybuho.model.User; // Importar User
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.time.format.FormatStyle;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Locale;
 
 public class DashboardView extends VBox {
 
-    private final User loggedInUser; // Añadir campo para el usuario logueado
-
-    public DashboardView(User loggedInUser) { // Constructor modificado
-        this.loggedInUser = loggedInUser; // Asignar el usuario logueado
-
+    public DashboardView() {
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(20);
@@ -33,27 +26,10 @@ public class DashboardView extends VBox {
         Label subtitulo = new Label("Resumen de actividad — " + LocalDate.now());
         subtitulo.getStyleClass().add("view-subtitle");
 
-        // Mostrar información del último acceso
-        Label lastLoginLabel = new Label();
-        lastLoginLabel.getStyleClass().add("last-login-info");
-        updateLastLoginInfo(lastLoginLabel);
-
         HBox tarjetas = buildTarjetas();
         VBox avisos   = buildAvisosCalendario();
-        getChildren().addAll(titulo, subtitulo, lastLoginLabel, tarjetas, avisos); // Añadir lastLoginLabel
+        getChildren().addAll(titulo, subtitulo, tarjetas, avisos);
         cargarDatos(tarjetas);
-    }
-
-    private void updateLastLoginInfo(Label label) {
-        if (loggedInUser != null && loggedInUser.getLastLogin() != null) {
-            LocalDateTime lastLogin = loggedInUser.getLastLogin();
-            DateTimeFormatter formatter = DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM)
-                                                        .withLocale(new Locale("es", "ES"));
-            String formattedLastLogin = lastLogin.format(formatter);
-            label.setText("Último acceso: " + formattedLastLogin + " — " + loggedInUser.getUsername());
-        } else {
-            label.setText("Último acceso: No registrado");
-        }
     }
 
     private HBox buildTarjetas() {
