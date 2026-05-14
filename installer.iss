@@ -1,5 +1,5 @@
 #define MyAppName "GraficasMulberry"
-#define MyAppVersion "9.5"
+#define MyAppVersion "10.0.0"
 #define MyAppPublisher "Graficas Mulberry"
 #define MyAppExeName "GraficasMulberry.exe"
 #define MyAppDir "output\GraficasMulberry"
@@ -14,7 +14,7 @@ DefaultDirName={autopf}\{#MyAppName}
 DefaultGroupName={#MyAppName}
 AllowNoIcons=yes
 OutputDir=output
-OutputBaseFilename=GraficasMulberry-Instalador-v9.5
+OutputBaseFilename=GraficasMulberry-Instalador-v{#MyAppVersion}
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

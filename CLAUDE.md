@@ -161,6 +161,8 @@ El uso de otros agentes debe decidirse por una combinación de:
 #### Requerir apoyo Multi-IA salvo justificación por cuota/disponibilidad cuando:
 - El cambio afecte autenticación, permisos, seguridad, datos sensibles, base de datos o lógica crítica de negocio.
 - La tarea sea amplia, ambigua o requiera comparar alternativas técnicas.
+- La tarea sea mediana o grande y tenga partes separables entre análisis, implementación, revisión, pruebas o empaquetado.
+- El cambio afecte UI relevante, instalador, empaquetado Windows, integración IA, asistentes visuales, voz/TTS o flujos de usuario principales.
 - Haya que revisar una implementación relevante antes de cerrar.
 - El agente líder detecte incertidumbre técnica importante.
 - El usuario solicite explícitamente revisión, segunda opinión o colaboración Multi-IA.
@@ -170,7 +172,9 @@ El uso de otros agentes debe decidirse por una combinación de:
 - Exista riesgo de regresión pero el cambio no sea crítico.
 - Sea útil repartir trabajo entre análisis, implementación y validación.
 - Gemini pueda ayudar con contexto amplio o investigación.
+- Claude Code pueda aportar revisión de calidad, seguridad, regresiones o coherencia con `CLAUDE.md`.
 - Codex pueda ejecutar pruebas, inspeccionar archivos o aplicar parches rápidos.
+- Haya que conservar cuota del agente actual y otro agente pueda resolver una parte concreta sin bloquear el avance.
 
 #### No usar otro agente cuando:
 - La tarea sea pequeña, local y de bajo riesgo.
@@ -184,6 +188,8 @@ La cuota es un recurso técnico del proyecto. Por tanto:
 - No se debe gastar cuota de Claude Code, Codex o Gemini en comprobaciones repetitivas, tareas triviales o revisiones sin riesgo.
 - No se debe hacer ping a todos los agentes en cada tarea.
 - Se debe reutilizar la información de disponibilidad obtenida durante la misma sesión.
+- Se debe repartir el trabajo entre Claude Code, Codex y Gemini cuando la tarea sea mediana o grande y el reparto reduzca el consumo concentrado de un solo agente.
+- Se debe priorizar el agente más adecuado para cada fase: Codex para edición/local/testing, Claude Code para revisión/calidad/seguridad y Gemini para análisis amplio/arquitectura/alternativas.
 - Si Claude Code tiene cuota limitada, reservarlo para revisión final, cambios críticos o decisiones de calidad.
 - Si Gemini tiene cuota limitada, reservarlo para contexto amplio, arquitectura, investigación o segunda opinión.
 - Si Codex tiene cuota limitada, reservarlo para edición local, ejecución de comandos, pruebas y validación.
@@ -195,8 +201,9 @@ Antes de invocar otro agente, responder internamente:
 2. ¿El riesgo del cambio justifica gastar cuota?
 3. ¿La tarea requiere una segunda opinión real o solo una comprobación rutinaria?
 4. ¿Hay una validación objetiva más barata, como `mvn test`, compilación o inspección directa?
+5. ¿Conviene repartir esta tarea para no concentrar el consumo de cuota en el agente actual?
 
-Si la respuesta no justifica claramente el coste, no se invoca otro agente y se documenta el motivo.
+Si la respuesta no justifica claramente el coste, no se invoca otro agente y se documenta el motivo. En tareas medianas o grandes, la opción por defecto debe ser consultar o delegar al menos a un segundo agente disponible, salvo que una validación local objetiva sea claramente suficiente.
 
 ### Comprobación de disponibilidad
 Antes de delegar o depender de un agente, comprobar solo lo necesario:
@@ -211,6 +218,21 @@ Antes de delegar o depender de un agente, comprobar solo lo necesario:
 
 No repetir estas comprobaciones en cada paso si ya se han realizado durante la misma sesión y el agente está funcionando.
 
+### Interpretación correcta de disponibilidad
+- **Un agente se considera operativo si responde con el token esperado** (CODEX_OK, GEMINI_OK, etc.), aunque muestre avisos secundarios (API key duplicada, ripgrep no disponible, color terminal, etc.). Los avisos no son fallos.
+- **Distinguir siempre entre dos estados distintos:**
+  - `CLI inaccesible desde Claude Code`: el comando falla cuando Claude Code lo invoca como subproceso, pero puede funcionar desde la sesión interactiva del usuario o desde el IDE.
+  - `Agente globalmente no disponible`: el agente falla en todos los entornos (CLI, IDE, sesión del usuario).
+- **Si Codex CLI falla desde Claude Code pero el usuario lo ha confirmado operativo**, reportar como `"Codex CLI inaccesible desde el subproceso de Claude Code"`, nunca como `"Codex sin cuota"` salvo que el error sea explícitamente de cuota, se haya comprobado desde la sesión interactiva del usuario y también falle fuera de Claude Code.
+- **No afirmar saldo agotado, cuota global agotada o agente caído globalmente** cuando solo haya fallado un subproceso. En ese caso, describir el alcance exacto: `"falla desde Claude Code"`, `"funciona desde IDE"`, `"funciona desde PowerShell"` o `"pendiente de confirmar en otros entornos"`.
+- **Si Gemini CLI falla desde Claude Code con `fetch failed`**, puede deberse a diferencias de red/proxy entre el subproceso y la sesión interactiva. No declarar Gemini caído si el usuario o Codex lo han confirmado operativo.
+- **Regla de diagnóstico antes de declarar un agente no operativo:**
+  1. ¿El error aparece solo desde el subproceso de Claude Code? → reportar fallo limitado a ese entorno.
+  2. ¿El usuario, Codex o el IDE lo confirmaron operativo en la misma sesión? → considerar el agente operativo por ese canal y usar método IDE/bloque autocontenido.
+  3. ¿El error es explícito (quota exceeded, auth error)? → reportar ese error concreto solo para el entorno donde se produjo.
+  4. ¿El error es de red/conexión (fetch failed, timeout)? → probablemente limitación del contexto de subproceso, proxy o red, no del agente completo.
+  5. ¿Falla en todos los entornos comprobados? → solo entonces declarar `Agente globalmente no disponible`.
+
 ### Comunicación entre agentes
 - Claude Code puede llamar a Codex mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
 - Claude Code puede llamar a Gemini mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
@@ -224,6 +246,8 @@ No repetir estas comprobaciones en cada paso si ya se han realizado durante la m
 - Implementación localizada, edición de archivos, ejecución de tests o comandos: usar el agente que tenga acceso directo al workspace y menor fricción operativa.
 - Revisión de seguridad, auth, permisos, datos sensibles o cambios críticos: solicitar segunda revisión a otro agente disponible.
 - Cambios amplios, arquitectura, migraciones o decisiones con varias alternativas: consultar Gemini o Claude Code para planificación/revisión.
+- Cambios medianos de UI, asistentes visuales, instalador, empaquetado Windows o integración IA: pedir revisión o apoyo a Claude Code o Gemini si están disponibles.
+- Tareas con varias partes independientes: dividir entre agentes siempre que haya ámbitos de escritura o análisis claramente separados.
 - Cambios pequeños y claros: un solo agente puede ejecutar. En tareas relevantes, debe dejar constancia de que Multi-IA no se invocó por no aportar valor técnico adicional.
 
 ### Flujo obligatorio
@@ -233,8 +257,9 @@ No repetir estas comprobaciones en cada paso si ya se han realizado durante la m
 4. Delegar o consultar con instrucciones concretas, contexto mínimo suficiente y objetivo verificable.
 5. Ejecutar cambios quirúrgicos respetando el estado actual del workspace.
 6. Validar con `mvn test`, compilación, ejecución manual o prueba equivalente según el cambio.
-7. Para cambios relevantes, solicitar revisión final a Claude Code si está operativo; si no lo está, Codex o Gemini harán la revisión disponible.
-8. Informar al final qué agentes participaron, qué aportó cada uno y qué validación se ejecutó.
+7. Para tareas medianas o grandes, intentar repartir análisis, implementación o revisión entre al menos dos agentes disponibles sin duplicar trabajo.
+8. Para cambios relevantes, solicitar revisión final a Claude Code si está operativo; si no lo está, Codex o Gemini harán la revisión disponible.
+9. Informar al final qué agentes participaron, qué aportó cada uno y qué validación se ejecutó.
 
 ### Mecanismo CLI / IDE
 - Si el CLI del agente está operativo, usarlo directamente con una instrucción concreta y acotada.

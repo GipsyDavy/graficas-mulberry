@@ -145,6 +145,10 @@ public class OllamaService {
     // =========================================================================
 
     public void enviarConsulta(String prompt, Consumer<String> onResponse, Consumer<String> onError) {
+        enviarConsulta(prompt, onResponse, onError, null);
+    }
+
+    public void enviarConsulta(String prompt, Consumer<String> onResponse, Consumer<String> onError, Runnable onComplete) {
         Thread.ofVirtual().start(() -> {
             try {
                 ObjectNode payload = mapper.createObjectNode();
@@ -193,6 +197,9 @@ public class OllamaService {
                     synchronized (historial) {
                         if (historial.size() >= MAX_HISTORIAL) historial.remove(0);
                         historial.add(new String[]{prompt, fullAiResponse.toString()});
+                    }
+                    if (onComplete != null) {
+                        Platform.runLater(onComplete);
                     }
                 }
             } catch (Exception e) {

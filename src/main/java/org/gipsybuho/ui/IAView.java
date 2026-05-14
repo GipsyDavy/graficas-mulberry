@@ -40,6 +40,8 @@ public class IAView extends VBox {
     private final CheckBox cbContexto;
     private final ToggleButton btnVoz;
     private final ComboBox<String> cbVozTts;
+    private String ultimaRespuestaIA = "";
+    private volatile boolean vozWindowsDisponible;
 
     public IAView() {
         getStyleClass().add("content-view");
@@ -109,15 +111,27 @@ public class IAView extends VBox {
 
         btnVoz.setSelected("1".equals(DatabaseManager.getConfig("ia_voz_activada")));
         actualizarBotonVoz();
-        btnVoz.setTooltip(new Tooltip("Activar o silenciar la lectura por voz del asistente IA"));
+        btnVoz.setDisable(true);
         btnVoz.setOnAction(e -> {
             SoundService.play(SoundService.Sound.CLICK);
-            DatabaseManager.setConfig("ia_voz_activada", btnVoz.isSelected() ? "1" : "0");
-            actualizarBotonVoz();
-            if (!btnVoz.isSelected()) {
+            if (btnVoz.isSelected()) {
+                if (!vozWindowsDisponible) {
+                    btnVoz.setSelected(false);
+                    DatabaseManager.setConfig("ia_voz_activada", "0");
+                    actualizarBotonVoz();
+                    mostrarErrorVozNoDisponible();
+                    return;
+                }
+                DatabaseManager.setConfig("ia_voz_activada", "1");
+                actualizarBotonVoz();
+                TextToSpeechService.speak("Voz activada");
+            } else {
+                DatabaseManager.setConfig("ia_voz_activada", "0");
+                actualizarBotonVoz();
                 TextToSpeechService.stop();
             }
         });
+        verificarDisponibilidadVoz();
 
         Button btnModelos = new Button(AppConstants.TEXT_BTN_GESTION_MODELOS);
         btnModelos.setOnAction(e -> {
@@ -147,7 +161,33 @@ public class IAView extends VBox {
     }
 
     private void actualizarBotonVoz() {
-        btnVoz.setText(btnVoz.isSelected() ? "🔊 Voz" : "🔇 Voz");
+        if (btnVoz.isSelected()) {
+            btnVoz.setText("🔊 Voz activada");
+            btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA se leerá por voz"));
+            btnVoz.setStyle(
+                "-fx-background-color: #1F8F4D; "
+                    + "-fx-text-fill: white; "
+                    + "-fx-font-weight: bold; "
+                    + "-fx-background-radius: 18; "
+                    + "-fx-border-color: #B7F7CE; "
+                    + "-fx-border-width: 2; "
+                    + "-fx-border-radius: 18; "
+                    + "-fx-padding: 6 12;"
+            );
+        } else {
+            btnVoz.setText("🔇 Voz silenciada");
+            btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA no se leerá por voz"));
+            btnVoz.setStyle(
+                "-fx-background-color: #5F6673; "
+                    + "-fx-text-fill: white; "
+                    + "-fx-font-weight: bold; "
+                    + "-fx-background-radius: 18; "
+                    + "-fx-border-color: #2F3540; "
+                    + "-fx-border-width: 2; "
+                    + "-fx-border-radius: 18; "
+                    + "-fx-padding: 6 12;"
+            );
+        }
     }
 
     private ScrollPane buildChat(VBox chatBox) {
@@ -197,6 +237,7 @@ public class IAView extends VBox {
     private void enviar() {
         String prompt = txtInput.getText().trim();
         if (prompt.isEmpty() || btnEnviar.isDisabled()) return;
+        boolean incluirContexto = cbContexto.isSelected();
 
         txtInput.clear();
         btnEnviar.setDisable(true);
@@ -212,42 +253,57 @@ public class IAView extends VBox {
 
         Thread.ofVirtual().start(() -> {
             try {
-                if (cbContexto.isSelected()) {
+                if (incluirContexto) {
                     ia.setContextoERP(contextoService.construirContexto());
                 } else {
                     ia.setContextoERP(null);
                 }
 
                 ia.enviarConsulta(prompt,
-                        fragment -> Platform.runLater(() -> {
+                        fragment -> {
                             respuestaFull.append(fragment);
                             burbuja.textFlow().getChildren().clear();
                             burbuja.textFlow().getChildren().add(new Text(respuestaFull.toString()));
                             scrollAbajo();
-                        }),
-                        err -> Platform.runLater(() -> {
+                        },
+                        err -> {
                             quitarSpinner(burbuja.container());
                             // Corregido: Usamos el prefijo existente en AppConstants
                             SoundService.play(SoundService.Sound.ERROR);
                             addMensajeSistema(AppConstants.MSG_ERROR_PREFIX + err);
                             btnEnviar.setDisable(false);
-                        })
+                        },
+                        () -> {
+                            ultimaRespuestaIA = respuestaFull.toString();
+                            quitarSpinner(burbuja.container());
+                            btnEnviar.setDisable(false);
+                            SoundService.play(SoundService.Sound.CHAT_RECEIVE);
+                            if (btnVoz.isSelected() && !ultimaRespuestaIA.isBlank()) {
+                                TextToSpeechService.speak(ultimaRespuestaIA);
+                            }
+                        }
                 );
-
-                Platform.runLater(() -> {
-                    quitarSpinner(burbuja.container());
-                    btnEnviar.setDisable(false);
-                    SoundService.play(SoundService.Sound.CHAT_RECEIVE);
-                    if (btnVoz.isSelected()) {
-                        TextToSpeechService.speak(respuestaFull.toString());
-                    }
-                });
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.ERROR);
                     btnEnviar.setDisable(false);
                 });
             }
+        });
+    }
+
+    private void verificarDisponibilidadVoz() {
+        Thread.ofVirtual().start(() -> {
+            boolean disponible = TextToSpeechService.isDisponible();
+            Platform.runLater(() -> {
+                vozWindowsDisponible = disponible;
+                btnVoz.setDisable(false);
+                if (!disponible && btnVoz.isSelected()) {
+                    btnVoz.setSelected(false);
+                    DatabaseManager.setConfig("ia_voz_activada", "0");
+                }
+                actualizarBotonVoz();
+            });
         });
     }
 
@@ -431,6 +487,18 @@ public class IAView extends VBox {
         alert.setTitle("Voces naturales de Windows");
         alert.setHeaderText("Instala voces naturales es-ES desde Windows");
         alert.setContentText(TextToSpeechService.mensajeInstalacionVocesNaturales());
+        if (getScene() != null) {
+            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        alert.showAndWait();
+    }
+
+    private void mostrarErrorVozNoDisponible() {
+        Alert alert = new Alert(Alert.AlertType.WARNING);
+        alert.setTitle("Voz no disponible");
+        alert.setHeaderText("No se ha podido activar la lectura por voz");
+        alert.setContentText("Windows no ha devuelto ninguna voz compatible para leer el chat. "
+                + "Instala o habilita una voz desde Configuración > Hora e idioma > Voz y reinicia la aplicación.");
         if (getScene() != null) {
             alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         }

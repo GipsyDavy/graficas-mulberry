@@ -99,7 +99,11 @@
       "Bash(echo \"---CODEX_EXIT:$?\")",
       "Read(//c/Users/GipsyDavy//**)",
       "Read(//c/Users/Gipsy Dávy/**)",
-      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-24\" \"/c/Program Files/JetBrains/IntelliJ IDEA 2026.1/plugins/maven/lib/maven3/bin/mvn\" compile -q -f \"/c/Users/GipsyDavy/MAVEN/Graficas Mulberry/pom.xml\")"
+      "Bash(JAVA_HOME=\"/c/Program Files/Java/jdk-24\" \"/c/Program Files/JetBrains/IntelliJ IDEA 2026.1/plugins/maven/lib/maven3/bin/mvn\" compile -q -f \"/c/Users/GipsyDavy/MAVEN/Graficas Mulberry/pom.xml\")",
+      "Bash(echo \"EXIT_CODEX:$?\")",
+      "Bash(echo \"EXIT_GEMINI:$?\")",
+      "Bash(gemini -p \"Responde solo con exactamente esta frase: GEMINI OPERATIVO - integración Multi-IA confirmada\")",
+      "Bash(echo \"EXIT:$?\")"
     ]
   },
   "hooks": {

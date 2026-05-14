@@ -92,6 +92,7 @@ public class App extends Application {
         primaryStage.setScene(mainAppScene);
         primaryStage.setMinWidth(1024);
         primaryStage.setMinHeight(680);
+        primaryStage.setMaximized(true);
         primaryStage.setOnCloseRequest(event -> {
             if (!mainView.confirmarSalida()) {
                 event.consume();

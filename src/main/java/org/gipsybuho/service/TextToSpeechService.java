@@ -56,6 +56,10 @@ public final class TextToSpeechService {
             + "añadiendo Español (España) y sus opciones de voz. Después reinicia la aplicación.";
     }
 
+    public static boolean isDisponible() {
+        return isWindows() && hayVocesWindowsInstaladas();
+    }
+
     public static synchronized void speak(String text) {
         if (text == null || text.isBlank()) return;
 
@@ -125,7 +129,11 @@ public final class TextToSpeechService {
                 }
                 currentProcess = process;
             }
+            String salida = new String(process.getInputStream().readAllBytes(), charsetConsolaWindows());
             process.waitFor();
+            if (process.exitValue() != 0 && !salida.isBlank()) {
+                System.err.println("No se pudo reproducir la voz de Windows: " + salida.trim());
+            }
         } catch (IOException e) {
             System.err.println("No se pudo iniciar la voz femenina de Windows: " + e.getMessage());
         } catch (InterruptedException e) {
@@ -147,6 +155,34 @@ public final class TextToSpeechService {
 
         currentProcess.descendants().forEach(ProcessHandle::destroyForcibly);
         currentProcess.destroyForcibly();
+    }
+
+    private static boolean hayVocesWindowsInstaladas() {
+        ProcessBuilder pb = new ProcessBuilder(
+            "powershell.exe",
+            "-NoProfile",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            "$ErrorActionPreference = 'Stop'; "
+                + "Add-Type -AssemblyName System.Speech; "
+                + "$speaker = New-Object System.Speech.Synthesis.SpeechSynthesizer; "
+                + "$voice = $speaker.GetInstalledVoices() | Where-Object { $_.Enabled } | Select-Object -First 1; "
+                + "$speaker.Dispose(); "
+                + "if ($voice) { exit 0 } else { exit 1 }"
+        );
+        pb.redirectErrorStream(true);
+        try {
+            Process process = pb.start();
+            process.getInputStream().readAllBytes();
+            process.waitFor();
+            return process.exitValue() == 0;
+        } catch (IOException e) {
+            return false;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return false;
+        }
     }
 
     private static List<String> detectarVocesWindowsEsEs() {

@@ -37,6 +37,7 @@ import javafx.scene.shape.Circle;
 import javafx.scene.shape.Ellipse;
 import javafx.scene.shape.Polygon;
 import javafx.scene.shape.Rectangle;
+import javafx.scene.text.Text;
 import javafx.scene.transform.Rotate;
 import javafx.util.Duration;
 import org.gipsybuho.db.DatabaseManager;
@@ -64,7 +65,10 @@ public class VisualAssistantView extends StackPane {
         "Robot", "Robot",
         "Guía", "Guía",
         "Técnico", "Técnico",
-        "Guardia Civil", "Guardia Civil"
+        "David", "David",
+        "Gema", "Gema",
+        "Sonia", "Sonia",
+        "Ana", "Ana"
     );
 
     private final StackPane personaje = new StackPane();
@@ -84,6 +88,11 @@ public class VisualAssistantView extends StackPane {
     private double dragOffsetY;
     private Rotate rotBrazoIzq, rotBrazoDer, rotPiernaIzq, rotPiernaDer, rotLlave;
     private Circle robLuz;
+    private Group metalCabeza, metalPelo, metalTorso, metalBrazoAlto;
+    private Group soniaCabeza, soniaManoIzq, soniaManoDer, soniaMicrofono;
+    private Rectangle soniaPantalla;
+    private Group davidCabeza, davidTorso, davidRadio, davidLinterna;
+    private Circle davidLinternaLuz;
     private Timeline animExtremidades, animPersonaje;
     private Node ultimoNodoAyuda;
     private long ultimaAyudaMs;
@@ -246,6 +255,11 @@ public class VisualAssistantView extends StackPane {
     }
 
     public void setPersonajeActual(String personajeActual) {
+        if ("Metalera".equals(personajeActual)) {
+            personajeActual = "Gema";
+        } else if ("Guardia Civil".equals(personajeActual)) {
+            personajeActual = "David";
+        }
         this.personajeActual = PERSONAJES.containsKey(personajeActual) ? personajeActual : "Búho";
         DatabaseManager.setConfig(KEY_PERSONAJE, this.personajeActual);
         actualizarPersonaje();
@@ -429,7 +443,10 @@ public class VisualAssistantView extends StackPane {
             case "Robot" -> crearRobot();
             case "Guía" -> crearGuia();
             case "Técnico" -> crearTecnico();
-            case "Guardia Civil" -> crearGuardiaCivil();
+            case "David", "Guardia Civil" -> crearGuardiaCivil();
+            case "Gema", "Metalera" -> crearMetalera();
+            case "Sonia" -> crearSonia();
+            case "Ana" -> crearAna();
             default -> crearBuho();
         };
         personaje.getChildren().setAll(avatar);
@@ -565,20 +582,18 @@ public class VisualAssistantView extends StackPane {
         Group piernaIzqG = piernaBotaGroup(31, 83, rotPiernaIzq);
         Group piernaDerG = piernaBotaGroup(57, 83, rotPiernaDer);
 
-        // Tricornio
         Rectangle corona    = rect(36,  8, 28, 16,  4, "#0D1A0D");
         Polygon   alaIzq    = polygon("#0D1A0D", 36, 24, 22, 22, 24, 29, 38, 30);
         Polygon   alaDer    = polygon("#0D1A0D", 64, 24, 78, 22, 76, 29, 62, 30);
         Rectangle visorFront = rect(40, 24, 20, 5, 2, "#0D1A0D");
 
-        // Cara
         Circle    cabeza    = circle(50, 39, 17, "#E8C8A0");
         Circle    ojoIzq    = circle(44, 37,  3, "#1C1C1C");
         Circle    ojoDer    = circle(56, 37,  3, "#1C1C1C");
         Polygon   bigoteIzq = polygon("#3D1A00", 43, 47, 50, 46, 50, 50, 43, 50);
         Polygon   bigoteDer = polygon("#3D1A00", 50, 46, 57, 47, 57, 50, 50, 50);
+        davidCabeza = new Group(cabeza, ojoIzq, ojoDer, bigoteIzq, bigoteDer, alaIzq, alaDer, visorFront, corona);
 
-        // Cuerpo
         Rectangle cuello    = rect(44, 55, 12,  7, 3, "#E8C8A0");
         Rectangle torso     = rect(25, 61, 50, 22, 8, "#2F6B35");
         Rectangle cinturon  = rect(25, 77, 50,  5, 2, "#3D2800");
@@ -588,13 +603,61 @@ public class VisualAssistantView extends StackPane {
         Rectangle cierre    = rect(71, 79,  9,  3, 1, "#3D2800");
         Group pistolaFunda = new Group(funda, empunadura, cierre);
         pistolaFunda.setRotate(-8);
+        davidTorso = new Group(cuello, torso, cinturon, hebilla, pistolaFunda);
+        davidRadio = new Group(rect(18, 70, 8, 13, 2, "#111111"), rect(20, 66, 4, 5, 1, "#111111"));
+        davidLinternaLuz = circle(84, 72, 5, "#F2C94C");
+        davidLinternaLuz.setOpacity(0.0);
+        davidLinterna = new Group(rect(77, 70, 11, 5, 2, "#222222"), davidLinternaLuz);
 
         Group g = new Group(
             piernaIzqG, piernaDerG,
-            brazoIzqG, brazoDerG,
-            cuello, torso, cinturon, hebilla, pistolaFunda,
-            cabeza, ojoIzq, ojoDer, bigoteIzq, bigoteDer,
-            alaIzq, alaDer, visorFront, corona
+            brazoIzqG, brazoDerG, davidTorso, davidRadio, davidLinterna, davidCabeza
+        );
+        return escalar(g);
+    }
+
+    private Node crearMetalera() {
+        rotBrazoIzq  = new Rotate(0, 5.5, 31);
+        rotBrazoDer  = new Rotate(18, 6, 0);
+        rotPiernaIzq = new Rotate(5, 6, 0);
+        rotPiernaDer = new Rotate(-5, 6, 0);
+
+        Group piernaIzqG = piernaBotaGroup(31, 83, rotPiernaIzq);
+        Group piernaDerG = piernaBotaGroup(57, 83, rotPiernaDer);
+        Group brazoBajo = brazoGroup("#111111", "#E8B58F", 70, 63, rotBrazoDer);
+        metalBrazoAlto = brazoCuernosGroup();
+        metalBrazoAlto.getTransforms().add(rotBrazoIzq);
+
+        Rectangle cuello = rect(45, 53, 10, 8, 3, "#E8B58F");
+        Rectangle torso = rect(25, 61, 50, 24, 8, "#101010");
+        torso.setStroke(Color.web("#5B5B5B"));
+        torso.setStrokeWidth(1.5);
+        Polygon rayo = polygon("#F2C94C", 50, 64, 42, 75, 49, 74, 43, 84, 58, 70, 51, 71);
+        Text camiseta = new Text(33, 79, "AC/DC");
+        camiseta.setFill(Color.web("#FFFFFF"));
+        camiseta.setStyle("-fx-font-size: 9px; -fx-font-weight: bold;");
+        Rectangle cinturon = rect(27, 84, 46, 5, 1, "#2A2A2A");
+        Rectangle hebilla = rect(47, 84, 8, 5, 1, "#C0C0C0");
+        metalTorso = new Group(cuello, torso, rayo, camiseta, cinturon, hebilla);
+
+        metalPelo = new Group(
+            ellipse(43, 37, 17, 30, "#181014"),
+            ellipse(57, 37, 17, 30, "#181014"),
+            polygon("#181014", 28, 42, 36, 82, 47, 56),
+            polygon("#181014", 72, 42, 64, 82, 53, 56)
+        );
+        metalCabeza = new Group(
+            circle(50, 34, 19, "#E8B58F"),
+            ellipse(50, 19, 24, 10, "#181014"),
+            circle(43, 33, 3.5, "#111111"),
+            circle(57, 33, 3.5, "#111111"),
+            rect(43, 45, 14, 3, 2, "#7A1E1E")
+        );
+
+        Group g = new Group(
+            piernaIzqG, piernaDerG,
+            metalTorso, brazoBajo, metalBrazoAlto,
+            metalPelo, metalCabeza
         );
         return escalar(g);
     }
@@ -618,6 +681,143 @@ public class VisualAssistantView extends StackPane {
         g.setTranslateY(ty);
         g.getTransforms().add(rot);
         return g;
+    }
+
+    private Group brazoCuernosGroup() {
+        Rectangle brazo = new Rectangle(0, 0, 11, 31);
+        brazo.setArcWidth(4);
+        brazo.setArcHeight(4);
+        brazo.setFill(Color.web("#111111"));
+
+        Rectangle muneca = new Rectangle(-1, -6, 13, 8);
+        muneca.setArcWidth(3);
+        muneca.setArcHeight(3);
+        muneca.setFill(Color.web("#E8B58F"));
+        Circle palma = circle(5.5, -10, 7, "#E8B58F");
+        Rectangle indice = rect(0, -29, 4, 17, 2, "#E8B58F");
+        Rectangle menique = rect(9, -27, 4, 15, 2, "#E8B58F");
+        Rectangle dedosCerrados = rect(3, -16, 8, 7, 3, "#D49B76");
+        Rectangle pulgar = rect(-5, -13, 7, 4, 2, "#E8B58F");
+        pulgar.setRotate(-28);
+
+        Group g = new Group(brazo, muneca, palma, indice, menique, dedosCerrados, pulgar);
+        g.setTranslateX(25);
+        g.setTranslateY(29);
+        return g;
+    }
+
+    private Node crearSonia() {
+        Rectangle mesa = rect(14, 76, 72, 18, 4, "#5B3A2E");
+        Rectangle pataIzq = rect(21, 92, 8, 12, 2, "#3D251F");
+        Rectangle pataDer = rect(71, 92, 8, 12, 2, "#3D251F");
+        Rectangle silla = rect(32, 68, 36, 24, 8, "#2C3E50");
+
+        Rectangle torso = rect(35, 56, 30, 23, 9, "#6B2D5E");
+        Rectangle cuello = rect(46, 49, 8, 8, 3, "#E8B58F");
+        soniaCabeza = new Group(
+            ellipse(50, 34, 22, 25, "#5C3324"),
+            circle(50, 35, 18, "#E8B58F"),
+            ellipse(42, 24, 14, 10, "#5C3324"),
+            ellipse(58, 24, 14, 10, "#5C3324"),
+            circle(44, 35, 3, "#111111"),
+            circle(56, 35, 3, "#111111"),
+            rect(44, 46, 12, 3, 2, "#8E4B3A")
+        );
+
+        Group cascoIzq = new Group(circle(31, 36, 6, "#1F2937"), rect(27, 31, 5, 11, 2, "#111827"));
+        Group cascoDer = new Group(circle(69, 36, 6, "#1F2937"), rect(68, 31, 5, 11, 2, "#111827"));
+        Polygon diadema = polygon("#111827", 34, 25, 42, 17, 50, 15, 58, 17, 66, 25, 64, 28, 57, 21, 50, 19, 43, 21, 36, 28);
+        soniaMicrofono = new Group(
+            rect(66, 42, 5, 3, 2, "#111827"),
+            rect(69, 43, 14, 3, 2, "#111827"),
+            circle(84, 44, 3, "#2F80ED")
+        );
+        Group auriculares = new Group(diadema, cascoIzq, cascoDer, soniaMicrofono);
+
+        Rectangle monitorMarco = rect(24, 55, 52, 34, 5, "#111827");
+        soniaPantalla = rect(28, 59, 44, 24, 3, "#2F80ED");
+        Rectangle soporte = rect(47, 89, 7, 8, 2, "#111827");
+        Rectangle base = rect(38, 96, 26, 5, 2, "#111827");
+        Text prompt = new Text(34, 75, ">_");
+        prompt.setFill(Color.web("#DFF6FF"));
+        prompt.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+        Group monitor = new Group(monitorMarco, soniaPantalla, prompt, soporte, base);
+
+        Rectangle teclado = rect(31, 84, 38, 7, 2, "#1F2937");
+        soniaManoIzq = new Group(rect(29, 80, 13, 5, 3, "#E8B58F"));
+        soniaManoDer = new Group(rect(58, 80, 13, 5, 3, "#E8B58F"));
+
+        Group g = new Group(
+            pataIzq, pataDer, silla, torso, cuello, soniaCabeza, auriculares,
+            mesa, monitor, teclado, soniaManoIzq, soniaManoDer
+        );
+        return escalar(g);
+    }
+
+    private Node crearAna() {
+        Rectangle paredSilla = rect(18, 54, 18, 37, 7, "#1F4E79");
+        Rectangle asientoSilla = rect(26, 78, 26, 10, 4, "#17446B");
+        Rectangle pataSilla = rect(30, 87, 6, 15, 2, "#17324A");
+
+        Rectangle tableroMesa = rect(50, 72, 43, 8, 3, "#5B3A2E");
+        Rectangle pataMesa = rect(83, 80, 7, 23, 2, "#3D251F");
+        Rectangle cantoMesa = rect(50, 78, 43, 4, 2, "#7A4D3A");
+
+        Rectangle monitorMarco = rect(70, 36, 22, 29, 4, "#111827");
+        soniaPantalla = rect(73, 39, 16, 22, 2, "#1D6FB8");
+        Rectangle soporte = rect(78, 65, 6, 7, 2, "#111827");
+        Text monitorText = new Text(74, 55, "061");
+        monitorText.setFill(Color.web("#EAF7FF"));
+        monitorText.setStyle("-fx-font-size: 7px; -fx-font-weight: bold;");
+        Group monitor = new Group(monitorMarco, soniaPantalla, monitorText, soporte);
+
+        Rectangle torsoBase = rect(31, 55, 27, 25, 8, "#1368A8");
+        Rectangle franjaNaranja = rect(47, 55, 9, 25, 3, "#F58220");
+        Rectangle mangaNaranja = rect(55, 59, 12, 8, 3, "#F58220");
+        Rectangle reflectante = rect(34, 60, 21, 3, 1, "#EAF7FF");
+        Text distintivo = new Text(35, 74, "061");
+        distintivo.setFill(Color.web("#FFFFFF"));
+        distintivo.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        Rectangle cuello = rect(48, 48, 8, 8, 3, "#E8B58F");
+        Group uniforme = new Group(torsoBase, franjaNaranja, mangaNaranja, reflectante, distintivo);
+
+        soniaCabeza = new Group(
+            ellipse(45, 36, 15, 24, "#4E2C20"),
+            circle(51, 35, 16, "#E8B58F"),
+            ellipse(44, 25, 16, 10, "#4E2C20"),
+            polygon("#E8B58F", 63, 35, 71, 38, 63, 41),
+            circle(59, 34, 3, "#111111"),
+            rect(58, 45, 9, 3, 2, "#8E4B3A")
+        );
+
+        Group casco = new Group(circle(44, 35, 6, "#1F2937"), rect(40, 30, 5, 11, 2, "#111827"));
+        Polygon diadema = polygon("#111827", 42, 27, 47, 18, 55, 17, 63, 25, 61, 28, 55, 21, 48, 22, 44, 29);
+        soniaMicrofono = new Group(
+            rect(60, 42, 5, 3, 2, "#111827"),
+            rect(64, 43, 12, 3, 2, "#111827"),
+            circle(78, 44, 3, "#F58220")
+        );
+        Group auriculares = new Group(diadema, casco, soniaMicrofono);
+
+        Rectangle brazoIzq = rect(53, 66, 19, 5, 3, "#1368A8");
+        Rectangle brazoDer = rect(50, 72, 21, 5, 3, "#F58220");
+        Rectangle teclado = rect(63, 78, 22, 5, 2, "#1F2937");
+        soniaManoIzq = new Group(rect(68, 72, 10, 4, 2, "#E8B58F"));
+        soniaManoDer = new Group(rect(72, 78, 10, 4, 2, "#E8B58F"));
+
+        Group piernas = new Group(
+            rect(38, 79, 18, 7, 3, "#1368A8"),
+            rect(50, 86, 14, 6, 3, "#1368A8"),
+            rect(62, 88, 11, 5, 2, "#111111")
+        );
+
+        Group g = new Group(
+            pataSilla, paredSilla, asientoSilla, piernas,
+            uniforme, cuello, soniaCabeza, auriculares,
+            tableroMesa, cantoMesa, pataMesa, monitor,
+            brazoIzq, brazoDer, teclado, soniaManoIzq, soniaManoDer
+        );
+        return escalar(g);
     }
 
     private Group piernaBotaGroup(double tx, double ty, Rotate rot) {
@@ -806,10 +1006,27 @@ public class VisualAssistantView extends StackPane {
         if (animExtremidades != null) { animExtremidades.stop(); animExtremidades = null; }
         if (animPersonaje    != null) { animPersonaje.stop();    animPersonaje    = null; }
         rotBrazoIzq = rotBrazoDer = rotPiernaIzq = rotPiernaDer = rotLlave = null;
+        metalCabeza = metalPelo = metalTorso = metalBrazoAlto = null;
+        soniaCabeza = soniaManoIzq = soniaManoDer = soniaMicrofono = null;
+        soniaPantalla = null;
+        davidCabeza = davidTorso = davidRadio = davidLinterna = null;
+        davidLinternaLuz = null;
         robLuz = null;
     }
 
     private void iniciarAnimacionesPersonaje() {
+        if (davidCabeza != null) {
+            iniciarAnimacionDavid();
+            return;
+        }
+        if (soniaCabeza != null) {
+            iniciarAnimacionSonia();
+            return;
+        }
+        if (metalCabeza != null) {
+            iniciarAnimacionMetalera();
+            return;
+        }
         if (rotBrazoIzq != null) {
             animExtremidades = new Timeline(
                 new KeyFrame(Duration.ZERO,
@@ -846,6 +1063,145 @@ public class VisualAssistantView extends StackPane {
             animPersonaje.setCycleCount(Animation.INDEFINITE);
             animPersonaje.play();
         }
+    }
+
+    private void iniciarAnimacionMetalera() {
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0),
+                new KeyValue(metalTorso.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 18),
+                new KeyValue(rotPiernaIzq.angleProperty(), 5),
+                new KeyValue(rotPiernaDer.angleProperty(), -5)),
+            new KeyFrame(Duration.millis(170),
+                new KeyValue(metalCabeza.rotateProperty(), -14),
+                new KeyValue(metalCabeza.translateYProperty(), 4),
+                new KeyValue(metalPelo.rotateProperty(), 9),
+                new KeyValue(metalPelo.translateYProperty(), 6),
+                new KeyValue(metalTorso.rotateProperty(), -4),
+                new KeyValue(rotBrazoIzq.angleProperty(), -4),
+                new KeyValue(rotBrazoDer.angleProperty(), 8),
+                new KeyValue(rotPiernaIzq.angleProperty(), -4),
+                new KeyValue(rotPiernaDer.angleProperty(), 4)),
+            new KeyFrame(Duration.millis(340),
+                new KeyValue(metalCabeza.rotateProperty(), 12),
+                new KeyValue(metalCabeza.translateYProperty(), -2),
+                new KeyValue(metalPelo.rotateProperty(), -11),
+                new KeyValue(metalPelo.translateYProperty(), -3),
+                new KeyValue(metalTorso.rotateProperty(), 4),
+                new KeyValue(rotBrazoIzq.angleProperty(), 4),
+                new KeyValue(rotBrazoDer.angleProperty(), 28),
+                new KeyValue(rotPiernaIzq.angleProperty(), 8),
+                new KeyValue(rotPiernaDer.angleProperty(), -8)),
+            new KeyFrame(Duration.millis(520),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0),
+                new KeyValue(metalTorso.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 18),
+                new KeyValue(rotPiernaIzq.angleProperty(), 5),
+                new KeyValue(rotPiernaDer.angleProperty(), -5))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
+    }
+
+    private void iniciarAnimacionDavid() {
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(davidCabeza.rotateProperty(), 0),
+                new KeyValue(davidTorso.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(rotPiernaIzq.angleProperty(), 0),
+                new KeyValue(rotPiernaDer.angleProperty(), 0),
+                new KeyValue(davidRadio.translateYProperty(), 0),
+                new KeyValue(davidLinterna.rotateProperty(), 0),
+                new KeyValue(davidLinternaLuz.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(550),
+                new KeyValue(davidCabeza.rotateProperty(), -8),
+                new KeyValue(davidTorso.translateYProperty(), -1),
+                new KeyValue(rotBrazoIzq.angleProperty(), -92),
+                new KeyValue(rotBrazoDer.angleProperty(), 12),
+                new KeyValue(rotPiernaIzq.angleProperty(), 2),
+                new KeyValue(rotPiernaDer.angleProperty(), -2),
+                new KeyValue(davidRadio.translateYProperty(), -2),
+                new KeyValue(davidLinterna.rotateProperty(), -8),
+                new KeyValue(davidLinternaLuz.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(1100),
+                new KeyValue(davidCabeza.rotateProperty(), 8),
+                new KeyValue(davidTorso.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), -12),
+                new KeyValue(rotBrazoDer.angleProperty(), -58),
+                new KeyValue(rotPiernaIzq.angleProperty(), -2),
+                new KeyValue(rotPiernaDer.angleProperty(), 2),
+                new KeyValue(davidRadio.translateYProperty(), 0),
+                new KeyValue(davidLinterna.rotateProperty(), 8),
+                new KeyValue(davidLinternaLuz.opacityProperty(), 0.65)),
+            new KeyFrame(Duration.millis(1650),
+                new KeyValue(davidCabeza.rotateProperty(), 0),
+                new KeyValue(davidTorso.translateYProperty(), -1),
+                new KeyValue(rotBrazoIzq.angleProperty(), 22),
+                new KeyValue(rotBrazoDer.angleProperty(), 4),
+                new KeyValue(rotPiernaIzq.angleProperty(), 0),
+                new KeyValue(rotPiernaDer.angleProperty(), 0),
+                new KeyValue(davidRadio.translateYProperty(), -1),
+                new KeyValue(davidLinterna.rotateProperty(), 0),
+                new KeyValue(davidLinternaLuz.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(2200),
+                new KeyValue(davidCabeza.rotateProperty(), 0),
+                new KeyValue(davidTorso.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(rotPiernaIzq.angleProperty(), 0),
+                new KeyValue(rotPiernaDer.angleProperty(), 0),
+                new KeyValue(davidRadio.translateYProperty(), 0),
+                new KeyValue(davidLinterna.rotateProperty(), 0),
+                new KeyValue(davidLinternaLuz.opacityProperty(), 0.0))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
+    }
+
+    private void iniciarAnimacionSonia() {
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(soniaManoIzq.translateYProperty(), 0),
+                new KeyValue(soniaManoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED"))),
+            new KeyFrame(Duration.millis(280),
+                new KeyValue(soniaCabeza.rotateProperty(), -4),
+                new KeyValue(soniaCabeza.translateYProperty(), 1),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.5),
+                new KeyValue(soniaManoIzq.translateYProperty(), 3),
+                new KeyValue(soniaManoDer.translateYProperty(), -1),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#27AE60"))),
+            new KeyFrame(Duration.millis(560),
+                new KeyValue(soniaCabeza.rotateProperty(), 3),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(soniaManoIzq.translateYProperty(), -1),
+                new KeyValue(soniaManoDer.translateYProperty(), 3),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#6B2D5E"))),
+            new KeyFrame(Duration.millis(840),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(soniaManoIzq.translateYProperty(), 0),
+                new KeyValue(soniaManoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED")))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
     }
 
     private void actualizarEstadoVisual(String mensaje) {

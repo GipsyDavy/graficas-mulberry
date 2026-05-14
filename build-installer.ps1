@@ -12,6 +12,7 @@ $ISCC_candidatos = @(
 $ISCC = ($ISCC_candidatos | Where-Object { Test-Path $_ } | Select-Object -First 1)
 if (-not $ISCC) { Write-Error "Inno Setup no encontrado. Instálalo con: winget install JRSoftware.InnoSetup"; exit 1 }
 $PROJECT   = $PSScriptRoot
+$APP_VERSION = "10.0.0"
 
 # ── 1. Compilar con Maven ───────────────────────────────────────────────────
 Write-Host "`n=== 1/3  Compilando con Maven ===" -ForegroundColor Cyan
@@ -55,7 +56,7 @@ Write-Host "`n=== 2/3  Creando app-image con jpackage ===" -ForegroundColor Cyan
 & $JPACKAGE `
     --type app-image `
     --name "GraficasMulberry" `
-    --app-version "9.5" `
+    --app-version $APP_VERSION `
     --vendor "Graficas Mulberry S.L." `
     --description "Sistema de gestion para Graficas Mulberry" `
     --copyright "Copyright (C) 2024-2026 Graficas Mulberry S.L." `
