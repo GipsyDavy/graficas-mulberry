@@ -88,10 +88,10 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_x', '24')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_y', '24')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_instalador_animado', '1')",
-            // Limpieza de tablas de autenticación (sistema reemplazado)
-            "DROP TABLE IF EXISTS log_accesos",
-            "DROP TABLE IF EXISTS usuarios",
-            "DELETE FROM config WHERE clave IN ('session_timeout_minutes','max_login_attempts','login_lockout_minutes')"
+            "DELETE FROM config WHERE clave IN ('session_timeout_minutes','max_login_attempts','login_lockout_minutes')",
+            "ALTER TABLE usuarios ADD COLUMN last_login TEXT",
+            "ALTER TABLE usuarios ADD COLUMN security_question TEXT",
+            "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
@@ -113,8 +113,30 @@ public class DatabaseManager {
     }
 
     private static void createTables(Connection conn) throws SQLException {
+        // Si existe el esquema antiguo de auth (columna initial_admin), lo eliminamos
+        try (ResultSet cols = conn.getMetaData().getColumns(null, null, "usuarios", "initial_admin")) {
+            if (cols.next()) {
+                try (Statement drop = conn.createStatement()) {
+                    drop.execute("DROP TABLE IF EXISTS log_accesos");
+                    drop.execute("DROP TABLE IF EXISTS usuarios");
+                }
+            }
+        }
+
         try (Statement st = conn.createStatement()) {
-            // Nueva tabla de usuarios con columnas adicionales para intentos de login
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS usuarios (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    username TEXT UNIQUE NOT NULL,
+                    password_hash TEXT NOT NULL,
+                    role TEXT NOT NULL,
+                    permissions TEXT NOT NULL DEFAULT '',
+                    created_at TEXT DEFAULT (datetime('now')),
+                    last_login TEXT,
+                    security_question TEXT,
+                    security_answer_hash TEXT
+                )""");
+
             st.execute("""
                 CREATE TABLE IF NOT EXISTS clientes (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,

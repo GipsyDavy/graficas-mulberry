@@ -20,8 +20,12 @@ import javafx.scene.image.ImageView;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import org.gipsybuho.model.User;
+import org.gipsybuho.model.UserPermissions;
+import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
 
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -33,16 +37,24 @@ public class MainView extends BorderPane {
     private final VisualAssistantView visualAssistant;
     private VBox sidebar;
     private final IAView iaView;
+    private final User loggedInUser;
+    private final AuthService authService;
     private final Stage primaryStage;
 
-    public MainView(Stage stage) {
+    public MainView(Stage stage, User loggedInUser, AuthService authService) {
         this.primaryStage = stage;
+        this.loggedInUser = loggedInUser;
+        this.authService = authService;
         this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");
-        mostrarVista(new DashboardView(), "Panel principal");
+        if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
+            mostrarVista(new DashboardView(), "Panel principal");
+        } else {
+            mostrarVista(accesoLimitado(), "Inicio");
+        }
     }
 
     private VBox buildSidebar() {
@@ -67,6 +79,21 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
         sidebar.getChildren().add(logoBox);
 
+        Label userInfoLabel = new Label("👤  " + loggedInUser.getUsername()
+            + "  ·  " + loggedInUser.getRole().getLabel());
+        userInfoLabel.getStyleClass().add("sidebar-user-info");
+        VBox.setMargin(userInfoLabel, new Insets(10, 0, 0, 10));
+        sidebar.getChildren().add(userInfoLabel);
+
+        String lastLoginText = loggedInUser.getLastLogin() == null
+            ? "Primera sesión"
+            : "Última sesión: " + loggedInUser.getLastLogin()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+        Label lastLoginLabel = new Label(lastLoginText);
+        lastLoginLabel.getStyleClass().add("sidebar-version");
+        VBox.setMargin(lastLoginLabel, new Insets(2, 0, 0, 12));
+        sidebar.getChildren().add(lastLoginLabel);
+
         // Separador
         Region sep = new Region();
         sep.getStyleClass().add("sidebar-sep");
@@ -75,39 +102,44 @@ public class MainView extends BorderPane {
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
-        navMenu.getChildren().add(navBtn("🏠  Panel principal", DashboardView::new));
+        addIfPermiso(navMenu, UserPermissions.DASHBOARD,
+            navBtn("🏠  Panel principal", DashboardView::new));
         navMenu.getChildren().addAll(
             navGrupo("CLIENTES",
-                navBtn("👥  Clientes", ClientesView::new)
+                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new)
             ),
             navGrupo("COMERCIAL",
-                navBtn("📋  Presupuestos", PresupuestosView::new),
-                navBtn("🧾  Facturas", FacturasView::new),
-                navBtn("📋  Albaranes", AlbaranesView::new),
-                navBtn("📦  Pedidos", PedidosView::new)
+                navBtn(UserPermissions.PRESUPUESTOS, "📋  Presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.FACTURAS,     "🧾  Facturas",     FacturasView::new),
+                navBtn(UserPermissions.ALBARANES,    "📋  Albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.PEDIDOS,      "📦  Pedidos",      PedidosView::new)
             ),
             navGrupo("ALMACÉN",
-                navBtn("💰  Tarifas", TarifasView::new),
-                navBtn("📦  Materiales", MaterialesView::new)
+                navBtn(UserPermissions.TARIFAS,    "💰  Tarifas",    TarifasView::new),
+                navBtn(UserPermissions.MATERIALES, "📦  Materiales", MaterialesView::new)
             ),
             navGrupo("PERSONAL",
-                navBtn("👤  Empleados", EmpleadosView::new),
-                navBtn("💼  Nóminas", NominasView::new)
+                navBtn(UserPermissions.EMPLEADOS, "👤  Empleados", EmpleadosView::new),
+                navBtn(UserPermissions.NOMINAS,   "💼  Nóminas",   NominasView::new)
             ),
             navGrupo("ANALÍTICA",
-                navBtn("📊  Estadísticas", EstadisticasView::new),
-                navBtn("📅  Calendario", CalendarioView::new)
+                navBtn(UserPermissions.ESTADISTICAS, "📊  Estadísticas", EstadisticasView::new),
+                navBtn(UserPermissions.CALENDARIO,   "📅  Calendario",   CalendarioView::new)
             ),
             navGrupo("SISTEMA",
-                navBtnEspecial("🤖  Asistente IA",
+                navBtn(UserPermissions.IA, "🤖  Asistente IA",
                     () -> mostrarVista(iaView, "🤖  Asistente IA"),
                     IAView::new),
-                navBtn("📥  Importar Backup", ImportBackupView::new),
-                navBtn("💾  Exportar / Backup", ExportView::new),
-                navBtn("⚙  Configuración", ConfiguracionView::new),
+                navBtn(UserPermissions.IMPORTAR_BACKUP,  "📥  Importar Backup",    ImportBackupView::new),
+                navBtn(UserPermissions.EXPORTAR_BACKUP,  "💾  Exportar / Backup",  ExportView::new),
+                navBtn(UserPermissions.CONFIGURACION,    "⚙  Configuración",       ConfiguracionView::new),
                 navBtn("🧭  Configuración asistente visual",
                     () -> new VisualAssistantConfigView(visualAssistant)),
-                buildBotonAsistenteVisual()
+                buildBotonAsistenteVisual(),
+                loggedInUser.isAdmin()
+                    ? navBtn("👥  Gestión de usuarios",
+                        () -> new UserManagementView(authService, loggedInUser))
+                    : null
             )
         );
 
@@ -130,7 +162,7 @@ public class MainView extends BorderPane {
         });
         sidebar.getChildren().add(btnCerrarApp);
 
-        Label version = new Label("v10.5.0 · Almería, España");
+        Label version = new Label("v11.1.0 · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -190,6 +222,22 @@ public class MainView extends BorderPane {
         return navBtnImpl(texto, () -> mostrarVista(factory.get(), texto), factory, texto);
     }
 
+    private StackPane navBtn(String permiso, String texto, Supplier<javafx.scene.Parent> factory) {
+        return loggedInUser.hasPermission(permiso) ? navBtn(texto, factory) : null;
+    }
+
+    private void addIfPermiso(VBox parent, String permiso, StackPane node) {
+        if (loggedInUser.hasPermission(permiso) && node != null) parent.getChildren().add(node);
+    }
+
+    private javafx.scene.Parent accesoLimitado() {
+        Label label = new Label("No tienes módulos asignados. Contacta con el administrador.");
+        label.getStyleClass().add("view-title");
+        javafx.scene.layout.StackPane pane = new javafx.scene.layout.StackPane(label);
+        pane.setPadding(new Insets(24));
+        return pane;
+    }
+
     /**
      * Botón especial: permite separar la acción de clic izquierdo (p.ej. reusar
      * una instancia existente) de la fábrica usada para crear ventanas emergentes.
@@ -197,6 +245,12 @@ public class MainView extends BorderPane {
     private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
                                      Supplier<javafx.scene.Parent> popupFactory) {
         return navBtnImpl(texto, accionPrincipal, popupFactory, texto);
+    }
+
+    private StackPane navBtn(String permiso, String texto, Runnable accion,
+                             Supplier<javafx.scene.Parent> popupFactory) {
+        return loggedInUser.hasPermission(permiso)
+            ? navBtnEspecial(texto, accion, popupFactory) : null;
     }
 
     private StackPane navBtnImpl(String texto, Runnable accionPrincipal,

@@ -111,7 +111,9 @@
       "Bash(Select-Object Name, Length)",
       "Bash(mvn *)",
       "Bash(git *)",
-      "Bash(findstr -i \"version\\\\|gipsybuho\")"
+      "Bash(findstr -i \"version\\\\|gipsybuho\")",
+      "Bash(.\\\\mvnw javafx:run)",
+      "Bash(Select-Object -Last 30)"
     ]
   },
   "hooks": {

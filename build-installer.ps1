@@ -12,7 +12,7 @@ $ISCC_candidatos = @(
 $ISCC = ($ISCC_candidatos | Where-Object { Test-Path $_ } | Select-Object -First 1)
 if (-not $ISCC) { Write-Error "Inno Setup no encontrado. Instálalo con: winget install JRSoftware.InnoSetup"; exit 1 }
 $PROJECT   = $PSScriptRoot
-$APP_VERSION = "10.5.0"
+$APP_VERSION = "11.1.0"
 
 # ── 1. Compilar con Maven ───────────────────────────────────────────────────
 Write-Host "`n=== 1/3  Compilando con Maven ===" -ForegroundColor Cyan

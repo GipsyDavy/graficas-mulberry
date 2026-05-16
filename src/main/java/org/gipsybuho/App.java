@@ -7,12 +7,17 @@ import javafx.scene.control.Alert;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import org.gipsybuho.dao.NotaCalendarioDAO;
+import org.gipsybuho.dao.UserDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
+import org.gipsybuho.model.User;
+import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
+import org.gipsybuho.ui.AdminSetupView;
+import org.gipsybuho.ui.LoginView;
 import org.gipsybuho.ui.MainView;
 
 import java.time.LocalDate;
@@ -23,6 +28,7 @@ import java.util.Objects;
 public class App extends Application {
 
     private Stage primaryStage;
+    private AuthService authService;
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -46,13 +52,62 @@ public class App extends Application {
             try { SoundService.setVolume(Integer.parseInt(volStr) / 100f); }
             catch (NumberFormatException ignored) {}
         }
-        String mutedStr = DatabaseManager.getConfig("audio_muted");
-        SoundService.setMuted("1".equals(mutedStr));
+        SoundService.setMuted("1".equals(DatabaseManager.getConfig("audio_muted")));
 
-        showMainApplication();
+        authService = new AuthService(new UserDAO());
+
+        try {
+            Image icon = new Image(Objects.requireNonNull(
+                getClass().getResourceAsStream("/org/gipsybuho/img/logo.jpg")));
+            primaryStage.getIcons().add(icon);
+        } catch (Exception e) {
+            System.err.println("Advertencia: no se pudo cargar el icono: " + e.getMessage());
+        }
+
+        if (!authService.hasAdmin()) {
+            showAdminSetup();
+        } else {
+            showLogin();
+        }
     }
 
-    private void showMainApplication() {
+    private void showAdminSetup() {
+        AdminSetupView view = new AdminSetupView(authService, this::showMainApplication);
+        Scene scene = buildAuthScene(view);
+        primaryStage.setTitle("Gráficas Mulberry — Configuración inicial");
+        primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
+        primaryStage.setWidth(500);
+        primaryStage.setHeight(440);
+        primaryStage.centerOnScreen();
+        primaryStage.setOnCloseRequest(e -> Platform.exit());
+        primaryStage.show();
+        SoundService.play(SoundService.Sound.NOTIFICATION);
+    }
+
+    private void showLogin() {
+        LoginView view = new LoginView(authService, this::showMainApplication);
+        Scene scene = buildAuthScene(view);
+        primaryStage.setTitle("Gráficas Mulberry — Iniciar sesión");
+        primaryStage.setScene(scene);
+        primaryStage.setResizable(false);
+        primaryStage.setWidth(420);
+        primaryStage.setHeight(360);
+        primaryStage.centerOnScreen();
+        primaryStage.setOnCloseRequest(e -> Platform.exit());
+        primaryStage.show();
+        SoundService.play(SoundService.Sound.NOTIFICATION);
+    }
+
+    private Scene buildAuthScene(javafx.scene.Parent view) {
+        Scene scene = new Scene(view);
+        scene.getStylesheets().add(Objects.requireNonNull(
+            getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
+        TemaManager.aplicarTodo(scene);
+        return scene;
+    }
+
+    private void showMainApplication(User user) {
         String musicaPlaylist = DatabaseManager.getConfig("musica_playlist");
         if (!musicaPlaylist.isBlank()) {
             MusicService.setPlaylist(java.util.Arrays.asList(musicaPlaylist.split("\\|")));
@@ -62,35 +117,14 @@ public class App extends Application {
             try { MusicService.setVolumen(Integer.parseInt(musicaVolStr) / 100f); }
             catch (NumberFormatException ignored) {}
         }
-        String musicaLoop = DatabaseManager.getConfig("musica_loop");
-        MusicService.setLoop(!"0".equals(musicaLoop));
+        MusicService.setLoop(!"0".equals(DatabaseManager.getConfig("musica_loop")));
         boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
-        MainView mainView = new MainView(primaryStage);
+        MainView mainView = new MainView(primaryStage, user, authService);
         Scene mainAppScene = new Scene(mainView, 1280, 800);
         mainAppScene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());
-
         TemaManager.aplicarTodo(mainAppScene);
-
-        primaryStage.setTitle("Gráficas Mulberry — Sistema de Gestión");
-        primaryStage.setScene(mainAppScene);
-        primaryStage.setMinWidth(1024);
-        primaryStage.setMinHeight(680);
-        primaryStage.setMaximized(true);
-        primaryStage.setOnCloseRequest(event -> {
-            if (!mainView.confirmarSalida()) {
-                event.consume();
-            }
-        });
-
-        try {
-            Image icon = new Image(Objects.requireNonNull(
-                getClass().getResourceAsStream("/org/gipsybuho/img/logo.jpg")));
-            primaryStage.getIcons().add(icon);
-        } catch (Exception e) {
-            System.err.println("Advertencia: no se pudo cargar el icono de la aplicación: " + e.getMessage());
-        }
 
         mainAppScene.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
             if (ev.getSource() instanceof javafx.scene.control.Button) {
@@ -98,7 +132,16 @@ public class App extends Application {
             }
         });
 
-        primaryStage.show();
+        primaryStage.setTitle("Gráficas Mulberry — Sistema de Gestión");
+        primaryStage.setScene(mainAppScene);
+        primaryStage.setResizable(true);
+        primaryStage.setMinWidth(1024);
+        primaryStage.setMinHeight(680);
+        primaryStage.setMaximized(true);
+        primaryStage.setOnCloseRequest(event -> {
+            if (!mainView.confirmarSalida()) event.consume();
+        });
+
         SoundService.play(SoundService.Sound.NOTIFICATION);
         Platform.runLater(this::notificarRecordatoriosProximos);
         if (musicaAutoplay && !MusicService.getPlaylist().isEmpty()) {
@@ -122,11 +165,9 @@ public class App extends Application {
                 String cuando = dias == 0 ? "HOY" : dias == 1 ? "mañana" : "en " + dias + " días";
                 sb.append("• ").append(n.getTitulo()).append("  (").append(cuando).append(")\n");
             }
-
             Alert alert = new Alert(Alert.AlertType.WARNING);
             alert.setTitle("Recordatorios próximos");
-            alert.setHeaderText("Tienes " + proximas.size()
-                + " recordatorio(s) en los próximos 3 días");
+            alert.setHeaderText("Tienes " + proximas.size() + " recordatorio(s) en los próximos 3 días");
             alert.setContentText(sb.toString().stripTrailing());
             alert.show();
         } catch (Exception e) {
