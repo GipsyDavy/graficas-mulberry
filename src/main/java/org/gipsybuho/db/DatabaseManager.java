@@ -92,7 +92,15 @@ public class DatabaseManager {
             "ALTER TABLE usuarios ADD COLUMN last_login TEXT",
             "ALTER TABLE usuarios ADD COLUMN security_question TEXT",
             "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT",
-            "ALTER TABLE tarifas ADD COLUMN usa_tiempo INTEGER DEFAULT 0"
+            "ALTER TABLE tarifas ADD COLUMN usa_tiempo INTEGER DEFAULT 0",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('prefijo_pedido', 'PED')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('factura_vencimiento_dias', '30')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('factura_forma_pago', 'Transferencia')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_logo_path', '')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_pie_legal', '')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_presupuesto', '')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_factura', '')",
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_albaran', '')"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {

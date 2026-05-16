@@ -52,9 +52,12 @@ public class ConfiguracionView extends VBox {
         new TamanoFuente("Muy grande",  "17")
     );
 
+    private final VisualAssistantView assistant;
+
     // ── Constructor ───────────────────────────────────────────────────────────
 
-    public ConfiguracionView() {
+    public ConfiguracionView(VisualAssistantView assistant) {
+        this.assistant = assistant;
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(16);
@@ -69,10 +72,14 @@ public class ConfiguracionView extends VBox {
         Tab tabApariencia   = new Tab("🎨  Apariencia",  buildTabApariencia());
         Tab tabEmpresa      = new Tab("🏢  Mi empresa",  buildTabEmpresa());
         Tab tabPreferencias = new Tab("⚙  Preferencias", buildTabPreferencias());
-        Tab tabMusica       = new Tab("🎵  Música",       buildTabMusica());
+        Tab tabSonido       = new Tab("🔊  Sonido",       buildTabSonido());
+        Tab tabAsistente    = new Tab("🧭  Asistente",    buildTabAsistente());
+        Tab tabDocumentos   = new Tab("📄  Documentos",   buildTabDocumentos());
         Tab tabAcercaDe     = new Tab("ℹ  Acerca de",     buildTabAcercaDe());
+        Tab tabDiagnostico  = new Tab("🖥  Diagnóstico",  buildTabDiagnostico());
 
-        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias, tabMusica, tabAcercaDe);
+        tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias,
+            tabSonido, tabAsistente, tabDocumentos, tabAcercaDe, tabDiagnostico);
         getChildren().addAll(titulo, tabs);
     }
 
@@ -385,24 +392,43 @@ public class ConfiguracionView extends VBox {
         // Prefijos
         TextField tfPrePres = fieldFor("prefijo_presupuesto", "PRE");
         TextField tfPreFact = fieldFor("prefijo_factura",     "FAC");
+        TextField tfPreAlb  = fieldFor("prefijo_albaran",     "ALB");
+        TextField tfPrePed  = fieldFor("prefijo_pedido",      "PED");
         // Condiciones
         TextArea taCondiciones = new TextArea(DatabaseManager.getConfig("condiciones_defecto"));
         taCondiciones.setPromptText("Texto de condiciones que aparece en presupuestos");
         taCondiciones.setPrefRowCount(3);
         taCondiciones.setWrapText(true);
+        // Vencimiento y forma de pago
+        Spinner<Integer> spVencimiento = new Spinner<>(0, 365,
+            parseIntSafe(DatabaseManager.getConfig("factura_vencimiento_dias"), 30));
+        spVencimiento.setEditable(true);
+        spVencimiento.setPrefWidth(100);
+        ComboBox<String> cbFormaPago = new ComboBox<>();
+        cbFormaPago.getItems().addAll("Transferencia", "Efectivo", "Cheque", "Domiciliación", "Tarjeta");
+        String formaPagoActual = DatabaseManager.getConfig("factura_forma_pago");
+        cbFormaPago.setValue(formaPagoActual.isBlank() ? "Transferencia" : formaPagoActual);
 
-        addRow(grid, 0, "IVA por defecto (%):", tfIva);
-        addRow(grid, 1, "Prefijo presupuesto:", tfPrePres);
-        addRow(grid, 2, "Prefijo factura:",     tfPreFact);
-        addRow(grid, 3, "Condiciones defecto:", taCondiciones);
+        addRow(grid, 0, "IVA por defecto (%):",        tfIva);
+        addRow(grid, 1, "Prefijo presupuesto:",         tfPrePres);
+        addRow(grid, 2, "Prefijo factura:",             tfPreFact);
+        addRow(grid, 3, "Prefijo albarán:",             tfPreAlb);
+        addRow(grid, 4, "Prefijo pedido:",              tfPrePed);
+        addRow(grid, 5, "Condiciones defecto:",         taCondiciones);
+        addRow(grid, 6, "Vencimiento factura (días):",  spVencimiento);
+        addRow(grid, 7, "Forma de pago defecto:",       cbFormaPago);
 
         Button btnGuardar = new Button("Guardar preferencias de facturación");
         btnGuardar.getStyleClass().add("config-save-btn");
         btnGuardar.setOnAction(e -> {
-            DatabaseManager.setConfig("iva_defecto",          tfIva.getText().trim());
-            DatabaseManager.setConfig("prefijo_presupuesto",  tfPrePres.getText().trim());
-            DatabaseManager.setConfig("prefijo_factura",      tfPreFact.getText().trim());
-            DatabaseManager.setConfig("condiciones_defecto",  taCondiciones.getText().trim());
+            DatabaseManager.setConfig("iva_defecto",               tfIva.getText().trim());
+            DatabaseManager.setConfig("prefijo_presupuesto",       tfPrePres.getText().trim());
+            DatabaseManager.setConfig("prefijo_factura",           tfPreFact.getText().trim());
+            DatabaseManager.setConfig("prefijo_albaran",           tfPreAlb.getText().trim());
+            DatabaseManager.setConfig("prefijo_pedido",            tfPrePed.getText().trim());
+            DatabaseManager.setConfig("condiciones_defecto",       taCondiciones.getText().trim());
+            DatabaseManager.setConfig("factura_vencimiento_dias",  String.valueOf(spVencimiento.getValue()));
+            DatabaseManager.setConfig("factura_forma_pago",        cbFormaPago.getValue());
             mostrarToast("Preferencias de facturación guardadas");
         });
 
@@ -466,9 +492,59 @@ public class ConfiguracionView extends VBox {
     // TAB 4 — MÚSICA
     // ═════════════════════════════════════════════════════════════════════════
 
-    private ScrollPane buildTabMusica() {
+    private ScrollPane buildTabSonido() {
         VBox contenido = new VBox(20);
         contenido.setPadding(new Insets(20));
+
+        // ── Efectos de interfaz UI ────────────────────────────────────────────
+        Label tituloEfectos = new Label("Efectos de interfaz");
+        tituloEfectos.getStyleClass().add("config-section-title");
+        Label descEfectos = new Label("Sonidos de navegación, clicks y notificaciones del sistema.");
+        descEfectos.getStyleClass().add("config-section-desc");
+
+        CheckBox chkSonidosActivos = new CheckBox("Activar efectos de sonido");
+        chkSonidosActivos.setStyle("-fx-text-fill: -c-text;");
+        chkSonidosActivos.setSelected(!SoundService.isMuted());
+
+        int uiVolInt = parseIntSafe(DatabaseManager.getConfig("audio_volumen"), 65);
+        Slider sliderUiVol = new Slider(0, 100, uiVolInt);
+        sliderUiVol.setPrefWidth(200);
+        sliderUiVol.setMajorTickUnit(25);
+        sliderUiVol.setShowTickMarks(true);
+        Label lblUiVolVal = new Label(uiVolInt + "%");
+        lblUiVolVal.setStyle("-fx-text-fill: -c-text; -fx-font-weight: bold;");
+        Label lblUiVolLabel = new Label("Volumen efectos:");
+        lblUiVolLabel.setStyle("-fx-text-fill: -c-text; -fx-font-weight: bold;");
+        HBox uiVolBox = new HBox(10, lblUiVolLabel, sliderUiVol, lblUiVolVal);
+        uiVolBox.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnProbar = new Button("▶  Probar sonido");
+        btnProbar.setOnAction(e -> SoundService.play(SoundService.Sound.SUCCESS));
+
+        chkSonidosActivos.selectedProperty().addListener((obs, ov, activo) -> {
+            SoundService.setMuted(!activo);
+            DatabaseManager.setConfig("audio_muted", activo ? "0" : "1");
+        });
+        sliderUiVol.valueProperty().addListener((obs, ov, nv) -> {
+            SoundService.setVolume(nv.floatValue() / 100f);
+            int val = (int) Math.round(nv.doubleValue());
+            lblUiVolVal.setText(val + "%");
+            if (!sliderUiVol.isValueChanging()) {
+                DatabaseManager.setConfig("audio_volumen", String.valueOf(val));
+            }
+        });
+        sliderUiVol.valueChangingProperty().addListener((obs, wasChanging, changing) -> {
+            if (!changing) {
+                DatabaseManager.setConfig("audio_volumen",
+                    String.valueOf((int) Math.round(sliderUiVol.getValue())));
+            }
+        });
+
+        VBox panelEfectos = new VBox(12, tituloEfectos, descEfectos,
+            chkSonidosActivos, uiVolBox, btnProbar);
+        panelEfectos.getStyleClass().add("config-panel");
+        panelEfectos.setPadding(new Insets(15));
+        contenido.getChildren().add(panelEfectos);
 
         // ── Playlist ──────────────────────────────────────────────────────────
         Label tituloPlaylist = new Label("Lista de reproducción");
@@ -739,27 +815,197 @@ public class ConfiguracionView extends VBox {
         lblDesc.setWrapText(true);
         lblDesc.getStyleClass().add("config-section-desc");
 
-        // Tarjeta de información del sistema
-        Label lblSistemaTitulo = new Label("Información del sistema");
-        lblSistemaTitulo.getStyleClass().add("config-section-title");
+        VBox panel = new VBox(16,
+            cardApp,
+            new Separator(),
+            gridInfo,
+            new Separator(),
+            lblDescTitulo, lblDesc
+        );
+        panel.getStyleClass().add("config-panel");
+        contenido.getChildren().add(panel);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB 5 — ASISTENTE VISUAL
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabAsistente() {
+        ScrollPane scroll = new ScrollPane(new VisualAssistantConfigView(assistant));
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB — DOCUMENTOS
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabDocumentos() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        // ── Logo de la empresa ────────────────────────────────────────────────
+        Label tituloLogo = new Label("Logo de la empresa");
+        tituloLogo.getStyleClass().add("config-section-title");
+        Label descLogo = new Label("El logo aparecerá en las cabeceras de presupuestos, facturas y albaranes.");
+        descLogo.getStyleClass().add("config-section-desc");
+
+        TextField tfLogoPath = new TextField(DatabaseManager.getConfig("doc_logo_path"));
+        tfLogoPath.setPromptText("Ruta del archivo de imagen (PNG, JPG)");
+        tfLogoPath.setMaxWidth(Double.MAX_VALUE);
+        HBox.setHgrow(tfLogoPath, Priority.ALWAYS);
+
+        Button btnSeleccionarLogo = new Button("📂 Seleccionar...");
+        btnSeleccionarLogo.setOnAction(e -> {
+            FileChooser fc = new FileChooser();
+            fc.setTitle("Seleccionar logo");
+            fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG"));
+            File f = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
+            if (f != null) tfLogoPath.setText(f.getAbsolutePath());
+        });
+
+        HBox logoBox = new HBox(8, tfLogoPath, btnSeleccionarLogo);
+        logoBox.setAlignment(Pos.CENTER_LEFT);
+
+        Button btnGuardarLogo = new Button("Guardar logo");
+        btnGuardarLogo.getStyleClass().add("config-save-btn");
+        btnGuardarLogo.setOnAction(e -> {
+            DatabaseManager.setConfig("doc_logo_path", tfLogoPath.getText().trim());
+            mostrarToast("Logo guardado");
+        });
+
+        HBox footerLogo = new HBox(btnGuardarLogo);
+        footerLogo.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox panelLogo = new VBox(12, tituloLogo, descLogo, logoBox, footerLogo);
+        panelLogo.getStyleClass().add("config-panel");
+
+        // ── Pie legal ─────────────────────────────────────────────────────────
+        Label tituloPie = new Label("Pie de página legal");
+        tituloPie.getStyleClass().add("config-section-title");
+        Label descPie = new Label("Texto que aparece al pie de todos los documentos generados.");
+        descPie.getStyleClass().add("config-section-desc");
+
+        TextArea taPieLegal = new TextArea(DatabaseManager.getConfig("doc_pie_legal"));
+        taPieLegal.setPromptText("Ej: Inscrita en el Registro Mercantil de Almería...");
+        taPieLegal.setPrefRowCount(3);
+        taPieLegal.setWrapText(true);
+
+        Button btnGuardarPie = new Button("Guardar pie legal");
+        btnGuardarPie.getStyleClass().add("config-save-btn");
+        btnGuardarPie.setOnAction(e -> {
+            DatabaseManager.setConfig("doc_pie_legal", taPieLegal.getText().trim());
+            mostrarToast("Pie legal guardado");
+        });
+
+        HBox footerPie = new HBox(btnGuardarPie);
+        footerPie.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox panelPie = new VBox(12, tituloPie, descPie, taPieLegal, footerPie);
+        panelPie.getStyleClass().add("config-panel");
+
+        // ── Textos por defecto ────────────────────────────────────────────────
+        Label tituloTextos = new Label("Textos por defecto en documentos");
+        tituloTextos.getStyleClass().add("config-section-title");
+        Label descTextos = new Label("Texto introductorio que se inserta automáticamente al crear cada tipo de documento.");
+        descTextos.getStyleClass().add("config-section-desc");
+        descTextos.setWrapText(true);
+
+        TextArea taTextoPresupuesto = new TextArea(DatabaseManager.getConfig("doc_texto_presupuesto"));
+        taTextoPresupuesto.setPromptText("Texto por defecto en presupuestos");
+        taTextoPresupuesto.setPrefRowCount(3);
+        taTextoPresupuesto.setWrapText(true);
+
+        TextArea taTextoFactura = new TextArea(DatabaseManager.getConfig("doc_texto_factura"));
+        taTextoFactura.setPromptText("Texto por defecto en facturas");
+        taTextoFactura.setPrefRowCount(3);
+        taTextoFactura.setWrapText(true);
+
+        TextArea taTextoAlbaran = new TextArea(DatabaseManager.getConfig("doc_texto_albaran"));
+        taTextoAlbaran.setPromptText("Texto por defecto en albaranes");
+        taTextoAlbaran.setPrefRowCount(3);
+        taTextoAlbaran.setWrapText(true);
+
+        GridPane gridTextos = new GridPane();
+        gridTextos.setHgap(14);
+        gridTextos.setVgap(12);
+        ColumnConstraints cc0 = new ColumnConstraints();
+        cc0.setMinWidth(140);
+        cc0.setHalignment(javafx.geometry.HPos.RIGHT);
+        ColumnConstraints cc1 = new ColumnConstraints();
+        cc1.setHgrow(Priority.ALWAYS);
+        cc1.setFillWidth(true);
+        gridTextos.getColumnConstraints().addAll(cc0, cc1);
+        Label lblPres = new Label("Presupuesto:");
+        lblPres.getStyleClass().add("config-form-label");
+        Label lblFact = new Label("Factura:");
+        lblFact.getStyleClass().add("config-form-label");
+        Label lblAlb = new Label("Albarán:");
+        lblAlb.getStyleClass().add("config-form-label");
+        gridTextos.add(lblPres, 0, 0); gridTextos.add(taTextoPresupuesto, 1, 0);
+        gridTextos.add(lblFact, 0, 1); gridTextos.add(taTextoFactura, 1, 1);
+        gridTextos.add(lblAlb,  0, 2); gridTextos.add(taTextoAlbaran,  1, 2);
+
+        Button btnGuardarTextos = new Button("Guardar textos");
+        btnGuardarTextos.getStyleClass().add("config-save-btn");
+        btnGuardarTextos.setOnAction(e -> {
+            DatabaseManager.setConfig("doc_texto_presupuesto", taTextoPresupuesto.getText().trim());
+            DatabaseManager.setConfig("doc_texto_factura",    taTextoFactura.getText().trim());
+            DatabaseManager.setConfig("doc_texto_albaran",    taTextoAlbaran.getText().trim());
+            mostrarToast("Textos de documentos guardados");
+        });
+
+        HBox footerTextos = new HBox(btnGuardarTextos);
+        footerTextos.setAlignment(Pos.CENTER_RIGHT);
+
+        VBox panelTextos = new VBox(12, tituloTextos, descTextos, gridTextos, footerTextos);
+        panelTextos.getStyleClass().add("config-panel");
+
+        contenido.getChildren().addAll(panelLogo, panelPie, panelTextos);
+
+        ScrollPane scroll = new ScrollPane(contenido);
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
+    // ═════════════════════════════════════════════════════════════════════════
+    // TAB — DIAGNÓSTICO DEL SISTEMA
+    // ═════════════════════════════════════════════════════════════════════════
+
+    private ScrollPane buildTabDiagnostico() {
+        VBox contenido = new VBox(20);
+        contenido.setPadding(new Insets(20));
+
+        Label lblTitulo = new Label("Información del sistema");
+        lblTitulo.getStyleClass().add("config-section-title");
+        Label lblDesc = new Label("Detalles de hardware y software. Útil para soporte técnico.");
+        lblDesc.getStyleClass().add("config-section-desc");
 
         GridPane gridSistema = new GridPane();
         gridSistema.setHgap(20);
         gridSistema.setVgap(12);
         gridSistema.setPadding(new Insets(8, 16, 8, 16));
-        ColumnConstraints csL = new ColumnConstraints(); csL.setMinWidth(160);
+        ColumnConstraints csL = new ColumnConstraints();
+        csL.setMinWidth(160);
         csL.setHalignment(javafx.geometry.HPos.RIGHT);
-        ColumnConstraints csR = new ColumnConstraints(); csR.setHgrow(Priority.ALWAYS);
+        ColumnConstraints csR = new ColumnConstraints();
+        csR.setHgrow(Priority.ALWAYS);
         gridSistema.getColumnConstraints().addAll(csL, csR);
 
         int sysRow = 0;
 
-        // --- Equipo ---
         String computerName = System.getenv("COMPUTERNAME");
         if (computerName != null && !computerName.isEmpty())
             addInfoRow(gridSistema, sysRow++, "Nombre del equipo:", computerName);
 
-        // Sistema operativo — WMI para edición completa y número de build
         String osArch = System.getProperty("os.arch", "");
         Map<String, String> osWmi = wmicQuery("os", "get", "Caption,BuildNumber,OSArchitecture", "/format:value");
         String osDisplay = osWmi.getOrDefault("Caption",
@@ -769,7 +1015,6 @@ public class ConfiguracionView extends VBox {
         addInfoRow(gridSistema, sysRow++, "Sistema operativo:", osDisplay);
         addInfoRow(gridSistema, sysRow++, "Arquitectura:", osWmi.getOrDefault("OSArchitecture", osArch));
 
-        // --- Procesador ---
         Map<String, String> cpuWmi = wmicQuery("cpu", "get",
             "Name,NumberOfCores,NumberOfLogicalProcessors,MaxClockSpeed", "/format:value");
         String cpuNombre = cpuWmi.getOrDefault("Name",
@@ -787,7 +1032,6 @@ public class ConfiguracionView extends VBox {
             } catch (NumberFormatException ignored) {}
         }
 
-        // --- Memoria RAM ---
         try {
             com.sun.management.OperatingSystemMXBean osMx =
                 (com.sun.management.OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
@@ -801,7 +1045,6 @@ public class ConfiguracionView extends VBox {
                 + "  (" + String.format("%.1f%%", pctUsada) + " en uso)");
         } catch (Exception ignored) {}
 
-        // --- Almacenamiento ---
         try {
             for (FileStore store : FileSystems.getDefault().getFileStores()) {
                 long total  = store.getTotalSpace();
@@ -819,7 +1062,6 @@ public class ConfiguracionView extends VBox {
             }
         } catch (Exception ignored) {}
 
-        // --- Tarjeta gráfica ---
         Map<String, String> gpuWmi = wmicQuery("path", "win32_videocontroller", "get",
             "Caption,AdapterRAM", "/format:value");
         String gpuCaption = gpuWmi.get("Caption");
@@ -834,7 +1076,6 @@ public class ConfiguracionView extends VBox {
             }
         }
 
-        // --- Pantalla ---
         try {
             Rectangle2D bounds = Screen.getPrimary().getBounds();
             addInfoRow(gridSistema, sysRow++, "Resolución pantalla:",
@@ -842,20 +1083,11 @@ public class ConfiguracionView extends VBox {
                 + "  ·  " + String.format("%.0f", Screen.getPrimary().getDpi()) + " DPI");
         } catch (Exception ignored) {}
 
-        // --- Java ---
         String javaVersion = System.getProperty("java.version", "?");
         String javaVendor  = System.getProperty("java.vendor",  "");
         addInfoRow(gridSistema, sysRow++, "Java (JVM):", javaVersion + "  —  " + javaVendor);
 
-        VBox panel = new VBox(16,
-            cardApp,
-            new Separator(),
-            gridInfo,
-            new Separator(),
-            lblDescTitulo, lblDesc,
-            new Separator(),
-            lblSistemaTitulo, gridSistema
-        );
+        VBox panel = new VBox(16, lblTitulo, lblDesc, gridSistema);
         panel.getStyleClass().add("config-panel");
         contenido.getChildren().add(panel);
 

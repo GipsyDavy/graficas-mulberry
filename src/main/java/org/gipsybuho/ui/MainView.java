@@ -105,18 +105,18 @@ public class MainView extends BorderPane {
         addIfPermiso(navMenu, UserPermissions.DASHBOARD,
             navBtn("🏠  Panel principal", DashboardView::new));
         navMenu.getChildren().addAll(
-            navGrupo("CLIENTES",
-                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new)
+            navGrupo("CLIENTES Y MAESTROS",
+                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new),
+                navBtn(UserPermissions.TARIFAS,  "💰  Tarifas",  TarifasView::new)
             ),
             navGrupo("COMERCIAL",
                 navBtn(UserPermissions.PRESUPUESTOS, "📋  Presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.FACTURAS,     "🧾  Facturas",     FacturasView::new),
-                navBtn(UserPermissions.ALBARANES,    "📋  Albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.PEDIDOS,      "📦  Pedidos",      PedidosView::new)
+                navBtn(UserPermissions.PEDIDOS,      "📦  Pedidos",      PedidosView::new),
+                navBtn(UserPermissions.ALBARANES,    "📄  Albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.FACTURAS,     "🧾  Facturas",     FacturasView::new)
             ),
             navGrupo("ALMACÉN",
-                navBtn(UserPermissions.TARIFAS,    "💰  Tarifas",    TarifasView::new),
-                navBtn(UserPermissions.MATERIALES, "📦  Materiales", MaterialesView::new)
+                navBtn(UserPermissions.MATERIALES, "🧱  Materiales", MaterialesView::new)
             ),
             navGrupo("PERSONAL",
                 navBtn(UserPermissions.EMPLEADOS, "👤  Empleados", EmpleadosView::new),
@@ -124,18 +124,16 @@ public class MainView extends BorderPane {
             ),
             navGrupo("ANALÍTICA",
                 navBtn(UserPermissions.ESTADISTICAS, "📊  Estadísticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO,   "📅  Calendario",   CalendarioView::new)
-            ),
-            navGrupo("SISTEMA",
+                navBtn(UserPermissions.CALENDARIO,   "📅  Calendario",   CalendarioView::new),
                 navBtn(UserPermissions.IA, "🤖  Asistente IA",
                     () -> mostrarVista(iaView, "🤖  Asistente IA"),
-                    IAView::new),
-                navBtn(UserPermissions.IMPORTAR_BACKUP,  "📥  Importar Backup",    ImportBackupView::new),
-                navBtn(UserPermissions.EXPORTAR_BACKUP,  "💾  Exportar / Backup",  ExportView::new),
-                navBtn(UserPermissions.CONFIGURACION,    "⚙  Configuración",       ConfiguracionView::new),
-                navBtn("🧭  Configuración asistente visual",
-                    () -> new VisualAssistantConfigView(visualAssistant)),
-                buildBotonAsistenteVisual(),
+                    IAView::new)
+            ),
+            navGrupo("SISTEMA",
+                navBtn(UserPermissions.IMPORTAR_BACKUP, "📥  Importar Backup",   ImportBackupView::new),
+                navBtn(UserPermissions.EXPORTAR_BACKUP, "💾  Exportar / Backup", ExportView::new),
+                navBtn(UserPermissions.CONFIGURACION,   "⚙  Configuración",
+                    () -> new ConfiguracionView(visualAssistant)),
                 loggedInUser.isAdmin()
                     ? navBtn("👥  Gestión de usuarios",
                         () -> new UserManagementView(authService, loggedInUser))
