@@ -234,6 +234,12 @@ public class AlbaranesView extends VBox {
         TableColumn<LineaAlbaran, String> cDesc = new TableColumn<>("Descripción");
         cDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cDesc.setPrefWidth(400);
+        cDesc.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : descripcionVisible(v));
+            }
+        });
 
         TableColumn<LineaAlbaran, Integer> cCant = new TableColumn<>("Cantidad");
         cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
@@ -242,6 +248,12 @@ public class AlbaranesView extends VBox {
         TableColumn<LineaAlbaran, String> cUnid = new TableColumn<>("Unidad");
         cUnid.setCellValueFactory(new PropertyValueFactory<>("unidad"));
         cUnid.setPrefWidth(80);
+        cUnid.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(String v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : ("__material__".equals(v) ? "ud" : v));
+            }
+        });
 
         t.getColumns().addAll(cDesc, cCant, cUnid);
 
@@ -273,12 +285,13 @@ public class AlbaranesView extends VBox {
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
 
-        TextArea fDesc = new TextArea(nvl(l.getDescripcion())); fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
+        boolean esMaterial = esDescripcionMaterial(l.getDescripcion());
+        TextArea fDesc = new TextArea(descripcionVisible(nvl(l.getDescripcion()))); fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
         TextField fCant = tf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
         ComboBox<String> fUnidad = new ComboBox<>(FXCollections.observableArrayList(
             "ud", "m²", "m", "kg", "L", "caja", "pack", "rollo"));
         fUnidad.setEditable(true);
-        fUnidad.setValue(l.getUnidad() != null ? l.getUnidad() : "ud");
+        fUnidad.setValue("__material__".equals(l.getUnidad()) ? "ud" : (l.getUnidad() != null ? l.getUnidad() : "ud"));
 
         grid.addRow(0, lbl("Descripción *"), fDesc);
         GridPane.setColumnSpan(fDesc, 3);
@@ -287,9 +300,9 @@ public class AlbaranesView extends VBox {
 
         dlg.setResultConverter(bt -> {
             if (bt != ButtonType.OK) return null;
-            l.setDescripcion(fDesc.getText().trim());
+            l.setDescripcion((esMaterial ? "[MATERIAL] " : "") + fDesc.getText().trim());
             l.setCantidad(parseInt(fCant.getText(), 1));
-            l.setUnidad(fUnidad.getValue() != null ? fUnidad.getValue().trim() : "ud");
+            l.setUnidad(esMaterial ? "__material__" : (fUnidad.getValue() != null ? fUnidad.getValue().trim() : "ud"));
             return l;
         });
 
@@ -340,10 +353,10 @@ public class AlbaranesView extends VBox {
             if (bt != ButtonType.OK || cbMat.getValue() == null) return null;
             Material m = cbMat.getValue();
             LineaAlbaran l = new LineaAlbaran();
-            l.setDescripcion(m.getNombre() +
+            l.setDescripcion("[MATERIAL] " + m.getNombre() +
                 (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
             l.setCantidad(spCant.getValue());
-            l.setUnidad(m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud");
+            l.setUnidad("__material__");
             return l;
         });
 
@@ -619,23 +632,27 @@ public class AlbaranesView extends VBox {
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
             try {
-                byte[] pdfBytes; String tituloVentana;
+                byte[] pdfBytes; byte[] pdfImpresionBytes; String tituloVentana;
                 if (lista.size() == 1) {
                     Albaran a = dao.findById(lista.get(0).getId());
                     Cliente c = clienteDAO.findById(a.getClienteId());
-                    Path pdfPath = new PDFService().generarAlbaran(a, c);
+                    PDFService pdfService = new PDFService();
+                    Path pdfPath = pdfService.generarAlbaran(a, c, true);
                     pdfBytes = Files.readAllBytes(pdfPath);
+                    Path pdfImpresionPath = pdfService.generarAlbaran(a, c, false);
+                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
                     tituloVentana = "Previsualización — Albarán " + a.getNumero();
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarAlbaranes(lista);
+                    pdfImpresionBytes = pdfBytes;
                     tituloVentana = "Previsualización — Albaranes (" + lista.size() + " registro(s))";
                 }
-                final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
+                final byte[] bytes = pdfBytes; final byte[] bytesImpresion = pdfImpresionBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
                     setDisable(false);
                     SoundService.play(SoundService.Sound.COMPLETE);
-                    PdfPreviewWindow.mostrar(bytes, titulo);
+                    PdfPreviewWindow.mostrar(bytes, bytesImpresion, titulo);
                 });
             } catch (Exception ex) {
                 Platform.runLater(() -> {
@@ -664,6 +681,13 @@ public class AlbaranesView extends VBox {
         };
     }
     private String nvl(String s) { return s != null ? s : ""; }
+    private boolean esDescripcionMaterial(String descripcion) {
+        return nvl(descripcion).startsWith("[MATERIAL] ");
+    }
+    private String descripcionVisible(String descripcion) {
+        String valor = nvl(descripcion);
+        return valor.startsWith("[MATERIAL] ") ? valor.substring("[MATERIAL] ".length()) : valor;
+    }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch (Exception e) { return def; } }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) { SoundService.play(SoundService.Sound.ERROR); new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }

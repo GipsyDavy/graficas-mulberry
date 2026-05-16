@@ -1,0 +1,306 @@
+<section id="navegacion-grupos">
+    <h2 id="navegacion-grupos">Navegación lateral reestructurada</h2>
+    <p>La versión v12.1.0 de Gráficas Mulberry introduce una reorganización completa del panel de navegación lateral, conocido como sidebar. Esta reestructuración tiene como objetivo principal mejorar la usabilidad y la eficiencia, agrupando las funcionalidades de la aplicación de manera más lógica y acorde al flujo de trabajo de una imprenta o serigrafía.</p>
+    <p>Ahora, todos los módulos están organizados en seis grupos claramente definidos, cada uno con su propia cabecera distintiva:</p>
+    <ul>
+        <li><strong>CLIENTES Y MAESTROS:</strong> Este grupo agrupa los módulos fundamentales para la gestión de la base de clientes y la configuración de los elementos de precio. Aquí encontrará acceso directo a la gestión de <em>Clientes</em> y a la configuración de <em>Tarifas</em>.</li>
+        <li><strong>COMERCIAL:</strong> Diseñado para seguir el ciclo de vida de un proyecto comercial, este grupo contiene los módulos de <em>Presupuestos</em>, <em>Pedidos</em>, <em>Albaranes</em> y <em>Facturas</em>. El orden de presentación refleja la progresión natural desde la oferta inicial hasta la facturación final.</li>
+        <li><strong>ALMACÉN:</strong> Dedicado exclusivamente a la gestión de inventario, este grupo proporciona acceso al módulo de <em>Materiales</em>, donde podrá controlar el stock y los movimientos de sus insumos.</li>
+        <li><strong>PERSONAL:</strong> Para la administración de los recursos humanos de su empresa, este grupo incluye los módulos de <em>Empleados</em> y <em>Nóminas</em>.</li>
+        <li><strong>ANALÍTICA:</strong> Este grupo centraliza las herramientas para el seguimiento del rendimiento y la planificación. Aquí encontrará los módulos de <em>Estadísticas</em>, <em>Calendario</em> y el <em>Asistente IA</em>, que le ayudará a interpretar datos y optimizar procesos.</li>
+        <li><strong>SISTEMA:</strong> Contiene las herramientas de administración y configuración de la aplicación. Incluye funciones para <em>Importar Backup</em>, <em>Exportar/Backup</em>, la <em>Configuración</em> general de la aplicación y la <em>Gestión de usuarios</em> (esta última visible solo para administradores).</li>
+    </ul>
+    <figure class="shot">
+        <img src="capturas/35-sidebar-grupos.png" alt="Vista completa del sidebar con los 6 grupos de navegación">
+        <figcaption>Vista completa del sidebar con los 6 grupos de navegación, mostrando la nueva organización de los módulos.</figcaption>
+    </figure>
+    <p>Además de la nueva agrupación, el sidebar ha sido mejorado para ofrecer información contextual relevante. En la parte superior, siempre visible, se muestra el nombre del usuario actualmente logueado, su rol dentro del sistema y la información de su última sesión. Esto le permite tener siempre a la vista quién está utilizando la aplicación y cuándo fue su último acceso.</p>
+    <p>Para facilitar la navegación en instalaciones con un gran número de módulos o en pantallas de menor resolución, el sidebar ahora incorpora un scroll vertical automático si la lista de módulos excede el espacio disponible. En el pie del sidebar, encontrará un botón "⏻ Salir" que, tras una confirmación, le permitirá cerrar la aplicación de forma segura. Finalmente, la versión actual de la aplicación (v12.1.0) y su ubicación geográfica (Almería, España) se muestran discretamente en el pie del panel, proporcionando información rápida sobre la instancia en uso.</p>
+    <p>Un detalle importante es el botón del Asistente Visual, que ahora se comporta de forma dinámica. Este botón, ubicado en el grupo ANALÍTICA, alternará su texto entre "🧭 Activar asistente" y "🧭 Desactivar asistente" según el estado actual del asistente, permitiéndole controlarlo con un solo clic.</p>
+</section>
+
+
+<section id="tarifas-tramos">
+    <h2 id="tarifas-tramos">Tarifas — Tramos de tiempo</h2>
+    <p>La versión v12.1.0 introduce una potente funcionalidad para la gestión de tarifas: el "pricing basado en tiempo". Este sistema está diseñado específicamente para técnicas de producción donde el coste varía directamente con el tiempo de trabajo, como el bordado, la sublimación o ciertos procesos de acabado. Permite definir precios escalonados según la duración de la producción en minutos.</p>
+    <figure class="shot">
+        <img src="capturas/07-tarifas.png" alt="Vista principal del módulo Tarifas con la columna Tramos">
+        <figcaption>Vista principal del módulo Tarifas, destacando la nueva columna "Tramos" que indica el tipo de pricing.</figcaption>
+    </figure>
+    <p>En el formulario de creación o edición de una tarifa, encontrará un nuevo checkbox titulado "Tarifa con pricing basado en tiempo". Su comportamiento es el siguiente:</p>
+    <ul>
+        <li>Si el checkbox está <strong>DESMARCADO</strong>: La tarifa funcionará como hasta ahora, utilizando un precio fijo por unidad (campo <code>precio_unit</code>).</li>
+        <li>Si el checkbox está <strong>MARCADO</strong>: La tarifa activará el sistema de tramos de tiempo. Un aviso le indicará que debe "Gestionar los tramos desde el botón ⏱ de la pantalla principal", lo que significa que el precio final se calculará en base a los tramos definidos.</li>
+    </ul>
+    <p>La tabla principal del módulo de Tarifas ahora incluye una columna "Tramos" que le permite identificar rápidamente el tipo de pricing de cada tarifa:</p>
+    <ul>
+        <li>Si la columna muestra "⏱ Sí": Indica que la tarifa tiene el pricing por tiempo activado y, por tanto, utiliza tramos.</li>
+        <li>Si la columna muestra "—": Indica que la tarifa es de precio fijo por unidad.</li>
+    </ul>
+    <figure class="shot">
+        <img src="capturas/30-tarifas-nuevo-formulario.png" alt="Formulario de nueva tarifa con el checkbox de tramos">
+        <figcaption>El formulario de nueva tarifa incluye el checkbox "Tarifa con pricing basado en tiempo" para activar esta funcionalidad.</figcaption>
+    </figure>
+    <p>Para gestionar estos tramos, se ha añadido un botón "⏱ Tramos" en la barra de herramientas del módulo de Tarifas. Este botón tiene un comportamiento condicional:</p>
+    <ul>
+        <li>Solo se activará si ha seleccionado previamente una tarifa en la tabla principal y esta tarifa tiene el pricing por tiempo activado.</li>
+        <li>Si la tarifa seleccionada no usa pricing basado en tiempo, recibirá un aviso informativo: "Esta tarifa no usa pricing basado en tiempo".</li>
+        <li>Si no ha seleccionado ninguna tarifa, el aviso será: "Selecciona una tarifa".</li>
+    </ul>
+    <figure class="shot">
+        <img src="capturas/28-tarifas-tramos-boton.png" alt="Barra de herramientas con el botón ⏱ Tramos visible">
+        <figcaption>El botón "⏱ Tramos" en la barra de herramientas, que permite acceder a la gestión de los intervalos de tiempo y precio.</figcaption>
+    </figure>
+    <p>Al pulsar el botón "⏱ Tramos" con una tarifa válida seleccionada, se abrirá una ventana de gestión de tramos. Esta ventana, titulada "Tramos de tiempo — [nombre de la tarifa]", presenta una tabla con dos columnas: "Tiempo (min)" y "Precio (€)". Debajo de la tabla, encontrará los botones "Añadir", "Editar" y "Borrar" para administrar los tramos.</p>
+    <figure class="shot">
+        <img src="capturas/29-tarifas-tramos-ventana.png" alt="Ventana de gestión de tramos con tabla y botones">
+        <figcaption>Ventana de gestión de tramos, donde se definen los intervalos de tiempo y sus precios asociados.</figcaption>
+    </figure>
+    <p>El proceso para añadir un nuevo tramo se realiza a través de un diálogo:</p>
+    <ul>
+        <li><strong>Campo "Tiempo (min, múltiplo de 5) *" (OBLIGATORIO):</strong>
+            <ul>
+                <li>Debe ser un valor numérico mayor que 0.</li>
+                <li>Debe ser un múltiplo exacto de 5 (ej. 5, 10, 15, 20, 30, 45, 60, 90, 120...).</li>
+                <li>Si no cumple estas validaciones, se mostrará el error: "El tiempo debe ser mayor que 0 y múltiplo de 5".</li>
+            </ul>
+        </li>
+        <li><strong>Campo "Precio (€) *" (OBLIGATORIO):</strong>
+            <ul>
+                <li>Debe ser un valor numérico mayor que 0.</li>
+                <li>Si no cumple esta validación, se mostrará el error: "El precio debe ser mayor que 0".</li>
+            </ul>
+        </li>
+    </ul>
+    <p>Para editar un tramo existente, simplemente seleccione la fila deseada en la tabla y pulse el botón "Editar". Se abrirá el mismo diálogo de "Añadir tramo" con los valores precargados para su modificación. Para borrar un tramo, selecciónelo en la tabla, pulse "Borrar" y confirme la acción en el diálogo "¿Eliminar este tramo?".</p>
+</section>
+
+
+<section id="config-documentos">
+    <h2 id="config-documentos">Configuración — Pestaña Documentos</h2>
+    <p>La sección de Configuración ha sido ampliada y ahora se organiza en ocho pestañas para una gestión más granular de las preferencias de la aplicación. Las pestañas actuales son: 🎨 Apariencia | 🏢 Mi empresa | ⚙ Preferencias | 🔊 Sonido | 🧭 Asistente | 📄 Documentos | ℹ Acerca de | 🖥 Diagnóstico.</p>
+    <p>La nueva pestaña "📄 Documentos" centraliza todas las opciones relacionadas con la personalización de los documentos generados por la aplicación, como presupuestos, facturas y albaranes. Esta sección se divide en tres áreas principales para facilitar la configuración:</p>
+    <h3>Logo de la empresa</h3>
+    <p>Esta sección le permite definir el logotipo que aparecerá en la cabecera de todos sus documentos oficiales. Dispone de:</p>
+    <ul>
+        <li>Un campo de texto que muestra la ruta actual del archivo de imagen de su logo.</li>
+        <li>Un botón "📂 Seleccionar..." que abre un selector de archivos, permitiéndole elegir imágenes en formatos PNG, JPG o JPEG.</li>
+        <li>Un botón "Guardar logo" que almacena la ruta seleccionada en la configuración de la aplicación.</li>
+    </ul>
+    <p class="call"><strong>IMPORTANTE:</strong> Este logo se insertará automáticamente en la CABECERA de todos los presupuestos, facturas y albaranes que genere. Si la ruta del archivo está vacía, los documentos se generarán sin logo de empresa.</p>
+    <h3>Pie de página legal</h3>
+    <p>Aquí puede configurar un texto legal que se incluirá automáticamente en el pie de todos sus documentos. Esta funcionalidad es ideal para añadir información corporativa obligatoria o avisos legales.</p>
+    <ul>
+        <li>Un área de texto multi-línea (con 3 filas visibles) donde puede introducir el contenido deseado.</li>
+        <li>Un ejemplo de texto podría ser: "Inscrita en el Registro Mercantil de Almería...".</li>
+        <li>Un botón "Guardar pie legal" para almacenar el texto introducido.</li>
+    </ul>
+    <p class="call">Este texto aparecerá AL PIE de TODOS los documentos generados (presupuestos, facturas, albaranes), garantizando la coherencia en su comunicación.</p>
+    <h3>Textos por defecto en documentos</h3>
+    <p>Esta sección le permite predefinir textos introductorios o de notas para los diferentes tipos de documentos, agilizando la creación de nuevos registros.</p>
+    <ul>
+        <li>Dispone de tres áreas de texto independientes: una para <em>Presupuestos</em>, otra para <em>Facturas</em> y una tercera para <em>Albaranes</em>.</li>
+        <li>Cada área permite introducir un texto introductorio o de observaciones que se cargará automáticamente.</li>
+        <li>Cuando cree un documento nuevo (presupuesto, factura o albarán), el texto aquí configurado ya aparecerá precargado en el campo de observaciones/notas correspondiente.</li>
+        <li>Un botón "Guardar textos" le permite almacenar los tres textos simultáneamente.</li>
+    </ul>
+    <p class="call">Esta funcionalidad es muy útil para incluir condiciones generales de venta, agradecimientos o avisos automáticos que desee que aparezcan por defecto en sus documentos.</p>
+    <figure class="shot">
+        <img src="capturas/31-config-documentos.png" alt="Pestaña Documentos de Configuración con las tres secciones">
+        <figcaption>Vista de la pestaña "Documentos" en Configuración, mostrando las opciones para el logo, pie legal y textos por defecto.</figcaption>
+    </figure>
+</section>
+
+
+<section id="config-apariencia">
+    <h2 id="config-apariencia">Configuración — Apariencia mejorada</h2>
+    <p>La pestaña "🎨 Apariencia" dentro del capítulo de Configuración ha sido completamente renovada para ofrecerle una experiencia de personalización visual más rica e intuitiva. Ahora podrá adaptar el aspecto de la aplicación a sus preferencias de forma inmediata y con mayor detalle.</p>
+    <h3>Tarjetas visuales de tema</h3>
+    <p>La selección de temas se ha transformado en un sistema de tarjetas visuales que le permiten previsualizar el aspecto de cada opción antes de aplicarla:</p>
+    <ul>
+        <li>Dispone de 5 temas predefinidos: <em>Mulberry</em> (el tema por defecto de la aplicación), <em>Azul marino</em>, <em>Verde</em>, <em>Rojo</em> y <em>Claro</em>.</li>
+        <li>Cada tarjeta muestra una miniatura real que representa los colores principales del tema: una franja izquierda para el color del sidebar y un área derecha para el color del fondo de contenido y las barras de acento.</li>
+        <li>La tarjeta correspondiente al tema actualmente activo aparecerá siempre resaltada, indicando su selección.</li>
+        <li>Al hacer clic en cualquiera de las tarjetas, el tema se aplicará de forma <strong>INMEDIATA</strong> a toda la interfaz de la aplicación, sin necesidad de reiniciar.</li>
+    </ul>
+    <figure class="shot">
+        <img src="capturas/32-config-apariencia-temas.png" alt="Pestaña Apariencia con tarjetas de temas visibles">
+        <figcaption>La pestaña "Apariencia" muestra las tarjetas de temas visuales para una selección rápida y con previsualización.</figcaption>
+    </figure>
+    <h3>Modo oscuro</h3>
+    <p>Se ha integrado un control sencillo para activar o desactivar el modo oscuro en la aplicación:</p>
+    <ul>
+        <li>Un checkbox titulado "Ejecutar la aplicación en modo oscuro" le permite alternar entre el tema claro y el oscuro.</li>
+        <li>El cambio de modo es <strong>inmediato</strong> y no requiere reiniciar la aplicación para que los efectos sean visibles.</li>
+        <li>Tras activar o desactivar el modo oscuro, recibirá un "Toast" (una pequeña notificación emergente) de confirmación, indicando "Modo oscuro activado" o "Modo oscuro desactivado" respectivamente.</li>
+    </ul>
+    <h3>Tipografía</h3>
+    <p>La personalización de la tipografía de la interfaz ha sido ampliada para ofrecerle más control sobre la legibilidad y el estilo:</p>
+    <ul>
+        <li>Un selector de fuente (ComboBox) le permite elegir entre una variedad de tipografías comunes como Segoe UI, Arial, Calibri, Georgia, Consolas, Trebuchet MS y Verdana.</li>
+        <li>Un selector de tamaño con botones le permite ajustar el tamaño del texto entre las opciones: <em>Pequeño (11px)</em>, <em>Normal (13px)</em>, <em>Grande (15px)</em> y <em>Muy grande (17px)</em>. El botón correspondiente al tamaño activo se mostrará resaltado.</li>
+        <li>Un botón "Aplicar tipografía" aplica la fuente y el tamaño seleccionados a toda la interfaz de la aplicación.</li>
+        <li>Al igual que con el modo oscuro, un "Toast" de confirmación le informará: "Tipografía aplicada correctamente".</li>
+    </ul>
+    <p class="call"><strong>Nota:</strong> El título de la aplicación y algunos elementos fijos de la interfaz mantendrán su tamaño relativo para preservar la coherencia del diseño.</p>
+</section>
+
+
+<section id="config-preferencias">
+    <h2 id="config-preferencias">Configuración — Preferencias ampliadas</h2>
+    <p>La pestaña "⚙ Preferencias" ha sido significativamente ampliada en la versión v12.1.0 para ofrecer un control más granular sobre los valores por defecto y el comportamiento de la aplicación, especialmente en las áreas de facturación y recordatorios. Esta sección se organiza ahora en dos paneles principales:</p>
+    <h3>PANEL "Facturación y presupuestos"</h3>
+    <p>Este panel centraliza las configuraciones que afectan directamente a la creación y gestión de documentos comerciales:</p>
+    <ul>
+        <li><strong>IVA por defecto (%):</strong> Un campo numérico donde puede establecer el porcentaje de IVA que se aplicará por defecto al crear nuevos documentos. El valor predeterminado es 21%.</li>
+        <li><strong>Prefijo presupuesto:</strong> Un campo de texto corto para definir el prefijo que se utilizará en la numeración automática de los presupuestos. El valor por defecto es "PRE" (ejemplo: PRE-0001).</li>
+        <li><strong>Prefijo factura:</strong> Similar al anterior, para definir el prefijo de las facturas. Por defecto: "FAC" (ejemplo: FAC-0001).</li>
+        <li><strong>Prefijo albarán:</strong> Nuevo campo para el prefijo de los albaranes. Por defecto: "ALB" (ejemplo: ALB-0001).</li>
+        <li><strong>Prefijo pedido:</strong> Nuevo campo para el prefijo de los pedidos. Por defecto: "PED" (ejemplo: PED-0001).</li>
+        <li><strong>Condiciones por defecto:</strong> Un área de texto multi-línea donde puede introducir las condiciones generales que se precargarán en los presupuestos al crearlos.</li>
+        <li><strong>Vencimiento factura (días):</strong> Un Spinner numérico que permite establecer el número de días por defecto para el vencimiento de las facturas, con un rango de 0 a 365 días. El valor predeterminado es 30 días desde la emisión.</li>
+        <li><strong>Forma de pago por defecto:</strong> Un ComboBox con opciones predefinidas para la forma de pago más común (Transferencia, Efectivo, Cheque, Domiciliación, Tarjeta), que se seleccionará automáticamente al crear nuevos documentos.</li>
+    </ul>
+    <p>Un botón "Guardar preferencias de facturación" le permite almacenar todos los cambios realizados en este panel.</p>
+    <h3>PANEL "Recordatorios del calendario"</h3>
+    <p>Este panel le permite ajustar el comportamiento de las alertas y la visualización de eventos del calendario:</p>
+    <ul>
+        <li><strong>Alerta emergente al iniciar (días):</strong> Un Spinner numérico (rango 1–30) para configurar con cuántos días de antelación los eventos del calendario deben generar una alerta emergente automática al iniciar la aplicación. El valor por defecto es 3 días.</li>
+        <li><strong>Panel dashboard — mostrar eventos (días):</strong> Un Spinner numérico (rango 1–60) que define el horizonte de días para mostrar los eventos del calendario en el panel principal (dashboard). Por defecto, se muestran los eventos de los próximos 7 días.</li>
+    </ul>
+    <p>Un botón "Guardar preferencias de recordatorios" le permite almacenar los cambios de este panel.</p>
+    <figure class="shot">
+        <img src="capturas/33-config-preferencias.png" alt="Pestaña Preferencias con los dos paneles">
+        <figcaption>Vista de la pestaña "Preferencias" en Configuración, mostrando los paneles de facturación y recordatorios.</figcaption>
+    </figure>
+</section>
+
+
+<section id="config-diagnostico">
+    <h2 id="config-diagnostico">Configuración — Diagnóstico del sistema</h2>
+    <p>La versión v12.1.0 introduce una nueva pestaña "🖥 Diagnóstico" en la sección de Configuración, diseñada para proporcionar información técnica detallada sobre el entorno de ejecución de la aplicación. Esta herramienta es invaluable para el soporte técnico, el diagnóstico de rendimiento y la verificación de los requisitos del sistema.</p>
+    <p>Al acceder a esta pestaña, la aplicación leerá y mostrará en tiempo real los siguientes datos:</p>
+    <ul>
+        <li><strong>Versión de Java en uso:</strong> Indica la versión exacta del entorno de ejecución Java (JRE) que está utilizando la aplicación.</li>
+        <li><strong>Sistema operativo (nombre y versión):</strong> Muestra el nombre y la versión del sistema operativo donde se está ejecutando Gráficas Mulberry.</li>
+        <li><strong>Memoria disponible / total de la JVM:</strong> Proporciona información sobre la memoria asignada y utilizada por la Máquina Virtual Java (JVM), útil para identificar posibles problemas de rendimiento.</li>
+        <li><strong>Espacio libre en disco:</strong> Muestra el espacio de almacenamiento disponible en la unidad donde se encuentra instalada la aplicación.</li>
+        <li><strong>Resolución de pantalla actual:</strong> Indica la resolución de la pantalla principal del usuario.</li>
+    </ul>
+    <p class="call">Esta información es de gran utilidad para el soporte técnico en caso de incidencias, para diagnosticar problemas de rendimiento o simplemente para verificar que el equipo cumple con los requisitos mínimos de la aplicación. Tenga en cuenta que la información se lee al abrir la pestaña, por lo que puede haber un ligero retardo en su visualización inicial.</p>
+    <figure class="shot">
+        <img src="capturas/34-config-diagnostico.png" alt="Pestaña Diagnóstico con información del sistema">
+        <figcaption>La pestaña "Diagnóstico" en Configuración, mostrando información técnica relevante del sistema.</figcaption>
+    </figure>
+</section>
+
+
+<section id="asistente-visual">
+    <h2 id="asistente-visual">Asistente visual Vampi actualizado</h2>
+    <p>El asistente visual, su compañero animado en la pantalla, ha recibido una importante actualización en la versión v12.1.0, ofreciendo nuevas formas y una interacción más dinámica. Este personaje le acompaña en la pantalla, proporcionando asistencia y retroalimentación visual.</p>
+    <h3>Formas del asistente</h3>
+    <p>Vampi, el asistente predeterminado, ahora puede alternar entre dos formas distintas:</p>
+    <ul>
+        <li><strong>FORMA MURCIÉLAGO (forma por defecto):</strong>
+            <ul>
+                <li>Se presenta con un cuerpo morado oscuro y sus alas extendidas, animándose suavemente para simular un aleteo.</li>
+                <li>Sus ojos son blancos con una pupila negra, y su hocico tiene una forma elíptica.</li>
+                <li>Destacan sus colmillos blancos, de los cuales cuelgan pequeñas manchas de sangre roja en las puntas, con una gota de sangre oscura suspendida del colmillo derecho.</li>
+            </ul>
+        </li>
+        <li><strong>FORMA DRÁCULA (forma alternativa):</strong>
+            <ul>
+                <li>Adopta una apariencia más humana, con una tez clara y cabello negro peinado hacia atrás con entradas.</li>
+                <li>Sus ojos son oscuros y viste un elegante lazo rojo, chaleco oscuro y camisa blanca.</li>
+                <li>Una capa negra con un interior púrpura le confiere un aire distinguido.</li>
+                <li>Al igual que en su forma de murciélago, sus colmillos blancos presentan manchas de sangre roja en las puntas.</li>
+                <li>En esta forma, el cuerpo respira suavemente, animando un ligero cabeceo.</li>
+            </ul>
+        </li>
+    </ul>
+    <h3>Transformación</h3>
+    <p>La aplicación ha sido diseñada para que el asistente alterne periódicamente entre sus dos formas (Murciélago y Drácula) de manera automática. Esta transición se acompaña de una animación suave y visualmente atractiva, donde una nube de humo aparece momentáneamente para marcar el cambio de forma.</p>
+    <h3>Activar / Desactivar</h3>
+    <p>Usted tiene control total sobre la visibilidad del asistente visual:</p>
+    <ul>
+        <li>Desde el sidebar izquierdo, encontrará un botón que actúa como un "toggle" dinámico, alternando su texto entre "🧭 Activar asistente" y "🧭 Desactivar asistente".</li>
+        <li>Cuando el asistente está activo, el personaje aparecerá sobre el área de contenido de la aplicación.</li>
+        <li>Cuando se desactiva, el personaje desaparecerá completamente de la vista.</li>
+    </ul>
+    <h3>Configuración detallada</h3>
+    <p>Para una personalización más avanzada del asistente, diríjase a la sección de Configuración y seleccione la pestaña "🧭 Asistente". Aquí podrá encontrar opciones como:</p>
+    <ul>
+        <li>La selección del personaje (Vampi es el predeterminado, pero la arquitectura permite la inclusión de otros asistentes en el futuro).</li>
+        <li>El tamaño del asistente en pantalla.</li>
+        <li>Otras opciones de comportamiento para ajustar la experiencia a sus preferencias.</li>
+    </ul>
+    <figure class="shot">
+        <img src="capturas/15-asistente-visual.png" alt="Asistente visual Vampi en forma de murciélago">
+        <figcaption>El asistente visual Vampi en su forma predeterminada de murciélago, acompañando al usuario.</figcaption>
+    </figure>
+</section>
+
+
+<section id="novedades-v12">
+    <h2>Novedades v12.1.0</h2>
+    <p>La actualización v12.1.0 de Gráficas Mulberry trae consigo una serie de mejoras significativas y nuevas funcionalidades diseñadas para optimizar su flujo de trabajo y enriquecer la experiencia de usuario. A continuación, se presenta un resumen rápido de las novedades más destacadas:</p>
+    <table class="grid">
+        <thead>
+            <tr>
+                <th>Funcionalidad</th>
+                <th>Módulo / Dónde</th>
+                <th>Qué puedes hacer</th>
+                <th>Paso rápido</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tramos de tiempo</td>
+                <td>Tarifas → botón ⏱</td>
+                <td>Definir precios por intervalos de tiempo (múltiplos de 5 min) para técnicas específicas.</td>
+                <td>Ir a Tarifas, seleccionar una, pulsar ⏱.</td>
+            </tr>
+            <tr>
+                <td>Pestaña Documentos</td>
+                <td>Configuración → 📄</td>
+                <td>Personalizar el logo de la empresa, el pie legal y los textos por defecto para presupuestos, facturas y albaranes.</td>
+                <td>Configuración → pestaña 📄 Documentos.</td>
+            </tr>
+            <tr>
+                <td>Pestaña Diagnóstico</td>
+                <td>Configuración → 🖥</td>
+                <td>Consultar información técnica detallada del sistema (versión de Java, SO, memoria, disco, pantalla) para soporte o verificación.</td>
+                <td>Configuración → pestaña 🖥 Diagnóstico.</td>
+            </tr>
+            <tr>
+                <td>Navegación reestructurada</td>
+                <td>Sidebar</td>
+                <td>Acceder a los módulos organizados en 6 grupos lógicos, con scroll vertical e información de usuario/sesión.</td>
+                <td>Explorar el panel lateral izquierdo de la aplicación.</td>
+            </tr>
+            <tr>
+                <td>Apariencia mejorada</td>
+                <td>Configuración → 🎨</td>
+                <td>Elegir entre tarjetas de tema visuales, activar el modo oscuro y personalizar la tipografía de la interfaz.</td>
+                <td>Configuración → pestaña 🎨 Apariencia.</td>
+            </tr>
+            <tr>
+                <td>Preferencias ampliadas</td>
+                <td>Configuración → ⚙</td>
+                <td>Configurar valores por defecto para IVA, prefijos de documentos, vencimiento de facturas, forma de pago y recordatorios de calendario.</td>
+                <td>Configuración → pestaña ⚙ Preferencias.</td>
+            </tr>
+            <tr>
+                <td>Asistente visual mejorado</td>
+                <td>Sidebar / Configuración → 🧭</td>
+                <td>Disfrutar de Vampi con una nueva forma Drácula y animaciones de transformación, con control de activación/desactivación.</td>
+                <td>Sidebar → botón 🧭 / Configuración → pestaña 🧭 Asistente.</td>
+            </tr>
+        </tbody>
+    </table>
+    <div class="call call.ok">
+        <p><strong>¡Importante!</strong> Todos los archivos de la versión v11.1.0 se conservan y son compatibles. Los nuevos archivos generados por esta actualización son de la versión v12.1.0.</p>
+    </div>
+</section>
+
+

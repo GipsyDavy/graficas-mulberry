@@ -47,6 +47,7 @@ public class TarifasView extends VBox {
         COLUMNAS_BASE.put("precio_setup", "Setup");
         COLUMNAS_BASE.put("minimo_unidades", "Mín. uds.");
         COLUMNAS_BASE.put("activa", "Activa");
+        COLUMNAS_BASE.put("usa_tiempo", "Tramos");
         COLUMNAS_BASE.put("updated_at", "Actualizado");
     }
     private final DynamicColumnRuntime<Tarifa> dynamicColumns =

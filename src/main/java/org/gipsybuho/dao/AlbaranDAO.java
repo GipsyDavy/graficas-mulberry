@@ -73,9 +73,33 @@ public class AlbaranDAO {
 
         for (var lf : factura.getLineas()) {
             LineaAlbaran la = new LineaAlbaran();
-            la.setDescripcion(lf.getDescripcion());
+            boolean esMaterial = "📦 Material".equals(lf.getTecnica());
+            la.setDescripcion((esMaterial ? "[MATERIAL] " : "") + lf.getDescripcion());
             la.setCantidad(lf.getCantidad());
-            la.setUnidad("ud");
+            la.setUnidad(esMaterial ? "__material__" : "ud");
+            a.getLineas().add(la);
+        }
+        save(a);
+        return a;
+    }
+
+    public Albaran crearDesdePresupuesto(int presupuestoId) throws SQLException {
+        PresupuestoDAO pDao = new PresupuestoDAO();
+        var presupuesto = pDao.findById(presupuestoId);
+        if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
+
+        Albaran a = new Albaran();
+        a.setNumero(DatabaseManager.generarNumeroAlbaran());
+        a.setClienteId(presupuesto.getClienteId());
+        a.setFecha(java.time.LocalDate.now().toString());
+        a.setEstado("pendiente");
+
+        for (var lp : presupuesto.getLineas()) {
+            LineaAlbaran la = new LineaAlbaran();
+            boolean esMaterial = "📦 Material".equals(lp.getTecnica());
+            la.setDescripcion((esMaterial ? "[MATERIAL] " : "") + lp.getDescripcion());
+            la.setCantidad(lp.getCantidad());
+            la.setUnidad(esMaterial ? "__material__" : "ud");
             a.getLineas().add(la);
         }
         save(a);

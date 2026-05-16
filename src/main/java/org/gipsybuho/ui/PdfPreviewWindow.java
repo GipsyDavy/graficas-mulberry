@@ -30,7 +30,14 @@ import java.util.List;
 public class PdfPreviewWindow {
 
     public static void mostrar(byte[] pdfBytes, String titulo) {
+        mostrar(pdfBytes, pdfBytes, titulo);
+    }
+
+    public static void mostrar(byte[] pdfBytes, byte[] pdfImpresionBytes, String titulo) {
         if (pdfBytes == null || pdfBytes.length == 0) return;
+        byte[] bytesParaImprimir = pdfImpresionBytes != null && pdfImpresionBytes.length > 0
+            ? pdfImpresionBytes
+            : pdfBytes;
 
         List<javafx.scene.image.Image> paginas = new ArrayList<>();
         try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
@@ -114,7 +121,7 @@ public class PdfPreviewWindow {
         btnImprimir.setOnAction(e -> {
             btnImprimir.setDisable(true);
             Thread.ofVirtual().start(() -> {
-                try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(pdfBytes))) {
+                try (PDDocument doc = PDDocument.load(new ByteArrayInputStream(bytesParaImprimir))) {
                     PrinterJob job = PrinterJob.getPrinterJob();
                     job.setPageable(new PDFPageable(doc));
                     if (job.printDialog()) {

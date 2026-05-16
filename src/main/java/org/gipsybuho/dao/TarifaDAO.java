@@ -90,7 +90,7 @@ public class TarifaDAO {
         t.setPrecioSetup(rs.getDouble("precio_setup"));
         t.setMinimoUnidades(rs.getInt("minimo_unidades"));
         t.setActiva(rs.getInt("activa") == 1);
-        t.setUsaTiempo(rs.getInt("usa_tiempo") == 1);
+        t.setUsaTiempo(rs.getInt("usa_tiempo") != 0);
         t.setUpdatedAt(rs.getString("updated_at"));
         return t;
     }

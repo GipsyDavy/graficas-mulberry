@@ -2,6 +2,7 @@ package org.gipsybuho.ui;
 
 import javafx.animation.Animation;
 import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
 import javafx.animation.KeyFrame;
 import javafx.animation.KeyValue;
 import javafx.animation.PauseTransition;
@@ -87,16 +88,20 @@ public class VisualAssistantView extends StackPane {
     private double dragOffsetX;
     private double dragOffsetY;
     private Rotate rotBrazoIzq, rotBrazoDer, rotPiernaIzq, rotPiernaDer;
-    private Group vampiGrupo, vampiAlaIzq, vampiAlaDer, vampiCabeza;
+    private Group vampiGrupo, vampiMurcielago, vampiDracula, vampiHumo, vampiAlaIzq, vampiAlaDer, vampiCabeza;
+    private Group vampiDraculaCabeza, vampiDraculaCapaIzq, vampiDraculaCapaDer;
     private Circle vampiOjoIzq, vampiOjoDer;
-    private Group metalCabeza, metalPelo, metalTorso, metalBrazoAlto;
-    private Group soniaCabeza, soniaManoIzq, soniaManoDer, soniaMicrofono;
+    private Group metalCabeza, metalPelo, metalPeloDelante, metalTorso, metalBrazoAlto;
+    private Group soniaGrupo, soniaCabeza, soniaBrazoIzq, soniaBrazoDer, soniaManoIzq, soniaManoDer, soniaMicrofono;
+    private Group anaBrazoIzq, anaBrazoDer;
     private Rectangle soniaPantalla;
     private Group davidCabeza, davidTorso, davidRadio, davidLinterna;
     private Circle davidLinternaLuz;
-    private Group seleneCabeza, seleneEdredon, seleneGloboZzz;
+    private Group seleneGrupo, seleneCabeza, seleneEdredon, seleneGloboZzz, seleneHamburguesa;
     private Text seleneZPeq, seleneZMed, seleneZGrande;
-    private Timeline animExtremidades, animPersonaje, animVampiAviso, animSeleneGlobo;
+    private Ellipse seleneNarizBurbuja;
+    private Timeline animExtremidades, animPersonaje, animVampiAviso, animSeleneGlobo, animSeleneNariz;
+    private boolean usarWindmill = false;
     private Node ultimoNodoAyuda;
     private long ultimaAyudaMs;
     private boolean posicionInicializada;
@@ -315,24 +320,78 @@ public class VisualAssistantView extends StackPane {
     private String ayudaPara(String modulo) {
         String limpio = modulo.replaceAll("^[^\\p{L}\\p{N}]+", "").trim();
         return switch (limpio) {
-            case "Panel principal" -> "Panel principal: aquí ves el resumen general, avisos y accesos rápidos de la gestión.";
-            case "Clientes" -> "Clientes: registra, busca, edita y elimina clientes. Desde aquí se alimentan presupuestos, facturas y pedidos.";
-            case "Presupuestos" -> "Presupuestos: crea ofertas para clientes, añade líneas y prepara documentos para enviar.";
-            case "Facturas" -> "Facturas: gestiona facturación, estados de cobro y documentos emitidos.";
-            case "Albaranes" -> "Albaranes: controla entregas y documentos vinculados a pedidos o facturas.";
-            case "Pedidos" -> "Pedidos: organiza trabajos, entregas previstas, importes y pagos asociados.";
-            case "Tarifas" -> "Tarifas: define precios por técnica, mínimos y costes de preparación.";
-            case "Materiales" -> "Materiales: controla stock, consumos, proveedores y pagos de compras.";
-            case "Empleados" -> "Empleados: gestiona datos del personal, altas, bajas y contacto.";
-            case "Nóminas" -> "Nóminas: calcula y revisa salarios, deducciones y costes de empresa.";
-            case "Estadísticas" -> "Estadísticas: consulta gráficos y métricas para entender la evolución del negocio.";
-            case "Calendario" -> "Calendario: crea notas y recordatorios para fechas importantes.";
-            case "Asistente IA" -> "Asistente IA: escribe consultas, pide ayuda sobre el ERP y activa la voz si quieres escuchar las respuestas.";
-            case "Importar Backup" -> "Importar Backup: restaura datos desde una copia de seguridad compatible.";
-            case "Exportar / Backup" -> "Exportar y Backup: genera copias de seguridad y exporta información de la aplicación.";
-            case "Configuración" -> "Configuración: ajusta empresa, temas, audio, música, calendario y preferencias generales.";
-            case "Configuración asistente visual" -> "Configuración asistente visual: elige personaje, tamaño, voz y posición del ayudante flotante.";
-            default -> "Este módulo agrupa herramientas de gestión. Usa los botones principales y las tablas para trabajar con los registros.";
+            case "Panel principal" ->
+                "Panel principal: Tu resumen en tiempo real. Aquí verás avisos importantes, " +
+                "eventos del calendario y accesos rápidos a los módulos más usados. " +
+                "Es tu punto de partida diario.";
+            case "Clientes" ->
+                "Clientes: gestiona el directorio completo de clientes de la empresa. " +
+                "Crea nuevos registros, edita datos de contacto y consulta el historial de operaciones de cada cliente. " +
+                "Todos los presupuestos, facturas y pedidos se vinculan a un cliente de esta lista.";
+            case "Presupuestos" ->
+                "Presupuestos: prepara ofertas comerciales detalladas para tus clientes. " +
+                "Añade líneas de producto o servicio, aplica descuentos y genera el documento PDF para enviar. " +
+                "Una vez aceptado por el cliente, puedes convertirlo directamente en pedido o en factura con un solo clic.";
+            case "Facturas" ->
+                "Facturas: gestiona todos los documentos de facturación emitidos. " +
+                "Crea facturas manualmente o genera una automáticamente desde un pedido existente. " +
+                "Controla el estado de cobro de cada factura, registra los pagos recibidos y consulta los vencimientos pendientes.";
+            case "Albaranes" ->
+                "Albaranes: registra y controla las entregas de trabajos realizados. " +
+                "Vincula cada albarán a un pedido o factura, indica las unidades entregadas y genera el documento de entrega firmable. " +
+                "Útil para llevar un seguimiento preciso de los trabajos completados y pendientes de facturar.";
+            case "Pedidos" ->
+                "Pedidos: organiza y controla todos los trabajos en curso. " +
+                "Registra importes, fechas de entrega previstas y el estado de cada trabajo. " +
+                "Gestiona los pagos asociados a cada pedido y consulta el historial de abonos recibidos para hacer un seguimiento del cobro.";
+            case "Tarifas" ->
+                "Tarifas: Define tus precios por técnica de impresión. " +
+                "Configura el precio por unidad, el coste de preparación y la cantidad mínima. " +
+                "Para bordado o sublimación, activa el pricing por tramos de tiempo.";
+            case "Materiales" ->
+                "Materiales: controla el inventario de materias primas y consumibles del taller. " +
+                "Registra entradas de stock, consulta el nivel actual de cada material y gestiona los proveedores habituales. " +
+                "Registra también los pagos de las compras realizadas para llevar un control de los costes de aprovisionamiento.";
+            case "Empleados" ->
+                "Empleados: mantiene el registro completo del personal activo de la empresa. " +
+                "Gestiona datos personales, de contacto y laborales de cada trabajador. " +
+                "Registra altas y bajas, y consulta el historial de cada empleado para tener toda la información centralizada.";
+            case "Nóminas" ->
+                "Nóminas: calcula y registra los salarios mensuales del personal. " +
+                "Introduce los datos de cada período, deducciones, complementos y retenciones para cada empleado. " +
+                "Consulta el histórico de nóminas emitidas y el coste total para la empresa en cualquier período.";
+            case "Estadísticas" ->
+                "Estadísticas: analiza la evolución del negocio con gráficos y métricas detalladas. " +
+                "Consulta ventas por período, comparativas entre módulos y los indicadores clave de rendimiento. " +
+                "Filtra por fechas para obtener el análisis concreto que necesitas en cada momento.";
+            case "Calendario" ->
+                "Calendario: organiza eventos, citas y recordatorios de fechas importantes. " +
+                "Crea notas con fecha para no olvidar entregas, reuniones con clientes o vencimientos de facturas. " +
+                "Los eventos próximos aparecen automáticamente en el panel principal y generan un aviso emergente al iniciar sesión según los días configurados en Preferencias.";
+            case "Asistente IA" ->
+                "Asistente IA: consulta dudas sobre el ERP, pide resúmenes de actividad o solicita ayuda con las operaciones del negocio. " +
+                "Escribe tu pregunta en el campo de texto y pulsa Enviar para obtener una respuesta. " +
+                "Activa la voz para escuchar las respuestas en voz alta. Esta función requiere Ollama instalado y un modelo de IA activo.";
+            case "Importar Backup" ->
+                "Importar Backup: restaura los datos de la aplicación desde una copia de seguridad guardada anteriormente. " +
+                "Selecciona el archivo de backup compatible y sigue los pasos del asistente de importación. " +
+                "Atención: esta operación reemplaza los datos actuales por los del backup. Úsala únicamente cuando sea necesario recuperar información.";
+            case "Exportar / Backup" ->
+                "Exportar y Backup: genera copias de seguridad completas de todos los datos de la aplicación. " +
+                "Guarda el archivo resultante en un lugar seguro, como una unidad externa o almacenamiento en la nube. " +
+                "También permite exportar información en formatos compatibles para análisis externos o para llevar un registro histórico.";
+            case "Configuración" ->
+                "Configuración: Personaliza la aplicación según las necesidades de tu empresa. " +
+                "Ajusta el tema, la tipografía, datos fiscales, IVA por defecto y más. " +
+                "Explora las ocho pestañas disponibles para un control total.";
+            case "Configuración asistente visual" ->
+                "Asistente visual: personaliza el ayudante flotante que te acompaña en todos los módulos. " +
+                "Elige entre los personajes disponibles, ajusta el tamaño que ocupa en pantalla y configura si quieres que hable en voz alta. " +
+                "El asistente ofrece ayuda contextual según el módulo que estás usando y el botón o campo sobre el que sitúas el ratón.";
+            default ->
+                "Este módulo agrupa herramientas de gestión del negocio. " +
+                "Usa los botones de la barra de herramientas para crear, editar o eliminar registros. " +
+                "Selecciona una fila de la tabla para habilitar las acciones disponibles sobre ese elemento.";
         };
     }
 
@@ -363,30 +422,30 @@ public class VisualAssistantView extends StackPane {
         if (node instanceof TextInputControl input) {
             String prompt = textoLimpio(input.getPromptText());
             return prompt.isBlank()
-                ? "Campo de texto: escribe o modifica el dato solicitado en esta pantalla."
-                : "Campo de texto: introduce " + prompt.toLowerCase() + ".";
+                ? "Campo de texto: escribe o modifica el dato solicitado en esta pantalla. Los campos marcados con * son obligatorios para poder guardar el registro."
+                : "Campo «" + prompt.toLowerCase() + "»: introduce el valor correspondiente a este campo. Si el campo es obligatorio, debes rellenarlo antes de poder guardar.";
         }
         if (node instanceof ComboBoxBase<?>) {
-            return "Selector: despliega la lista y elige una opción disponible.";
+            return "Selector desplegable: haz clic para abrir la lista y elige una de las opciones disponibles. En algunos selectores puedes escribir directamente para filtrar rápidamente las opciones.";
         }
         if (node instanceof TableView<?>) {
-            return "Tabla de datos: selecciona registros, revisa columnas y usa los botones de acción para trabajar con ellos.";
+            return "Tabla de datos: Haz clic en una fila para seleccionarla y activar las opciones de edición o borrado. Mantén Ctrl para seleccionar varias. Pulsa en la cabecera para ordenar los registros.";
         }
         if (node instanceof ListView<?>) {
-            return "Lista: selecciona un elemento para consultarlo o aplicar acciones relacionadas.";
+            return "Lista de elementos: haz clic en un elemento para seleccionarlo y poder aplicar las acciones disponibles en los botones de esta pantalla. Puedes usar las teclas de flecha para moverte por los elementos de la lista.";
         }
         if (node instanceof TabPane tabPane) {
             Tab tab = tabPane.getSelectionModel().getSelectedItem();
             String titulo = tab != null ? textoLimpio(tab.getText()) : "";
             return titulo.isBlank()
-                ? "Pestañas: cambia entre secciones de esta pantalla."
-                : "Pestaña " + titulo + ": muestra opciones y datos de esta sección.";
+                ? "Pestañas: cambia entre las secciones de esta pantalla pulsando cada pestaña. Cada una agrupa opciones y datos relacionados entre sí."
+                : "Pestaña «" + titulo + "»: contiene las opciones y datos de esta sección. Explora las demás pestañas disponibles para acceder a todas las funciones de esta pantalla.";
         }
         if (node instanceof Slider) {
-            return "Deslizador: arrastra el control para ajustar este valor.";
+            return "Deslizador: arrastra el control hacia la izquierda o la derecha para ajustar este valor. Puedes ver el resultado del cambio en tiempo real mientras arrastras.";
         }
         if (node instanceof Spinner<?>) {
-            return "Selector numérico: usa las flechas o escribe un valor válido.";
+            return "Selector numérico: usa las flechas arriba y abajo para cambiar el valor de uno en uno, o haz clic en el campo y escribe directamente el número que necesitas. El valor debe estar dentro del rango mínimo y máximo permitido.";
         }
         return null;
     }
@@ -394,20 +453,28 @@ public class VisualAssistantView extends StackPane {
     private String ayudaParaBoton(String textoBoton, String tooltip) {
         String base = !textoBoton.isBlank() ? textoBoton : textoLimpio(tooltip);
         String lower = base.toLowerCase();
-        if (lower.isBlank()) return "Botón de acción: ejecuta la función asociada en esta pantalla.";
-        if (lower.contains("guardar") || lower.contains("actualizar")) return "Guardar: conserva los cambios realizados en esta pantalla.";
-        if (lower.contains("nuevo") || lower.contains("crear") || lower.contains("añadir") || lower.contains("agregar")) return "Nuevo: crea un registro o añade información al módulo actual.";
-        if (lower.contains("editar") || lower.contains("modificar")) return "Editar: permite cambiar los datos del registro seleccionado.";
-        if (lower.contains("eliminar") || lower.contains("borrar")) return "Eliminar: borra el registro o los registros seleccionados. Revisa la selección antes de confirmar.";
-        if (lower.contains("buscar") || lower.contains("filtrar")) return "Buscar: localiza registros usando el texto o filtros indicados.";
-        if (lower.contains("limpiar")) return "Limpiar: vacía filtros, campos o el contenido actual para empezar de nuevo.";
-        if (lower.contains("export")) return "Exportar: genera un archivo con la información de esta pantalla.";
-        if (lower.contains("import")) return "Importar: carga datos desde un archivo externo o una copia de seguridad.";
-        if (lower.contains("imprimir") || lower.contains("pdf")) return "Documento: genera o muestra una versión imprimible o PDF.";
-        if (lower.contains("enviar")) return "Enviar: manda el texto o solicitud para que el sistema la procese.";
-        if (lower.contains("cerrar") || lower.contains("salir") || lower.contains("cancel")) return "Cerrar o cancelar: abandona esta acción y vuelve al estado anterior.";
-        if (lower.contains("config")) return "Configuración: abre opciones para ajustar el comportamiento de esta función.";
-        return "Botón " + base + ": ejecuta esta acción dentro del módulo actual.";
+        if (lower.isBlank()) return "Botón de acción: ejecuta la función asociada en esta pantalla. Asegúrate de tener seleccionado el registro sobre el que quieres actuar.";
+        if (lower.contains("tramo")) return "Tramos de tiempo: Gestiona los precios según la duración de producción para la tarifa seleccionada. Añade, edita o elimina tramos indicando minutos (múltiplo de 5) y su precio.";
+        if (lower.contains("previsualiz") || lower.contains("preview") || lower.contains("vista previa")) return "Previsualizar: muestra una vista previa del documento antes de generarlo definitivamente. Comprueba que el formato, los datos y el diseño son correctos antes de imprimir o guardar el archivo.";
+        if (lower.contains("columna")) return "Columnas: personaliza qué columnas se muestran en esta tabla y en qué orden aparecen. Los cambios se guardan para tu sesión y se mantienen la próxima vez que abras este módulo.";
+        if (lower.contains("guardar") || lower.contains("actualizar")) return "Guardar: conserva todos los cambios realizados en el formulario actual. Si hay campos obligatorios sin rellenar, el sistema te avisará antes de guardar para que puedas completarlos.";
+        if (lower.contains("nuevo") || lower.contains("nueva") || lower.contains("crear") || lower.contains("añadir") || lower.contains("agregar")) return "Nuevo: abre el formulario para crear un registro en este módulo. Completa los campos obligatorios, marcados con *, y pulsa Aceptar para guardar el nuevo elemento en la base de datos.";
+        if (lower.contains("editar") || lower.contains("modificar")) return "Editar: abre el formulario con los datos del registro seleccionado para que puedas modificarlos. Selecciona primero una fila en la tabla y luego pulsa este botón para acceder a la edición.";
+        if (lower.contains("eliminar") || lower.contains("borrar")) return "Eliminar: borra de forma permanente el registro o los registros seleccionados. El sistema pedirá confirmación antes de ejecutar el borrado. Esta acción no se puede deshacer, revisa bien la selección.";
+        if (lower.contains("buscar") || lower.contains("filtrar")) return "Buscar: filtra los registros mostrados en la tabla según el texto introducido. Escribe en el campo de búsqueda y los resultados se actualizan automáticamente. Deja el campo vacío para volver a ver todos los registros.";
+        if (lower.contains("limpiar")) return "Limpiar: restablece los filtros y campos de búsqueda a su estado inicial. Úsalo para volver a ver todos los registros después de haber aplicado un filtro o búsqueda.";
+        if (lower.contains("export")) return "Exportar: genera un archivo con los datos de esta pantalla en el formato seleccionado. Elige la ubicación donde quieres guardarlo. Útil para compartir información o crear copias de trabajo externas.";
+        if (lower.contains("import")) return "Importar: carga datos desde un archivo externo o desde una copia de seguridad. Sigue el asistente de importación y revisa los datos cargados antes de confirmar para asegurarte de que son correctos.";
+        if (lower.contains("imprimir") || lower.contains("pdf")) return "Documento PDF: genera una versión imprimible del registro o listado actual. Puedes previsualizar el documento antes de imprimirlo o guardarlo como archivo PDF en tu equipo.";
+        if (lower.contains("enviar")) return "Enviar: procesa y envía el texto o consulta introducida al sistema. La respuesta aparecerá en el área de resultados en unos segundos. Asegúrate de que el contenido es correcto antes de enviar.";
+        if (lower.contains("cerrar") || lower.contains("salir") || lower.contains("cancel")) return "Cerrar o cancelar: abandona la acción actual sin guardar los cambios realizados. Volverás al estado anterior sin que se modifique ningún dato en la base de datos.";
+        if (lower.contains("aplicar")) return "Aplicar: ejecuta el cambio configurado y lo muestra inmediatamente en la interfaz. Puedes probarlo y volver a ajustar los parámetros si el resultado no es el que buscabas.";
+        if (lower.contains("backup") || lower.contains("copia")) return "Backup: genera una copia de seguridad completa de los datos actuales de la aplicación. Guarda el archivo en un lugar seguro, como una unidad externa o un servicio de almacenamiento en la nube.";
+        if (lower.contains("restaurar")) return "Restaurar: recupera los datos desde una copia de seguridad anterior. Esta operación reemplaza los datos actuales, úsala únicamente cuando sea necesario recuperar información perdida o dañada.";
+        if (lower.contains("config")) return "Configuración: abre las opciones de ajuste de esta función. Aquí puedes cambiar el comportamiento, los parámetros y las preferencias de este elemento de la aplicación.";
+        if (lower.contains("activar") || lower.contains("desactivar")) return "Activar / Desactivar: cambia el estado activo de este elemento. Un elemento desactivado no aparecerá disponible en los selectores ni en las operaciones del módulo hasta que lo vuelvas a activar.";
+        if (lower.contains("salir") || lower.contains("salida")) return "Salir: cierra la aplicación. Se mostrará una confirmación para evitar cierres accidentales. Asegúrate de haber guardado todos los cambios antes de salir.";
+        return "Botón «" + base + "»: ejecuta esta acción dentro del módulo actual. Si está deshabilitado, es posible que necesites seleccionar primero un registro en la tabla.";
     }
 
     private boolean esParteDelAsistente(Node node) {
@@ -504,19 +571,79 @@ public class VisualAssistantView extends StackPane {
             orejaIzq, orejaDer, cabeza, vampiOjoIzq, vampiOjoDer, pupilaIzq, pupilaDer,
             hocico, colmilloIzq, colmilloDer, sangreIzq, sangreDer, gotaSangre
         );
-        vampiGrupo = new Group(
+        vampiMurcielago = new Group(
             vampiAlaIzq, vampiAlaDer, cuerpo, vampiCabeza
         );
+        vampiDraculaCapaIzq = new Group(
+            polygon("#1B1024", 48, 44, 16, 58, 24, 96, 45, 82),
+            polygon("#5C2A66", 46, 49, 25, 61, 31, 86, 45, 75)
+        );
+        vampiDraculaCapaDer = new Group(
+            polygon("#1B1024", 52, 44, 84, 58, 76, 96, 55, 82),
+            polygon("#5C2A66", 54, 49, 75, 61, 69, 86, 55, 75)
+        );
+        Rectangle pantalon = rect(41, 72, 18, 20, 4, "#151018");
+        Rectangle piernaIzq = rect(40, 89, 7, 9, 2, "#111111");
+        Rectangle piernaDer = rect(53, 89, 7, 9, 2, "#111111");
+        Polygon chaleco = polygon("#2A1633", 36, 48, 64, 48, 58, 77, 42, 77);
+        Polygon camisa = polygon("#FFFFFF", 45, 48, 55, 48, 52, 73, 48, 73);
+        Polygon pajarita = polygon("#B11226", 44, 52, 50, 56, 44, 60, 50, 56, 56, 52, 50, 56, 56, 60);
+        Rectangle cuelloAltoIzq = rect(35, 40, 9, 18, 2, "#1B1024");
+        cuelloAltoIzq.setRotate(-24);
+        Rectangle cuelloAltoDer = rect(56, 40, 9, 18, 2, "#1B1024");
+        cuelloAltoDer.setRotate(24);
+        vampiDraculaCabeza = new Group(
+            circle(50, 31, 16, "#E8B58F"),
+            ellipse(50, 20, 18, 9, "#111111"),
+            polygon("#111111", 34, 28, 42, 18, 48, 28),
+            polygon("#111111", 66, 28, 58, 18, 52, 28),
+            circle(44, 31, 2.6, "#111111"),
+            circle(56, 31, 2.6, "#111111"),
+            rect(45, 39, 10, 2, 1, "#8E4B3A"),
+            polygon("#FFFFFF", 45, 42, 48, 42, 46.5, 48),
+            polygon("#FFFFFF", 52, 42, 55, 42, 53.5, 48),
+            circle(46.5, 47, 1.8, "#B11226"),
+            circle(53.5, 47, 1.8, "#B11226"),
+            ellipse(53.5, 50.5, 1.4, 2.5, "#8B0E1A")
+        );
+        vampiDracula = new Group(
+            vampiDraculaCapaIzq, vampiDraculaCapaDer,
+            cuelloAltoIzq, cuelloAltoDer,
+            pantalon, piernaIzq, piernaDer, chaleco, camisa, pajarita,
+            vampiDraculaCabeza
+        );
+        vampiDracula.setOpacity(0.0);
+
+        vampiHumo = new Group(
+            circle(34, 52, 8, "#D8D8E6"),
+            circle(46, 46, 11, "#F0F0F8"),
+            circle(58, 50, 10, "#D8D8E6"),
+            circle(66, 61, 8, "#F0F0F8"),
+            circle(39, 65, 10, "#C6C6D8"),
+            circle(52, 61, 14, "#EFEFF7")
+        );
+        vampiHumo.setOpacity(0.0);
+
+        vampiGrupo = new Group(vampiMurcielago, vampiDracula, vampiHumo);
         return escalar(vampiGrupo);
     }
 
     private Node crearGuardiaCivil() {
-        rotBrazoIzq  = new Rotate(0, 5.5, 0);
+        rotBrazoIzq  = new Rotate(180, 5.5, 0);
         rotBrazoDer  = new Rotate(0, 5.5, 0);
         rotPiernaIzq = new Rotate(0, 6,   0);
         rotPiernaDer = new Rotate(0, 6,   0);
 
-        Group brazoIzqG  = brazoGroup("#2F6B35", "#E8C8A0", 19.5, 61, rotBrazoIzq);
+        Group brazoIzqG = new Group(
+            rect(0, 0, 11, 22, 4, "#2F6B35"),
+            rect(-3, 20, 17, 5, 3, "#E8C8A0"),
+            rect(3, 24, 5, 24, 2, "#222222"),
+            rect(2, 22, 7, 5, 2, "#3A3A3A"),
+            rect(1, 46, 9, 3, 1, "#111111")
+        );
+        brazoIzqG.setTranslateX(19.5);
+        brazoIzqG.setTranslateY(61);
+        brazoIzqG.getTransforms().add(rotBrazoIzq);
         Group brazoDerG  = brazoGroup("#2F6B35", "#E8C8A0", 69.5, 61, rotBrazoDer);
         Group piernaIzqG = piernaBotaGroup(31, 83, rotPiernaIzq);
         Group piernaDerG = piernaBotaGroup(57, 83, rotPiernaDer);
@@ -543,14 +670,14 @@ public class VisualAssistantView extends StackPane {
         Group pistolaFunda = new Group(funda, empunadura, cierre);
         pistolaFunda.setRotate(-8);
         davidTorso = new Group(cuello, torso, cinturon, hebilla, pistolaFunda);
-        davidRadio = new Group(rect(18, 70, 8, 13, 2, "#111111"), rect(20, 66, 4, 5, 1, "#111111"));
+        davidRadio = new Group(rect(78, 70, 8, 13, 2, "#111111"), rect(80, 66, 4, 5, 1, "#111111"));
         davidLinternaLuz = circle(84, 72, 5, "#F2C94C");
         davidLinternaLuz.setOpacity(0.0);
         davidLinterna = new Group(rect(77, 70, 11, 5, 2, "#222222"), davidLinternaLuz);
 
         Group g = new Group(
             piernaIzqG, piernaDerG,
-            brazoIzqG, brazoDerG, davidTorso, davidRadio, davidLinterna, davidCabeza
+            brazoIzqG, davidTorso, davidRadio, davidLinterna, davidCabeza, brazoDerG
         );
         return escalar(g);
     }
@@ -579,12 +706,32 @@ public class VisualAssistantView extends StackPane {
         Rectangle hebilla = rect(47, 84, 8, 5, 1, "#C0C0C0");
         metalTorso = new Group(cuello, torso, rayo, camiseta, cinturon, hebilla);
 
+        Group guitarra = new Group(
+            rect(15, 74, 5, 18, 2, "#4A2A1A"),
+            rect(16, 60, 3, 18, 1, "#D9C08A"),
+            rect(13, 57, 9, 5, 1, "#2A2A2A"),
+            ellipse(18, 82, 10, 13, "#7A1E1E"),
+            ellipse(12, 84, 7, 8, "#B3262E"),
+            ellipse(24, 78, 7, 8, "#B3262E"),
+            rect(11, 80, 14, 3, 1, "#C0C0C0"),
+            circle(18, 82, 3, "#111111"),
+            rect(17, 58, 1, 31, 0, "#F5E6B8"),
+            rect(14, 90, 8, 2, 1, "#C0C0C0")
+        );
+        guitarra.setRotate(-13);
+
         metalPelo = new Group(
             ellipse(43, 37, 17, 30, "#181014"),
             ellipse(57, 37, 17, 30, "#181014"),
             polygon("#181014", 28, 42, 36, 82, 47, 56),
             polygon("#181014", 72, 42, 64, 82, 53, 56)
         );
+        metalPeloDelante = new Group(
+            ellipse(50, 36, 9, 28, "#181014"),
+            polygon("#181014", 35, 23, 49, 70, 60, 24),
+            polygon("#181014", 42, 31, 54, 78, 66, 34)
+        );
+        metalPeloDelante.setOpacity(0.0);
         metalCabeza = new Group(
             circle(50, 34, 19, "#E8B58F"),
             ellipse(50, 19, 24, 10, "#181014"),
@@ -595,8 +742,8 @@ public class VisualAssistantView extends StackPane {
 
         Group g = new Group(
             piernaIzqG, piernaDerG,
-            metalTorso, brazoBajo, metalBrazoAlto,
-            metalPelo, metalCabeza
+            guitarra, metalTorso, brazoBajo, metalBrazoAlto,
+            metalPelo, metalCabeza, metalPeloDelante
         );
         return escalar(g);
     }
@@ -646,6 +793,9 @@ public class VisualAssistantView extends StackPane {
     }
 
     private Node crearSonia() {
+        rotBrazoIzq = new Rotate(0, 0, 2.5);
+        rotBrazoDer = new Rotate(0, 0, 2.5);
+
         Rectangle mesa = rect(14, 76, 72, 18, 4, "#5B3A2E");
         Rectangle pataIzq = rect(21, 92, 8, 12, 2, "#3D251F");
         Rectangle pataDer = rect(71, 92, 8, 12, 2, "#3D251F");
@@ -683,80 +833,115 @@ public class VisualAssistantView extends StackPane {
         Group monitor = new Group(monitorMarco, soniaPantalla, prompt, soporte, base);
 
         Rectangle teclado = rect(31, 84, 38, 7, 2, "#1F2937");
-        soniaManoIzq = new Group(rect(29, 80, 13, 5, 3, "#E8B58F"));
-        soniaManoDer = new Group(rect(58, 80, 13, 5, 3, "#E8B58F"));
-
-        Group g = new Group(
-            pataIzq, pataDer, silla, torso, cuello, soniaCabeza, auriculares,
-            mesa, monitor, teclado, soniaManoIzq, soniaManoDer
+        soniaBrazoIzq = new Group(
+            polygon("#6B2D5E", 0, 0, 9, 1, 10, 15, 2, 16),
+            polygon("#E8B58F", 2, 14, 10, 14, 14, 21, 6, 22),
+            ellipse(11, 22, 5, 3, "#E8B58F")
         );
-        return escalar(g);
+        soniaBrazoIzq.setLayoutX(32);
+        soniaBrazoIzq.setLayoutY(62);
+        soniaBrazoIzq.getTransforms().add(rotBrazoIzq);
+        soniaBrazoDer = new Group(
+            polygon("#6B2D5E", -9, 1, 0, 0, -2, 16, -10, 15),
+            polygon("#E8B58F", -10, 14, -2, 14, -6, 22, -14, 21),
+            ellipse(-11, 22, 5, 3, "#E8B58F")
+        );
+        soniaBrazoDer.setLayoutX(68);
+        soniaBrazoDer.setLayoutY(62);
+        soniaBrazoDer.getTransforms().add(rotBrazoDer);
+        soniaManoIzq = soniaBrazoIzq;
+        soniaManoDer = soniaBrazoDer;
+
+        soniaGrupo = new Group(
+            pataIzq, pataDer, silla, torso, cuello, soniaCabeza, auriculares,
+            mesa, soniaBrazoIzq, soniaBrazoDer, monitor, teclado
+        );
+        return escalar(soniaGrupo);
     }
 
     private Node crearAna() {
-        Rectangle paredSilla = rect(18, 54, 18, 37, 7, "#1F4E79");
-        Rectangle asientoSilla = rect(26, 78, 26, 10, 4, "#17446B");
-        Rectangle pataSilla = rect(30, 87, 6, 15, 2, "#17324A");
+        rotBrazoIzq = new Rotate(0, 0, 2.5);
+        rotBrazoDer = new Rotate(0, 0, 2.5);
 
-        Rectangle tableroMesa = rect(50, 72, 43, 8, 3, "#5B3A2E");
-        Rectangle pataMesa = rect(83, 80, 7, 23, 2, "#3D251F");
-        Rectangle cantoMesa = rect(50, 78, 43, 4, 2, "#7A4D3A");
+        Rectangle mesa = rect(14, 76, 72, 18, 4, "#5B3A2E");
+        Rectangle pataIzq = rect(21, 92, 8, 12, 2, "#3D251F");
+        Rectangle pataDer = rect(71, 92, 8, 12, 2, "#3D251F");
+        Rectangle silla = rect(32, 68, 36, 24, 8, "#17446B");
 
-        Rectangle monitorMarco = rect(70, 36, 22, 29, 4, "#111827");
-        soniaPantalla = rect(73, 39, 16, 22, 2, "#1D6FB8");
-        Rectangle soporte = rect(78, 65, 6, 7, 2, "#111827");
-        Text monitorText = new Text(74, 55, "061");
-        monitorText.setFill(Color.web("#EAF7FF"));
-        monitorText.setStyle("-fx-font-size: 7px; -fx-font-weight: bold;");
-        Group monitor = new Group(monitorMarco, soniaPantalla, monitorText, soporte);
-
-        Rectangle torsoBase = rect(31, 55, 27, 25, 8, "#1368A8");
-        Rectangle franjaNaranja = rect(47, 55, 9, 25, 3, "#F58220");
-        Rectangle mangaNaranja = rect(55, 59, 12, 8, 3, "#F58220");
-        Rectangle reflectante = rect(34, 60, 21, 3, 1, "#EAF7FF");
-        Text distintivo = new Text(35, 74, "061");
+        Rectangle torsoBase = rect(35, 56, 30, 23, 9, "#1368A8");
+        Rectangle franjaNaranja = rect(49, 56, 8, 23, 3, "#F58220");
+        Rectangle reflectante = rect(38, 61, 22, 3, 1, "#EAF7FF");
+        Text distintivo = new Text(40, 75, "061");
         distintivo.setFill(Color.web("#FFFFFF"));
-        distintivo.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
-        Rectangle cuello = rect(48, 48, 8, 8, 3, "#E8B58F");
-        Group uniforme = new Group(torsoBase, franjaNaranja, mangaNaranja, reflectante, distintivo);
+        distintivo.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+        Group uniforme = new Group(torsoBase, franjaNaranja, reflectante, distintivo);
+        Rectangle cuello = rect(46, 49, 8, 8, 3, "#E8B58F");
 
-        soniaCabeza = new Group(
-            ellipse(45, 36, 15, 24, "#4E2C20"),
-            circle(51, 35, 16, "#E8B58F"),
-            ellipse(44, 25, 16, 10, "#4E2C20"),
-            polygon("#E8B58F", 63, 35, 71, 38, 63, 41),
-            circle(59, 34, 3, "#111111"),
-            rect(58, 45, 9, 3, 2, "#8E4B3A")
+        Group pelo = new Group(
+            ellipse(50, 34, 21, 25, "#4E2C20"),
+            ellipse(42, 24, 13, 9, "#4E2C20"),
+            ellipse(58, 24, 13, 9, "#4E2C20")
         );
+        Group cara = new Group(
+            circle(50, 35, 18, "#E8B58F"),
+            circle(44, 35, 3, "#111111"),
+            circle(56, 35, 3, "#111111"),
+            rect(44, 46, 12, 3, 2, "#8E4B3A")
+        );
+        Group gorra = new Group(
+            ellipse(50, 22, 18, 8, "#1368A8"),
+            rect(37, 18, 26, 9, 4, "#1368A8"),
+            polygon("#F58220", 60, 25, 76, 27, 62, 31),
+            rect(44, 20, 12, 6, 2, "#F58220")
+        );
+        Text gorra061 = new Text(44, 25, "061");
+        gorra061.setFill(Color.web("#FFFFFF"));
+        gorra061.setStyle("-fx-font-size: 7px; -fx-font-weight: bold;");
+        gorra.getChildren().add(gorra061);
+        soniaCabeza = new Group(pelo, cara, gorra);
 
-        Group casco = new Group(circle(44, 35, 6, "#1F2937"), rect(40, 30, 5, 11, 2, "#111827"));
-        Polygon diadema = polygon("#111827", 42, 27, 47, 18, 55, 17, 63, 25, 61, 28, 55, 21, 48, 22, 44, 29);
+        Group cascoIzq = new Group(circle(31, 36, 6, "#1F2937"), rect(27, 31, 5, 11, 2, "#111827"));
+        Group cascoDer = new Group(circle(69, 36, 6, "#1F2937"), rect(68, 31, 5, 11, 2, "#111827"));
+        Polygon diadema = polygon("#111827", 34, 25, 42, 17, 50, 15, 58, 17, 66, 25, 64, 28, 57, 21, 50, 19, 43, 21, 36, 28);
         soniaMicrofono = new Group(
-            rect(60, 42, 5, 3, 2, "#111827"),
-            rect(64, 43, 12, 3, 2, "#111827"),
-            circle(78, 44, 3, "#F58220")
+            rect(66, 42, 5, 3, 2, "#111827"),
+            rect(69, 43, 14, 3, 2, "#111827"),
+            circle(84, 44, 3, "#F58220")
         );
-        Group auriculares = new Group(diadema, casco, soniaMicrofono);
+        Group auriculares = new Group(diadema, cascoIzq, cascoDer, soniaMicrofono);
 
-        Rectangle brazoIzq = rect(53, 66, 19, 5, 3, "#1368A8");
-        Rectangle brazoDer = rect(50, 72, 21, 5, 3, "#F58220");
-        Rectangle teclado = rect(63, 78, 22, 5, 2, "#1F2937");
-        soniaManoIzq = new Group(rect(68, 72, 10, 4, 2, "#E8B58F"));
-        soniaManoDer = new Group(rect(72, 78, 10, 4, 2, "#E8B58F"));
+        Rectangle monitorMarco = rect(24, 55, 52, 34, 5, "#111827");
+        soniaPantalla = rect(28, 59, 44, 24, 3, "#1D6FB8");
+        Rectangle soporte = rect(47, 89, 7, 8, 2, "#111827");
+        Rectangle base = rect(38, 96, 26, 5, 2, "#111827");
+        Text monitorText = new Text(39, 75, "061");
+        monitorText.setFill(Color.web("#EAF7FF"));
+        monitorText.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        Group monitor = new Group(monitorMarco, soniaPantalla, monitorText, soporte, base);
 
-        Group piernas = new Group(
-            rect(38, 79, 18, 7, 3, "#1368A8"),
-            rect(50, 86, 14, 6, 3, "#1368A8"),
-            rect(62, 88, 11, 5, 2, "#111111")
+        Rectangle teclado = rect(31, 84, 38, 7, 2, "#1F2937");
+        anaBrazoIzq = new Group(
+            polygon("#1368A8", 0, 0, 9, 1, 10, 15, 2, 16),
+            polygon("#E8B58F", 2, 14, 10, 14, 14, 21, 6, 22),
+            ellipse(11, 22, 5, 3, "#E8B58F")
         );
-
-        Group g = new Group(
-            pataSilla, paredSilla, asientoSilla, piernas,
-            uniforme, cuello, soniaCabeza, auriculares,
-            tableroMesa, cantoMesa, pataMesa, monitor,
-            brazoIzq, brazoDer, teclado, soniaManoIzq, soniaManoDer
+        anaBrazoIzq.setLayoutX(32);
+        anaBrazoIzq.setLayoutY(62);
+        anaBrazoIzq.getTransforms().add(rotBrazoIzq);
+        anaBrazoDer = new Group(
+            polygon("#F58220", -9, 1, 0, 0, -2, 16, -10, 15),
+            polygon("#E8B58F", -10, 14, -2, 14, -6, 22, -14, 21),
+            ellipse(-11, 22, 5, 3, "#E8B58F")
         );
-        return escalar(g);
+        anaBrazoDer.setLayoutX(68);
+        anaBrazoDer.setLayoutY(62);
+        anaBrazoDer.getTransforms().add(rotBrazoDer);
+
+        soniaGrupo = new Group(
+            pataIzq, pataDer, silla, uniforme, cuello, soniaCabeza, auriculares,
+            mesa, anaBrazoIzq, anaBrazoDer, monitor, teclado
+        );
+        return escalar(soniaGrupo);
     }
 
     private Group piernaBotaGroup(double tx, double ty, Rotate rot) {
@@ -963,16 +1148,20 @@ public class VisualAssistantView extends StackPane {
         if (animPersonaje    != null) { animPersonaje.stop();    animPersonaje    = null; }
         if (animVampiAviso   != null) { animVampiAviso.stop();   animVampiAviso   = null; }
         rotBrazoIzq = rotBrazoDer = rotPiernaIzq = rotPiernaDer = null;
-        vampiGrupo = vampiAlaIzq = vampiAlaDer = vampiCabeza = null;
+        vampiGrupo = vampiMurcielago = vampiDracula = vampiHumo = vampiAlaIzq = vampiAlaDer = vampiCabeza = null;
+        vampiDraculaCabeza = vampiDraculaCapaIzq = vampiDraculaCapaDer = null;
         vampiOjoIzq = vampiOjoDer = null;
-        metalCabeza = metalPelo = metalTorso = metalBrazoAlto = null;
-        soniaCabeza = soniaManoIzq = soniaManoDer = soniaMicrofono = null;
+        metalCabeza = metalPelo = metalPeloDelante = metalTorso = metalBrazoAlto = null;
+        soniaGrupo = soniaCabeza = soniaBrazoIzq = soniaBrazoDer = soniaManoIzq = soniaManoDer = soniaMicrofono = null;
+        anaBrazoIzq = anaBrazoDer = null;
         soniaPantalla = null;
         davidCabeza = davidTorso = davidRadio = davidLinterna = null;
         davidLinternaLuz = null;
-        seleneCabeza = seleneEdredon = seleneGloboZzz = null;
+        seleneGrupo = seleneCabeza = seleneEdredon = seleneGloboZzz = seleneHamburguesa = null;
         seleneZPeq = seleneZMed = seleneZGrande = null;
+        seleneNarizBurbuja = null;
         if (animSeleneGlobo != null) { animSeleneGlobo.stop(); animSeleneGlobo = null; }
+        if (animSeleneNariz != null) { animSeleneNariz.stop(); animSeleneNariz = null; }
     }
 
     private void iniciarAnimacionesPersonaje() {
@@ -982,6 +1171,10 @@ public class VisualAssistantView extends StackPane {
         }
         if (davidCabeza != null) {
             iniciarAnimacionDavid();
+            return;
+        }
+        if (anaBrazoIzq != null) {
+            iniciarAnimacionAna();
             return;
         }
         if (soniaCabeza != null) {
@@ -1019,32 +1212,51 @@ public class VisualAssistantView extends StackPane {
         animExtremidades = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(vampiAlaIzq.rotateProperty(), -8),
-                new KeyValue(vampiAlaDer.rotateProperty(), 8)),
+                new KeyValue(vampiAlaDer.rotateProperty(), 8),
+                new KeyValue(vampiDraculaCapaIzq.rotateProperty(), -4),
+                new KeyValue(vampiDraculaCapaDer.rotateProperty(), 4)),
             new KeyFrame(Duration.millis(360),
                 new KeyValue(vampiAlaIzq.rotateProperty(), 20),
-                new KeyValue(vampiAlaDer.rotateProperty(), -20)),
+                new KeyValue(vampiAlaDer.rotateProperty(), -20),
+                new KeyValue(vampiDraculaCapaIzq.rotateProperty(), -13),
+                new KeyValue(vampiDraculaCapaDer.rotateProperty(), 13)),
             new KeyFrame(Duration.millis(720),
                 new KeyValue(vampiAlaIzq.rotateProperty(), -8),
-                new KeyValue(vampiAlaDer.rotateProperty(), 8))
+                new KeyValue(vampiAlaDer.rotateProperty(), 8),
+                new KeyValue(vampiDraculaCapaIzq.rotateProperty(), -4),
+                new KeyValue(vampiDraculaCapaDer.rotateProperty(), 4))
         );
         animExtremidades.setCycleCount(Animation.INDEFINITE);
         animExtremidades.play();
 
         animPersonaje = new Timeline(
             new KeyFrame(Duration.ZERO,
+                new KeyValue(vampiMurcielago.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiDracula.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.0),
+                new KeyValue(vampiHumo.scaleXProperty(), 0.6),
+                new KeyValue(vampiHumo.scaleYProperty(), 0.6),
                 new KeyValue(vampiCabeza.translateYProperty(), 0),
                 new KeyValue(vampiCabeza.rotateProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 0),
                 new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
                 new KeyValue(vampiOjoDer.scaleYProperty(), 1),
                 new KeyValue(vampiGrupo.rotateProperty(), 0)),
             new KeyFrame(Duration.millis(360),
                 new KeyValue(vampiCabeza.translateYProperty(), -1.5),
                 new KeyValue(vampiCabeza.rotateProperty(), -2),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), -1.5),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), -2),
                 new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
                 new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
             new KeyFrame(Duration.millis(720),
                 new KeyValue(vampiCabeza.translateYProperty(), 0),
                 new KeyValue(vampiCabeza.rotateProperty(), 2),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 2),
                 new KeyValue(vampiOjoIzq.scaleYProperty(), 1),
                 new KeyValue(vampiOjoDer.scaleYProperty(), 1)),
             new KeyFrame(Duration.seconds(4.8),
@@ -1063,19 +1275,149 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.seconds(9.3),
                 new KeyValue(vampiGrupo.rotateProperty(), 360)),
             new KeyFrame(Duration.seconds(9.45),
-                new KeyValue(vampiGrupo.rotateProperty(), 0))
+                new KeyValue(vampiGrupo.rotateProperty(), 0)),
+            new KeyFrame(Duration.seconds(9.8),
+                new KeyValue(vampiMurcielago.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiDracula.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.0),
+                new KeyValue(vampiHumo.scaleXProperty(), 0.6),
+                new KeyValue(vampiHumo.scaleYProperty(), 0.6)),
+            new KeyFrame(Duration.seconds(10.05),
+                new KeyValue(vampiMurcielago.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.95),
+                new KeyValue(vampiHumo.scaleXProperty(), 1.25),
+                new KeyValue(vampiHumo.scaleYProperty(), 1.25)),
+            new KeyFrame(Duration.seconds(10.35),
+                new KeyValue(vampiDracula.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.75),
+                new KeyValue(vampiHumo.scaleXProperty(), 1.75),
+                new KeyValue(vampiHumo.scaleYProperty(), 1.75)),
+            new KeyFrame(Duration.seconds(10.7),
+                new KeyValue(vampiHumo.opacityProperty(), 0.0),
+                new KeyValue(vampiHumo.scaleXProperty(), 2.05),
+                new KeyValue(vampiHumo.scaleYProperty(), 2.05),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 0)),
+            new KeyFrame(Duration.seconds(11.2),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), -1.5),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), -2)),
+            new KeyFrame(Duration.seconds(11.8),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 2)),
+            new KeyFrame(Duration.seconds(12.4),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), -1.5),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), -2)),
+            new KeyFrame(Duration.seconds(13.0),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 2)),
+            new KeyFrame(Duration.seconds(13.9),
+                new KeyValue(vampiDracula.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiMurcielago.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.0),
+                new KeyValue(vampiHumo.scaleXProperty(), 0.6),
+                new KeyValue(vampiHumo.scaleYProperty(), 0.6)),
+            new KeyFrame(Duration.seconds(14.15),
+                new KeyValue(vampiDracula.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.95),
+                new KeyValue(vampiHumo.scaleXProperty(), 1.25),
+                new KeyValue(vampiHumo.scaleYProperty(), 1.25)),
+            new KeyFrame(Duration.seconds(14.45),
+                new KeyValue(vampiMurcielago.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.75),
+                new KeyValue(vampiHumo.scaleXProperty(), 1.75),
+                new KeyValue(vampiHumo.scaleYProperty(), 1.75)),
+            new KeyFrame(Duration.seconds(14.8),
+                new KeyValue(vampiMurcielago.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaIzq.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiAlaDer.opacityProperty(), 1.0, Interpolator.DISCRETE),
+                new KeyValue(vampiDracula.opacityProperty(), 0.0, Interpolator.DISCRETE),
+                new KeyValue(vampiHumo.opacityProperty(), 0.0),
+                new KeyValue(vampiHumo.scaleXProperty(), 2.05),
+                new KeyValue(vampiHumo.scaleYProperty(), 2.05),
+                new KeyValue(vampiGrupo.rotateProperty(), 0),
+                new KeyValue(vampiCabeza.translateYProperty(), 0),
+                new KeyValue(vampiCabeza.rotateProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.translateYProperty(), 0),
+                new KeyValue(vampiDraculaCabeza.rotateProperty(), 0))
         );
         animPersonaje.setCycleCount(Animation.INDEFINITE);
         animPersonaje.play();
     }
 
     private void iniciarAnimacionMetalera() {
+        if (!usarWindmill) {
+            animPersonaje = new Timeline(
+                new KeyFrame(Duration.ZERO,
+                    new KeyValue(metalCabeza.rotateProperty(), 0),
+                    new KeyValue(metalCabeza.translateYProperty(), 0),
+                    new KeyValue(metalPelo.rotateProperty(), 0),
+                    new KeyValue(metalPelo.translateYProperty(), 0),
+                    new KeyValue(metalTorso.rotateProperty(), 0),
+                    new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                    new KeyValue(rotBrazoDer.angleProperty(), 18),
+                    new KeyValue(rotPiernaIzq.angleProperty(), 5),
+                    new KeyValue(rotPiernaDer.angleProperty(), -5)),
+                new KeyFrame(Duration.millis(170),
+                    new KeyValue(metalCabeza.rotateProperty(), -14),
+                    new KeyValue(metalCabeza.translateYProperty(), 4),
+                    new KeyValue(metalPelo.rotateProperty(), 9),
+                    new KeyValue(metalPelo.translateYProperty(), 6),
+                    new KeyValue(metalTorso.rotateProperty(), -4),
+                    new KeyValue(rotBrazoIzq.angleProperty(), -4),
+                    new KeyValue(rotBrazoDer.angleProperty(), 8),
+                    new KeyValue(rotPiernaIzq.angleProperty(), -4),
+                    new KeyValue(rotPiernaDer.angleProperty(), 4)),
+                new KeyFrame(Duration.millis(340),
+                    new KeyValue(metalCabeza.rotateProperty(), 12),
+                    new KeyValue(metalCabeza.translateYProperty(), -2),
+                    new KeyValue(metalPelo.rotateProperty(), -11),
+                    new KeyValue(metalPelo.translateYProperty(), -3),
+                    new KeyValue(metalTorso.rotateProperty(), 4),
+                    new KeyValue(rotBrazoIzq.angleProperty(), 4),
+                    new KeyValue(rotBrazoDer.angleProperty(), 28),
+                    new KeyValue(rotPiernaIzq.angleProperty(), 8),
+                    new KeyValue(rotPiernaDer.angleProperty(), -8)),
+                new KeyFrame(Duration.millis(520),
+                    new KeyValue(metalCabeza.rotateProperty(), 0),
+                    new KeyValue(metalCabeza.translateYProperty(), 0),
+                    new KeyValue(metalPelo.rotateProperty(), 0),
+                    new KeyValue(metalPelo.translateYProperty(), 0),
+                    new KeyValue(metalTorso.rotateProperty(), 0),
+                    new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                    new KeyValue(rotBrazoDer.angleProperty(), 18),
+                    new KeyValue(rotPiernaIzq.angleProperty(), 5),
+                    new KeyValue(rotPiernaDer.angleProperty(), -5))
+            );
+            animPersonaje.setCycleCount(Animation.INDEFINITE);
+            animPersonaje.play();
+            return;
+        }
+
         animPersonaje = new Timeline(
             new KeyFrame(Duration.ZERO,
                 new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.opacityProperty(), 1.0),
+                new KeyValue(metalCabeza.translateXProperty(), 0),
                 new KeyValue(metalCabeza.translateYProperty(), 0),
                 new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateXProperty(), 0),
                 new KeyValue(metalPelo.translateYProperty(), 0),
+                new KeyValue(metalPelo.scaleXProperty(), 1.0),
+                new KeyValue(metalPelo.scaleYProperty(), 1.0),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.0),
+                new KeyValue(metalPeloDelante.rotateProperty(), 0),
+                new KeyValue(metalPeloDelante.translateXProperty(), 0),
+                new KeyValue(metalPeloDelante.translateYProperty(), 0),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.0),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 1.0),
                 new KeyValue(metalTorso.rotateProperty(), 0),
                 new KeyValue(rotBrazoIzq.angleProperty(), 0),
                 new KeyValue(rotBrazoDer.angleProperty(), 18),
@@ -1110,7 +1452,226 @@ public class VisualAssistantView extends StackPane {
                 new KeyValue(rotBrazoIzq.angleProperty(), 0),
                 new KeyValue(rotBrazoDer.angleProperty(), 18),
                 new KeyValue(rotPiernaIzq.angleProperty(), 5),
-                new KeyValue(rotPiernaDer.angleProperty(), -5))
+                new KeyValue(rotPiernaDer.angleProperty(), -5)),
+            new KeyFrame(Duration.millis(1040),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(1210),
+                new KeyValue(metalCabeza.rotateProperty(), -14),
+                new KeyValue(metalCabeza.translateYProperty(), 4),
+                new KeyValue(metalPelo.rotateProperty(), 9),
+                new KeyValue(metalPelo.translateYProperty(), 6)),
+            new KeyFrame(Duration.millis(1380),
+                new KeyValue(metalCabeza.rotateProperty(), 12),
+                new KeyValue(metalCabeza.translateYProperty(), -2),
+                new KeyValue(metalPelo.rotateProperty(), -11),
+                new KeyValue(metalPelo.translateYProperty(), -3)),
+            new KeyFrame(Duration.millis(1560),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(2080),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(2250),
+                new KeyValue(metalCabeza.rotateProperty(), -14),
+                new KeyValue(metalCabeza.translateYProperty(), 4),
+                new KeyValue(metalPelo.rotateProperty(), 9),
+                new KeyValue(metalPelo.translateYProperty(), 6)),
+            new KeyFrame(Duration.millis(2420),
+                new KeyValue(metalCabeza.rotateProperty(), 12),
+                new KeyValue(metalCabeza.translateYProperty(), -2),
+                new KeyValue(metalPelo.rotateProperty(), -11),
+                new KeyValue(metalPelo.translateYProperty(), -3)),
+            new KeyFrame(Duration.millis(2600),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(3120),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(3290),
+                new KeyValue(metalCabeza.rotateProperty(), -14),
+                new KeyValue(metalCabeza.translateYProperty(), 4),
+                new KeyValue(metalPelo.rotateProperty(), 9),
+                new KeyValue(metalPelo.translateYProperty(), 6)),
+            new KeyFrame(Duration.millis(3460),
+                new KeyValue(metalCabeza.rotateProperty(), 12),
+                new KeyValue(metalCabeza.translateYProperty(), -2),
+                new KeyValue(metalPelo.rotateProperty(), -11),
+                new KeyValue(metalPelo.translateYProperty(), -3)),
+            new KeyFrame(Duration.millis(3640),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(4160),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(4330),
+                new KeyValue(metalCabeza.rotateProperty(), -14),
+                new KeyValue(metalCabeza.translateYProperty(), 4),
+                new KeyValue(metalPelo.rotateProperty(), 9),
+                new KeyValue(metalPelo.translateYProperty(), 6)),
+            new KeyFrame(Duration.millis(4500),
+                new KeyValue(metalCabeza.rotateProperty(), 12),
+                new KeyValue(metalCabeza.translateYProperty(), -2),
+                new KeyValue(metalPelo.rotateProperty(), -11),
+                new KeyValue(metalPelo.translateYProperty(), -3)),
+            new KeyFrame(Duration.millis(4680),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.translateXProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0),
+                new KeyValue(metalPelo.scaleXProperty(), 1.0),
+                new KeyValue(metalPelo.scaleYProperty(), 1.0),
+                new KeyValue(metalTorso.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(5200),
+                new KeyValue(metalCabeza.rotateProperty(), 18),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateYProperty(), 10),
+                new KeyValue(metalPelo.rotateProperty(), 18),
+                new KeyValue(metalPelo.translateYProperty(), 9),
+                new KeyValue(metalPelo.scaleYProperty(), 0.78),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.0),
+                new KeyValue(metalTorso.rotateProperty(), 2)),
+            new KeyFrame(Duration.millis(5600),
+                new KeyValue(metalCabeza.rotateProperty(), 24),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), -3),
+                new KeyValue(metalCabeza.translateYProperty(), 12),
+                new KeyValue(metalPelo.rotateProperty(), -70),
+                new KeyValue(metalPelo.translateXProperty(), -12),
+                new KeyValue(metalPelo.translateYProperty(), 2),
+                new KeyValue(metalPelo.scaleXProperty(), 1.18),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.15),
+                new KeyValue(metalPeloDelante.rotateProperty(), -70),
+                new KeyValue(metalPeloDelante.translateXProperty(), -16),
+                new KeyValue(metalPeloDelante.translateYProperty(), 4),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.15),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 0.85)),
+            new KeyFrame(Duration.millis(6000),
+                new KeyValue(metalCabeza.rotateProperty(), 20),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 2),
+                new KeyValue(metalCabeza.translateYProperty(), 14),
+                new KeyValue(metalPelo.rotateProperty(), 10),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 11),
+                new KeyValue(metalPelo.scaleXProperty(), 0.9),
+                new KeyValue(metalPeloDelante.opacityProperty(), 1.0),
+                new KeyValue(metalPeloDelante.rotateProperty(), 8),
+                new KeyValue(metalPeloDelante.translateXProperty(), 1),
+                new KeyValue(metalPeloDelante.translateYProperty(), 13),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.55),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 1.35)),
+            new KeyFrame(Duration.millis(6400),
+                new KeyValue(metalCabeza.rotateProperty(), 25),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 3),
+                new KeyValue(metalCabeza.translateYProperty(), 12),
+                new KeyValue(metalPelo.rotateProperty(), 82),
+                new KeyValue(metalPelo.translateXProperty(), 13),
+                new KeyValue(metalPelo.translateYProperty(), 2),
+                new KeyValue(metalPelo.scaleXProperty(), 1.18),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.2),
+                new KeyValue(metalPeloDelante.rotateProperty(), 82),
+                new KeyValue(metalPeloDelante.translateXProperty(), 16),
+                new KeyValue(metalPeloDelante.translateYProperty(), 4),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.15),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 0.85)),
+            new KeyFrame(Duration.millis(6800),
+                new KeyValue(metalCabeza.rotateProperty(), 18),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 10),
+                new KeyValue(metalPelo.rotateProperty(), 180),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), -7),
+                new KeyValue(metalPelo.scaleXProperty(), 0.82),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(7200),
+                new KeyValue(metalCabeza.rotateProperty(), 24),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), -3),
+                new KeyValue(metalCabeza.translateYProperty(), 12),
+                new KeyValue(metalPelo.rotateProperty(), 290),
+                new KeyValue(metalPelo.translateXProperty(), -12),
+                new KeyValue(metalPelo.translateYProperty(), 2),
+                new KeyValue(metalPelo.scaleXProperty(), 1.18),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.15),
+                new KeyValue(metalPeloDelante.rotateProperty(), -70),
+                new KeyValue(metalPeloDelante.translateXProperty(), -16),
+                new KeyValue(metalPeloDelante.translateYProperty(), 4)),
+            new KeyFrame(Duration.millis(7600),
+                new KeyValue(metalCabeza.rotateProperty(), 20),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 2),
+                new KeyValue(metalCabeza.translateYProperty(), 14),
+                new KeyValue(metalPelo.rotateProperty(), 370),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 11),
+                new KeyValue(metalPelo.scaleXProperty(), 0.9),
+                new KeyValue(metalPeloDelante.opacityProperty(), 1.0),
+                new KeyValue(metalPeloDelante.rotateProperty(), 8),
+                new KeyValue(metalPeloDelante.translateXProperty(), 1),
+                new KeyValue(metalPeloDelante.translateYProperty(), 13),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.55),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 1.35)),
+            new KeyFrame(Duration.millis(8000),
+                new KeyValue(metalCabeza.rotateProperty(), 25),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 3),
+                new KeyValue(metalCabeza.translateYProperty(), 12),
+                new KeyValue(metalPelo.rotateProperty(), 442),
+                new KeyValue(metalPelo.translateXProperty(), 13),
+                new KeyValue(metalPelo.translateYProperty(), 2),
+                new KeyValue(metalPelo.scaleXProperty(), 1.18),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.2),
+                new KeyValue(metalPeloDelante.rotateProperty(), 82),
+                new KeyValue(metalPeloDelante.translateXProperty(), 16),
+                new KeyValue(metalPeloDelante.translateYProperty(), 4)),
+            new KeyFrame(Duration.millis(8400),
+                new KeyValue(metalCabeza.rotateProperty(), 18),
+                new KeyValue(metalCabeza.opacityProperty(), 0.0),
+                new KeyValue(metalCabeza.translateXProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 10),
+                new KeyValue(metalPelo.rotateProperty(), 540),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), -7),
+                new KeyValue(metalPelo.scaleXProperty(), 0.82),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.millis(8700),
+                new KeyValue(metalCabeza.opacityProperty(), 0.5)),
+            new KeyFrame(Duration.millis(9000),
+                new KeyValue(metalCabeza.rotateProperty(), 0),
+                new KeyValue(metalCabeza.opacityProperty(), 1.0),
+                new KeyValue(metalCabeza.translateXProperty(), 0),
+                new KeyValue(metalCabeza.translateYProperty(), 0),
+                new KeyValue(metalPelo.rotateProperty(), 0),
+                new KeyValue(metalPelo.translateXProperty(), 0),
+                new KeyValue(metalPelo.translateYProperty(), 0),
+                new KeyValue(metalPelo.scaleXProperty(), 1.0),
+                new KeyValue(metalPelo.scaleYProperty(), 1.0),
+                new KeyValue(metalPeloDelante.opacityProperty(), 0.0),
+                new KeyValue(metalPeloDelante.rotateProperty(), 0),
+                new KeyValue(metalPeloDelante.translateXProperty(), 0),
+                new KeyValue(metalPeloDelante.translateYProperty(), 0),
+                new KeyValue(metalPeloDelante.scaleXProperty(), 1.0),
+                new KeyValue(metalPeloDelante.scaleYProperty(), 1.0),
+                new KeyValue(metalTorso.rotateProperty(), 0))
         );
         animPersonaje.setCycleCount(Animation.INDEFINITE);
         animPersonaje.play();
@@ -1121,7 +1682,7 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.ZERO,
                 new KeyValue(davidCabeza.rotateProperty(), 0),
                 new KeyValue(davidTorso.translateYProperty(), 0),
-                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 180),
                 new KeyValue(rotBrazoDer.angleProperty(), 0),
                 new KeyValue(rotPiernaIzq.angleProperty(), 0),
                 new KeyValue(rotPiernaDer.angleProperty(), 0),
@@ -1131,8 +1692,8 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.millis(550),
                 new KeyValue(davidCabeza.rotateProperty(), -8),
                 new KeyValue(davidTorso.translateYProperty(), -1),
-                new KeyValue(rotBrazoIzq.angleProperty(), -92),
-                new KeyValue(rotBrazoDer.angleProperty(), 12),
+                new KeyValue(rotBrazoIzq.angleProperty(), 166),
+                new KeyValue(rotBrazoDer.angleProperty(), -4),
                 new KeyValue(rotPiernaIzq.angleProperty(), 2),
                 new KeyValue(rotPiernaDer.angleProperty(), -2),
                 new KeyValue(davidRadio.translateYProperty(), -2),
@@ -1141,8 +1702,8 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.millis(1100),
                 new KeyValue(davidCabeza.rotateProperty(), 8),
                 new KeyValue(davidTorso.translateYProperty(), 0),
-                new KeyValue(rotBrazoIzq.angleProperty(), -12),
-                new KeyValue(rotBrazoDer.angleProperty(), -58),
+                new KeyValue(rotBrazoIzq.angleProperty(), 194),
+                new KeyValue(rotBrazoDer.angleProperty(), 4),
                 new KeyValue(rotPiernaIzq.angleProperty(), -2),
                 new KeyValue(rotPiernaDer.angleProperty(), 2),
                 new KeyValue(davidRadio.translateYProperty(), 0),
@@ -1151,8 +1712,8 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.millis(1650),
                 new KeyValue(davidCabeza.rotateProperty(), 0),
                 new KeyValue(davidTorso.translateYProperty(), -1),
-                new KeyValue(rotBrazoIzq.angleProperty(), 22),
-                new KeyValue(rotBrazoDer.angleProperty(), 4),
+                new KeyValue(rotBrazoIzq.angleProperty(), 172),
+                new KeyValue(rotBrazoDer.angleProperty(), -2),
                 new KeyValue(rotPiernaIzq.angleProperty(), 0),
                 new KeyValue(rotPiernaDer.angleProperty(), 0),
                 new KeyValue(davidRadio.translateYProperty(), -1),
@@ -1161,7 +1722,7 @@ public class VisualAssistantView extends StackPane {
             new KeyFrame(Duration.millis(2200),
                 new KeyValue(davidCabeza.rotateProperty(), 0),
                 new KeyValue(davidTorso.translateYProperty(), 0),
-                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 180),
                 new KeyValue(rotBrazoDer.angleProperty(), 0),
                 new KeyValue(rotPiernaIzq.angleProperty(), 0),
                 new KeyValue(rotPiernaDer.angleProperty(), 0),
@@ -1176,33 +1737,241 @@ public class VisualAssistantView extends StackPane {
     private void iniciarAnimacionSonia() {
         animPersonaje = new Timeline(
             new KeyFrame(Duration.ZERO,
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaGrupo.translateYProperty(), 0),
                 new KeyValue(soniaCabeza.rotateProperty(), 0),
                 new KeyValue(soniaCabeza.translateYProperty(), 0),
                 new KeyValue(soniaMicrofono.translateXProperty(), 0),
-                new KeyValue(soniaManoIzq.translateYProperty(), 0),
-                new KeyValue(soniaManoDer.translateYProperty(), 2),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2),
                 new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED"))),
             new KeyFrame(Duration.millis(280),
                 new KeyValue(soniaCabeza.rotateProperty(), -4),
                 new KeyValue(soniaCabeza.translateYProperty(), 1),
                 new KeyValue(soniaMicrofono.translateXProperty(), 1.5),
-                new KeyValue(soniaManoIzq.translateYProperty(), 3),
-                new KeyValue(soniaManoDer.translateYProperty(), -1),
+                new KeyValue(rotBrazoIzq.angleProperty(), 5),
+                new KeyValue(rotBrazoDer.angleProperty(), -4),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 3),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -1),
                 new KeyValue(soniaPantalla.fillProperty(), Color.web("#27AE60"))),
             new KeyFrame(Duration.millis(560),
                 new KeyValue(soniaCabeza.rotateProperty(), 3),
                 new KeyValue(soniaCabeza.translateYProperty(), 0),
                 new KeyValue(soniaMicrofono.translateXProperty(), 0),
-                new KeyValue(soniaManoIzq.translateYProperty(), -1),
-                new KeyValue(soniaManoDer.translateYProperty(), 3),
+                new KeyValue(rotBrazoIzq.angleProperty(), -4),
+                new KeyValue(rotBrazoDer.angleProperty(), 5),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -1),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 3),
                 new KeyValue(soniaPantalla.fillProperty(), Color.web("#6B2D5E"))),
             new KeyFrame(Duration.millis(840),
                 new KeyValue(soniaCabeza.rotateProperty(), 0),
                 new KeyValue(soniaCabeza.translateYProperty(), 0),
                 new KeyValue(soniaMicrofono.translateXProperty(), 0),
-                new KeyValue(soniaManoIzq.translateYProperty(), 0),
-                new KeyValue(soniaManoDer.translateYProperty(), 2),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED"))),
+            new KeyFrame(Duration.seconds(3.8),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2)),
+            new KeyFrame(Duration.seconds(4.35),
+                new KeyValue(soniaCabeza.rotateProperty(), -2),
+                new KeyValue(rotBrazoIzq.angleProperty(), 172),
+                new KeyValue(rotBrazoDer.angleProperty(), -172),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -4),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -4),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#F58220"))),
+            new KeyFrame(Duration.seconds(4.75),
+                new KeyValue(soniaCabeza.rotateProperty(), 3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 150),
+                new KeyValue(rotBrazoDer.angleProperty(), -150),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -6),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -6),
+                new KeyValue(soniaMicrofono.translateXProperty(), -1.2)),
+            new KeyFrame(Duration.seconds(5.15),
+                new KeyValue(soniaCabeza.rotateProperty(), -3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 176),
+                new KeyValue(rotBrazoDer.angleProperty(), -176),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -3),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -3),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.2)),
+            new KeyFrame(Duration.seconds(5.55),
+                new KeyValue(soniaCabeza.rotateProperty(), 4),
+                new KeyValue(rotBrazoIzq.angleProperty(), 148),
+                new KeyValue(rotBrazoDer.angleProperty(), -148),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -7),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -7),
+                new KeyValue(soniaMicrofono.translateXProperty(), -1.2)),
+            new KeyFrame(Duration.seconds(5.95),
+                new KeyValue(soniaCabeza.rotateProperty(), -3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 170),
+                new KeyValue(rotBrazoDer.angleProperty(), -170),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), -4),
+                new KeyValue(soniaBrazoDer.translateYProperty(), -4),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.2)),
+            new KeyFrame(Duration.seconds(6.35),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0)),
+            new KeyFrame(Duration.seconds(7.0),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED"))),
+            new KeyFrame(Duration.seconds(8.4),
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaGrupo.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0)),
+            new KeyFrame(Duration.seconds(8.75),
+                new KeyValue(soniaGrupo.rotateProperty(), 180),
+                new KeyValue(soniaGrupo.translateYProperty(), -2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#6B2D5E"))),
+            new KeyFrame(Duration.seconds(9.1),
+                new KeyValue(soniaGrupo.rotateProperty(), 360),
+                new KeyValue(soniaGrupo.translateYProperty(), 0)),
+            new KeyFrame(Duration.seconds(9.25),
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(soniaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(soniaBrazoDer.translateYProperty(), 2),
                 new KeyValue(soniaPantalla.fillProperty(), Color.web("#2F80ED")))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
+    }
+
+    private void iniciarAnimacionAna() {
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaGrupo.translateYProperty(), 0),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#1D6FB8"))),
+            new KeyFrame(Duration.millis(280),
+                new KeyValue(soniaCabeza.rotateProperty(), -4),
+                new KeyValue(soniaCabeza.translateYProperty(), 1),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.5),
+                new KeyValue(rotBrazoIzq.angleProperty(), 5),
+                new KeyValue(rotBrazoDer.angleProperty(), -4),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 3),
+                new KeyValue(anaBrazoDer.translateYProperty(), -1),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#F58220"))),
+            new KeyFrame(Duration.millis(560),
+                new KeyValue(soniaCabeza.rotateProperty(), 3),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), -5),
+                new KeyValue(rotBrazoDer.angleProperty(), 6),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -1),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#1368A8"))),
+            new KeyFrame(Duration.millis(840),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#1D6FB8"))),
+            new KeyFrame(Duration.seconds(3.8),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2)),
+            new KeyFrame(Duration.seconds(4.35),
+                new KeyValue(soniaCabeza.rotateProperty(), -2),
+                new KeyValue(rotBrazoIzq.angleProperty(), 172),
+                new KeyValue(rotBrazoDer.angleProperty(), -172),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -4),
+                new KeyValue(anaBrazoDer.translateYProperty(), -4),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#F58220"))),
+            new KeyFrame(Duration.seconds(4.75),
+                new KeyValue(soniaCabeza.rotateProperty(), 3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 150),
+                new KeyValue(rotBrazoDer.angleProperty(), -150),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -6),
+                new KeyValue(anaBrazoDer.translateYProperty(), -6),
+                new KeyValue(soniaMicrofono.translateXProperty(), -1.2)),
+            new KeyFrame(Duration.seconds(5.15),
+                new KeyValue(soniaCabeza.rotateProperty(), -3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 176),
+                new KeyValue(rotBrazoDer.angleProperty(), -176),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -3),
+                new KeyValue(anaBrazoDer.translateYProperty(), -3),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.2)),
+            new KeyFrame(Duration.seconds(5.55),
+                new KeyValue(soniaCabeza.rotateProperty(), 4),
+                new KeyValue(rotBrazoIzq.angleProperty(), 148),
+                new KeyValue(rotBrazoDer.angleProperty(), -148),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -7),
+                new KeyValue(anaBrazoDer.translateYProperty(), -7),
+                new KeyValue(soniaMicrofono.translateXProperty(), -1.2)),
+            new KeyFrame(Duration.seconds(5.95),
+                new KeyValue(soniaCabeza.rotateProperty(), -3),
+                new KeyValue(rotBrazoIzq.angleProperty(), 170),
+                new KeyValue(rotBrazoDer.angleProperty(), -170),
+                new KeyValue(anaBrazoIzq.translateYProperty(), -4),
+                new KeyValue(anaBrazoDer.translateYProperty(), -4),
+                new KeyValue(soniaMicrofono.translateXProperty(), 1.2)),
+            new KeyFrame(Duration.seconds(6.35),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0)),
+            new KeyFrame(Duration.seconds(7.0),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#1D6FB8"))),
+            new KeyFrame(Duration.seconds(8.4),
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaGrupo.translateYProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0)),
+            new KeyFrame(Duration.seconds(8.75),
+                new KeyValue(soniaGrupo.rotateProperty(), 180),
+                new KeyValue(soniaGrupo.translateYProperty(), -2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#F58220"))),
+            new KeyFrame(Duration.seconds(9.1),
+                new KeyValue(soniaGrupo.rotateProperty(), 360),
+                new KeyValue(soniaGrupo.translateYProperty(), 0)),
+            new KeyFrame(Duration.seconds(9.25),
+                new KeyValue(soniaGrupo.rotateProperty(), 0),
+                new KeyValue(soniaCabeza.rotateProperty(), 0),
+                new KeyValue(soniaMicrofono.translateXProperty(), 0),
+                new KeyValue(rotBrazoIzq.angleProperty(), 0),
+                new KeyValue(rotBrazoDer.angleProperty(), 0),
+                new KeyValue(anaBrazoIzq.translateYProperty(), 0),
+                new KeyValue(anaBrazoDer.translateYProperty(), 2),
+                new KeyValue(soniaPantalla.fillProperty(), Color.web("#1D6FB8")))
         );
         animPersonaje.setCycleCount(Animation.INDEFINITE);
         animPersonaje.play();
@@ -1303,50 +2072,90 @@ public class VisualAssistantView extends StackPane {
     }
 
     private Node crearSelene() {
-        Rectangle marcoCama = rect(8, 62, 84, 35, 6, "#5B3A2E");
-        Rectangle cabecero = rect(8, 55, 18, 45, 5, "#7A4D3A");
-        Rectangle piecero = rect(74, 65, 18, 32, 4, "#7A4D3A");
-        Rectangle colchon = rect(26, 65, 48, 30, 4, "#F5F0F0");
-        Ellipse almohada = ellipse(35, 68, 14, 7, "#D4CCCC");
+        Ellipse almohada = ellipse(50, 62, 34, 14, "#D4CCCC");
+        Rectangle respaldo = rect(14, 57, 72, 33, 8, "#7A4D3A");
+        Rectangle sabana = rect(18, 69, 64, 21, 7, "#F5F0F0");
 
-        Rectangle edredonPrincipal = rect(26, 72, 48, 23, 5, "#B784A7");
-        seleneEdredon = new Group(edredonPrincipal);
-        Rectangle pliegue = rect(28, 77, 44, 3, 2, "#8E5A84");
-        Rectangle pie = rect(73, 80, 8, 8, 4, "#D4CCCC");
+        Ellipse hombroIzq = ellipse(35, 74, 14, 8, "#E8B58F");
+        Ellipse hombroDer = ellipse(65, 74, 14, 8, "#E8B58F");
+        Rectangle cuello = rect(44, 62, 12, 12, 4, "#E8B58F");
+        Rectangle edredonPrincipal = rect(17, 74, 66, 25, 8, "#B784A7");
+        Rectangle pliegue = rect(23, 82, 54, 3, 2, "#8E5A84");
+        Ellipse sombraEdredon = ellipse(50, 75, 30, 5, "#8E5A84");
+        sombraEdredon.setOpacity(0.25);
+        seleneEdredon = new Group(edredonPrincipal, sombraEdredon);
 
-        Ellipse pelo = ellipse(30, 63, 12, 14, "#4E2C20");
-        Polygon mechon = polygon("#4E2C20", 28, 60, 33, 58, 32, 70, 27, 68);
-        Circle cara = circle(35, 66, 10, "#E8B58F");
-        Rectangle ojoIzq = rect(29, 66, 6, 2, 1, "#111111");
-        Rectangle ojoDer = rect(36, 66, 6, 2, 1, "#111111");
-        Rectangle boca = rect(33, 71, 4, 2, 1, "#C07860");
-        seleneCabeza = new Group(pelo, mechon, cara, ojoIzq, ojoDer, boca);
+        Ellipse peloFondo = ellipse(50, 43, 24, 27, "#4E2C20");
+        Circle cara = circle(50, 47, 21, "#E8B58F");
+        Polygon flequillo = polygon("#4E2C20", 28, 39, 36, 26, 44, 34, 50, 28, 56, 34, 64, 26, 72, 39);
+        Ellipse mejillaIzq = ellipse(37, 53, 5, 3, "#F0A0A0");
+        mejillaIzq.setOpacity(0.45);
+        Ellipse mejillaDer = ellipse(63, 53, 5, 3, "#F0A0A0");
+        mejillaDer.setOpacity(0.45);
+        Rectangle ojoIzq = rect(36, 45, 10, 3, 2, "#3D2000");
+        Rectangle ojoDer = rect(54, 45, 10, 3, 2, "#3D2000");
+        Ellipse nariz = ellipse(50, 55, 3.5, 2.5, "#D4956A");
+        Rectangle boca = rect(46, 62, 8, 3, 2, "#B07060");
 
-        Ellipse fondoOval = ellipse(72, 30, 18, 12, "#EEF4FF");
+        seleneNarizBurbuja = new Ellipse(52, 58, 3.5, 2.7);
+        seleneNarizBurbuja.setFill(Color.web("#C8E6F0"));
+        seleneNarizBurbuja.setOpacity(0.82);
+        seleneNarizBurbuja.setStroke(Color.web("#90BDD0"));
+        seleneNarizBurbuja.setStrokeWidth(0.8);
+        Ellipse brilloBurbuja = new Ellipse(50.5, 56.8, 1.1, 0.8);
+        brilloBurbuja.setFill(Color.web("#FFFFFF"));
+        brilloBurbuja.setOpacity(0.7);
+
+        seleneCabeza = new Group(
+            peloFondo, cara, flequillo,
+            mejillaIzq, mejillaDer,
+            ojoIzq, ojoDer, nariz,
+            seleneNarizBurbuja, brilloBurbuja,
+            boca
+        );
+
+        Ellipse fondoOval = ellipse(80, 24, 15, 10, "#EEF4FF");
         fondoOval.setStroke(Color.web("#9BB8D4"));
         fondoOval.setStrokeWidth(1.2);
-        Circle cola1 = circle(60, 43, 2.5, "#9BB8D4");
-        Circle cola2 = circle(55, 48, 2, "#9BB8D4");
-        Circle cola3 = circle(51, 52, 1.5, "#9BB8D4");
+        Circle cola1 = circle(72, 35, 2.2, "#9BB8D4");
+        Circle cola2 = circle(68, 40, 1.8, "#9BB8D4");
+        Circle cola3 = circle(65, 45, 1.3, "#9BB8D4");
 
-        seleneZPeq = new Text(60, 28, "z");
+        seleneZPeq = new Text(73, 23, "z");
         seleneZPeq.setFill(Color.web("#5B7FA6"));
-        seleneZPeq.setStyle("-fx-font-size: 8px; -fx-font-weight: bold;");
-        seleneZMed = new Text(67, 25, "Z");
+        seleneZPeq.setStyle("-fx-font-size: 7px; -fx-font-weight: bold;");
+        seleneZMed = new Text(79, 20, "Z");
         seleneZMed.setFill(Color.web("#4A6A8A"));
-        seleneZMed.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
-        seleneZGrande = new Text(74, 22, "Z");
+        seleneZMed.setStyle("-fx-font-size: 10px; -fx-font-weight: bold;");
+        seleneZGrande = new Text(86, 17, "Z");
         seleneZGrande.setFill(Color.web("#2C4F6E"));
-        seleneZGrande.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
-        seleneGloboZzz = new Group(fondoOval, cola1, cola2, cola3, seleneZPeq, seleneZMed, seleneZGrande);
+        seleneZGrande.setStyle("-fx-font-size: 13px; -fx-font-weight: bold;");
+        seleneHamburguesa = new Group(
+            ellipse(80, 21, 9, 4.5, "#E9A84A"),
+            rect(72, 21, 16, 2, 1, "#F7D27B"),
+            rect(72, 23, 16, 2, 1, "#35A853"),
+            rect(73, 25, 14, 3, 2, "#6B3A1E"),
+            rect(72, 28, 16, 2, 1, "#F2C24D"),
+            ellipse(80, 31, 9, 3.5, "#D78A34"),
+            circle(76, 18.5, 0.7, "#FFF4C6"),
+            circle(80, 17.8, 0.7, "#FFF4C6"),
+            circle(84, 18.5, 0.7, "#FFF4C6")
+        );
+        seleneHamburguesa.setOpacity(0.0);
+        seleneGloboZzz = new Group(
+            fondoOval, cola1, cola2, cola3,
+            seleneZPeq, seleneZMed, seleneZGrande,
+            seleneHamburguesa
+        );
 
-        Group g = new Group(
-            marcoCama, cabecero, piecero, colchon, almohada,
-            seleneEdredon, pliegue, pie,
+        seleneGrupo = new Group(
+            respaldo, almohada, sabana,
+            hombroIzq, hombroDer, cuello,
+            seleneEdredon, pliegue,
             seleneCabeza,
             seleneGloboZzz
         );
-        return escalar(g);
+        return escalar(seleneGrupo);
     }
 
     private void iniciarAnimacionSelene() {
@@ -1366,6 +2175,7 @@ public class VisualAssistantView extends StackPane {
 
         animPersonaje = new Timeline(
             new KeyFrame(Duration.ZERO,
+                new KeyValue(seleneGrupo.rotateProperty(), 0),
                 new KeyValue(seleneCabeza.rotateProperty(), 0)),
             new KeyFrame(Duration.millis(200),
                 new KeyValue(seleneCabeza.rotateProperty(), 1.5)),
@@ -1386,6 +2196,16 @@ public class VisualAssistantView extends StackPane {
                 new KeyValue(seleneCabeza.rotateProperty(), 0),
                 new KeyValue(seleneEdredon.rotateProperty(), 0)),
             new KeyFrame(Duration.millis(9000),
+                new KeyValue(seleneCabeza.rotateProperty(), 0),
+                new KeyValue(seleneGrupo.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(9600),
+                new KeyValue(seleneGrupo.rotateProperty(), 180)),
+            new KeyFrame(Duration.millis(10200),
+                new KeyValue(seleneGrupo.rotateProperty(), 360)),
+            new KeyFrame(Duration.millis(10300),
+                new KeyValue(seleneGrupo.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(14000),
+                new KeyValue(seleneGrupo.rotateProperty(), 0),
                 new KeyValue(seleneCabeza.rotateProperty(), 0))
         );
         animPersonaje.setCycleCount(Animation.INDEFINITE);
@@ -1397,27 +2217,114 @@ public class VisualAssistantView extends StackPane {
                 new KeyValue(seleneGloboZzz.opacityProperty(), 0.9),
                 new KeyValue(seleneZPeq.opacityProperty(), 0),
                 new KeyValue(seleneZMed.opacityProperty(), 0),
-                new KeyValue(seleneZGrande.opacityProperty(), 0)),
-            new KeyFrame(Duration.millis(400),
-                new KeyValue(seleneZPeq.opacityProperty(), 1.0)),
-            new KeyFrame(Duration.millis(800),
-                new KeyValue(seleneZPeq.opacityProperty(), 0.6),
-                new KeyValue(seleneZMed.opacityProperty(), 1.0)),
-            new KeyFrame(Duration.millis(1200),
-                new KeyValue(seleneZMed.opacityProperty(), 0.6),
-                new KeyValue(seleneZGrande.opacityProperty(), 1.0)),
-            new KeyFrame(Duration.millis(1800),
-                new KeyValue(seleneGloboZzz.translateYProperty(), -12),
-                new KeyValue(seleneGloboZzz.opacityProperty(), 0.5)),
-            new KeyFrame(Duration.millis(2500),
-                new KeyValue(seleneGloboZzz.translateYProperty(), -18),
-                new KeyValue(seleneGloboZzz.opacityProperty(), 0.0),
-                new KeyValue(seleneZPeq.opacityProperty(), 0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 0.0),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 3.5),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 2.7),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), 0)),
+            new KeyFrame(Duration.millis(300),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
                 new KeyValue(seleneZMed.opacityProperty(), 0),
                 new KeyValue(seleneZGrande.opacityProperty(), 0)),
-            new KeyFrame(Duration.millis(3000),
+            new KeyFrame(Duration.millis(650),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.7),
+                new KeyValue(seleneZMed.opacityProperty(), 1.0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0)),
+            new KeyFrame(Duration.millis(1000),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.35),
+                new KeyValue(seleneZMed.opacityProperty(), 0.75),
+                new KeyValue(seleneZGrande.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.seconds(1.5),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -2),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.95),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.25),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 5.0),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 3.8),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), -0.8)),
+            new KeyFrame(Duration.seconds(2.0),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.45),
+                new KeyValue(seleneZMed.opacityProperty(), 1.0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.4)),
+            new KeyFrame(Duration.seconds(2.5),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -4),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.25),
+                new KeyValue(seleneZMed.opacityProperty(), 0.55),
+                new KeyValue(seleneZGrande.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.seconds(3.0),
                 new KeyValue(seleneGloboZzz.translateYProperty(), 0),
-                new KeyValue(seleneGloboZzz.opacityProperty(), 0))
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.95),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.15),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.seconds(3.7),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.55),
+                new KeyValue(seleneZMed.opacityProperty(), 1.0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.25),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 5.5),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 4.2),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), -1.5)),
+            new KeyFrame(Duration.seconds(4.4),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -3),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.25),
+                new KeyValue(seleneZMed.opacityProperty(), 0.55),
+                new KeyValue(seleneZGrande.opacityProperty(), 1.0),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 8.0),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 6.0),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), -2.8)),
+            new KeyFrame(Duration.seconds(5.0),
+                new KeyValue(seleneGloboZzz.translateYProperty(), 0),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.25),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 9.0),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 6.8),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), -3.5)),
+            new KeyFrame(Duration.seconds(5.6),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.55),
+                new KeyValue(seleneZMed.opacityProperty(), 1.0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.35),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 4.2),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 3.2),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), -1.0)),
+            new KeyFrame(Duration.seconds(6.0),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -4),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.95),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.2),
+                new KeyValue(seleneZMed.opacityProperty(), 0.55),
+                new KeyValue(seleneZGrande.opacityProperty(), 1.0),
+                new KeyValue(seleneNarizBurbuja.radiusXProperty(), 3.5),
+                new KeyValue(seleneNarizBurbuja.radiusYProperty(), 2.7),
+                new KeyValue(seleneNarizBurbuja.translateYProperty(), 0)),
+            new KeyFrame(Duration.seconds(6.8),
+                new KeyValue(seleneGloboZzz.translateYProperty(), 0),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.95),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.25),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.seconds(7.4),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.seconds(10.4),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -1),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.95),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.seconds(11.2),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 0.0),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0),
+                new KeyValue(seleneZMed.opacityProperty(), 0.25),
+                new KeyValue(seleneZGrande.opacityProperty(), 0.0)),
+            new KeyFrame(Duration.seconds(12.0),
+                new KeyValue(seleneGloboZzz.translateYProperty(), 0),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.9),
+                new KeyValue(seleneZPeq.opacityProperty(), 0),
+                new KeyValue(seleneZMed.opacityProperty(), 0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0),
+                new KeyValue(seleneHamburguesa.opacityProperty(), 0.0))
         );
         animSeleneGlobo.setCycleCount(Animation.INDEFINITE);
         animSeleneGlobo.play();

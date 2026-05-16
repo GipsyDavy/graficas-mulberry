@@ -2162,6 +2162,23 @@ public class ExportService {
 
     private static String s(String v) { return v != null ? v : ""; }
 
+    private static boolean esLineaMaterial(String tecnica) {
+        return "📦 Material".equals(tecnica);
+    }
+
+    private static boolean esLineaMaterialAlbaran(LineaAlbaran linea) {
+        return linea != null && s(linea.getDescripcion()).startsWith("[MATERIAL] ");
+    }
+
+    private static String descripcionAlbaranVisible(LineaAlbaran linea) {
+        String descripcion = s(linea.getDescripcion());
+        return descripcion.startsWith("[MATERIAL] ") ? descripcion.substring("[MATERIAL] ".length()) : descripcion;
+    }
+
+    private static String unidadAlbaranVisible(LineaAlbaran linea) {
+        return "__material__".equals(s(linea.getUnidad())) ? "ud" : s(linea.getUnidad());
+    }
+
     // ─────────────────────────────────────────────────────────────────────────
     // EXPORTACIONES ESPECÍFICAS DE PRESUPUESTOS
     // ─────────────────────────────────────────────────────────────────────────
@@ -2462,6 +2479,7 @@ public class ExportService {
 
             boolean par = false;
             for (LineaPresupuesto linea : p.getLineas()) {
+                if (esLineaMaterial(linea.getTecnica())) continue;
                 String bgColor = par ? colorGrisClaro : "FFFFFF";
                 XWPFTableRow row = lineasTable.createRow();
                 addCell(row, 0, s(linea.getDescripcion()), bgColor, false, ParagraphAlignment.LEFT);
@@ -2679,11 +2697,12 @@ public class ExportService {
                 setCeldasAncho(tLineas, 9000, 60, 20, 20);
                 boolean par = false;
                 for (LineaAlbaran linea : a.getLineas()) {
+                    if (esLineaMaterialAlbaran(linea)) continue;
                     String bg = par ? colorGrisClaro : "FFFFFF";
                     XWPFTableRow row = tLineas.createRow();
-                    addCell(row, 0, s(linea.getDescripcion()), bg, false, ParagraphAlignment.LEFT);
+                    addCell(row, 0, descripcionAlbaranVisible(linea), bg, false, ParagraphAlignment.LEFT);
                     addCell(row, 1, String.valueOf(linea.getCantidad()), bg, false, ParagraphAlignment.CENTER);
-                    addCell(row, 2, s(linea.getUnidad()), bg, false, ParagraphAlignment.CENTER);
+                    addCell(row, 2, unidadAlbaranVisible(linea), bg, false, ParagraphAlignment.CENTER);
                     par = !par;
                 }
                 addParagraph(document, "");
@@ -3114,6 +3133,7 @@ public class ExportService {
 
             boolean par = false;
             for (LineaFactura linea : f.getLineas()) {
+                if (esLineaMaterial(linea.getTecnica())) continue;
                 String bg = par ? colorGrisClaro : "FFFFFF";
                 XWPFTableRow row = lineasTable.createRow();
                 addCell(row, 0, s(linea.getDescripcion()),                                           bg, false, ParagraphAlignment.LEFT);

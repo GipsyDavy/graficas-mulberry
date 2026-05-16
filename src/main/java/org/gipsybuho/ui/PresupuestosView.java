@@ -10,6 +10,7 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
@@ -82,12 +83,13 @@ public class PresupuestosView extends VBox {
         Button btnBorrar   = btn("🗑 Borrar",          "#E74C3C", this::borrar);
         Button btnImportar = btn("📥 Importar",        "#27AE60", this::importar);
         Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
+        Button btnAlbaran  = btn("📋 Crear Albarán",   "#7D3C98", this::crearAlbaran);
         Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnFacturar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -204,6 +206,23 @@ public class PresupuestosView extends VBox {
             new FacturaDAO().crearDesdePresupuesto(sel.getId());
             cargar();
             new Alert(Alert.AlertType.INFORMATION, "Factura creada correctamente.", ButtonType.OK).showAndWait();
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void crearAlbaran() {
+        Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un presupuesto."); return; }
+        if (!"aceptado".equals(sel.getEstado())) {
+            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "El presupuesto no está en estado 'aceptado'. ¿Crear albarán igualmente?",
+                ButtonType.YES, ButtonType.NO);
+            conf.setHeaderText(null);
+            if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
+        }
+        try {
+            new AlbaranDAO().crearDesdePresupuesto(sel.getId());
+            cargar();
+            new Alert(Alert.AlertType.INFORMATION, "Albarán creado correctamente.", ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
     }
 
@@ -868,6 +887,7 @@ public class PresupuestosView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 byte[] pdfBytes;
+                byte[] pdfImpresionBytes;
                 String tituloVentana;
 
                 if (seleccionados.size() == 1) {
@@ -884,8 +904,10 @@ public class PresupuestosView extends VBox {
                     }
 
                     PDFService pdfService = new PDFService();
-                    Path pdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado);
+                    Path pdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado, true);
                     pdfBytes = Files.readAllBytes(pdfPath);
+                    Path pdfImpresionPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado, false);
+                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
                     tituloVentana = "Previsualización — Presupuesto " + presupuestoSeleccionado.getNumero();
 
                     // Opcional: eliminar el archivo temporal después de leerlo
@@ -894,16 +916,18 @@ public class PresupuestosView extends VBox {
                 } else {
                     // Previsualizar un listado de múltiples presupuestos
                     pdfBytes = PdfPreviewService.previsualizarPresupuestos(seleccionados);
+                    pdfImpresionBytes = pdfBytes;
                     tituloVentana = "Previsualización — Presupuestos (" + seleccionados.size() + " registro(s))";
                 }
 
                 final byte[] finalPdfBytes = pdfBytes;
+                final byte[] finalPdfImpresionBytes = pdfImpresionBytes;
                 final String finalTituloVentana = tituloVentana;
 
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(finalPdfBytes, finalTituloVentana);
+                    PdfPreviewWindow.mostrar(finalPdfBytes, finalPdfImpresionBytes, finalTituloVentana);
                 });
 
             } catch (Exception ex) {

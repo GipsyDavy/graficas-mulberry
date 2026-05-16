@@ -761,6 +761,7 @@ public class FacturasView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 byte[] pdfBytes;
+                byte[] pdfImpresionBytes;
                 String tituloVentana;
 
                 if (lista.size() == 1) {
@@ -771,21 +772,25 @@ public class FacturasView extends VBox {
                     if (clienteAsociado == null)
                         throw new Exception("No se pudo encontrar el cliente asociado a la factura.");
                     PDFService pdfService = new PDFService();
-                    Path pdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado);
+                    Path pdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, true);
                     pdfBytes = Files.readAllBytes(pdfPath);
+                    Path pdfImpresionPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, false);
+                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
                     tituloVentana = "Previsualización — Factura " + facturaSeleccionada.getNumero();
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarFacturas(lista);
+                    pdfImpresionBytes = pdfBytes;
                     tituloVentana = "Previsualización — Facturas (" + lista.size() + " registro(s))";
                 }
 
                 final byte[] finalPdfBytes = pdfBytes;
+                final byte[] finalPdfImpresionBytes = pdfImpresionBytes;
                 final String finalTitulo = tituloVentana;
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(finalPdfBytes, finalTitulo);
+                    PdfPreviewWindow.mostrar(finalPdfBytes, finalPdfImpresionBytes, finalTitulo);
                 });
             } catch (Exception ex) {
                 Platform.runLater(() -> {

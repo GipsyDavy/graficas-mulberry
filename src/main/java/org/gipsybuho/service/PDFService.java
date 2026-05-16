@@ -13,6 +13,7 @@ import java.awt.*;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -42,7 +43,29 @@ public class PDFService {
         return name.replaceAll("[/\\\\:*?\"<>|]", "_").replaceAll("\\.{2,}", "_");
     }
 
+    private boolean esLineaMaterial(String tecnica) {
+        return "📦 Material".equals(tecnica);
+    }
+
+    private boolean esLineaMaterialAlbaran(LineaAlbaran linea) {
+        return linea != null && nvl(linea.getDescripcion()).startsWith("[MATERIAL] ");
+    }
+
+    private String descripcionAlbaranVisible(LineaAlbaran linea) {
+        String descripcion = nvl(linea.getDescripcion());
+        return descripcion.startsWith("[MATERIAL] ") ? descripcion.substring("[MATERIAL] ".length()) : descripcion;
+    }
+
+    private String unidadAlbaranVisible(LineaAlbaran linea) {
+        String unidad = nvl(linea.getUnidad());
+        return "__material__".equals(unidad) ? "ud" : unidad;
+    }
+
     public Path generarPresupuesto(Presupuesto p, Cliente c) throws Exception {
+        return generarPresupuesto(p, c, false);
+    }
+
+    public Path generarPresupuesto(Presupuesto p, Cliente c, boolean incluirMateriales) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Presupuestos")
             .resolve(safeFilename(p.getNumero()) + ".pdf");
@@ -59,7 +82,7 @@ public class PDFService {
         doc.add(Chunk.NEWLINE);
         addTablaLineas(doc,
             p.getLineas().stream()
-                .filter(l -> !"📦 Material".equals(l.getTecnica()))
+                .filter(l -> incluirMateriales || !esLineaMaterial(l.getTecnica()))
                 .map(l -> new String[]{
                     l.getDescripcion(), l.getTecnica(), String.valueOf(l.getCantidad()),
                     String.format("%.2f €", l.getPrecioUnit()),
@@ -84,6 +107,10 @@ public class PDFService {
     }
 
     public Path generarFactura(Factura f, Cliente c) throws Exception {
+        return generarFactura(f, c, false);
+    }
+
+    public Path generarFactura(Factura f, Cliente c, boolean incluirMateriales) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Facturas")
             .resolve(safeFilename(f.getNumero()) + ".pdf");
@@ -99,7 +126,9 @@ public class PDFService {
 
         doc.add(Chunk.NEWLINE);
         addTablaLineas(doc,
-            f.getLineas().stream().map(l -> new String[]{
+            f.getLineas().stream()
+                .filter(l -> incluirMateriales || !esLineaMaterial(l.getTecnica()))
+                .map(l -> new String[]{
                 l.getDescripcion(), l.getTecnica(), String.valueOf(l.getCantidad()),
                 String.format("%.2f €", l.getPrecioUnit()),
                 l.getDescuento() > 0 ? String.format("%.0f%%", l.getDescuento()) : "-",
@@ -119,6 +148,10 @@ public class PDFService {
     }
 
     public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c) throws Exception {
+        return generarAlbaran(a, c, false);
+    }
+
+    public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c, boolean incluirMateriales) throws Exception {
         initFonts();
         Path path = getDocumentosPath().resolve("Mulberry").resolve("Albaranes")
             .resolve(safeFilename(a.getNumero()) + ".pdf");
@@ -166,14 +199,17 @@ public class PDFService {
         }
 
         boolean par = false;
-        for (var linea : a.getLineas()) {
+        List<LineaAlbaran> lineasVisibles = a.getLineas().stream()
+            .filter(l -> incluirMateriales || !esLineaMaterialAlbaran(l))
+            .toList();
+        for (var linea : lineasVisibles) {
             Color bg = par ? COLOR_GRIS_CLARO : Color.WHITE;
-            PdfPCell cDesc = new PdfPCell(new Phrase(nvl(linea.getDescripcion()), fontNormal));
+            PdfPCell cDesc = new PdfPCell(new Phrase(descripcionAlbaranVisible(linea), fontNormal));
             cDesc.setBackgroundColor(bg); cDesc.setBorderColor(COLOR_GRIS_BORDE); cDesc.setPadding(4);
             PdfPCell cCant = new PdfPCell(new Phrase(String.valueOf(linea.getCantidad()), fontNormal));
             cCant.setBackgroundColor(bg); cCant.setBorderColor(COLOR_GRIS_BORDE); cCant.setPadding(4);
             cCant.setHorizontalAlignment(Element.ALIGN_CENTER);
-            PdfPCell cUnid = new PdfPCell(new Phrase(nvl(linea.getUnidad()), fontNormal));
+            PdfPCell cUnid = new PdfPCell(new Phrase(unidadAlbaranVisible(linea), fontNormal));
             cUnid.setBackgroundColor(bg); cUnid.setBorderColor(COLOR_GRIS_BORDE); cUnid.setPadding(4);
             cUnid.setHorizontalAlignment(Element.ALIGN_CENTER);
             tLineas.addCell(cDesc);
