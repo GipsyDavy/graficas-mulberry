@@ -117,7 +117,8 @@
       "Bash(.\\\\mvnw.cmd compile *)",
       "Bash(gemini -p 'Analiza la estructura de navegación de esta aplicación JavaFX de escritorio \\(ERP para imprenta/serigrafía\\) y da tu opinión sobre si la distribución y agrupación de secciones es la correcta. No hay código que modificar; solo queremos tu análisis crítico y real. *)",
       "WebFetch(domain:www.graficasmulberry.com)",
-      "Bash(./mvnw.cmd compile *)"
+      "Bash(./mvnw.cmd compile *)",
+      "Bash(Get-ChildItem -Recurse -Directory -Path \"src/main/java\")"
     ]
   },
   "hooks": {

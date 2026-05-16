@@ -59,7 +59,7 @@ public class VisualAssistantView extends StackPane {
     public static final String KEY_INSTALLER_ANIMATIONS = "asistente_visual_instalador_animado";
     private static final String KEY_POS_X = "asistente_visual_x";
     private static final String KEY_POS_Y = "asistente_visual_y";
-    private static final double BUBBLE_MIN_WIDTH = 170;
+    private static final double BUBBLE_MIN_WIDTH = 110;
     private static final double BUBBLE_MAX_WIDTH = 360;
 
     public static final Map<String, String> PERSONAJES = Map.of(
@@ -1051,7 +1051,7 @@ public class VisualAssistantView extends StackPane {
         bubble.setPrefWidth(ancho);
         bubble.setMaxWidth(ancho);
 
-        double anchoTotal = Math.max(320, tamanoActual + 58 + ancho);
+        double anchoTotal = tamanoActual + 58 + ancho;
         setPrefWidth(anchoTotal);
         setMaxWidth(anchoTotal);
         body.setPrefWidth(anchoTotal - 20);
@@ -1059,11 +1059,11 @@ public class VisualAssistantView extends StackPane {
     }
 
     private double calcularAnchoGlobo(String mensaje) {
-        int longitud = mensaje == null ? 0 : mensaje.length();
-        if (longitud <= 28) return BUBBLE_MIN_WIDTH;
-        if (longitud <= 70) return 230;
-        if (longitud <= 120) return 300;
-        return BUBBLE_MAX_WIDTH;
+        if (mensaje == null || mensaje.isEmpty()) return BUBBLE_MIN_WIDTH;
+        Text t = new Text(mensaje);
+        t.setFont(texto.getFont());
+        double anchoTexto = t.getLayoutBounds().getWidth();
+        return Math.max(BUBBLE_MIN_WIDTH, Math.min(anchoTexto + 30, BUBBLE_MAX_WIDTH));
     }
 
     private void animarGlobo() {
