@@ -626,7 +626,9 @@ public class FacturasView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de facturas como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de facturas en documento Word (.docx), editable.", "docx"}
+                "Tabla de facturas en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -727,6 +729,7 @@ public class FacturasView extends VBox {
                         case "json"   -> ExportService.exportarFacturasJSON(destino);
                         case "pdf"    -> ExportService.exportarFacturasPDF(destino, listaFinal);
                         case "word"   -> ExportService.exportarFacturasWord(destino, listaFinal);
+                        case "excel"  -> ExportService.exportarFacturasExcel(destino, listaFinal);
                     }
                 }
                 Platform.runLater(() -> {

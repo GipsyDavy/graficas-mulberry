@@ -58,12 +58,14 @@ public class PDFService {
 
         doc.add(Chunk.NEWLINE);
         addTablaLineas(doc,
-            p.getLineas().stream().map(l -> new String[]{
-                l.getDescripcion(), l.getTecnica(), String.valueOf(l.getCantidad()),
-                String.format("%.2f €", l.getPrecioUnit()),
-                l.getDescuento() > 0 ? String.format("%.0f%%", l.getDescuento()) : "-",
-                String.format("%.2f €", l.getTotal())
-            }).toArray(String[][]::new)
+            p.getLineas().stream()
+                .filter(l -> !"📦 Material".equals(l.getTecnica()))
+                .map(l -> new String[]{
+                    l.getDescripcion(), l.getTecnica(), String.valueOf(l.getCantidad()),
+                    String.format("%.2f €", l.getPrecioUnit()),
+                    l.getDescuento() > 0 ? String.format("%.0f%%", l.getDescuento()) : "-",
+                    String.format("%.2f €", l.getTotal())
+                }).toArray(String[][]::new)
         );
 
         addTotales(doc, p.getBaseImponible(), p.getIvaPorcentaje(), p.getIvaImporte(), p.getTotal());

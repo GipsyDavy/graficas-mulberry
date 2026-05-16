@@ -113,7 +113,9 @@
       "Bash(git *)",
       "Bash(findstr -i \"version\\\\|gipsybuho\")",
       "Bash(.\\\\mvnw javafx:run)",
-      "Bash(Select-Object -Last 30)"
+      "Bash(Select-Object -Last 30)",
+      "Bash(.\\\\mvnw.cmd compile *)",
+      "Bash(gemini -p 'Analiza la estructura de navegación de esta aplicación JavaFX de escritorio \\(ERP para imprenta/serigrafía\\) y da tu opinión sobre si la distribución y agrupación de secciones es la correcta. No hay código que modificar; solo queremos tu análisis crítico y real. *)"
     ]
   },
   "hooks": {

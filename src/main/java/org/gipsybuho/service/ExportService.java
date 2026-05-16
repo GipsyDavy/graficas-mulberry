@@ -15,6 +15,8 @@ import com.lowagie.text.pdf.BaseFont;
 import com.lowagie.text.pdf.PdfPCell;
 import com.lowagie.text.pdf.PdfPTable;
 import com.lowagie.text.pdf.PdfWriter;
+import org.apache.poi.ss.usermodel.FillPatternType;
+import org.apache.poi.xssf.usermodel.*;
 import org.apache.poi.xwpf.usermodel.*;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
@@ -3156,6 +3158,263 @@ public class ExportService {
             try (FileOutputStream out = new FileOutputStream(destino.toFile())) {
                 document.write(out);
             }
+        }
+        return destino;
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EXPORTACIONES EXCEL (.xlsx) — helpers internos
+    // ─────────────────────────────────────────────────────────────────────────
+
+    private static XSSFCellStyle excelHeaderStyle(XSSFWorkbook wb) {
+        XSSFCellStyle style = wb.createCellStyle();
+        XSSFFont font = wb.createFont();
+        font.setBold(true);
+        font.setColor(new XSSFColor(new byte[]{(byte)255, (byte)255, (byte)255}, null));
+        style.setFont(font);
+        style.setFillForegroundColor(new XSSFColor(new byte[]{(byte)107, (byte)45, (byte)94}, null));
+        style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        return style;
+    }
+
+    private static XSSFCellStyle excelRowStyle(XSSFWorkbook wb, boolean par) {
+        XSSFCellStyle style = wb.createCellStyle();
+        if (!par) {
+            style.setFillForegroundColor(new XSSFColor(new byte[]{(byte)0xF5, (byte)0xEE, (byte)0xF4}, null));
+            style.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+        }
+        return style;
+    }
+
+    private static void excelFillRow(XSSFRow row, String[] vals, XSSFCellStyle style) {
+        for (int j = 0; j < vals.length; j++) {
+            XSSFCell c = row.createCell(j);
+            c.setCellValue(vals[j] != null ? vals[j] : "");
+            c.setCellStyle(style);
+        }
+    }
+
+    private static XSSFSheet excelCreateSheet(XSSFWorkbook wb, String nombre, String[] headers) {
+        XSSFSheet sheet = wb.createSheet(nombre);
+        XSSFRow hRow = sheet.createRow(0);
+        XSSFCellStyle hStyle = excelHeaderStyle(wb);
+        for (int i = 0; i < headers.length; i++) {
+            XSSFCell c = hRow.createCell(i);
+            c.setCellValue(headers[i]);
+            c.setCellStyle(hStyle);
+        }
+        return sheet;
+    }
+
+    private static void excelAutosize(XSSFSheet sheet, int cols) {
+        for (int i = 0; i < cols; i++) sheet.autoSizeColumn(i);
+    }
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // EXPORTACIONES EXCEL (.xlsx) — por entidad
+    // ─────────────────────────────────────────────────────────────────────────
+
+    public static Path exportarClientesExcel(Path destino, List<Cliente> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Nombre", "Apellidos", "Tipo", "NIF/CIF", "Teléfono", "Email", "Ciudad"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Clientes", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Cliente c = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(c.getNombre()), s(c.getApellidos()), s(c.getTipo()),
+                                 s(c.getNif()), s(c.getTelefono()), s(c.getEmail()), s(c.getCiudad())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarFacturasExcel(Path destino, List<Factura> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Número", "Cliente", "Fecha", "Vencimiento",
+                                 "Forma pago", "Estado", "Base", "IVA%", "Total"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Facturas", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Factura f = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(f.getNumero()), s(f.getClienteNombre()), s(f.getFecha()),
+                                 s(f.getFechaVencimiento()), s(f.getFormaPago()), s(f.getEstado()),
+                                 String.format("%.2f", f.getBaseImponible()),
+                                 String.format("%.0f", f.getIvaPorcentaje()),
+                                 String.format("%.2f", f.getTotal())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarAlbaranesExcel(Path destino, List<Albaran> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Número", "Cliente", "Fecha", "Factura", "Pedido", "Estado", "Observaciones"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Albaranes", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Albaran a = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(a.getNumero()), s(a.getClienteNombre()), s(a.getFecha()),
+                                 s(a.getFacturaNumero()), s(a.getPedidoNumero()),
+                                 s(a.getEstado()), s(a.getObservaciones())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarPedidosExcel(Path destino, List<Pedido> lista) throws Exception {
+        DateTimeFormatter fmtFecha = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Número", "Cliente", "Fecha", "Entrega prev.",
+                                 "Estado", "Descripción", "Total", "Pendiente"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Pedidos", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Pedido p = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(p.getNumero()), s(p.getClienteNombre()),
+                                 p.getFecha() != null ? p.getFecha().format(fmtFecha) : "",
+                                 p.getFechaEntregaPrevista() != null ? p.getFechaEntregaPrevista().format(fmtFecha) : "",
+                                 s(p.getEstadoDisplay()), s(p.getDescripcion()),
+                                 String.format("%.2f", p.getImporteTotal()),
+                                 String.format("%.2f", p.getImportePendiente())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarMaterialesExcel(Path destino, List<Material> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Nombre", "Referencia", "Categoría",
+                                 "Stock actual", "Stock mín.", "Unidad",
+                                 "Precio/ud.", "Proveedor", "Alerta"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Materiales", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            XSSFCellStyle alertaStyle = wb.createCellStyle();
+            alertaStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte)0xFF, (byte)0xEB, (byte)0xEB}, null));
+            alertaStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            for (int i = 0; i < lista.size(); i++) {
+                Material m = lista.get(i);
+                XSSFCellStyle st = m.isBajoStock() ? alertaStyle : (i % 2 == 0 ? par : impar);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(m.getNombre()), s(m.getReferencia()), s(m.getCategoria()),
+                                 String.valueOf(m.getStockActual()), String.valueOf(m.getStockMinimo()),
+                                 s(m.getUnidad()), String.format("%.2f", m.getPrecioUnidad()),
+                                 s(m.getProveedor()), m.isBajoStock() ? "¡Bajo!" : "OK"},
+                    st);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarTarifasExcel(Path destino, List<Tarifa> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Técnica", "Nombre", "Descripción",
+                                 "Precio/ud.", "Setup (€)", "Mín. uds.", "Activa"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Tarifas", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Tarifa t = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(t.getTecnica()), s(t.getNombre()), s(t.getDescripcion()),
+                                 String.format("%.2f", t.getPrecioUnit()),
+                                 String.format("%.2f", t.getPrecioSetup()),
+                                 String.valueOf(t.getMinimoUnidades()),
+                                 t.isActiva() ? "Sí" : "No"},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarNominasExcel(Path destino, List<Nomina> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Empleado", "Período", "Salario base",
+                                 "Bruto", "SS Trab.", "IRPF%", "IRPF €", "Neto", "Coste empresa"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Nóminas", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Nomina n = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(n.getEmpleadoNombre()), s(n.getPeriodo()),
+                                 String.format("%.2f", n.getSalarioBase()),
+                                 String.format("%.2f", n.getTotalBruto()),
+                                 String.format("%.2f", n.getSsTrabajador()),
+                                 String.format("%.1f", n.getIrpfPorcentaje()),
+                                 String.format("%.2f", n.getIrpfImporte()),
+                                 String.format("%.2f", n.getNeto()),
+                                 String.format("%.2f", n.getCosteTotalEmpresa())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarEmpleadosExcel(Path destino, List<Empleado> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Nombre", "Apellidos", "NIF", "Categoría",
+                                 "Salario base", "IRPF%", "Fecha alta", "Estado"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Empleados", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            XSSFCellStyle bajaStyle = wb.createCellStyle();
+            bajaStyle.setFillForegroundColor(new XSSFColor(new byte[]{(byte)0xFF, (byte)0xEB, (byte)0xEB}, null));
+            bajaStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
+            for (int i = 0; i < lista.size(); i++) {
+                Empleado e = lista.get(i);
+                String estado = e.isActivo() ? "ACTIVO"
+                    : "BAJA" + (e.getFechaBaja() != null ? " " + e.getFechaBaja() : "");
+                XSSFCellStyle st = !e.isActivo() ? bajaStyle : (i % 2 == 0 ? par : impar);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(e.getNombre()), s(e.getApellidos()), s(e.getNif()),
+                                 s(e.getCategoria()),
+                                 String.format("%.2f", e.getSalarioBase()),
+                                 String.format("%.1f", e.getIrpf()),
+                                 s(e.getFechaAlta()), estado},
+                    st);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+        }
+        return destino;
+    }
+
+    public static Path exportarPresupuestosExcel(Path destino, List<Presupuesto> lista) throws Exception {
+        try (XSSFWorkbook wb = new XSSFWorkbook()) {
+            String[] headers = {"Número", "Cliente", "Fecha", "Validez", "Estado", "Base", "IVA%", "Total"};
+            XSSFSheet sheet = excelCreateSheet(wb, "Presupuestos", headers);
+            XSSFCellStyle par = excelRowStyle(wb, true), impar = excelRowStyle(wb, false);
+            for (int i = 0; i < lista.size(); i++) {
+                Presupuesto p = lista.get(i);
+                excelFillRow(sheet.createRow(i + 1),
+                    new String[]{s(p.getNumero()), s(p.getClienteNombre()), s(p.getFecha()),
+                                 s(p.getFechaValidez()), s(p.getEstado()),
+                                 String.format("%.2f", p.getBaseImponible()),
+                                 String.format("%.0f", p.getIvaPorcentaje()),
+                                 String.format("%.2f", p.getTotal())},
+                    i % 2 == 0 ? par : impar);
+            }
+            excelAutosize(sheet, headers.length);
+            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
         }
         return destino;
     }

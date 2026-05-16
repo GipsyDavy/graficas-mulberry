@@ -476,7 +476,9 @@ public class NominasView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de nóminas como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de nóminas en documento Word (.docx), editable.", "docx"}
+                "Tabla de nóminas en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -569,6 +571,7 @@ public class NominasView extends VBox {
                             ExportService.exportarNominasWord(destino, dao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarNominasExcel(destino, dao.findAll());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

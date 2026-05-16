@@ -137,7 +137,7 @@ public class App extends Application {
         primaryStage.setResizable(true);
         primaryStage.setMinWidth(1024);
         primaryStage.setMinHeight(680);
-        primaryStage.setMaximized(true);
+        Platform.runLater(() -> primaryStage.setMaximized(true));
         primaryStage.setOnCloseRequest(event -> {
             if (!mainView.confirmarSalida()) event.consume();
         });

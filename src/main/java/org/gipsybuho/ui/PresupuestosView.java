@@ -15,6 +15,7 @@ import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
 import org.gipsybuho.dao.TarifaDAO;
+import org.gipsybuho.dao.TarifaTramoDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.ExportService;
@@ -30,6 +31,7 @@ import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -369,7 +371,10 @@ public class PresupuestosView extends VBox {
             cbTarifa.setPromptText("Seleccionar tarifa...");
             cbTarifa.setOnAction(e -> {
                 Tarifa t = cbTarifa.getValue();
-                if (t != null) {
+                if (t == null) return;
+                if (t.isUsaTiempo()) {
+                    aplicarTarifaTiempo(t, fDesc, fTec, fPrecio);
+                } else {
                     if (fDesc.getText().isBlank()) fDesc.setText(t.getNombre() + (t.getDescripcion() != null ? " - " + t.getDescripcion() : ""));
                     fTec.setText(t.getTecnica());
                     fPrecio.setText(String.valueOf(t.getPrecioUnit()));
@@ -398,6 +403,59 @@ public class PresupuestosView extends VBox {
 
         dlg.showAndWait().ifPresent(result -> {
             if (esNueva) lista.add(result);
+        });
+    }
+
+    private void aplicarTarifaTiempo(Tarifa tarifaBase,
+                                      TextArea fDesc, TextField fTec, TextField fPrecio) {
+        Dialog<Integer> dlg = new Dialog<>();
+        dlg.setTitle("Tiempo de ejecución — " + tarifaBase.getNombre());
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (tabla.getScene() != null)
+            dlg.getDialogPane().getStylesheets()
+                .addAll(tabla.getScene().getStylesheets());
+
+        Spinner<Integer> spMinutos = new Spinner<>(1, 9999, 10);
+        spMinutos.setEditable(true);
+        spMinutos.setPrefWidth(120);
+
+        GridPane g = new GridPane();
+        g.setHgap(10); g.setVgap(10); g.setPadding(new Insets(16));
+        g.addRow(0, new Label("Minutos reales de ejecución:"), spMinutos);
+        dlg.getDialogPane().setContent(g);
+        dlg.setResultConverter(bt -> bt == ButtonType.OK ? spMinutos.getValue() : null);
+
+        dlg.showAndWait().ifPresent(minutosReales -> {
+            int redondeado = (int)(Math.ceil(minutosReales / 5.0) * 5);
+            try {
+                List<TarifaTramo> tramos =
+                    new TarifaTramoDAO().findByTarifaId(tarifaBase.getId());
+                TarifaTramo tramoUsado = tramos.stream()
+                    .filter(tr -> tr.getTiempoMinutos() == redondeado)
+                    .findFirst()
+                    .orElseGet(() -> tramos.stream()
+                        .filter(tr -> tr.getTiempoMinutos() > redondeado)
+                        .min(Comparator.comparing(TarifaTramo::getTiempoMinutos))
+                        .orElse(null));
+                if (tramoUsado == null) {
+                    new Alert(Alert.AlertType.WARNING,
+                        "No existe tramo para " + redondeado + " min ni superior.\n"
+                        + "Revisa los tramos de esta tarifa.", ButtonType.OK)
+                        .showAndWait();
+                    return;
+                }
+                boolean huboRedondeo = (minutosReales != redondeado);
+                String desc = tarifaBase.getNombre() + " — "
+                    + tramoUsado.getTiempoMinutos() + " min"
+                    + (huboRedondeo ? " (real: " + minutosReales + " min)" : "");
+                fDesc.setText(desc);
+                fTec.setText(tarifaBase.getTecnica());
+                fPrecio.setText(String.format("%.2f", tramoUsado.getPrecioTiempo()));
+            } catch (Exception ex) {
+                new Alert(Alert.AlertType.ERROR,
+                    "Error al cargar tramos: " + ex.getMessage(), ButtonType.OK)
+                    .showAndWait();
+            }
         });
     }
 
@@ -659,7 +717,9 @@ public class PresupuestosView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de presupuestos como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de presupuestos en documento Word (.docx), editable.", "docx"}
+                "Tabla de presupuestos en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -767,6 +827,7 @@ public class PresupuestosView extends VBox {
                         case "json"   -> ExportService.exportarPresupuestosJSON(destino);
                         case "pdf"    -> ExportService.exportarPresupuestosPDF(destino, presupuestosAExportar);
                         case "word"   -> ExportService.exportarPresupuestosWord(destino, presupuestosAExportar);
+                        case "excel"  -> ExportService.exportarPresupuestosExcel(destino, presupuestosAExportar);
                     }
                 }
 

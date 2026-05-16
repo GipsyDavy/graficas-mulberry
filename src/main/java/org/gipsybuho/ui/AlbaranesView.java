@@ -494,7 +494,9 @@ public class AlbaranesView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de albaranes como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de albaranes en documento Word (.docx), editable.", "docx"}
+                "Tabla de albaranes en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -578,6 +580,7 @@ public class AlbaranesView extends VBox {
                             ExportService.exportarAlbaranesPDF(destino, dao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarAlbaranesExcel(destino, dao.findAll());
                     case "word"   -> {
                         if (selExp.size() == 1) {
                             Albaran a = dao.findById(selExp.get(0).getId());

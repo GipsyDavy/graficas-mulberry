@@ -66,7 +66,8 @@ public class VisualAssistantView extends StackPane {
         "David", "David",
         "Gema", "Gema",
         "Sonia", "Sonia",
-        "Ana", "Ana"
+        "Ana", "Ana",
+        "Selene", "Selene"
     );
 
     private final StackPane personaje = new StackPane();
@@ -93,7 +94,9 @@ public class VisualAssistantView extends StackPane {
     private Rectangle soniaPantalla;
     private Group davidCabeza, davidTorso, davidRadio, davidLinterna;
     private Circle davidLinternaLuz;
-    private Timeline animExtremidades, animPersonaje, animVampiAviso;
+    private Group seleneCabeza, seleneEdredon, seleneGloboZzz;
+    private Text seleneZPeq, seleneZMed, seleneZGrande;
+    private Timeline animExtremidades, animPersonaje, animVampiAviso, animSeleneGlobo;
     private Node ultimoNodoAyuda;
     private long ultimaAyudaMs;
     private boolean posicionInicializada;
@@ -460,6 +463,7 @@ public class VisualAssistantView extends StackPane {
             case "Gema", "Metalera" -> crearMetalera();
             case "Sonia" -> crearSonia();
             case "Ana" -> crearAna();
+            case "Selene" -> crearSelene();
             default -> crearVampi();
         };
         personaje.getChildren().setAll(avatar);
@@ -966,6 +970,9 @@ public class VisualAssistantView extends StackPane {
         soniaPantalla = null;
         davidCabeza = davidTorso = davidRadio = davidLinterna = null;
         davidLinternaLuz = null;
+        seleneCabeza = seleneEdredon = seleneGloboZzz = null;
+        seleneZPeq = seleneZMed = seleneZGrande = null;
+        if (animSeleneGlobo != null) { animSeleneGlobo.stop(); animSeleneGlobo = null; }
     }
 
     private void iniciarAnimacionesPersonaje() {
@@ -983,6 +990,10 @@ public class VisualAssistantView extends StackPane {
         }
         if (metalCabeza != null) {
             iniciarAnimacionMetalera();
+            return;
+        }
+        if (seleneCabeza != null) {
+            iniciarAnimacionSelene();
             return;
         }
         if (rotBrazoIzq != null) {
@@ -1289,6 +1300,127 @@ public class VisualAssistantView extends StackPane {
     private void guardarPosicionActual() {
         DatabaseManager.setConfig(KEY_POS_X, String.valueOf(getLayoutX()));
         DatabaseManager.setConfig(KEY_POS_Y, String.valueOf(getLayoutY()));
+    }
+
+    private Node crearSelene() {
+        Rectangle marcoCama = rect(8, 62, 84, 35, 6, "#5B3A2E");
+        Rectangle cabecero = rect(8, 55, 18, 45, 5, "#7A4D3A");
+        Rectangle piecero = rect(74, 65, 18, 32, 4, "#7A4D3A");
+        Rectangle colchon = rect(26, 65, 48, 30, 4, "#F5F0F0");
+        Ellipse almohada = ellipse(35, 68, 14, 7, "#D4CCCC");
+
+        Rectangle edredonPrincipal = rect(26, 72, 48, 23, 5, "#B784A7");
+        seleneEdredon = new Group(edredonPrincipal);
+        Rectangle pliegue = rect(28, 77, 44, 3, 2, "#8E5A84");
+        Rectangle pie = rect(73, 80, 8, 8, 4, "#D4CCCC");
+
+        Ellipse pelo = ellipse(30, 63, 12, 14, "#4E2C20");
+        Polygon mechon = polygon("#4E2C20", 28, 60, 33, 58, 32, 70, 27, 68);
+        Circle cara = circle(35, 66, 10, "#E8B58F");
+        Rectangle ojoIzq = rect(29, 66, 6, 2, 1, "#111111");
+        Rectangle ojoDer = rect(36, 66, 6, 2, 1, "#111111");
+        Rectangle boca = rect(33, 71, 4, 2, 1, "#C07860");
+        seleneCabeza = new Group(pelo, mechon, cara, ojoIzq, ojoDer, boca);
+
+        Ellipse fondoOval = ellipse(72, 30, 18, 12, "#EEF4FF");
+        fondoOval.setStroke(Color.web("#9BB8D4"));
+        fondoOval.setStrokeWidth(1.2);
+        Circle cola1 = circle(60, 43, 2.5, "#9BB8D4");
+        Circle cola2 = circle(55, 48, 2, "#9BB8D4");
+        Circle cola3 = circle(51, 52, 1.5, "#9BB8D4");
+
+        seleneZPeq = new Text(60, 28, "z");
+        seleneZPeq.setFill(Color.web("#5B7FA6"));
+        seleneZPeq.setStyle("-fx-font-size: 8px; -fx-font-weight: bold;");
+        seleneZMed = new Text(67, 25, "Z");
+        seleneZMed.setFill(Color.web("#4A6A8A"));
+        seleneZMed.setStyle("-fx-font-size: 11px; -fx-font-weight: bold;");
+        seleneZGrande = new Text(74, 22, "Z");
+        seleneZGrande.setFill(Color.web("#2C4F6E"));
+        seleneZGrande.setStyle("-fx-font-size: 14px; -fx-font-weight: bold;");
+        seleneGloboZzz = new Group(fondoOval, cola1, cola2, cola3, seleneZPeq, seleneZMed, seleneZGrande);
+
+        Group g = new Group(
+            marcoCama, cabecero, piecero, colchon, almohada,
+            seleneEdredon, pliegue, pie,
+            seleneCabeza,
+            seleneGloboZzz
+        );
+        return escalar(g);
+    }
+
+    private void iniciarAnimacionSelene() {
+        animExtremidades = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(seleneEdredon.scaleYProperty(), 1.0),
+                new KeyValue(seleneEdredon.translateYProperty(), 0)),
+            new KeyFrame(Duration.seconds(1.5),
+                new KeyValue(seleneEdredon.scaleYProperty(), 1.035),
+                new KeyValue(seleneEdredon.translateYProperty(), -0.8)),
+            new KeyFrame(Duration.seconds(3.0),
+                new KeyValue(seleneEdredon.scaleYProperty(), 1.0),
+                new KeyValue(seleneEdredon.translateYProperty(), 0))
+        );
+        animExtremidades.setCycleCount(Animation.INDEFINITE);
+        animExtremidades.play();
+
+        animPersonaje = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(seleneCabeza.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(200),
+                new KeyValue(seleneCabeza.rotateProperty(), 1.5)),
+            new KeyFrame(Duration.millis(400),
+                new KeyValue(seleneCabeza.rotateProperty(), -1.0)),
+            new KeyFrame(Duration.millis(600),
+                new KeyValue(seleneCabeza.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(8000),
+                new KeyValue(seleneCabeza.rotateProperty(), 0),
+                new KeyValue(seleneEdredon.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(8100),
+                new KeyValue(seleneCabeza.rotateProperty(), 3),
+                new KeyValue(seleneEdredon.rotateProperty(), 2)),
+            new KeyFrame(Duration.millis(8200),
+                new KeyValue(seleneCabeza.rotateProperty(), -2),
+                new KeyValue(seleneEdredon.rotateProperty(), -1)),
+            new KeyFrame(Duration.millis(8350),
+                new KeyValue(seleneCabeza.rotateProperty(), 0),
+                new KeyValue(seleneEdredon.rotateProperty(), 0)),
+            new KeyFrame(Duration.millis(9000),
+                new KeyValue(seleneCabeza.rotateProperty(), 0))
+        );
+        animPersonaje.setCycleCount(Animation.INDEFINITE);
+        animPersonaje.play();
+
+        animSeleneGlobo = new Timeline(
+            new KeyFrame(Duration.ZERO,
+                new KeyValue(seleneGloboZzz.translateYProperty(), 0),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.9),
+                new KeyValue(seleneZPeq.opacityProperty(), 0),
+                new KeyValue(seleneZMed.opacityProperty(), 0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0)),
+            new KeyFrame(Duration.millis(400),
+                new KeyValue(seleneZPeq.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.millis(800),
+                new KeyValue(seleneZPeq.opacityProperty(), 0.6),
+                new KeyValue(seleneZMed.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.millis(1200),
+                new KeyValue(seleneZMed.opacityProperty(), 0.6),
+                new KeyValue(seleneZGrande.opacityProperty(), 1.0)),
+            new KeyFrame(Duration.millis(1800),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -12),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.5)),
+            new KeyFrame(Duration.millis(2500),
+                new KeyValue(seleneGloboZzz.translateYProperty(), -18),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0.0),
+                new KeyValue(seleneZPeq.opacityProperty(), 0),
+                new KeyValue(seleneZMed.opacityProperty(), 0),
+                new KeyValue(seleneZGrande.opacityProperty(), 0)),
+            new KeyFrame(Duration.millis(3000),
+                new KeyValue(seleneGloboZzz.translateYProperty(), 0),
+                new KeyValue(seleneGloboZzz.opacityProperty(), 0))
+        );
+        animSeleneGlobo.setCycleCount(Animation.INDEFINITE);
+        animSeleneGlobo.play();
     }
 
     private String valorConfig(String clave, String defecto) {

@@ -34,8 +34,7 @@ import java.util.Optional;
 public class EmpleadosView extends VBox {
 
     private static final String[] CATEGORIAS = {
-        "Operario", "Oficial 1ª", "Oficial 2ª", "Auxiliar",
-        "Técnico", "Administrativo", "Encargado", "Gerente"
+        "Diseñadora", "Contable", "Administrativo", "Taller", "Jefe de Taller", "Prácticas"
     };
 
     private final EmpleadoDAO dao = new EmpleadoDAO();
@@ -425,7 +424,9 @@ public class EmpleadosView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de empleados como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de empleados en documento Word (.docx), editable.", "docx"}
+                "Tabla de empleados en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -515,6 +516,7 @@ public class EmpleadosView extends VBox {
                             ExportService.exportarEmpleadosWord(destino, dao.findAllIncluirBajas());
                         }
                     }
+                    case "excel"  -> ExportService.exportarEmpleadosExcel(destino, dao.findAllIncluirBajas());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

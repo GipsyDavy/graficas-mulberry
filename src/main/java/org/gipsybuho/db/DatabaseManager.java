@@ -91,7 +91,8 @@ public class DatabaseManager {
             "DELETE FROM config WHERE clave IN ('session_timeout_minutes','max_login_attempts','login_lockout_minutes')",
             "ALTER TABLE usuarios ADD COLUMN last_login TEXT",
             "ALTER TABLE usuarios ADD COLUMN security_question TEXT",
-            "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT"
+            "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT",
+            "ALTER TABLE tarifas ADD COLUMN usa_tiempo INTEGER DEFAULT 0"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
@@ -182,6 +183,15 @@ public class DatabaseManager {
                     minimo_unidades INTEGER DEFAULT 1,
                     activa INTEGER DEFAULT 1,
                     updated_at TEXT DEFAULT (datetime('now'))
+                )""");
+
+            st.execute("""
+                CREATE TABLE IF NOT EXISTS tarifa_tramos (
+                    id             INTEGER PRIMARY KEY AUTOINCREMENT,
+                    tarifa_id      INTEGER NOT NULL REFERENCES tarifas(id) ON DELETE CASCADE,
+                    tiempo_minutos INTEGER NOT NULL,
+                    precio_tiempo  REAL    NOT NULL,
+                    UNIQUE (tarifa_id, tiempo_minutos)
                 )""");
 
             st.execute("""
@@ -440,35 +450,44 @@ public class DatabaseManager {
                 ('asistente_visual_instalador_animado', '1')
                 """);
 
-            // Tarifas de ejemplo para serigrafía
-            st.execute("""
-                INSERT OR IGNORE INTO tarifas (id, tecnica, nombre, descripcion, precio_unit, precio_setup, minimo_unidades) VALUES
-                (1, 'Serigrafía', 'Serigrafía 1 color', 'Impresión serigráfica en 1 tinta', 2.50, 35.00, 12),
-                (2, 'Serigrafía', 'Serigrafía 2 colores', 'Impresión serigráfica en 2 tintas', 3.20, 60.00, 12),
-                (3, 'Serigrafía', 'Serigrafía 4 colores', 'Impresión serigráfica a todo color', 4.80, 100.00, 24),
-                (4, 'DTF', 'DTF estándar', 'Impresión DTF (Direct to Film)', 3.50, 0.00, 1),
-                (5, 'Bordado', 'Bordado básico', 'Bordado computarizado hasta 5.000 puntos', 4.00, 25.00, 6),
-                (6, 'Bordado', 'Bordado premium', 'Bordado computarizado hasta 15.000 puntos', 7.00, 40.00, 6),
-                (7, 'Vinilo', 'Vinilo textil', 'Corte de vinilo termoadhesivo para textil', 2.80, 0.00, 1),
-                (8, 'Sublimación', 'Sublimación full-color', 'Sublimación para tejidos sintéticos', 3.00, 0.00, 1),
-                (9, 'Gran Formato', 'Lona PVC 510g', 'Impresión en lona por m²', 18.00, 0.00, 1),
-                (10, 'Gran Formato', 'Vinilo adhesivo', 'Vinilo adhesivo exterior por m²', 22.00, 0.00, 1)
-                """);
+            // Datos de ejemplo: solo se insertan en la primera ejecución
+            boolean primeraVez;
+            try (ResultSet rs = st.executeQuery(
+                    "SELECT COUNT(*) FROM config WHERE clave='datos_ejemplo_insertados'")) {
+                primeraVez = rs.next() && rs.getInt(1) == 0;
+            }
 
-            // Materiales de ejemplo
-            st.execute("""
-                INSERT OR IGNORE INTO materiales (id, nombre, referencia, categoria, stock_actual, stock_minimo, unidad, precio_unidad) VALUES
-                (1, 'Tinta plastisol negra', 'TPL-NEG-01', 'tintas', 5.0, 2.0, 'kg', 12.50),
-                (2, 'Tinta plastisol blanca', 'TPL-BLA-01', 'tintas', 8.0, 2.0, 'kg', 11.00),
-                (3, 'Emulsión fotosensible', 'EMU-01', 'pantallas', 3.0, 1.0, 'kg', 28.00),
-                (4, 'Pantalla 90x120 serigrafía', 'PAN-90-01', 'pantallas', 10.0, 4.0, 'ud', 15.00),
-                (5, 'Camiseta blanca 160g', 'CAM-BLA-M', 'sustratos', 150.0, 30.0, 'ud', 3.20),
-                (6, 'Camiseta negra 160g', 'CAM-NEG-M', 'sustratos', 80.0, 20.0, 'ud', 3.50),
-                (7, 'Vinilo textil negro', 'VIN-TXT-NEG', 'vinilos', 25.0, 5.0, 'm²', 8.00),
-                (8, 'Papel DTF A3', 'DTF-A3', 'consumibles', 500.0, 100.0, 'ud', 0.35),
-                (9, 'Hilo poliéster negro 5000m', 'HIL-POL-NEG', 'bordado', 12.0, 3.0, 'ud', 6.50),
-                (10, 'Quitatintas industrial', 'LIM-QUI-01', 'consumibles', 4.0, 1.0, 'L', 9.80)
-                """);
+            if (primeraVez) {
+                st.execute("""
+                    INSERT OR IGNORE INTO tarifas (id, tecnica, nombre, descripcion, precio_unit, precio_setup, minimo_unidades) VALUES
+                    (1, 'Serigrafía', 'Serigrafía 1 color', 'Impresión serigráfica en 1 tinta', 2.50, 35.00, 12),
+                    (2, 'Serigrafía', 'Serigrafía 2 colores', 'Impresión serigráfica en 2 tintas', 3.20, 60.00, 12),
+                    (3, 'Serigrafía', 'Serigrafía 4 colores', 'Impresión serigráfica a todo color', 4.80, 100.00, 24),
+                    (4, 'DTF', 'DTF estándar', 'Impresión DTF (Direct to Film)', 3.50, 0.00, 1),
+                    (5, 'Bordado', 'Bordado básico', 'Bordado computarizado hasta 5.000 puntos', 4.00, 25.00, 6),
+                    (6, 'Bordado', 'Bordado premium', 'Bordado computarizado hasta 15.000 puntos', 7.00, 40.00, 6),
+                    (7, 'Vinilo', 'Vinilo textil', 'Corte de vinilo termoadhesivo para textil', 2.80, 0.00, 1),
+                    (8, 'Sublimación', 'Sublimación full-color', 'Sublimación para tejidos sintéticos', 3.00, 0.00, 1),
+                    (9, 'Gran Formato', 'Lona PVC 510g', 'Impresión en lona por m²', 18.00, 0.00, 1),
+                    (10, 'Gran Formato', 'Vinilo adhesivo', 'Vinilo adhesivo exterior por m²', 22.00, 0.00, 1)
+                    """);
+
+                st.execute("""
+                    INSERT OR IGNORE INTO materiales (id, nombre, referencia, categoria, stock_actual, stock_minimo, unidad, precio_unidad) VALUES
+                    (1, 'Tinta plastisol negra', 'TPL-NEG-01', 'tintas', 5.0, 2.0, 'kg', 12.50),
+                    (2, 'Tinta plastisol blanca', 'TPL-BLA-01', 'tintas', 8.0, 2.0, 'kg', 11.00),
+                    (3, 'Emulsión fotosensible', 'EMU-01', 'pantallas', 3.0, 1.0, 'kg', 28.00),
+                    (4, 'Pantalla 90x120 serigrafía', 'PAN-90-01', 'pantallas', 10.0, 4.0, 'ud', 15.00),
+                    (5, 'Camiseta blanca 160g', 'CAM-BLA-M', 'sustratos', 150.0, 30.0, 'ud', 3.20),
+                    (6, 'Camiseta negra 160g', 'CAM-NEG-M', 'sustratos', 80.0, 20.0, 'ud', 3.50),
+                    (7, 'Vinilo textil negro', 'VIN-TXT-NEG', 'vinilos', 25.0, 5.0, 'm²', 8.00),
+                    (8, 'Papel DTF A3', 'DTF-A3', 'consumibles', 500.0, 100.0, 'ud', 0.35),
+                    (9, 'Hilo poliéster negro 5000m', 'HIL-POL-NEG', 'bordado', 12.0, 3.0, 'ud', 6.50),
+                    (10, 'Quitatintas industrial', 'LIM-QUI-01', 'consumibles', 4.0, 1.0, 'L', 9.80)
+                    """);
+
+                st.execute("INSERT INTO config (clave, valor) VALUES ('datos_ejemplo_insertados','1')");
+            }
         }
     }
 

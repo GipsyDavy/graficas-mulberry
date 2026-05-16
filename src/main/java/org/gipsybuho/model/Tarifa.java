@@ -9,6 +9,7 @@ public class Tarifa {
     private double precioSetup;
     private int minimoUnidades;
     private boolean activa;
+    private boolean usaTiempo;
     private String updatedAt;
 
     public Tarifa() {}
@@ -40,6 +41,8 @@ public class Tarifa {
     public void setMinimoUnidades(int minimoUnidades) { this.minimoUnidades = minimoUnidades; }
     public boolean isActiva() { return activa; }
     public void setActiva(boolean activa) { this.activa = activa; }
+    public boolean isUsaTiempo() { return usaTiempo; }
+    public void setUsaTiempo(boolean usaTiempo) { this.usaTiempo = usaTiempo; }
     public String getUpdatedAt() { return updatedAt; }
     public void setUpdatedAt(String updatedAt) { this.updatedAt = updatedAt; }
 

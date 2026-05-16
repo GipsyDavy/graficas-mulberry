@@ -936,7 +936,9 @@ public class MaterialesView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de materiales con estado de stock en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de materiales en documento Word (.docx), editable.", "docx"}
+                "Tabla de materiales en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -1026,6 +1028,7 @@ public class MaterialesView extends VBox {
                             ExportService.exportarMaterialesWord(destino, dao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarMaterialesExcel(destino, dao.findAll());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

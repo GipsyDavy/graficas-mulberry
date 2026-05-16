@@ -727,7 +727,9 @@ public class PedidosView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de pedidos como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de pedidos en documento Word (.docx), editable.", "docx"}
+                "Tabla de pedidos en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -820,6 +822,7 @@ public class PedidosView extends VBox {
                             ExportService.exportarPedidosWord(destino, pedidoDao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarPedidosExcel(destino, pedidoDao.findAll());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

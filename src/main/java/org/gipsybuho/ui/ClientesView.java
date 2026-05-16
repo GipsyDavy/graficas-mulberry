@@ -435,7 +435,9 @@ public class ClientesView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
              "Listado de clientes como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-             "Tabla de clientes en documento Word (.docx), editable.", "docx"}
+             "Tabla de clientes en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+             "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -525,6 +527,7 @@ public class ClientesView extends VBox {
                             ExportService.exportarClientesWord(destino, dao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarClientesExcel(destino, dao.findAll());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

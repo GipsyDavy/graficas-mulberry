@@ -11,7 +11,9 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.TarifaDAO;
+import org.gipsybuho.dao.TarifaTramoDAO;
 import org.gipsybuho.model.Tarifa;
+import org.gipsybuho.model.TarifaTramo;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.PDFService;
@@ -71,12 +73,13 @@ public class TarifasView extends VBox {
         Button btnNuevo    = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
         Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
         Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
+        Button btnTramos   = btn("⏱ Tramos",        "#1A7A4A", this::verTramos);
         Button btnImportar   = btn("📥 Importar",      "#27AE60", this::importar);
         Button btnExportar   = btn("📤 Exportar",      "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",       "#34495E", dynamicColumns::configure);
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         return bar;
     }
@@ -120,7 +123,13 @@ public class TarifasView extends VBox {
         colMin.setCellValueFactory(new PropertyValueFactory<>("minimoUnidades"));
         colMin.setUserData("minimo_unidades");
 
-        tabla.getColumns().addAll(colTecnica, colNombre, colPrecio, colSetup, colMin);
+        TableColumn<Tarifa, String> colTramos = new TableColumn<>("Tramos");
+        colTramos.setCellValueFactory(c -> new javafx.beans.property.SimpleStringProperty(
+            c.getValue().isUsaTiempo() ? "⏱ Sí" : "—"));
+        colTramos.setPrefWidth(90);
+        colTramos.setUserData("usa_tiempo");
+
+        tabla.getColumns().addAll(colTecnica, colNombre, colPrecio, colSetup, colMin, colTramos);
         tabla.setPlaceholder(new Label("No hay tarifas registradas"));
         return tabla;
     }
@@ -175,6 +184,11 @@ public class TarifasView extends VBox {
         TextField fPrecioUnit  = tf(t.getPrecioUnit() > 0 ? String.valueOf(t.getPrecioUnit()) : "");
         TextField fPrecioSetup = tf(t.getPrecioSetup() > 0 ? String.valueOf(t.getPrecioSetup()) : "0");
         TextField fMinimo      = tf(t.getMinimoUnidades() > 0 ? String.valueOf(t.getMinimoUnidades()) : "1");
+        CheckBox chkUsaTiempo = new CheckBox("Tarifa con pricing basado en tiempo");
+        chkUsaTiempo.setSelected(t.isUsaTiempo());
+        Label lblInfo = new Label(
+            "→ Gestiona los tramos desde el botón ⏱ de la pantalla principal.");
+        lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
 
         grid.addRow(0, lbl("Técnica *"), fTecnica);
         grid.addRow(1, lbl("Nombre *"), fNombre);
@@ -182,8 +196,10 @@ public class TarifasView extends VBox {
         grid.addRow(3, lbl("Precio/ud. (€) *"), fPrecioUnit);
         grid.addRow(4, lbl("Setup (€)"), fPrecioSetup);
         grid.addRow(5, lbl("Mínimo uds."), fMinimo);
+        grid.add(chkUsaTiempo, 0, 6, 2, 1);
+        grid.add(lblInfo, 0, 7, 2, 1);
         dialogExtraFields = new LinkedHashMap<>();
-        dynamicColumns.addFormFields(grid, 6, t, dialogExtraFields);
+        dynamicColumns.addFormFields(grid, 8, t, dialogExtraFields);
 
         dlg.getDialogPane().setContent(grid);
 
@@ -200,9 +216,112 @@ public class TarifasView extends VBox {
                 t.setPrecioSetup(parseDouble(fPrecioSetup.getText()));
                 t.setMinimoUnidades(parseInt(fMinimo.getText(), 1));
                 t.setActiva(true);
+                t.setUsaTiempo(chkUsaTiempo.isSelected());
                 return t;
             }
             return null;
+        });
+        return dlg.showAndWait();
+    }
+
+    private void verTramos() {
+        Tarifa sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona una tarifa."); return; }
+        if (!sel.isUsaTiempo()) {
+            alerta("Esta tarifa no usa pricing basado en tiempo."); return;
+        }
+        abrirVentanaTramos(sel);
+    }
+
+    private void abrirVentanaTramos(Tarifa tarifa) {
+        Dialog<ButtonType> dlg = new Dialog<>();
+        dlg.setTitle("Tramos de tiempo — " + tarifa.getNombre());
+        dlg.getDialogPane().getButtonTypes().add(ButtonType.CLOSE);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+
+        ObservableList<TarifaTramo> tramos = FXCollections.observableArrayList();
+        TableView<TarifaTramo> tablaTramos = new TableView<>(tramos);
+
+        TableColumn<TarifaTramo, Integer> colTiempo = new TableColumn<>("Tiempo (min)");
+        colTiempo.setCellValueFactory(new PropertyValueFactory<>("tiempoMinutos"));
+        colTiempo.setPrefWidth(120);
+
+        TableColumn<TarifaTramo, Double> colPrecio = new TableColumn<>("Precio (€)");
+        colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioTiempo"));
+        colPrecio.setPrefWidth(120);
+        colPrecio.setCellFactory(c -> new TableCell<>() {
+            @Override protected void updateItem(Double v, boolean empty) {
+                super.updateItem(v, empty);
+                setText(empty || v == null ? null : String.format("%.2f €", v));
+            }
+        });
+
+        tablaTramos.getColumns().addAll(colTiempo, colPrecio);
+        tablaTramos.setPlaceholder(new Label("No hay tramos registrados"));
+
+        Runnable recargar = () -> {
+            try { tramos.setAll(new TarifaTramoDAO().findByTarifaId(tarifa.getId())); } catch (Exception e) { mostrarError(e); }
+        };
+        recargar.run();
+
+        Button btnAdd = btn("+ Añadir", "#4C9BE8", () -> {
+            dialogoTramo(tarifa, new TarifaTramo(tarifa.getId(), 0, 0)).ifPresent(tramo -> {
+                try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
+            });
+        });
+        Button btnEdit = btn("✏ Editar", "#F39C12", () -> {
+            TarifaTramo sel = tablaTramos.getSelectionModel().getSelectedItem();
+            if (sel == null) { alerta("Selecciona un tramo para editar."); return; }
+            dialogoTramo(tarifa, sel).ifPresent(tramo -> {
+                try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
+            });
+        });
+        Button btnDel = btn("🗑 Borrar", "#E74C3C", () -> {
+            TarifaTramo sel = tablaTramos.getSelectionModel().getSelectedItem();
+            if (sel == null) { alerta("Selecciona un tramo para borrar."); return; }
+            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Eliminar este tramo?", ButtonType.YES, ButtonType.NO);
+            conf.setHeaderText(null);
+            conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
+                try { new TarifaTramoDAO().delete(sel.getId()); recargar.run(); } catch (Exception e) { mostrarError(e); }
+            });
+        });
+
+        HBox buttons = new HBox(8, btnAdd, btnEdit, btnDel);
+        VBox box = new VBox(8, tablaTramos, buttons);
+        box.setPadding(new Insets(16));
+        dlg.getDialogPane().setContent(box);
+        dlg.showAndWait();
+    }
+
+    private Optional<TarifaTramo> dialogoTramo(Tarifa tarifa, TarifaTramo tramo) {
+        Dialog<TarifaTramo> dlg = new Dialog<>();
+        dlg.setTitle(tramo.getId() == 0 ? "Añadir tramo" : "Editar tramo");
+        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
+        TextField fTiempo = tf(tramo.getTiempoMinutos() > 0 ? String.valueOf(tramo.getTiempoMinutos()) : "");
+        TextField fPrecio = tf(tramo.getPrecioTiempo() > 0 ? String.valueOf(tramo.getPrecioTiempo()) : "");
+        grid.addRow(0, lbl("Tiempo (min, múltiplo de 5) *"), fTiempo);
+        grid.addRow(1, lbl("Precio (€) *"), fPrecio);
+        dlg.getDialogPane().setContent(grid);
+
+        dlg.setResultConverter(bt -> {
+            if (bt != ButtonType.OK) return null;
+            int tiempo = parseInt(fTiempo.getText(), 0);
+            if (tiempo <= 0 || tiempo % 5 != 0) {
+                alerta("El tiempo debe ser mayor que 0 y múltiplo de 5."); return null;
+            }
+            double precio = parseDouble(fPrecio.getText());
+            if (precio <= 0) {
+                alerta("El precio debe ser mayor que 0."); return null;
+            }
+            tramo.setTarifaId(tarifa.getId());
+            tramo.setTiempoMinutos(tiempo);
+            tramo.setPrecioTiempo(precio);
+            return tramo;
         });
         return dlg.showAndWait();
     }
@@ -327,7 +446,9 @@ public class TarifasView extends VBox {
             {"pdf",    "📄  Exportar a PDF",
                 "Listado de tarifas como tabla en un documento PDF.", "pdf"},
             {"word",   "📝  Exportar a Word",
-                "Tabla de tarifas en documento Word (.docx), editable.", "docx"}
+                "Tabla de tarifas en documento Word (.docx), editable.", "docx"},
+            {"excel",  "📗  Exportar a Excel (.xlsx)",
+                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -417,6 +538,7 @@ public class TarifasView extends VBox {
                             ExportService.exportarTarifasWord(destino, dao.findAll());
                         }
                     }
+                    case "excel"  -> ExportService.exportarTarifasExcel(destino, dao.findAll());
                 }
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);

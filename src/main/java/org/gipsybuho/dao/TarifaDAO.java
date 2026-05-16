@@ -43,7 +43,7 @@ public class TarifaDAO {
     }
 
     private void insert(Tarifa t) throws SQLException {
-        String sql = "INSERT INTO tarifas (tecnica,nombre,descripcion,precio_unit,precio_setup,minimo_unidades,activa) VALUES (?,?,?,?,?,?,?)";
+        String sql = "INSERT INTO tarifas (tecnica,nombre,descripcion,precio_unit,precio_setup,minimo_unidades,activa,usa_tiempo) VALUES (?,?,?,?,?,?,?,?)";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, t);
             ps.executeUpdate();
@@ -53,10 +53,10 @@ public class TarifaDAO {
     }
 
     private void update(Tarifa t) throws SQLException {
-        String sql = "UPDATE tarifas SET tecnica=?,nombre=?,descripcion=?,precio_unit=?,precio_setup=?,minimo_unidades=?,activa=? WHERE id=?";
+        String sql = "UPDATE tarifas SET tecnica=?,nombre=?,descripcion=?,precio_unit=?,precio_setup=?,minimo_unidades=?,activa=?,usa_tiempo=? WHERE id=?";
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
             set(ps, t);
-            ps.setInt(8, t.getId());
+            ps.setInt(9, t.getId());
             ps.executeUpdate();
         }
     }
@@ -77,6 +77,7 @@ public class TarifaDAO {
         ps.setDouble(5, t.getPrecioSetup());
         ps.setInt(6, t.getMinimoUnidades());
         ps.setInt(7, t.isActiva() ? 1 : 0);
+        ps.setInt(8, t.isUsaTiempo() ? 1 : 0);
     }
 
     private Tarifa map(ResultSet rs) throws SQLException {
@@ -89,6 +90,7 @@ public class TarifaDAO {
         t.setPrecioSetup(rs.getDouble("precio_setup"));
         t.setMinimoUnidades(rs.getInt("minimo_unidades"));
         t.setActiva(rs.getInt("activa") == 1);
+        t.setUsaTiempo(rs.getInt("usa_tiempo") == 1);
         t.setUpdatedAt(rs.getString("updated_at"));
         return t;
     }
