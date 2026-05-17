@@ -1,5 +1,13 @@
 package org.gipsybuho.model;
 
+import org.gipsybuho.service.importer.ColumnMatcher;
+import org.gipsybuho.service.importer.DuplicatePolicy;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
+
+import java.util.List;
+import java.util.Map;
+
 public class Material {
     private int id;
     private String nombre;
@@ -11,6 +19,31 @@ public class Material {
     private double precioUnidad;
     private String proveedor;
     private String updatedAt;
+
+    public static final EntityImportSpec IMPORT_SPEC = buildSpec();
+
+    private static EntityImportSpec buildSpec() {
+        var syn = Map.of(
+            "nombre",        List.of("nombre", "material", "articulo", "name", "item"),
+            "referencia",    List.of("referencia", "ref", "codigo", "sku", "code"),
+            "categoria",     List.of("categoria", "tipo", "grupo", "category"),
+            "stock_actual",  List.of("stock actual", "existencias", "cantidad", "quantity"),
+            "stock_minimo",  List.of("stock minimo", "stock min", "minimo stock", "stock", "minimo", "reorder"),
+            "unidad",        List.of("unidad", "ud", "und", "medida", "unit", "um"),
+            "precio_unidad", List.of("precio unidad", "precio ud", "precio", "coste", "price", "pvp"),
+            "proveedor",     List.of("proveedor", "supplier", "vendor", "fabricante")
+        );
+        return new EntityImportSpec("Materiales", List.of(
+            new FieldSpec("nombre",        "Nombre",        true),
+            new FieldSpec("referencia",    "Referencia",    false),
+            new FieldSpec("categoria",     "Categoría",     false),
+            new FieldSpec("stock_actual",  "Stock actual",  false),
+            new FieldSpec("stock_minimo",  "Stock mínimo",  false),
+            new FieldSpec("unidad",        "Unidad",        false),
+            new FieldSpec("precio_unidad", "Precio unidad", false),
+            new FieldSpec("proveedor",     "Proveedor",     false)
+        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+    }
 
     public Material() {}
 

@@ -16,8 +16,10 @@ import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
 import org.gipsybuho.model.Cliente;
+import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportarClientesService;
+import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
@@ -301,123 +303,73 @@ public class ClientesView extends VBox {
     // ── Importar ──────────────────────────────────────────────────────────────
 
     private void importar() {
-        // {clave, etiqueta, descripción, extensiones...}
-        Object[][] formatos = {
-            {"excel", "📊  Excel",
-             "Libros .xlsx, .xls, .xlsm, .xlsb, .xltx, .xltm — cualquier variante",
-             new String[]{"*.xlsx","*.xls","*.xlsm","*.xlsb","*.xltx","*.xltm"}},
-            {"csv",   "📋  CSV",
-             "Archivo separado por comas o punto y coma (.csv)",
-             new String[]{"*.csv"}},
-            {"json",  "{ }  JSON",
-             "Array de clientes o backup exportado desde esta aplicación (.json)",
-             new String[]{"*.json"}},
-            {"sql",   "🗄️  SQL",
-             "Script con sentencias INSERT INTO clientes (.sql)",
-             new String[]{"*.sql"}},
-            {"word",  "📝  Word",
-             "Documento con una tabla de clientes — .docx (Word moderno) o .doc (Word clásico)",
-             new String[]{"*.docx","*.doc"}},
-            {"pdf",   "📄  PDF",
-             "PDF con una tabla de datos de clientes (.pdf)",
-             new String[]{"*.pdf"}}
-        };
-
-        ToggleGroup grupo = new ToggleGroup();
-        VBox opBox = new VBox(4);
-        for (Object[] f : formatos) {
-            RadioButton rb = new RadioButton();
-            rb.setToggleGroup(grupo);
-            rb.setUserData(f);
-
-            Label lblNombre = new Label((String) f[1]);
-            lblNombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
-            Label lblDesc = new Label((String) f[2]);
-            lblDesc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-
-            VBox texto = new VBox(2, lblNombre, lblDesc);
-            HBox fila  = new HBox(10, rb, texto);
-            fila.setAlignment(Pos.CENTER_LEFT);
-            fila.setPadding(new Insets(7, 12, 7, 12));
-            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
-            fila.setOnMouseClicked(e -> rb.setSelected(true));
-            opBox.getChildren().add(fila);
-        }
-        grupo.getToggles().get(0).setSelected(true);
-
-        Label aviso = new Label(
-            "ℹ  Si el archivo contiene columnas que no existen en la aplicación, " +
-            "se crearán automáticamente.");
-        aviso.setWrapText(true);
-        aviso.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-
-        Label lblTitulo = new Label("Selecciona el formato del archivo a importar:");
-        lblTitulo.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lblTitulo, opBox, aviso);
-        contenido.setPadding(new Insets(16));
-
-        Dialog<Object[]> dlg = new Dialog<>();
-        dlg.setTitle("Importar clientes");
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        dlg.getDialogPane().setPrefWidth(500);
-        dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
-
-        dlg.setResultConverter(bt -> {
-            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
-                return (Object[]) grupo.getSelectedToggle().getUserData();
-            return null;
-        });
-
-        dlg.showAndWait().ifPresent(this::lanzarImportacion);
-    }
-
-    private void lanzarImportacion(Object[] fmt) {
-        String[] extensiones = (String[]) fmt[3];
-        String etiqueta = ((String) fmt[1]).replaceAll("[^\\w ]", "").trim();
-
         FileChooser fc = new FileChooser();
-        fc.setTitle("Seleccionar archivo — " + etiqueta);
+        fc.setTitle("Importar clientes");
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter(etiqueta + " — Clientes", extensiones),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
-        );
-        File docs = new File(System.getProperty("user.home"), "Documents");
-        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
-        fc.setInitialDirectory(docs);
-
+            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.json"),
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
-        setDisable(true);
         SoundService.play(SoundService.Sound.START);
-
-        final File archivoFinal = archivo;
+        final File f = archivo;
         Thread.ofVirtual().start(() -> {
             try {
-                ImportarClientesService svc = new ImportarClientesService();
-                ImportarClientesService.ResultadoImportacion resultado = svc.importar(archivoFinal);
-
+                var parsed = new ImportService().parseFile(f);
+                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
                 Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.COMPLETE);
-                    setDisable(false);
-                    cargar();
-                    actualizarColumnasDinamicas(); // añadir columnas nuevas a la tabla
-                    Alert ok = new Alert(Alert.AlertType.INFORMATION, resultado.resumen(), ButtonType.OK);
-                    ok.setTitle("Importación completada");
-                    ok.setHeaderText(null);
-                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    ok.showAndWait();
+                    var dlg = new ColumnMappingDialog(
+                        getScene() != null ? getScene().getWindow() : null,
+                        Cliente.IMPORT_SPEC, parsed.headers, preview);
+                    if (getScene() != null)
+                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    dlg.showAndWait().ifPresent(mr ->
+                        Thread.ofVirtual().start(() -> {
+                            try {
+                                var result = new EntityImportService().importar(
+                                    Cliente.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
+                                Platform.runLater(() -> {
+                                    cargar();
+                                    actualizarColumnasDinamicas();
+                                    SoundService.play(SoundService.Sound.COMPLETE);
+                                    mostrarResultadoImportacion(result);
+                                });
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> {
+                                    SoundService.play(SoundService.Sound.ERROR);
+                                    mostrarError(ex);
+                                });
+                            }
+                        })
+                    );
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.ERROR);
-                    setDisable(false);
                     mostrarError(e);
                 });
             }
         });
+    }
+
+    private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
+        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
+        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
+        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        if (!r.errores().isEmpty()) {
+            sb.append("\n\nErrores (primeros 10):");
+            r.errores().stream().limit(10).forEach(e ->
+                sb.append(String.format("%n  Fila %d — %s: %s",
+                    e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
+        }
+        Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
+        a.setTitle("Resultado de importación");
+        a.setHeaderText(null);
+        a.getDialogPane().setPrefWidth(480);
+        if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        a.showAndWait();
     }
 
     // ── Exportar ──────────────────────────────────────────────────────────────

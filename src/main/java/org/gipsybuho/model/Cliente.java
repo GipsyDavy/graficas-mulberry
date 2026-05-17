@@ -1,6 +1,12 @@
 package org.gipsybuho.model;
 
+import org.gipsybuho.service.importer.ColumnMatcher;
+import org.gipsybuho.service.importer.DuplicatePolicy;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
+
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class Cliente {
@@ -18,6 +24,36 @@ public class Cliente {
     private String createdAt;
     // Columnas adicionales añadidas dinámicamente al importar desde archivos externos
     private Map<String, String> extras = new LinkedHashMap<>();
+
+    public static final EntityImportSpec IMPORT_SPEC = buildSpec();
+
+    private static EntityImportSpec buildSpec() {
+        // Exactamente 10 entradas → Map.of() en su límite
+        var syn = Map.of(
+            "nombre",    List.of("razon social", "nombre", "empresa", "company", "name"),
+            "apellido",  List.of("apellidos", "apellido", "surname", "lastname"),
+            "tipo",      List.of("tipo cliente", "tipo", "type"),
+            "nif",       List.of("nif", "cif", "dni", "nie", "vat", "tax id"),
+            "direccion", List.of("direccion", "domicilio", "address"),
+            "ciudad",    List.of("ciudad", "city", "localidad", "municipio"),
+            "cp",        List.of("codigo postal", "postal code", "cp", "zip", "postcode"),
+            "telefono",  List.of("telefono", "tel", "phone", "movil"),
+            "email",     List.of("correo electronico", "email", "correo", "mail"),
+            "notas",     List.of("observaciones", "notas", "comentarios", "notes")
+        );
+        return new EntityImportSpec("Clientes", List.of(
+            new FieldSpec("nombre",    "Nombre",    true),
+            new FieldSpec("apellido",  "Apellidos", false),
+            new FieldSpec("tipo",      "Tipo",      false),
+            new FieldSpec("nif",       "NIF/CIF",   false),
+            new FieldSpec("direccion", "Dirección", false),
+            new FieldSpec("ciudad",    "Ciudad",    false),
+            new FieldSpec("cp",        "C.P.",      false),
+            new FieldSpec("telefono",  "Teléfono",  false),
+            new FieldSpec("email",     "Email",     false),
+            new FieldSpec("notas",     "Notas",     false)
+        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+    }
 
     public Cliente() {}
 

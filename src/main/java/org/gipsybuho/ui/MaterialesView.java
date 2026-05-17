@@ -19,8 +19,10 @@ import org.gipsybuho.dao.PagoMaterialDAO;
 import org.gipsybuho.model.ConsumoMaterial;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
+import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
+import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
@@ -811,104 +813,44 @@ public class MaterialesView extends VBox {
     // ═════════════════════════════════════════════════════════════════════════
 
     private void importar() {
-        String[][] formatos = {
-            {"csv",   "📊  CSV",
-                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
-            {"excel", "📗  Excel",
-                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = materiales.", "xlsx"},
-            {"sql",   "🗄️  Volcado SQL",
-                "Importa materiales, consumo, movimientos y pagos desde un volcado SQL.", "sql"},
-            {"json",  "{ }  JSON",
-                "Importa materiales, consumo, movimientos y pagos desde un archivo JSON.", "json"},
-            {"word",  "📝  Word",
-                "Documento Word (.docx/.doc) con tabla de materiales.", "docx"},
-            {"pdf",   "📄  PDF",
-                "Documento PDF con tabla de materiales (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
-        };
-
-        ToggleGroup grupo = new ToggleGroup();
-        VBox opBox = new VBox(4);
-        for (String[] f : formatos) {
-            RadioButton rb = new RadioButton();
-            rb.setToggleGroup(grupo);
-            rb.setUserData(f);
-
-            Label nombre = new Label(f[1]);
-            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
-            Label desc = new Label(f[2]);
-            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-
-            VBox texto = new VBox(2, nombre, desc);
-            HBox fila = new HBox(10, rb, texto);
-            fila.setAlignment(Pos.CENTER_LEFT);
-            fila.setPadding(new Insets(7, 12, 7, 12));
-            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
-            fila.setOnMouseClicked(e -> rb.setSelected(true));
-            opBox.getChildren().add(fila);
-        }
-        grupo.getToggles().get(0).setSelected(true);
-
-        Label lbl = new Label("Selecciona el formato a importar:");
-        lbl.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lbl, opBox);
-        contenido.setPadding(new Insets(16));
-
-        Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Importar materiales");
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        dlg.getDialogPane().setPrefWidth(460);
-        dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
-
-        dlg.setResultConverter(bt -> {
-            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
-                return (String[]) grupo.getSelectedToggle().getUserData();
-            return null;
-        });
-
-        dlg.showAndWait().ifPresent(this::lanzarImportacion);
-    }
-
-    private void lanzarImportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar materiales — " + fmt[1]);
-        switch (fmt[0]) {
-            case "excel" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel — Materiales", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            case "word" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Word — Materiales", "*.docx", "*.doc"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            default -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Materiales", "*." + fmt[3]),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        }
+        fc.setTitle("Importar materiales");
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.json"),
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
-        Path origen = archivo.toPath();
-        String tipo = fmt[0];
         SoundService.play(SoundService.Sound.START);
-
+        final File f = archivo;
         Thread.ofVirtual().start(() -> {
             try {
-                int n = switch (tipo) {
-                    case "csv"   -> ImportBackupService.importarMaterialesCSV(origen);
-                    case "sql"   -> ImportBackupService.importarMaterialesSQL(origen);
-                    case "json"  -> ImportBackupService.importarMaterialesJSON(origen);
-                    case "excel" -> ImportBackupService.importarMaterialesExcel(origen);
-                    case "word"  -> ImportBackupService.importarMaterialesWord(origen);
-                    case "pdf"   -> ImportBackupService.importarMaterialesPDF(origen);
-                    default      -> throw new Exception("Formato desconocido: " + tipo);
-                };
-                int filas = n;
+                var parsed = new ImportService().parseFile(f);
+                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
                 Platform.runLater(() -> {
-                    cargar();
-                    cargarConsumo();
-                    cargarPagos();
-                    SoundService.play(SoundService.Sound.COMPLETE);
-                    alerta("Importación completada: " + filas + " registro(s) importado(s).");
+                    var dlg = new ColumnMappingDialog(
+                        getScene() != null ? getScene().getWindow() : null,
+                        Material.IMPORT_SPEC, parsed.headers, preview);
+                    if (getScene() != null)
+                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    dlg.showAndWait().ifPresent(mr ->
+                        Thread.ofVirtual().start(() -> {
+                            try {
+                                var result = new EntityImportService().importar(
+                                    Material.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
+                                Platform.runLater(() -> {
+                                    cargar(); cargarConsumo(); cargarPagos();
+                                    SoundService.play(SoundService.Sound.COMPLETE);
+                                    mostrarResultadoImportacion(result);
+                                });
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> {
+                                    SoundService.play(SoundService.Sound.ERROR);
+                                    mostrarError(ex);
+                                });
+                            }
+                        })
+                    );
                 });
             } catch (Exception e) {
                 Platform.runLater(() -> {
@@ -917,6 +859,26 @@ public class MaterialesView extends VBox {
                 });
             }
         });
+    }
+
+    private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
+        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
+        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
+        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        if (!r.errores().isEmpty()) {
+            sb.append("\n\nErrores (primeros 10):");
+            r.errores().stream().limit(10).forEach(e ->
+                sb.append(String.format("%n  Fila %d — %s: %s",
+                    e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
+        }
+        Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
+        a.setTitle("Resultado de importación");
+        a.setHeaderText(null);
+        a.getDialogPane().setPrefWidth(480);
+        if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        a.showAndWait();
     }
 
     // ═════════════════════════════════════════════════════════════════════════

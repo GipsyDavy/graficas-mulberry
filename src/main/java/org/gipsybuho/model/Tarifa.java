@@ -1,5 +1,13 @@
 package org.gipsybuho.model;
 
+import org.gipsybuho.service.importer.ColumnMatcher;
+import org.gipsybuho.service.importer.DuplicatePolicy;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
+
+import java.util.List;
+import java.util.Map;
+
 public class Tarifa {
     private int id;
     private String tecnica;
@@ -11,6 +19,27 @@ public class Tarifa {
     private boolean activa;
     private boolean usaTiempo;
     private String updatedAt;
+
+    public static final EntityImportSpec IMPORT_SPEC = buildSpec();
+
+    private static EntityImportSpec buildSpec() {
+        var syn = Map.of(
+            "tecnica",         List.of("tecnica", "proceso", "technique", "tipo", "type"),
+            "nombre",          List.of("nombre", "name", "servicio", "tarifa"),
+            "descripcion",     List.of("descripcion", "detalle", "description"),
+            "precio_unit",     List.of("precio unitario", "precio unidad", "precio unit", "precio", "price", "rate", "pvp"),
+            "precio_setup",    List.of("precio setup", "setup", "configuracion", "arranque", "preparacion"),
+            "minimo_unidades", List.of("minimo unidades", "cantidad minima", "minimo", "min qty", "minimum")
+        );
+        return new EntityImportSpec("Tarifas", List.of(
+            new FieldSpec("tecnica",         "Técnica",            true),
+            new FieldSpec("nombre",          "Nombre",             true),
+            new FieldSpec("descripcion",     "Descripción",        false),
+            new FieldSpec("precio_unit",     "Precio unitario",    false),
+            new FieldSpec("precio_setup",    "Precio de setup",    false),
+            new FieldSpec("minimo_unidades", "Mínimo de unidades", false)
+        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+    }
 
     public Tarifa() {}
 

@@ -1,5 +1,13 @@
 package org.gipsybuho.model;
 
+import org.gipsybuho.service.importer.ColumnMatcher;
+import org.gipsybuho.service.importer.DuplicatePolicy;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
+
+import java.util.List;
+import java.util.Map;
+
 public class Empleado {
     private int id;
     private String nombre;
@@ -15,6 +23,38 @@ public class Empleado {
     private String telefono;
     private String email;
     private String direccion;
+
+    public static final EntityImportSpec IMPORT_SPEC = buildSpec();
+
+    private static EntityImportSpec buildSpec() {
+        // 11 entradas → Map.ofEntries() obligatorio (Map.of() admite máximo 10 pares)
+        var syn = Map.ofEntries(
+            Map.entry("nombre",       List.of("nombre", "name", "trabajador")),
+            Map.entry("apellido",     List.of("apellidos", "apellido", "surname", "lastname")),
+            Map.entry("nif",          List.of("nif", "dni", "nie", "cif", "documento")),
+            Map.entry("categoria",    List.of("categoria", "puesto", "cargo", "category")),
+            Map.entry("salario_base", List.of("salario base", "salario", "sueldo", "salary")),
+            Map.entry("fecha_alta",   List.of("fecha alta", "contratacion", "inicio", "alta", "hire date")),
+            Map.entry("iban",         List.of("cuenta bancaria", "iban", "cuenta", "bank account")),
+            Map.entry("irpf",         List.of("retencion irpf", "retencion", "irpf", "withholding")),
+            Map.entry("telefono",     List.of("telefono", "tel", "phone", "movil")),
+            Map.entry("email",        List.of("correo electronico", "email", "correo", "mail")),
+            Map.entry("direccion",    List.of("direccion", "domicilio", "address"))
+        );
+        return new EntityImportSpec("Empleados", List.of(
+            new FieldSpec("nombre",       "Nombre",         true),
+            new FieldSpec("apellido",     "Apellidos",      false),
+            new FieldSpec("nif",          "NIF/DNI",        false),
+            new FieldSpec("categoria",    "Categoría",      false),
+            new FieldSpec("salario_base", "Salario base",   false),
+            new FieldSpec("fecha_alta",   "Fecha de alta",  false),
+            new FieldSpec("iban",         "IBAN",           false),
+            new FieldSpec("irpf",         "IRPF (%)",       false),
+            new FieldSpec("telefono",     "Teléfono",       false),
+            new FieldSpec("email",        "Email",          false),
+            new FieldSpec("direccion",    "Dirección",      false)
+        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+    }
 
     public Empleado() {}
 
