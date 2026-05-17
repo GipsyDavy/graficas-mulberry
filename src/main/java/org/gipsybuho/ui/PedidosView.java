@@ -22,7 +22,6 @@ import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.PagoPedido;
 import org.gipsybuho.model.Pedido;
 import org.gipsybuho.service.ExportService;
-import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
@@ -603,111 +602,16 @@ public class PedidosView extends VBox {
     // ═════════════════════════════════════════════════════════════════════════
 
     private void importar() {
-        String[][] formatos = {
-            {"csv",   "📊  CSV",
-                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
-            {"excel", "📗  Excel",
-                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = pedidos · Hoja 2 = pagos (opcional).", "xlsx"},
-            {"sql",   "🗄️  Volcado SQL",
-                "Importa pedidos y pagos desde un volcado SQL.", "sql"},
-            {"json",  "{ }  JSON",
-                "Importa pedidos y pagos desde un archivo JSON.", "json"},
-            {"word",  "📝  Word",
-                "Documento Word (.docx/.doc). Tabla 1 = pedidos · Tabla 2 = pagos (opcional).", "docx"},
-            {"pdf",   "📄  PDF",
-                "Documento PDF con tabla de pedidos (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
-        };
-
-        ToggleGroup grupo = new ToggleGroup();
-        VBox opBox = new VBox(4);
-        for (String[] f : formatos) {
-            RadioButton rb = new RadioButton();
-            rb.setToggleGroup(grupo);
-            rb.setUserData(f);
-
-            Label nombre = new Label(f[1]);
-            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
-            Label desc = new Label(f[2]);
-            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-
-            VBox texto = new VBox(2, nombre, desc);
-            HBox fila = new HBox(10, rb, texto);
-            fila.setAlignment(Pos.CENTER_LEFT);
-            fila.setPadding(new Insets(7, 12, 7, 12));
-            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
-            fila.setOnMouseClicked(e -> rb.setSelected(true));
-            opBox.getChildren().add(fila);
-        }
-        grupo.getToggles().get(0).setSelected(true);
-
-        Label lbl = new Label("Selecciona el formato a importar:");
-        lbl.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lbl, opBox);
-        contenido.setPadding(new Insets(16));
-
-        Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Importar pedidos");
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        dlg.getDialogPane().setPrefWidth(440);
-        dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
-
-        dlg.setResultConverter(bt -> {
-            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
-                return (String[]) grupo.getSelectedToggle().getUserData();
-            return null;
-        });
-
-        dlg.showAndWait().ifPresent(this::lanzarImportacion);
-    }
-
-    private void lanzarImportacion(String[] fmt) {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Importar pedidos — " + fmt[1]);
-        switch (fmt[0]) {
-            case "excel" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel — Pedidos", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            case "word" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Word — Pedidos", "*.docx", "*.doc"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            default -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        }
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        Path origen = archivo.toPath();
-        String tipo = fmt[0];
-        SoundService.play(SoundService.Sound.START);
-
-        Thread.ofVirtual().start(() -> {
-            try {
-                int n = switch (tipo) {
-                    case "csv"   -> ImportBackupService.importarPedidosCSV(origen);
-                    case "sql"   -> ImportBackupService.importarPedidosSQL(origen);
-                    case "json"  -> ImportBackupService.importarPedidosJSON(origen);
-                    case "excel" -> ImportBackupService.importarPedidosExcel(origen);
-                    case "word"  -> ImportBackupService.importarPedidosWord(origen);
-                    case "pdf"   -> ImportBackupService.importarPedidosPDF(origen);
-                    default      -> throw new Exception("Formato desconocido: " + tipo);
-                };
-                int filas = n;
-                Platform.runLater(() -> {
-                    cargarPedidos();
-                    cargarTodosPagos();
-                    SoundService.play(SoundService.Sound.COMPLETE);
-                    alerta("Importación completada: " + filas + " registro(s) importado(s).");
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    mostrarError(e);
-                });
-            }
-        });
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Funcionalidad próximamente");
+        alert.setHeaderText("Importación de Pedidos");
+        alert.setContentText(
+            "Esta función estará disponible en una próxima versión. " +
+            "Mientras tanto, los datos históricos se cargan desde CSV procesados manualmente. " +
+            "Para más información consulta MIGRACION_HISTORICO.md.");
+        if (getScene() != null)
+            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        alert.showAndWait();
     }
 
     // ═════════════════════════════════════════════════════════════════════════

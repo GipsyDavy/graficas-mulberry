@@ -17,7 +17,6 @@ import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.ExportService;
-import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
@@ -491,126 +490,16 @@ public class FacturasView extends VBox {
     }
 
     private void importar() {
-        String[][] formatos = {
-            {"csv",   "📊  CSV",
-                "Archivo .csv con cabecera de columnas (separador «;»). Compatible con Excel y LibreOffice.", "csv"},
-            {"excel", "📗  Excel",
-                "Libro Excel (.xlsx, .xls, .xlsb, .xlsm, .xltx). Hoja 1 = facturas · Hoja 2 = líneas (opcional).", "xlsx"},
-            {"sql",   "🗄️  Volcado SQL",
-                "Script .sql con facturas y sus líneas generado por la exportación SQL.", "sql"},
-            {"json",  "{ }  JSON",
-                "Archivo .json con facturas y líneas generado por la exportación JSON o por el backup completo.", "json"},
-            {"word",  "📝  Word",
-                "Documento Word (.docx/.doc). Tabla 1 = facturas · Tabla 2 = líneas (opcional).", "docx"},
-            {"pdf",   "📄  PDF",
-                "Documento PDF con tabla de facturas (columnas separadas por tabulador, «|» o dobles espacios).", "pdf"}
-        };
-
-        ToggleGroup grupo = new ToggleGroup();
-        VBox opBox = new VBox(4);
-        for (String[] f : formatos) {
-            RadioButton rb = new RadioButton();
-            rb.setToggleGroup(grupo);
-            rb.setUserData(f);
-            Label nombre = new Label(f[1]);
-            nombre.setStyle("-fx-font-weight:bold; -fx-font-size:12px;");
-            Label desc = new Label(f[2]);
-            desc.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-            VBox texto = new VBox(2, nombre, desc);
-            HBox fila  = new HBox(10, rb, texto);
-            fila.setAlignment(Pos.CENTER_LEFT);
-            fila.setPadding(new Insets(7, 12, 7, 12));
-            fila.setStyle("-fx-background-radius:6; -fx-cursor:hand;");
-            fila.setOnMouseClicked(e -> rb.setSelected(true));
-            opBox.getChildren().add(fila);
-        }
-        grupo.getToggles().get(0).setSelected(true);
-
-        Label aviso = new Label(
-            "ℹ  Las facturas importadas se añaden o actualizan. " +
-            "Los registros con el mismo ID serán sobreescritos.");
-        aviso.setWrapText(true);
-        aviso.setStyle("-fx-font-size:11px; -fx-text-fill:-c-text-muted;");
-
-        Label lblSelecciona = new Label("Selecciona el formato del archivo:");
-        lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
-        VBox contenido = new VBox(12, lblSelecciona, opBox, aviso);
-        contenido.setPadding(new Insets(16));
-
-        Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Importar facturas");
-        dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        dlg.getDialogPane().setPrefWidth(460);
-        dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Seleccionar archivo →");
-
-        dlg.setResultConverter(bt -> {
-            if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
-                return (String[]) grupo.getSelectedToggle().getUserData();
-            return null;
-        });
-
-        dlg.showAndWait().ifPresent(this::lanzarImportacion);
-    }
-
-    private void lanzarImportacion(String[] fmt) {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Seleccionar archivo de facturas — " + fmt[1]);
-        switch (fmt[0]) {
-            case "excel" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Excel — Facturas", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.xltx", "*.xltm"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            case "word" -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Word — Facturas", "*.docx", "*.doc"),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-            default -> fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter(fmt[1].replaceAll("[^\\w ]", "").trim() + " — Facturas", "*." + fmt[3]),
-                new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        }
-        File docs = new File(System.getProperty("user.home"), "Documents");
-        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
-        fc.setInitialDirectory(docs);
-
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        Path origen = archivo.toPath();
-        setDisable(true);
-        SoundService.play(SoundService.Sound.START);
-
-        Thread.ofVirtual().start(() -> {
-            try {
-                int importados = switch (fmt[0]) {
-                    case "csv"   -> ImportBackupService.importarFacturasCSV(origen);
-                    case "sql"   -> ImportBackupService.importarFacturasSQL(origen);
-                    case "json"  -> ImportBackupService.importarFacturasJSON(origen);
-                    case "excel" -> ImportBackupService.importarFacturasExcel(origen);
-                    case "word"  -> ImportBackupService.importarFacturasWord(origen);
-                    case "pdf"   -> ImportBackupService.importarFacturasPDF(origen);
-                    default      -> throw new Exception("Formato desconocido: " + fmt[0]);
-                };
-                final int n = importados;
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.COMPLETE);
-                    setDisable(false);
-                    cargar();
-                    Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Se han importado o actualizado " + n + " registro(s) correctamente.",
-                        ButtonType.OK);
-                    ok.setTitle("Importación completada");
-                    ok.setHeaderText(null);
-                    if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    ok.showAndWait();
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    setDisable(false);
-                    mostrarError(e);
-                });
-            }
-        });
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Funcionalidad próximamente");
+        alert.setHeaderText("Importación de Facturas");
+        alert.setContentText(
+            "Esta función estará disponible en una próxima versión. " +
+            "Mientras tanto, los datos históricos se cargan desde CSV procesados manualmente. " +
+            "Para más información consulta MIGRACION_HISTORICO.md.");
+        if (getScene() != null)
+            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        alert.showAndWait();
     }
 
     private void exportar() {

@@ -11,13 +11,19 @@ import org.gipsybuho.model.*;
 import java.io.*;
 import java.net.URI;
 import java.net.http.*;
+import java.nio.ByteBuffer;
+import java.nio.charset.CharacterCodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 public class ImportService {
 
     private static final String OLLAMA_URL = "http://localhost:11434";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private final ObjectMapper mapper = new ObjectMapper();
 
     // ── Entity catalog ────────────────────────────────────────────────────────
@@ -81,14 +87,13 @@ public class ImportService {
         byte[] raw;
         try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
         String content;
-        // Strip BOM if present
         if (raw.length >= 3 && raw[0] == (byte) 0xEF && raw[1] == (byte) 0xBB && raw[2] == (byte) 0xBF) {
             content = new String(raw, 3, raw.length - 3, StandardCharsets.UTF_8);
         } else {
             try {
-                content = new String(raw, StandardCharsets.UTF_8);
-            } catch (Exception e) {
-                content = new String(raw, "ISO-8859-1");
+                content = decodeStrict(raw, StandardCharsets.UTF_8);
+            } catch (CharacterCodingException e) {
+                content = new String(raw, Charset.forName("windows-1252"));
             }
         }
 
@@ -143,6 +148,14 @@ public class ImportService {
         return fields;
     }
 
+    private String decodeStrict(byte[] raw, Charset charset) throws CharacterCodingException {
+        return charset.newDecoder()
+            .onMalformedInput(CodingErrorAction.REPORT)
+            .onUnmappableCharacter(CodingErrorAction.REPORT)
+            .decode(ByteBuffer.wrap(raw))
+            .toString();
+    }
+
     private ImportResult parseExcel(File file, boolean legacy) throws Exception {
         List<String> headers = new ArrayList<>();
         List<Map<String, String>> rows = new ArrayList<>();
@@ -182,6 +195,10 @@ public class ImportService {
             if (cv == null) return cell.getCellType() == CellType.STRING ? cell.getStringCellValue().trim() : "";
             return switch (cv.getCellType()) {
                 case NUMERIC -> {
+                    if (DateUtil.isCellDateFormatted(cell)) {
+                        yield DateUtil.getLocalDateTime(cv.getNumberValue()).toLocalDate()
+                            .format(DATE_FORMATTER);
+                    }
                     double d = cv.getNumberValue();
                     yield (d == Math.floor(d) && !Double.isInfinite(d))
                         ? String.valueOf((long) d)

@@ -72,15 +72,19 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         Label infoLabel = new Label(headers.size() + " columnas detectadas → " + spec.nombre());
         infoLabel.setStyle("-fx-text-fill:-c-text-muted;-fx-font-size:12px;");
         infoLabel.setPadding(new Insets(0, 0, 8, 0));
+        Label validationLabel = new Label();
+        validationLabel.setStyle("-fx-text-fill:#E74C3C;-fx-font-size:12px;");
 
         HBox bottomBox = new HBox(8, new Label("Si el registro ya existe:"), cbPolicy);
         bottomBox.setAlignment(Pos.CENTER_LEFT);
         bottomBox.setPadding(new Insets(10, 0, 4, 0));
 
+        VBox bottom = new VBox(6, validationLabel, bottomBox);
+
         BorderPane content = new BorderPane();
         content.setTop(infoLabel);
         content.setCenter(tabla);
-        content.setBottom(bottomBox);
+        content.setBottom(bottom);
 
         getDialogPane().setContent(content);
         getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
@@ -90,12 +94,17 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         Observable[] observables = items.stream()
             .map(r -> (Observable) r.campoSeleccionado)
             .toArray(Observable[]::new);
+        validationLabel.textProperty().bind(Bindings.createStringBinding(
+            () -> validationMessage(items, obligClaves), observables));
+        validationLabel.visibleProperty().bind(validationLabel.textProperty().isNotEmpty());
+        validationLabel.managedProperty().bind(validationLabel.visibleProperty());
         btnOk.disableProperty().bind(Bindings.createBooleanBinding(() -> {
             Set<String> mapeados = items.stream()
                 .map(r -> r.campoSeleccionado.get())
                 .collect(Collectors.toSet());
-            return !spec.camposObligatorios().stream()
+            boolean faltanObligatorios = !spec.camposObligatorios().stream()
                 .allMatch(f -> mapeados.contains(f.clave()));
+            return faltanObligatorios || hasDuplicateDestinations(items);
         }, observables));
 
         // Converter: devuelve null si el usuario cancela
@@ -192,6 +201,35 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
             @Override public DuplicatePolicy fromString(String s) { return null; }
         });
         return cb;
+    }
+
+    private String validationMessage(ObservableList<ColumnRow> items, Set<String> obligClaves) {
+        List<String> faltantes = obligClaves.stream()
+            .filter(clave -> items.stream().noneMatch(r -> clave.equals(r.campoSeleccionado.get())))
+            .toList();
+        if (!faltantes.isEmpty()) {
+            return "Faltan campos obligatorios: " + String.join(", ", faltantes);
+        }
+        List<String> duplicados = duplicateDestinations(items);
+        if (!duplicados.isEmpty()) {
+            return "Cada campo destino solo puede usarse una vez: " + String.join(", ", duplicados);
+        }
+        return "";
+    }
+
+    private boolean hasDuplicateDestinations(ObservableList<ColumnRow> items) {
+        return !duplicateDestinations(items).isEmpty();
+    }
+
+    private List<String> duplicateDestinations(ObservableList<ColumnRow> items) {
+        Set<String> vistos = new HashSet<>();
+        Set<String> duplicados = new LinkedHashSet<>();
+        for (ColumnRow row : items) {
+            String clave = row.campoSeleccionado.get();
+            if (clave == null || IGNORAR.equals(clave)) continue;
+            if (!vistos.add(clave)) duplicados.add(clave);
+        }
+        return new ArrayList<>(duplicados);
     }
 
     // ── Modelo de fila ────────────────────────────────────────────────────────
