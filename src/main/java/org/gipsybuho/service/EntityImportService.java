@@ -537,7 +537,11 @@ public class EntityImportService {
             return new int[]{0, 0};
         }
         Pedido existente = dao.findById(existingId);
+        int erroresAntes = errores.size();
         aplicarValoresPedido(existente, vr.vals(), errores, vr.numero());
+        if (errores.size() > erroresAntes) {
+            return new int[]{0, 0};
+        }
         existente.setClienteId(p.getClienteId());
         dao.save(existente);
         return new int[]{0, 1};

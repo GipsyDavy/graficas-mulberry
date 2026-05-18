@@ -153,6 +153,33 @@ class EntityImportServicePedidoTest {
         assertTrue(err.mensaje().contains("Fecha no válida"));
     }
 
+    @Test
+    void rechazaActualizacionConFechaMalFormada() throws Exception {
+        Cliente cliente = crearCliente("Ana", "Garcia", "111A");
+        Pedido existente = new Pedido();
+        existente.setClienteId(cliente.getId());
+        existente.setNumero("P-001");
+        existente.setFecha(java.time.LocalDate.of(2024, 1, 15));
+        new PedidoDAO().save(existente);
+
+        ImportResult result = importarConFecha(List.of(
+                fila("111A", "", "", "P-001", "120.50", "15/03/2024")
+        ), DuplicatePolicy.UPDATE_EXISTING);
+
+        assertEquals(0, result.filasImportadas());
+        assertEquals(0, result.filasActualizadas());
+        assertEquals(1, result.errores().size());
+        RowError err = result.errores().get(0);
+        assertEquals(ErrorTipo.TIPO_INVALIDO, err.tipo());
+        assertEquals("fecha", err.campo());
+        assertTrue(err.mensaje().contains("Fecha no válida"));
+        Pedido guardado = new PedidoDAO().findAll().stream()
+                .filter(pedido -> "P-001".equals(pedido.getNumero()))
+                .findFirst()
+                .orElseThrow();
+        assertEquals(java.time.LocalDate.of(2024, 1, 15), guardado.getFecha());
+    }
+
     private ImportResult importar(List<Map<String, String>> filas, DuplicatePolicy policy) throws Exception {
         return new EntityImportService().importar(Pedido.IMPORT_SPEC, filas, mapping(), policy);
     }
