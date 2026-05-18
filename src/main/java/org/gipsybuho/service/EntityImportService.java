@@ -31,7 +31,11 @@ public class EntityImportService {
 
     private static final Set<String> CAMPOS_NUMERICOS = Set.of(
         "stock_actual", "stock_minimo", "precio_unidad",
-        "salario_base", "irpf", "precio_unit", "precio_setup", "minimo_unidades"
+        "salario_base", "irpf", "precio_unit", "precio_setup", "minimo_unidades",
+        "mes", "anio", "complementos", "horas_extra_normales", "precio_hora_extra",
+        "horas_extra_festivas", "precio_hora_festiva", "percepciones_no_salariales",
+        "total_bruto", "irpf_porcentaje", "irpf_importe", "ss_trabajador",
+        "total_deducciones", "neto", "ss_empresa", "coste_total_empresa"
     );
     private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion");
 
@@ -181,6 +185,7 @@ public class EntityImportService {
             case "Empleados"  -> procesarEmpleado(conn, vr, policy, errores);
             case "Clientes"   -> procesarCliente(conn, vr, policy, errores);
             case "Tarifas"    -> procesarTarifa(conn, vr, policy, errores);
+            case "Nominas"    -> procesarNomina(conn, vr, policy, errores);
             default -> throw new IllegalArgumentException("Entidad no soportada: " + spec.nombre());
         };
     }
@@ -415,6 +420,114 @@ public class EntityImportService {
         });
     }
 
+    // ── Nomina ───────────────────────────────────────────────────────────────
+
+    private int[] procesarNomina(Connection conn, ValidRow vr, DuplicatePolicy policy,
+                                  List<RowError> errores) throws SQLException {
+        NominaDAO dao = new NominaDAO();
+        Nomina n = ensamblarNomina(vr.vals(), conn, errores, vr.numero());
+        if (n == null) return new int[]{0, 0};
+
+        if (policy == DuplicatePolicy.CREATE_NEW) {
+            dao.save(n);
+            return new int[]{1, 0};
+        }
+
+        int empleadoId = n.getEmpleadoId();
+        int mes = n.getMes();
+        int anio = n.getAnio();
+        if (empleadoId <= 0 || mes <= 0 || anio <= 0) {
+            errores.add(new RowError(vr.numero(), "empleado_id+mes+anio",
+                empleadoId + "/" + mes + "/" + anio, ErrorTipo.OTRO,
+                "Sin clave de negocio ('empleado_id'+'mes'+'anio') requerida por la política " + policy));
+            return new int[]{0, 0};
+        }
+
+        int existingId = buscarIdNomina(conn, empleadoId, mes, anio);
+        if (existingId == 0) {
+            dao.save(n);
+            return new int[]{1, 0};
+        }
+        if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
+            return new int[]{0, 0};
+        }
+        Nomina existente = dao.findById(existingId);
+        aplicarValoresNomina(existente, vr.vals());
+        existente.setEmpleadoId(empleadoId);
+        existente.setMes(mes);
+        existente.setAnio(anio);
+        dao.save(existente);
+        return new int[]{0, 1};
+    }
+
+    private Nomina ensamblarNomina(Map<String, String> vals, Connection conn,
+                                    List<RowError> errores, int numFila) throws SQLException {
+        String nombre = vals.getOrDefault("empleado_nombre", "");
+        String apellidos = vals.getOrDefault("empleado_apellidos", "");
+        int empleadoId = resolverEmpleadoId(conn, nombre, apellidos, errores, numFila);
+        if (empleadoId <= 0) return null;
+
+        Nomina n = new Nomina();
+        n.setEmpleadoId(empleadoId);
+        aplicarValoresNomina(n, vals);
+        return n;
+    }
+
+    private void aplicarValoresNomina(Nomina n, Map<String, String> vals) {
+        vals.forEach((clave, v) -> {
+            if (v == null || v.isBlank()) return;
+            switch (clave) {
+                case "mes"                         -> n.setMes(toInt(v));
+                case "anio"                        -> n.setAnio(toInt(v));
+                case "salario_base"                -> n.setSalarioBase(toDouble(v));
+                case "complementos"                -> n.setComplementos(toDouble(v));
+                case "horas_extra_normales"        -> n.setHorasExtraNormales(toInt(v));
+                case "precio_hora_extra"           -> n.setPrecioHoraExtra(toDouble(v));
+                case "horas_extra_festivas"        -> n.setHorasExtraFestivas(toInt(v));
+                case "precio_hora_festiva"         -> n.setPrecioHoraFestiva(toDouble(v));
+                case "percepciones_no_salariales"  -> n.setPercepcionesNoSalariales(toDouble(v));
+                case "total_bruto"                 -> n.setTotalBruto(toDouble(v));
+                case "irpf_porcentaje"             -> n.setIrpfPorcentaje(toDouble(v));
+                case "irpf_importe"                -> n.setIrpfImporte(toDouble(v));
+                case "ss_trabajador"               -> n.setSsTrabajador(toDouble(v));
+                case "total_deducciones"           -> n.setTotalDeducciones(toDouble(v));
+                case "neto"                        -> n.setNeto(toDouble(v));
+                case "ss_empresa"                  -> n.setSsEmpresa(toDouble(v));
+                case "coste_total_empresa"         -> n.setCosteTotalEmpresa(toDouble(v));
+            }
+        });
+    }
+
+    private int resolverEmpleadoId(Connection conn, String nombre, String apellidos,
+                                   List<RowError> errores, int numFila) throws SQLException {
+        String nombreLimpio = nombre != null ? nombre.trim() : "";
+        String apellidosLimpios = apellidos != null ? apellidos.trim() : "";
+        String sql = apellidosLimpios.isBlank()
+            ? "SELECT id FROM empleados WHERE activo=1 AND lower(trim(nombre))=lower(trim(?))"
+            : "SELECT id FROM empleados WHERE activo=1 AND lower(trim(nombre))=lower(trim(?)) AND lower(trim(COALESCE(apellidos,'')))=lower(trim(?))";
+
+        List<Integer> ids = new ArrayList<>();
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setString(1, nombreLimpio);
+            if (!apellidosLimpios.isBlank()) ps.setString(2, apellidosLimpios);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) ids.add(rs.getInt("id"));
+        }
+
+        String valor = apellidosLimpios.isBlank() ? nombreLimpio : nombreLimpio + " " + apellidosLimpios;
+        if (ids.isEmpty()) {
+            errores.add(new RowError(numFila, "empleado_nombre", valor, ErrorTipo.OTRO,
+                "Empleado no encontrado para la nómina: " + valor));
+            return -1;
+        }
+        if (ids.size() > 1) {
+            errores.add(new RowError(numFila, "empleado_nombre", valor, ErrorTipo.OTRO,
+                "Empleado ambiguo para la nómina: " + valor + " (" + ids.size() + " coincidencias)"));
+            return -1;
+        }
+        return ids.get(0);
+    }
+
     // ── Utilidades ────────────────────────────────────────────────────────────
 
     /** Busca el id de un registro por una sola clave de negocio. Devuelve 0 si no existe. */
@@ -432,6 +545,18 @@ public class EntityImportService {
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tecnica);
             ps.setString(2, nombre);
+            ResultSet rs = ps.executeQuery();
+            return rs.next() ? rs.getInt(1) : 0;
+        }
+    }
+
+    /** Busca el id de una nómina por su clave compuesta (empleado_id, mes, anio). */
+    private int buscarIdNomina(Connection conn, int empleadoId, int mes, int anio) throws SQLException {
+        String sql = "SELECT id FROM nominas WHERE empleado_id=? AND mes=? AND anio=?";
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+            ps.setInt(1, empleadoId);
+            ps.setInt(2, mes);
+            ps.setInt(3, anio);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         }
