@@ -12,8 +12,8 @@ $java        = "$jdk24\bin\java.exe"
 $wixDir      = "C:\Users\GipsyDavy\wix3"
 $destDir     = [System.IO.Path]::Combine([System.Environment]::GetFolderPath("Desktop"), "graficas_mulberry")
 $appName     = "GraficasMulberry"
-$appVersion  = "3.1.0"
-$jarName     = "GraficasMulberry-3.1.jar"
+$appVersion  = "13.5.0"
+$jarName     = "GraficasMulberry-13.5.0.jar"
 
 # Añadir WiX al PATH para que jpackage lo encuentre
 $env:PATH = "$wixDir;$env:PATH"

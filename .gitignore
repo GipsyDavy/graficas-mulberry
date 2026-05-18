@@ -3,12 +3,10 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 .kotlin
-
 ### Secrets / local environment ###
 .env
 .env.*
 !.env.example
-
 ### IntelliJ IDEA ###
 .idea/modules.xml
 .idea/jarRepositories.xml
@@ -17,7 +15,6 @@ target/
 *.iws
 *.iml
 *.ipr
-
 ### Eclipse ###
 .apt_generated
 .classpath
@@ -26,7 +23,6 @@ target/
 .settings
 .springBeans
 .sts4-cache
-
 ### NetBeans ###
 /nbproject/private/
 /nbbuild/
@@ -36,9 +32,20 @@ target/
 build/
 !**/src/main/**/build/
 !**/src/test/**/build/
-
 ### VS Code ###
 .vscode/
-
 ### Mac OS ###
 .DS_Store
+### IntelliJ IDEA (adicional) ###
+.idea/dataSources.xml
+.idea/dataSources.local.xml
+.idea/sqldialects.xml
+.idea/workspace.xml
+.idea/usage.statistics.xml
+.idea/shelf/
+### Claude Code ###
+.claude/settings.local.json
+### Instaladores e historico de builds ###
+installer/
+output/
+dependency-reduced-pom.xml
