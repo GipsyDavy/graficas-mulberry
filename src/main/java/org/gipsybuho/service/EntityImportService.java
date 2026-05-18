@@ -19,7 +19,7 @@ import java.util.*;
  * <ol>
  *   <li>Fase 1 — mapearValores: renombra las claves-header a claves-campo y sanitiza strings.</li>
  *   <li>Fase 2 — validarTodas: comprueba NOT NULL, tipos numéricos y longitudes en memoria, sin BD.</li>
- *   <li>Fase 3 — insertarEnTransaccion: aplica DuplicatePolicy e inserta/actualiza en una transacción única.</li>
+ *   <li>Fase 3 — insertarFilas: aplica DuplicatePolicy e inserta/actualiza en una transacción única.</li>
  * </ol>
  *
  * <p>El caller es responsable del parseo (use {@code ImportService.parseFile()}) y del mapeo
@@ -48,6 +48,9 @@ public class EntityImportService {
     /** Fila válida que ha superado la fase 2, con su número original de fila (1-based). */
     private record ValidRow(int numero, Map<String, String> vals) {}
 
+    /** Grupo de filas que comparten la misma clave de agrupación en specs parent-child. */
+    private record ValidGroup(String clave, List<ValidRow> filas) {}
+
     /**
      * @param spec    descriptor de la entidad (Material.IMPORT_SPEC, etc.)
      * @param filas   filas parseadas del archivo (clave = header del archivo, valor = texto)
@@ -62,6 +65,12 @@ public class EntityImportService {
         if (filas.size() > MAX_FILAS)
             throw new IllegalArgumentException(
                 "El archivo supera el límite de " + MAX_FILAS + " filas por importación.");
+
+        if (spec.esParentChild() && policy == DuplicatePolicy.UPDATE_EXISTING) {
+            throw new IllegalArgumentException(
+                "UPDATE_EXISTING no está permitido para entidades parent-child: " + spec.nombre()
+                    + ". El motor borraría líneas hijas manualmente añadidas. Use SKIP_IF_EXISTS o CREATE_NEW.");
+        }
 
         Instant start = Instant.now();
 
@@ -81,13 +90,28 @@ public class EntityImportService {
         }
 
         // Fase 3: insertar/actualizar en una única transacción SQLite
-        int[] cnt = insertarEnTransaccion(spec, validas, policy, errores);
+        int insertadas;
+        int actualizadas;
+        int filasOk;
+        if (spec.esParentChild()) {
+            // Fase 2.5: agrupar filas válidas por clave de agrupación
+            List<ValidGroup> grupos = agruparEnFase2_5(spec, validas, errores);
+            int[] cnt = insertarGrupos(spec, grupos, policy, errores);
+            insertadas = cnt[0];
+            actualizadas = cnt[1];
+            filasOk = cnt[2];
+        } else {
+            int[] cnt = insertarFilas(spec, validas, policy, errores);
+            insertadas = cnt[0];
+            actualizadas = cnt[1];
+            filasOk = cnt[0] + cnt[1];
+        }
 
         return new ImportResult(
             filas.size(),
-            cnt[0],                             // insertadas
-            cnt[1],                             // actualizadas
-            filas.size() - cnt[0] - cnt[1],     // descartadas = total − insertadas − actualizadas
+            insertadas,
+            actualizadas,
+            filas.size() - filasOk,
             Collections.unmodifiableList(errores),
             Duration.between(start, Instant.now())
         );
@@ -148,6 +172,30 @@ public class EntityImportService {
         return out;
     }
 
+    /**
+     * Fase 2.5: agrupa filas válidas por la clave declarada en {@code spec.claveAgrupacion()}.
+     * Filas con clave de agrupación blank se descartan con RowError individual (no contaminan ningún grupo).
+     * Preserva el orden de aparición de las claves en el CSV.
+     */
+    private List<ValidGroup> agruparEnFase2_5(EntityImportSpec spec, List<ValidRow> validas, List<RowError> errores) {
+        String claveCampo = spec.claveAgrupacion();
+        LinkedHashMap<String, List<ValidRow>> mapa = new LinkedHashMap<>();
+        for (ValidRow vr : validas) {
+            String valorClave = vr.vals().getOrDefault(claveCampo, "").trim();
+            if (valorClave.isBlank()) {
+                errores.add(new RowError(vr.numero(), claveCampo, "", ErrorTipo.NULL_OBLIGATORIO,
+                    "Falta clave de agrupación '" + claveCampo + "' en la fila"));
+                continue;
+            }
+            mapa.computeIfAbsent(valorClave, k -> new ArrayList<>()).add(vr);
+        }
+        List<ValidGroup> grupos = new ArrayList<>(mapa.size());
+        for (var e : mapa.entrySet()) {
+            grupos.add(new ValidGroup(e.getKey(), e.getValue()));
+        }
+        return grupos;
+    }
+
     private boolean esNumerico(String s) {
         try {
             Double.parseDouble(s.replace(",", ".").replaceAll("[^0-9.\\-]", ""));
@@ -168,7 +216,7 @@ public class EntityImportService {
 
     // ── Fase 3: transacción única ─────────────────────────────────────────────
 
-    private int[] insertarEnTransaccion(EntityImportSpec spec, List<ValidRow> validas,
+    private int[] insertarFilas(EntityImportSpec spec, List<ValidRow> validas,
                                          DuplicatePolicy policy, List<RowError> errores) throws Exception {
         int insertadas = 0, actualizadas = 0;
         Connection conn = DatabaseManager.getConnection();
@@ -197,6 +245,43 @@ public class EntityImportService {
         return new int[]{insertadas, actualizadas};
     }
 
+    /**
+     * Fase 3 alternativa para specs parent-child: ejecuta cada grupo dentro de su propio savepoint.
+     * Cabecera + líneas se insertan o se revierten como un átomo transaccional.
+     *
+     * @return int[]{entidadesInsertadas, entidadesActualizadas, filasConsumidasOk}
+     */
+    private int[] insertarGrupos(EntityImportSpec spec, List<ValidGroup> grupos,
+                                  DuplicatePolicy policy, List<RowError> errores) throws Exception {
+        int insertadas = 0, actualizadas = 0, filasOk = 0;
+        Connection conn = DatabaseManager.getConnection();
+        boolean prevAC = conn.getAutoCommit();
+        conn.setAutoCommit(false);
+        try {
+            for (ValidGroup g : grupos) {
+                Savepoint sp = conn.setSavepoint();
+                try {
+                    int[] r = procesarGrupo(conn, spec, g, policy, errores);
+                    insertadas += r[0];
+                    actualizadas += r[1];
+                    filasOk += r[2];
+                } catch (SQLException sqle) {
+                    conn.rollback(sp);
+                    int numFila = g.filas().isEmpty() ? 0 : g.filas().get(0).numero();
+                    errores.add(new RowError(numFila, null, g.clave(), ErrorTipo.OTRO,
+                        "Error de BD al guardar el grupo '" + g.clave() + "': " + sqle.getMessage()));
+                }
+            }
+            conn.commit();
+        } catch (Exception e) {
+            conn.rollback();
+            throw e;
+        } finally {
+            conn.setAutoCommit(prevAC);
+        }
+        return new int[]{insertadas, actualizadas, filasOk};
+    }
+
     private int[] procesarFila(Connection conn, EntityImportSpec spec, ValidRow vr,
                                 DuplicatePolicy policy, List<RowError> errores) throws SQLException {
         return switch (spec.nombre()) {
@@ -208,6 +293,21 @@ public class EntityImportService {
             case "Pedidos"    -> procesarPedido(conn, vr, policy, errores);
             default -> throw new IllegalArgumentException("Entidad no soportada: " + spec.nombre());
         };
+    }
+
+    /**
+     * Dispatcher de specs parent-child. Cada entidad parent-child se añadirá como case en bloques siguientes
+     * (3C-paso-3 Presupuesto, Bloque 4 Factura, Bloque 5 Albarán).
+     *
+     * <p>Contrato del método llamado por entidad: devolver int[]{entidadesInsertadas, entidadesActualizadas, filasConsumidasOk}.
+     * Fallos post-INSERT-cabecera deben lanzar SQLException para que el savepoint del grupo rollee atómicamente.
+     * Fallos pre-INSERT (FK de cabecera, etc.) pueden retornar {0,0,0} añadiendo el RowError correspondiente.
+     */
+    @SuppressWarnings("unused")
+    private int[] procesarGrupo(Connection conn, EntityImportSpec spec, ValidGroup g,
+                                 DuplicatePolicy policy, List<RowError> errores) throws SQLException {
+        throw new IllegalArgumentException(
+            "Entidad parent-child no soportada: " + spec.nombre());
     }
 
     // ── Material ──────────────────────────────────────────────────────────────
