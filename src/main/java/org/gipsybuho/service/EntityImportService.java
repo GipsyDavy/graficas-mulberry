@@ -40,6 +40,9 @@ public class EntityImportService {
         "total_deducciones", "neto", "ss_empresa", "coste_total_empresa",
         "importe_total", "iva_porcentaje"
     );
+    private static final Set<String> CAMPOS_FECHA = Set.of(
+        "fecha", "fecha_entrega_prevista", "fecha_entrega_real"
+    );
     private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion");
 
     /** Fila válida que ha superado la fase 2, con su número original de fila (1-based). */
@@ -137,6 +140,10 @@ public class EntityImportService {
                 out.add(new RowError(num, f.clave(), v, ErrorTipo.TIPO_INVALIDO,
                     "No es un número válido: '" + v + "'"));
             }
+            if (CAMPOS_FECHA.contains(f.clave()) && !esIsoFechaValida(v)) {
+                out.add(new RowError(num, f.clave(), v, ErrorTipo.TIPO_INVALIDO,
+                    "Fecha no válida (formato esperado: yyyy-MM-dd): '" + v + "'"));
+            }
         }
         return out;
     }
@@ -146,6 +153,15 @@ public class EntityImportService {
             Double.parseDouble(s.replace(",", ".").replaceAll("[^0-9.\\-]", ""));
             return true;
         } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    private boolean esIsoFechaValida(String s) {
+        try {
+            LocalDate.parse(s.trim());
+            return true;
+        } catch (DateTimeParseException e) {
             return false;
         }
     }

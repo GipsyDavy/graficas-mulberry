@@ -180,6 +180,26 @@ class EntityImportServicePedidoTest {
         assertEquals(java.time.LocalDate.of(2024, 1, 15), guardado.getFecha());
     }
 
+    @Test
+    void validaFormatoFechaEnFase2() throws Exception {
+        crearCliente("Ana", "Garcia", "111A");
+
+        ImportResult result = importarConFecha(List.of(
+                fila("111A", "", "", "P-FECHA-MALA", "120.50", "31/12/2025")
+        ), DuplicatePolicy.SKIP_IF_EXISTS);
+
+        assertEquals(1, result.filasDescartadas());
+        assertEquals(0, result.filasImportadas());
+        assertEquals(1, result.errores().size());
+        RowError err = result.errores().get(0);
+        assertEquals("fecha", err.campo());
+        assertEquals(ErrorTipo.TIPO_INVALIDO, err.tipo());
+        assertTrue(err.mensaje().contains("Fecha no válida"));
+        assertTrue(err.mensaje().contains("31/12/2025"));
+        assertTrue(new PedidoDAO().findAll().stream()
+                .noneMatch(pedido -> "P-FECHA-MALA".equals(pedido.getNumero())));
+    }
+
     private ImportResult importar(List<Map<String, String>> filas, DuplicatePolicy policy) throws Exception {
         return new EntityImportService().importar(Pedido.IMPORT_SPEC, filas, mapping(), policy);
     }
