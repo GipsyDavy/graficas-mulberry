@@ -4,10 +4,12 @@ import org.gipsybuho.dao.*;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.importer.*;
+import java.time.format.DateTimeParseException;
 
 import java.sql.*;
 import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -35,7 +37,8 @@ public class EntityImportService {
         "mes", "anio", "complementos", "horas_extra_normales", "precio_hora_extra",
         "horas_extra_festivas", "precio_hora_festiva", "percepciones_no_salariales",
         "total_bruto", "irpf_porcentaje", "irpf_importe", "ss_trabajador",
-        "total_deducciones", "neto", "ss_empresa", "coste_total_empresa"
+        "total_deducciones", "neto", "ss_empresa", "coste_total_empresa",
+        "importe_total", "iva_porcentaje"
     );
     private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion");
 
@@ -186,6 +189,7 @@ public class EntityImportService {
             case "Clientes"   -> procesarCliente(conn, vr, policy, errores);
             case "Tarifas"    -> procesarTarifa(conn, vr, policy, errores);
             case "Nominas"    -> procesarNomina(conn, vr, policy, errores);
+            case "Pedidos"    -> procesarPedido(conn, vr, policy, errores);
             default -> throw new IllegalArgumentException("Entidad no soportada: " + spec.nombre());
         };
     }
@@ -500,11 +504,130 @@ public class EntityImportService {
 
     private int resolverEmpleadoId(Connection conn, String nombre, String apellidos,
                                    List<RowError> errores, int numFila) throws SQLException {
+        return resolverFkPorNombre(conn, "empleados", "nombre", "apellidos",
+            nombre, apellidos, "activo=1", "Empleado", "la nómina", errores, numFila);
+    }
+
+    // ── Pedido ───────────────────────────────────────────────────────────────
+
+    private int[] procesarPedido(Connection conn, ValidRow vr, DuplicatePolicy policy,
+                                  List<RowError> errores) throws SQLException {
+        PedidoDAO dao = new PedidoDAO();
+        Pedido p = ensamblarPedido(vr.vals(), conn, errores, vr.numero());
+        if (p == null) return new int[]{0, 0};
+
+        if (policy == DuplicatePolicy.CREATE_NEW) {
+            dao.save(p);
+            return new int[]{1, 0};
+        }
+
+        String numero = p.getNumero();
+        if (numero == null || numero.isBlank()) {
+            errores.add(new RowError(vr.numero(), "numero", numero, ErrorTipo.OTRO,
+                "Sin clave de negocio ('numero') requerida por la política " + policy));
+            return new int[]{0, 0};
+        }
+
+        int existingId = buscarId(conn, "SELECT id FROM pedidos WHERE numero=?", numero);
+        if (existingId == 0) {
+            dao.save(p);
+            return new int[]{1, 0};
+        }
+        if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
+            return new int[]{0, 0};
+        }
+        Pedido existente = dao.findById(existingId);
+        aplicarValoresPedido(existente, vr.vals(), errores, vr.numero());
+        existente.setClienteId(p.getClienteId());
+        dao.save(existente);
+        return new int[]{0, 1};
+    }
+
+    private Pedido ensamblarPedido(Map<String, String> vals, Connection conn,
+                                   List<RowError> errores, int numFila) throws SQLException {
+        String nif = vals.getOrDefault("cliente_nif", "");
+        String nombre = vals.getOrDefault("cliente_nombre", "");
+        String apellidos = vals.getOrDefault("cliente_apellidos", "");
+        int clienteId = resolverClienteId(conn, nif, nombre, apellidos, errores, numFila);
+        if (clienteId <= 0) return null;
+
+        Pedido p = new Pedido();
+        p.setClienteId(clienteId);
+        int erroresAntes = errores.size();
+        aplicarValoresPedido(p, vals, errores, numFila);
+        if (errores.size() > erroresAntes) return null;
+        return p;
+    }
+
+    private void aplicarValoresPedido(Pedido p, Map<String, String> vals,
+                                      List<RowError> errores, int numFila) {
+        vals.forEach((clave, v) -> {
+            if (v == null || v.isBlank()) return;
+            switch (clave) {
+                case "numero"                  -> p.setNumero(v);
+                case "fecha"                   -> p.setFecha(toLocalDate(v, "fecha", numFila, errores));
+                case "fecha_entrega_prevista"  -> p.setFechaEntregaPrevista(toLocalDate(v, "fecha_entrega_prevista", numFila, errores));
+                case "fecha_entrega_real"      -> p.setFechaEntregaReal(toLocalDate(v, "fecha_entrega_real", numFila, errores));
+                case "estado"                  -> p.setEstado(v);
+                case "descripcion"             -> p.setDescripcion(v);
+                case "importe_total"           -> p.setImporteTotal(toDouble(v));
+                case "iva_porcentaje"          -> p.setIvaPorcentaje(toDouble(v));
+                case "notas"                   -> p.setNotas(v);
+            }
+        });
+    }
+
+    private int resolverClienteId(Connection conn, String nif, String nombre, String apellidos,
+                                  List<RowError> errores, int numFila) throws SQLException {
+        String nifLimpio = nif != null ? nif.trim() : "";
+        if (!nifLimpio.isBlank()) {
+            int id = buscarId(conn, "SELECT id FROM clientes WHERE nif=?", nifLimpio);
+            if (id > 0) return id;
+            errores.add(new RowError(numFila, "cliente_nif", nifLimpio, ErrorTipo.OTRO,
+                "Cliente con nif '" + nifLimpio + "' no encontrado para el pedido"));
+            return -1;
+        }
+
+        String nombreLimpio = nombre != null ? nombre.trim() : "";
+        if (nombreLimpio.isBlank()) {
+            errores.add(new RowError(numFila, "cliente_nombre", "", ErrorTipo.OTRO,
+                "El pedido no especifica ni cliente_nif ni cliente_nombre"));
+            return -1;
+        }
+
+        // Clientes no tiene flag de activo aplicado en importación; se resuelve sin filtro extra.
+        return resolverFkPorNombre(conn, "clientes", "nombre", "apellidos",
+            nombre, apellidos, null, "Cliente", "el pedido", errores, numFila);
+    }
+
+    private int resolverFkPorNombre(Connection conn,
+                                    String tabla,
+                                    String columnaNombre,
+                                    String columnaApellidos,
+                                    String nombre,
+                                    String apellidos,
+                                    String filtroExtraSql,
+                                    String etiquetaEntidad,
+                                    String contextoEntidad,
+                                    List<RowError> errores,
+                                    int numFila) throws SQLException {
+        validarIdentificadorSql(tabla);
+        validarIdentificadorSql(columnaNombre);
+        validarIdentificadorSql(columnaApellidos);
+        if (filtroExtraSql != null && !filtroExtraSql.matches("[A-Za-z_][A-Za-z0-9_]*\\s*=\\s*[0-9]+")) {
+            throw new IllegalArgumentException("Filtro SQL no válido para resolver FK: " + filtroExtraSql);
+        }
+
         String nombreLimpio = nombre != null ? nombre.trim() : "";
         String apellidosLimpios = apellidos != null ? apellidos.trim() : "";
-        String sql = apellidosLimpios.isBlank()
-            ? "SELECT id FROM empleados WHERE activo=1 AND lower(trim(nombre))=lower(trim(?))"
-            : "SELECT id FROM empleados WHERE activo=1 AND lower(trim(nombre))=lower(trim(?)) AND lower(trim(COALESCE(apellidos,'')))=lower(trim(?))";
+        String sql = "SELECT id FROM " + tabla
+            + " WHERE lower(trim(" + columnaNombre + "))=lower(trim(?))";
+        if (!apellidosLimpios.isBlank()) {
+            sql += " AND lower(trim(COALESCE(" + columnaApellidos + ",'')))=lower(trim(?))";
+        }
+        if (filtroExtraSql != null && !filtroExtraSql.isBlank()) {
+            sql += " AND " + filtroExtraSql;
+        }
 
         List<Integer> ids = new ArrayList<>();
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
@@ -515,14 +638,15 @@ public class EntityImportService {
         }
 
         String valor = apellidosLimpios.isBlank() ? nombreLimpio : nombreLimpio + " " + apellidosLimpios;
+        String campo = etiquetaEntidad.toLowerCase(Locale.ROOT) + "_nombre";
         if (ids.isEmpty()) {
-            errores.add(new RowError(numFila, "empleado_nombre", valor, ErrorTipo.OTRO,
-                "Empleado no encontrado para la nómina: " + valor));
+            errores.add(new RowError(numFila, campo, valor, ErrorTipo.OTRO,
+                etiquetaEntidad + " no encontrado para " + contextoEntidad + ": " + valor));
             return -1;
         }
         if (ids.size() > 1) {
-            errores.add(new RowError(numFila, "empleado_nombre", valor, ErrorTipo.OTRO,
-                "Empleado ambiguo para la nómina: " + valor + " (" + ids.size() + " coincidencias)"));
+            errores.add(new RowError(numFila, campo, valor, ErrorTipo.OTRO,
+                etiquetaEntidad + " ambiguo para " + contextoEntidad + ": " + valor + " (" + ids.size() + " coincidencias)"));
             return -1;
         }
         return ids.get(0);
@@ -562,6 +686,12 @@ public class EntityImportService {
         }
     }
 
+    private void validarIdentificadorSql(String identificador) {
+        if (identificador == null || !identificador.matches("[A-Za-z_][A-Za-z0-9_]*")) {
+            throw new IllegalArgumentException("Identificador SQL no válido para resolver FK: " + identificador);
+        }
+    }
+
     private double toDouble(String s) {
         try {
             return Double.parseDouble(s.replace(",", ".").replaceAll("[^0-9.\\-]", ""));
@@ -575,6 +705,17 @@ public class EntityImportService {
             return Integer.parseInt(s.replaceAll("[^0-9\\-]", ""));
         } catch (NumberFormatException e) {
             return 0;
+        }
+    }
+
+    private LocalDate toLocalDate(String s, String campo, int numFila, List<RowError> errores) {
+        if (s == null || s.isBlank()) return null;
+        try {
+            return LocalDate.parse(s.trim());
+        } catch (DateTimeParseException e) {
+            errores.add(new RowError(numFila, campo, s, ErrorTipo.TIPO_INVALIDO,
+                    "Fecha no válida (formato esperado: yyyy-MM-dd): '" + s + "'"));
+            return null;
         }
     }
 }
