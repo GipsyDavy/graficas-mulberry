@@ -191,9 +191,49 @@ public class EntityImportService {
         }
         List<ValidGroup> grupos = new ArrayList<>(mapa.size());
         for (var e : mapa.entrySet()) {
-            grupos.add(new ValidGroup(e.getKey(), e.getValue()));
+            List<ValidRow> filas = e.getValue();
+            List<RowError> inconsistencias = detectarInconsistenciaGrupo(spec, e.getKey(), filas);
+            if (!inconsistencias.isEmpty()) {
+                errores.addAll(inconsistencias);
+                continue;
+            }
+            grupos.add(new ValidGroup(e.getKey(), filas));
         }
         return grupos;
+    }
+
+    /**
+     * Compara cada fila del grupo contra la primera en todos los campos de {@code spec.campos()}.
+     * Si alguna fila difiere, devuelve un RowError por cada fila del grupo (la "canon" y las divergentes),
+     * indicando el primer campo discrepante encontrado. El caller descarta el grupo completo.
+     *
+     * <p>Política A de la decisión D1: todos los campos de la cabecera del spec cuentan.
+     * Comparación con equals() directo, sin normalización (la sanitización Fase 1 ya ha hecho trim).
+     *
+     * @return lista vacía si el grupo es coherente; lista con un RowError por fila si hay inconsistencia.
+     */
+    private List<RowError> detectarInconsistenciaGrupo(EntityImportSpec spec, String clave, List<ValidRow> filas) {
+        if (filas.size() < 2) return List.of();
+        ValidRow canon = filas.get(0);
+        for (int i = 1; i < filas.size(); i++) {
+            ValidRow otra = filas.get(i);
+            for (FieldSpec f : spec.campos()) {
+                String vCanon = canon.vals().getOrDefault(f.clave(), "");
+                String vOtra = otra.vals().getOrDefault(f.clave(), "");
+                if (!vCanon.equals(vOtra)) {
+                    List<RowError> out = new ArrayList<>(filas.size());
+                    String mensaje = "Inconsistencia en grupo '" + clave + "' entre filas "
+                        + canon.numero() + " y " + otra.numero()
+                        + ": campo '" + f.clave() + "' tiene valores '" + vCanon + "' vs '" + vOtra + "'";
+                    for (ValidRow vr : filas) {
+                        out.add(new RowError(vr.numero(), f.clave(), vr.vals().getOrDefault(f.clave(), ""),
+                            ErrorTipo.OTRO, mensaje));
+                    }
+                    return out;
+                }
+            }
+        }
+        return List.of();
     }
 
     private boolean esNumerico(String s) {
