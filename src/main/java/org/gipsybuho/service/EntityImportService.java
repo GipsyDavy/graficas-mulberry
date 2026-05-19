@@ -41,9 +41,9 @@ public class EntityImportService {
         "importe_total", "iva_porcentaje"
     );
     private static final Set<String> CAMPOS_FECHA = Set.of(
-        "fecha", "fecha_entrega_prevista", "fecha_entrega_real"
+        "fecha", "fecha_validez", "fecha_entrega_prevista", "fecha_entrega_real"
     );
-    private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion");
+    private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion", "condiciones");
 
     /** Fila válida que ha superado la fase 2, con su número original de fila (1-based). */
     private record ValidRow(int numero, Map<String, String> vals) {}
@@ -69,7 +69,12 @@ public class EntityImportService {
         if (spec.esParentChild() && policy == DuplicatePolicy.UPDATE_EXISTING) {
             throw new IllegalArgumentException(
                 "UPDATE_EXISTING no está permitido para entidades parent-child: " + spec.nombre()
-                    + ". El motor borraría líneas hijas manualmente añadidas. Use SKIP_IF_EXISTS o CREATE_NEW.");
+                    + ". El motor borraría líneas hijas manualmente añadidas. Use SKIP_IF_EXISTS.");
+        }
+        if (spec.esParentChild() && policy == DuplicatePolicy.CREATE_NEW) {
+            throw new IllegalArgumentException(
+                "CREATE_NEW no está permitido para entidades parent-child: " + spec.nombre()
+                    + ". La clave de agrupación es el identificador natural; duplicarla no tiene semántica clara. Use SKIP_IF_EXISTS.");
         }
 
         Instant start = Instant.now();
@@ -343,11 +348,13 @@ public class EntityImportService {
      * Fallos post-INSERT-cabecera deben lanzar SQLException para que el savepoint del grupo rollee atómicamente.
      * Fallos pre-INSERT (FK de cabecera, etc.) pueden retornar {0,0,0} añadiendo el RowError correspondiente.
      */
-    @SuppressWarnings("unused")
     private int[] procesarGrupo(Connection conn, EntityImportSpec spec, ValidGroup g,
                                  DuplicatePolicy policy, List<RowError> errores) throws SQLException {
-        throw new IllegalArgumentException(
-            "Entidad parent-child no soportada: " + spec.nombre());
+        return switch (spec.nombre()) {
+            case "Presupuestos" -> procesarPresupuesto(conn, spec, g, policy, errores);
+            default -> throw new IllegalArgumentException(
+                "Entidad parent-child no soportada: " + spec.nombre());
+        };
     }
 
     // ── Material ──────────────────────────────────────────────────────────────
@@ -810,6 +817,88 @@ public class EntityImportService {
             return -1;
         }
         return ids.get(0);
+    }
+
+    // ── Presupuesto (parent-child) ───────────────────────────────────────────
+
+    private int[] procesarPresupuesto(Connection conn, EntityImportSpec spec, ValidGroup g,
+                                       DuplicatePolicy policy, List<RowError> errores) throws SQLException {
+        // Cabecera = primera fila del grupo (ya validada coherente por detectarInconsistenciaGrupo).
+        ValidRow cabecera = g.filas().get(0);
+        Map<String, String> vals = cabecera.vals();
+        int numFila = cabecera.numero();
+
+        // FK cliente (mismo contrato que Pedido: nif explícito sin fallback; si vacío, nombre+apellidos).
+        String nif = vals.getOrDefault("cliente_nif", "");
+        String nombre = vals.getOrDefault("cliente_nombre", "");
+        String apellidos = vals.getOrDefault("cliente_apellidos", "");
+        int clienteId = resolverClienteId(conn, nif, nombre, apellidos, errores, numFila);
+        if (clienteId <= 0) return new int[]{0, 0, 0};
+
+        // Duplicado por 'numero'. UPDATE_EXISTING y CREATE_NEW están bloqueados al inicio de importar()
+        // para parent-child, así que aquí sólo se llega con SKIP_IF_EXISTS.
+        String numero = vals.getOrDefault("numero", "");
+        int existingId = buscarId(conn, "SELECT id FROM presupuestos WHERE numero=?", numero);
+        if (existingId > 0) {
+            return new int[]{0, 0, g.filas().size()};
+        }
+
+        Presupuesto p = ensamblarPresupuesto(clienteId, vals, g.filas(), errores, numFila);
+        if (p == null) return new int[]{0, 0, 0};
+
+        new PresupuestoDAO().save(p);
+        return new int[]{1, 0, g.filas().size()};
+    }
+
+    private Presupuesto ensamblarPresupuesto(int clienteId, Map<String, String> valsCabecera,
+                                              List<ValidRow> filas, List<RowError> errores, int numFila) {
+        Presupuesto p = new Presupuesto();
+        p.setClienteId(clienteId);
+        int erroresAntes = errores.size();
+        aplicarValoresPresupuestoCabecera(p, valsCabecera, errores, numFila);
+        if (errores.size() > erroresAntes) return null;
+
+        // Defaults si llegaron vacíos del CSV.
+        if (p.getFecha() == null || p.getFecha().isBlank()) p.setFecha(LocalDate.now().toString());
+        if (p.getEstado() == null || p.getEstado().isBlank()) p.setEstado("borrador");
+        if (p.getIvaPorcentaje() == 0.0) p.setIvaPorcentaje(21.0);
+
+        // Líneas: una por cada fila del grupo, en orden CSV.
+        List<LineaPresupuesto> lineas = new ArrayList<>(filas.size());
+        for (ValidRow vr : filas) {
+            lineas.add(ensamblarLineaPresupuesto(vr.vals()));
+        }
+        p.setLineas(lineas);
+        p.calcularTotales();
+        return p;
+    }
+
+    private void aplicarValoresPresupuestoCabecera(Presupuesto p, Map<String, String> vals,
+                                                    List<RowError> errores, int numFila) {
+        vals.forEach((clave, v) -> {
+            if (v == null || v.isBlank()) return;
+            switch (clave) {
+                case "numero"          -> p.setNumero(v);
+                case "fecha"           -> p.setFecha(v);
+                case "fecha_validez"   -> p.setFechaValidez(v);
+                case "estado"          -> p.setEstado(v);
+                case "iva_porcentaje"  -> p.setIvaPorcentaje(toDouble(v));
+                case "notas"           -> p.setNotas(v);
+                case "condiciones"     -> p.setCondiciones(v);
+                default -> { /* campos de línea o desconocidos: ignorar a nivel cabecera */ }
+            }
+        });
+    }
+
+    private LineaPresupuesto ensamblarLineaPresupuesto(Map<String, String> vals) {
+        LineaPresupuesto l = new LineaPresupuesto();
+        l.setDescripcion(vals.getOrDefault("descripcion", ""));
+        l.setTecnica(vals.getOrDefault("tecnica", ""));
+        l.setCantidad(toInt(vals.getOrDefault("cantidad", "0")));
+        l.setPrecioUnit(toDouble(vals.getOrDefault("precio_unit", "0")));
+        l.setDescuento(toDouble(vals.getOrDefault("descuento", "0")));
+        l.calcularTotal();
+        return l;
     }
 
     // ── Utilidades ────────────────────────────────────────────────────────────
