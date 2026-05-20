@@ -224,7 +224,11 @@ public class FacturaDAO {
 
     private void set(PreparedStatement ps, Factura f) throws SQLException {
         ps.setString(1, f.getNumero());
-        ps.setInt(2, f.getPresupuestoId());
+        if (f.getPresupuestoId() > 0) {
+            ps.setInt(2, f.getPresupuestoId());
+        } else {
+            ps.setNull(2, Types.INTEGER);
+        }
         ps.setInt(3, f.getClienteId());
         ps.setString(4, f.getFecha());
         ps.setString(5, f.getFechaVencimiento());

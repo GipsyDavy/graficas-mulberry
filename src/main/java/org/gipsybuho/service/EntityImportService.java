@@ -41,7 +41,7 @@ public class EntityImportService {
         "importe_total", "iva_porcentaje"
     );
     private static final Set<String> CAMPOS_FECHA = Set.of(
-        "fecha", "fecha_validez", "fecha_entrega_prevista", "fecha_entrega_real"
+        "fecha", "fecha_validez", "fecha_vencimiento", "fecha_entrega_prevista", "fecha_entrega_real"
     );
     private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion", "condiciones");
 
@@ -341,8 +341,8 @@ public class EntityImportService {
     }
 
     /**
-     * Dispatcher de specs parent-child. Cada entidad parent-child se añadirá como case en bloques siguientes
-     * (3C-paso-3 Presupuesto, Bloque 4 Factura, Bloque 5 Albarán).
+     * Dispatcher de specs parent-child. Cada entidad parent-child se añade como case conforme se implementa
+     * (3C-paso-3 Presupuesto, Bloque 4 Factura, Bloque 5 Albarán pendiente).
      *
      * <p>Contrato del método llamado por entidad: devolver int[]{entidadesInsertadas, entidadesActualizadas, filasConsumidasOk}.
      * Fallos post-INSERT-cabecera deben lanzar SQLException para que el savepoint del grupo rollee atómicamente.
@@ -352,6 +352,7 @@ public class EntityImportService {
                                  DuplicatePolicy policy, List<RowError> errores) throws SQLException {
         return switch (spec.nombre()) {
             case "Presupuestos" -> procesarPresupuesto(conn, spec, g, policy, errores);
+            case "Facturas"     -> procesarFactura(conn, spec, g, policy, errores);
             default -> throw new IllegalArgumentException(
                 "Entidad parent-child no soportada: " + spec.nombre());
         };
@@ -899,6 +900,112 @@ public class EntityImportService {
         l.setDescuento(toDouble(vals.getOrDefault("descuento", "0")));
         l.calcularTotal();
         return l;
+    }
+
+    // ── Factura (parent-child) ──────────────────────────────────────────────
+
+    private int[] procesarFactura(Connection conn, EntityImportSpec spec, ValidGroup g,
+                                   DuplicatePolicy policy, List<RowError> errores) throws SQLException {
+        // Cabecera = primera fila del grupo (ya validada coherente por detectarInconsistenciaGrupo).
+        ValidRow cabecera = g.filas().get(0);
+        Map<String, String> vals = cabecera.vals();
+        int numFila = cabecera.numero();
+
+        // FK cliente (mismo contrato que Pedido/Presupuesto: nif explícito sin fallback; si vacío, nombre+apellidos).
+        String nif = vals.getOrDefault("cliente_nif", "");
+        String nombre = vals.getOrDefault("cliente_nombre", "");
+        String apellidos = vals.getOrDefault("cliente_apellidos", "");
+        int clienteId = resolverClienteId(conn, nif, nombre, apellidos, errores, numFila);
+        if (clienteId <= 0) return new int[]{0, 0, 0};
+
+        // FK opcional presupuesto. Si CSV no la trae → 0 (preexistente, no se llama al setter).
+        // Si la trae y no existe en BD → ERROR, descartar grupo entero.
+        String presNumero = vals.getOrDefault("presupuesto_numero", "");
+        int presupuestoId = resolverPresupuestoIdPorNumero(conn, presNumero, errores, numFila);
+        if (presNumero != null && !presNumero.isBlank() && presupuestoId <= 0) {
+            return new int[]{0, 0, 0};
+        }
+
+        // Duplicado por 'numero'. UPDATE_EXISTING y CREATE_NEW están bloqueados al inicio de importar()
+        // para parent-child, así que aquí sólo se llega con SKIP_IF_EXISTS.
+        String numero = vals.getOrDefault("numero", "");
+        int existingId = buscarId(conn, "SELECT id FROM facturas WHERE numero=?", numero);
+        if (existingId > 0) {
+            return new int[]{0, 0, g.filas().size()};
+        }
+
+        Factura f = ensamblarFactura(clienteId, presupuestoId, vals, g.filas(), errores, numFila);
+        if (f == null) return new int[]{0, 0, 0};
+
+        new FacturaDAO().save(f);
+        return new int[]{1, 0, g.filas().size()};
+    }
+
+    private Factura ensamblarFactura(int clienteId, int presupuestoId, Map<String, String> valsCabecera,
+                                      List<ValidRow> filas, List<RowError> errores, int numFila) {
+        Factura f = new Factura();
+        f.setClienteId(clienteId);
+        if (presupuestoId > 0) f.setPresupuestoId(presupuestoId);
+        int erroresAntes = errores.size();
+        aplicarValoresFacturaCabecera(f, valsCabecera, errores, numFila);
+        if (errores.size() > erroresAntes) return null;
+
+        // Defaults si llegaron vacíos del CSV. La BD impone NOT NULL en facturas.fecha.
+        if (f.getFecha() == null || f.getFecha().isBlank()) f.setFecha(LocalDate.now().toString());
+        if (f.getEstado() == null || f.getEstado().isBlank()) f.setEstado("pendiente");
+        if (f.getIvaPorcentaje() == 0.0) f.setIvaPorcentaje(21.0);
+
+        // Líneas: una por cada fila del grupo, en orden CSV.
+        List<LineaFactura> lineas = new ArrayList<>(filas.size());
+        for (ValidRow vr : filas) {
+            lineas.add(ensamblarLineaFactura(vr.vals()));
+        }
+        f.setLineas(lineas);
+        f.calcularTotales();
+        return f;
+    }
+
+    private void aplicarValoresFacturaCabecera(Factura f, Map<String, String> vals,
+                                                List<RowError> errores, int numFila) {
+        vals.forEach((clave, v) -> {
+            if (v == null || v.isBlank()) return;
+            switch (clave) {
+                case "numero"             -> f.setNumero(v);
+                case "fecha"              -> f.setFecha(v);
+                case "fecha_vencimiento"  -> f.setFechaVencimiento(v);
+                case "estado"             -> f.setEstado(v);
+                case "forma_pago"         -> f.setFormaPago(v);
+                case "iva_porcentaje"     -> f.setIvaPorcentaje(toDouble(v));
+                case "notas"              -> f.setNotas(v);
+                default -> { /* cliente_*, presupuesto_numero, campos de línea o desconocidos: ignorar a nivel cabecera */ }
+            }
+        });
+    }
+
+    private LineaFactura ensamblarLineaFactura(Map<String, String> vals) {
+        LineaFactura l = new LineaFactura();
+        l.setDescripcion(vals.getOrDefault("descripcion", ""));
+        l.setTecnica(vals.getOrDefault("tecnica", ""));
+        l.setCantidad(toInt(vals.getOrDefault("cantidad", "0")));
+        l.setPrecioUnit(toDouble(vals.getOrDefault("precio_unit", "0")));
+        l.setDescuento(toDouble(vals.getOrDefault("descuento", "0")));
+        l.calcularTotal();
+        return l;
+    }
+
+    /**
+     * Resuelve un número de presupuesto a su id de BD.
+     * @return id si la cadena no es blank y el presupuesto existe; 0 si la cadena es blank (FK opcional no informada);
+     *         -1 si la cadena es no-blank pero el presupuesto no existe (añade RowError).
+     */
+    private int resolverPresupuestoIdPorNumero(Connection conn, String presNumero,
+                                                List<RowError> errores, int numFila) throws SQLException {
+        if (presNumero == null || presNumero.isBlank()) return 0;
+        int id = buscarId(conn, "SELECT id FROM presupuestos WHERE numero=?", presNumero.trim());
+        if (id > 0) return id;
+        errores.add(new RowError(numFila, "presupuesto_numero", presNumero, ErrorTipo.OTRO,
+            "Presupuesto con numero '" + presNumero + "' no encontrado para la factura"));
+        return -1;
     }
 
     // ── Utilidades ────────────────────────────────────────────────────────────

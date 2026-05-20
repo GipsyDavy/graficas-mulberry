@@ -1,7 +1,13 @@
 package org.gipsybuho.model;
 
+import org.gipsybuho.service.importer.ColumnMatcher;
+import org.gipsybuho.service.importer.DuplicatePolicy;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
+
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class Factura {
     private int id;
@@ -20,6 +26,60 @@ public class Factura {
     private String notas;
     private String createdAt;
     private List<LineaFactura> lineas = new ArrayList<>();
+
+    public static final EntityImportSpec IMPORT_SPEC = buildSpec();
+
+    private static EntityImportSpec buildSpec() {
+        var syn = Map.ofEntries(
+            Map.entry("cliente_nif",        List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "tax id")),
+            Map.entry("cliente_nombre",     List.of("cliente nombre", "nombre cliente", "cliente", "razon social", "empresa")),
+            Map.entry("cliente_apellidos",  List.of("cliente apellidos", "apellidos cliente", "apellido cliente", "surname", "lastname")),
+            Map.entry("numero",             List.of("numero", "nº factura", "num factura", "factura", "numero factura", "referencia factura")),
+            Map.entry("presupuesto_numero", List.of("presupuesto numero", "nº presupuesto", "num presupuesto", "presupuesto", "numero presupuesto", "ref presupuesto")),
+            Map.entry("fecha",              List.of("fecha", "fecha factura", "date")),
+            Map.entry("fecha_vencimiento",  List.of("fecha vencimiento", "vencimiento", "fecha pago", "fecha limite", "due date")),
+            Map.entry("estado",             List.of("estado", "status", "situacion")),
+            Map.entry("forma_pago",         List.of("forma pago", "forma de pago", "metodo pago", "metodo de pago", "payment method", "pago")),
+            Map.entry("iva_porcentaje",     List.of("iva porcentaje", "iva %", "porcentaje iva", "iva")),
+            Map.entry("notas",              List.of("notas", "observaciones", "comentarios", "notes")),
+            Map.entry("descripcion",        List.of("descripcion", "detalle", "concepto", "description")),
+            Map.entry("tecnica",            List.of("tecnica", "proceso", "technique", "tipo", "type")),
+            Map.entry("cantidad",           List.of("cantidad", "qty", "uds", "unidades")),
+            Map.entry("precio_unit",        List.of("precio unitario", "precio unidad", "precio unit", "precio", "price", "rate", "pvp")),
+            Map.entry("descuento",          List.of("descuento", "discount", "dto", "dto %", "descuento %"))
+        );
+        ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn);
+
+        EntityImportSpec specLinea = new EntityImportSpec("Líneas Factura", List.of(
+            new FieldSpec("descripcion", "Descripción",     true),
+            new FieldSpec("tecnica",     "Técnica",         false),
+            new FieldSpec("cantidad",    "Cantidad",        true),
+            new FieldSpec("precio_unit", "Precio unitario", true),
+            new FieldSpec("descuento",   "Descuento (%)",   false)
+        ), matcher, DuplicatePolicy.SKIP_IF_EXISTS);
+
+        return new EntityImportSpec(
+            "Facturas",
+            List.of(
+                new FieldSpec("cliente_nif",        "NIF/CIF del cliente",   false),
+                new FieldSpec("cliente_nombre",     "Nombre del cliente",    false),
+                new FieldSpec("cliente_apellidos",  "Apellidos del cliente", false),
+                new FieldSpec("numero",             "Número",                true),
+                new FieldSpec("presupuesto_numero", "Nº de presupuesto",     false),
+                new FieldSpec("fecha",              "Fecha",                 false),
+                new FieldSpec("fecha_vencimiento",  "Fecha vencimiento",     false),
+                new FieldSpec("estado",             "Estado",                false),
+                new FieldSpec("forma_pago",         "Forma de pago",         false),
+                new FieldSpec("iva_porcentaje",     "IVA (%)",               false),
+                new FieldSpec("notas",              "Notas",                 false)
+            ),
+            matcher,
+            DuplicatePolicy.SKIP_IF_EXISTS,
+            "numero",   // claveAgrupacion
+            "lineas",   // campoLineas
+            specLinea
+        );
+    }
 
     public Factura() {}
 
