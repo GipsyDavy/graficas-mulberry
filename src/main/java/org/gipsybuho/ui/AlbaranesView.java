@@ -18,10 +18,13 @@ import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.LineaAlbaran;
 import org.gipsybuho.model.Material;
+import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
+import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.importer.ImportResult;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -371,16 +374,72 @@ public class AlbaranesView extends VBox {
     }
 
     private void importar() {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setTitle("Funcionalidad próximamente");
-        alert.setHeaderText("Importación de Albaranes");
-        alert.setContentText(
-            "Esta función estará disponible en una próxima versión. " +
-            "Mientras tanto, los datos históricos se cargan desde CSV procesados manualmente. " +
-            "Para más información consulta MIGRACION_HISTORICO.md.");
-        if (getScene() != null)
-            alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        alert.showAndWait();
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Importar albaranes");
+        fc.getExtensionFilters().addAll(
+            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.json"),
+            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
+        if (archivo == null) return;
+
+        SoundService.play(SoundService.Sound.START);
+        final File f = archivo;
+        Thread.ofVirtual().start(() -> {
+            try {
+                var parsed = new ImportService().parseFile(f);
+                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
+                Platform.runLater(() -> {
+                    var dlg = new ColumnMappingDialog(
+                        getScene() != null ? getScene().getWindow() : null,
+                        Albaran.IMPORT_SPEC, parsed.headers, preview);
+                    if (getScene() != null)
+                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+                    dlg.showAndWait().ifPresent(mr ->
+                        Thread.ofVirtual().start(() -> {
+                            try {
+                                var result = new EntityImportService().importar(
+                                    Albaran.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
+                                Platform.runLater(() -> {
+                                    cargar();
+                                    SoundService.play(SoundService.Sound.COMPLETE);
+                                    mostrarResultadoImportacion(result);
+                                });
+                            } catch (Exception ex) {
+                                Platform.runLater(() -> {
+                                    SoundService.play(SoundService.Sound.ERROR);
+                                    mostrarError(ex);
+                                });
+                            }
+                        })
+                    );
+                });
+            } catch (Exception e) {
+                Platform.runLater(() -> {
+                    SoundService.play(SoundService.Sound.ERROR);
+                    mostrarError(e);
+                });
+            }
+        });
+    }
+
+    private void mostrarResultadoImportacion(ImportResult r) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
+        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
+        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
+        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        if (!r.errores().isEmpty()) {
+            sb.append("\n\nErrores (primeros 10):");
+            r.errores().stream().limit(10).forEach(e ->
+                sb.append(String.format("%n  Fila %d — %s: %s",
+                    e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
+        }
+        Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
+        a.setTitle("Resultado de importación");
+        a.setHeaderText(null);
+        a.getDialogPane().setPrefWidth(480);
+        if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        a.showAndWait();
     }
 
     private void exportar() {
