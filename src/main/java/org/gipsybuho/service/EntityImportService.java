@@ -43,7 +43,7 @@ public class EntityImportService {
     private static final Set<String> CAMPOS_FECHA = Set.of(
         "fecha", "fecha_validez", "fecha_vencimiento", "fecha_entrega_prevista", "fecha_entrega_real"
     );
-    private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion", "condiciones");
+    private static final Set<String> CAMPOS_LIBRES = Set.of("notas", "descripcion", "condiciones", "observaciones");
 
     /** Fila válida que ha superado la fase 2, con su número original de fila (1-based). */
     private record ValidRow(int numero, Map<String, String> vals) {}
@@ -353,6 +353,7 @@ public class EntityImportService {
         return switch (spec.nombre()) {
             case "Presupuestos" -> procesarPresupuesto(conn, spec, g, policy, errores);
             case "Facturas"     -> procesarFactura(conn, spec, g, policy, errores);
+            case "Albaranes"    -> procesarAlbaran(conn, spec, g, policy, errores);
             default -> throw new IllegalArgumentException(
                 "Entidad parent-child no soportada: " + spec.nombre());
         };
@@ -1073,5 +1074,128 @@ public class EntityImportService {
                     "Fecha no válida (formato esperado: yyyy-MM-dd): '" + s + "'"));
             return null;
         }
+    }
+
+    // ── Albarán (parent-child) ──────────────────────────────────────────────
+
+    private int[] procesarAlbaran(Connection conn, EntityImportSpec spec, ValidGroup g,
+                                   DuplicatePolicy policy, List<RowError> errores) throws SQLException {
+        ValidRow cabecera = g.filas().get(0);
+        Map<String, String> vals = cabecera.vals();
+        int numFila = cabecera.numero();
+
+        // FK cliente (mismo contrato que Pedido/Presupuesto/Factura).
+        String nif = vals.getOrDefault("cliente_nif", "");
+        String nombre = vals.getOrDefault("cliente_nombre", "");
+        String apellidos = vals.getOrDefault("cliente_apellidos", "");
+        int clienteId = resolverClienteId(conn, nif, nombre, apellidos, errores, numFila);
+        if (clienteId <= 0) return new int[]{0, 0, 0};
+
+        // FK opcional factura. Patrón D5: si vacío → 0; si informado y no existe → ERROR.
+        String facturaNumero = vals.getOrDefault("factura_numero", "");
+        int facturaId = resolverFacturaIdPorNumero(conn, facturaNumero, errores, numFila);
+        if (facturaNumero != null && !facturaNumero.isBlank() && facturaId <= 0) {
+            return new int[]{0, 0, 0};
+        }
+
+        // FK opcional pedido. Mismo patrón.
+        String pedidoNumero = vals.getOrDefault("pedido_numero", "");
+        int pedidoId = resolverPedidoIdPorNumero(conn, pedidoNumero, errores, numFila);
+        if (pedidoNumero != null && !pedidoNumero.isBlank() && pedidoId <= 0) {
+            return new int[]{0, 0, 0};
+        }
+
+        // Duplicado por 'numero'. UPDATE_EXISTING y CREATE_NEW están bloqueados al inicio de importar()
+        // para parent-child, así que aquí sólo se llega con SKIP_IF_EXISTS.
+        String numero = vals.getOrDefault("numero", "");
+        int existingId = buscarId(conn, "SELECT id FROM albaranes WHERE numero=?", numero);
+        if (existingId > 0) {
+            return new int[]{0, 0, g.filas().size()};
+        }
+
+        Albaran a = ensamblarAlbaran(clienteId, facturaId, pedidoId, vals, g.filas(), errores, numFila);
+        if (a == null) return new int[]{0, 0, 0};
+
+        new AlbaranDAO().save(a);
+        return new int[]{1, 0, g.filas().size()};
+    }
+
+    private Albaran ensamblarAlbaran(int clienteId, int facturaId, int pedidoId,
+                                      Map<String, String> valsCabecera, List<ValidRow> filas,
+                                      List<RowError> errores, int numFila) {
+        Albaran a = new Albaran();
+        a.setClienteId(clienteId);
+        if (facturaId > 0) a.setFacturaId(facturaId);
+        if (pedidoId > 0) a.setPedidoId(pedidoId);
+        int erroresAntes = errores.size();
+        aplicarValoresAlbaranCabecera(a, valsCabecera, errores, numFila);
+        if (errores.size() > erroresAntes) return null;
+
+        // Defaults si llegaron vacíos del CSV. La BD impone NOT NULL en albaranes.fecha.
+        if (a.getFecha() == null || a.getFecha().isBlank()) a.setFecha(LocalDate.now().toString());
+        // 'estado': SQLite no aplica DEFAULT cuando se pasa NULL explícito vía setString,
+        // así que se aplica en Java. Simetría con Factura (D-F-EST) y Presupuesto.
+        if (a.getEstado() == null || a.getEstado().isBlank()) a.setEstado("pendiente");
+
+        // Líneas: una por cada fila del grupo, en orden CSV.
+        List<LineaAlbaran> lineas = new ArrayList<>(filas.size());
+        for (ValidRow vr : filas) {
+            lineas.add(ensamblarLineaAlbaran(vr.vals()));
+        }
+        a.setLineas(lineas);
+        return a;
+    }
+
+    private void aplicarValoresAlbaranCabecera(Albaran a, Map<String, String> vals,
+                                                List<RowError> errores, int numFila) {
+        vals.forEach((clave, v) -> {
+            if (v == null || v.isBlank()) return;
+            switch (clave) {
+                case "numero"        -> a.setNumero(v);
+                case "fecha"         -> a.setFecha(v);
+                case "estado"        -> a.setEstado(v);
+                case "observaciones" -> a.setObservaciones(v);
+                default -> { /* cliente_*, factura_numero, pedido_numero, campos de línea o desconocidos: ignorar a nivel cabecera */ }
+            }
+        });
+    }
+
+    private LineaAlbaran ensamblarLineaAlbaran(Map<String, String> vals) {
+        LineaAlbaran l = new LineaAlbaran();
+        l.setDescripcion(vals.getOrDefault("descripcion", ""));
+        l.setCantidad(toInt(vals.getOrDefault("cantidad", "0")));
+        String unidad = vals.getOrDefault("unidad", "");
+        if (!unidad.isBlank()) l.setUnidad(unidad);
+        return l;
+    }
+
+    /**
+     * Resuelve un número de factura a su id de BD.
+     * @return id si la cadena no es blank y la factura existe; 0 si la cadena es blank (FK opcional no informada);
+     *         -1 si la cadena es no-blank pero la factura no existe (añade RowError).
+     */
+    private int resolverFacturaIdPorNumero(Connection conn, String facturaNumero,
+                                            List<RowError> errores, int numFila) throws SQLException {
+        if (facturaNumero == null || facturaNumero.isBlank()) return 0;
+        int id = buscarId(conn, "SELECT id FROM facturas WHERE numero=?", facturaNumero.trim());
+        if (id > 0) return id;
+        errores.add(new RowError(numFila, "factura_numero", facturaNumero, ErrorTipo.OTRO,
+            "Factura con numero '" + facturaNumero + "' no encontrada para el albaran"));
+        return -1;
+    }
+
+    /**
+     * Resuelve un número de pedido a su id de BD.
+     * @return id si la cadena no es blank y el pedido existe; 0 si la cadena es blank (FK opcional no informada);
+     *         -1 si la cadena es no-blank pero el pedido no existe (añade RowError).
+     */
+    private int resolverPedidoIdPorNumero(Connection conn, String pedidoNumero,
+                                           List<RowError> errores, int numFila) throws SQLException {
+        if (pedidoNumero == null || pedidoNumero.isBlank()) return 0;
+        int id = buscarId(conn, "SELECT id FROM pedidos WHERE numero=?", pedidoNumero.trim());
+        if (id > 0) return id;
+        errores.add(new RowError(numFila, "pedido_numero", pedidoNumero, ErrorTipo.OTRO,
+            "Pedido con numero '" + pedidoNumero + "' no encontrado para el albaran"));
+        return -1;
     }
 }
