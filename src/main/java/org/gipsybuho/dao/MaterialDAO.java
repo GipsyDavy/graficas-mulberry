@@ -71,8 +71,8 @@ public class MaterialDAO {
         Material m = findById(id);
         if (m == null) return;
         double nuevoStock = tipo.equals("entrada") ? m.getStockActual() + cantidad : m.getStockActual() - cantidad;
-        boolean prevAutoCommit = conn.getAutoCommit();
-        conn.setAutoCommit(false);
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
         try {
             try (PreparedStatement ps = conn.prepareStatement(
                     "UPDATE materiales SET stock_actual=?, updated_at=datetime('now') WHERE id=?")) {
@@ -88,12 +88,12 @@ public class MaterialDAO {
                 ps.setString(4, descripcion);
                 ps.executeUpdate();
             }
-            conn.commit();
+            if (!externalTx) conn.commit();
         } catch (SQLException e) {
-            conn.rollback();
+            if (!externalTx) conn.rollback();
             throw e;
         } finally {
-            conn.setAutoCommit(prevAutoCommit);
+            if (!externalTx) conn.setAutoCommit(true);
         }
     }
 
