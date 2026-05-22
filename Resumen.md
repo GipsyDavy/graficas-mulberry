@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprint Importación CSV
-# Versión: 3.6 · Fecha cierre: 22/05/2026 · Checkpoint: Sprint Importación CSV CERRADO. Bloque 6 commiteado (74f174c). Las 9 entidades importan CSV. MIGRACION_HISTORICO.md actualizado. Próximo sprint a decidir por el usuario.
+# HANDOFF — Graficas Mulberry · Sprint Transacciones DAOs
+# Versión: 3.7 · Fecha cierre: 22/05/2026 · Checkpoint: Sprint A (smoke Albaranes) CERRADO sin commit. Sprint B (transacciones DAOs) ARRANCADO en análisis. 6 decisiones de diseño cerradas, D-B-HELPER pendiente. Bloque 1 (plan partido en 7 sub-bloques) pendiente de redactar tras decidir D-B-HELPER.
 
 ---
 
@@ -18,17 +18,20 @@
 - **Pide el archivo antes de redactar bloques sobre métodos concretos.** Lección 3C-paso-2c, 3C-paso-3a, Bloque 4a y reforzada en Bloque 5a.1: no fiarse del recuerdo del handoff sobre la forma exacta de un método o API si la sesión actual no lo ha leído. Pedir y leer es barato; redactar a ciegas un bloque carácter-por-carácter es caro.
 - **Regla de inicio "_Gipsybuho_, procedo a ejecutar..."** del `CLAUDE.md`: aplícala solo en mensajes conversacionales claros. En respuestas técnicas, bloques, parches, listas de pasos, no aplica.
 - **Releer el bloque redactado antes de pegarlo.** Lección 3C-paso-3a: detecté dos basuras en mi propia redacción al releer (ternario inútil `apellidos.isBlank() ? nombre : nombre` y línea sentinela rara con comparación absurda). Releer una vez antes de dar por bueno el bloque cazó ambos. Releer es barato.
-- **Si un archivo aparece como modificado al arrancar sesión sin commit previo identificable, declararlo explícitamente.** Lección 3C-paso-3b: `Resumen.md` arrastró cambios v3.2 entre sesiones porque nunca se commiteó y se acumuló como "ruido" durante 3a y 3b; al revertir un fallo de `str_replace` se perdió ese trabajo intermedio. En el primer pase de cada sesión, verificar `git diff --stat` y declarar scope del archivo no-commiteado antes de empezar a editar nuevos archivos. PowerShell con encoding CP-850 muestra UTF-8 como salsa rara (`Versi├│n`, `ÔÇö`) y oculta cambios reales; usar `Format-Hex` cuando el diff se vea sospechoso.
-- **Si Codex declara un cambio funcional no pedido, parar y pedir el diff antes de aprobar.** Lección 3C-paso-3a: Codex añadió default `fecha = LocalDate.now().toString()` para que sus tests pasaran. La decisión era defendible (análoga a D-IVA y D-EST) pero no estaba autorizada. Aunque los tests estén verdes, revisar diff antes del commit y, si el cambio se acepta, declararlo como decisión explícita en el mensaje.
-- **Codex prefiere inserción aditiva sobre reemplazo cuando puede.** Lección 4a.1: dicté "reemplaza dos líneas de imports por estas siete" y Codex añadió las nuevas sin borrar las viejas. Funcionalmente equivalente, diff distinto del esperado (0 supresiones en lugar de 2). Cuando un `str_replace` afecta a líneas que también deben preservarse, conviene dictarlo como inserción pura ("inserta después de X estas N líneas") sin pedir reemplazo de líneas que pueden quedarse. **Truco aplicado en 4b/5b/6:** incluir las líneas a preservar tanto en `old_str` como en `new_str` blinda el resultado contra ambos comportamientos.
-- **`findstr /N "X \"Y\""` no escapa bien en PowerShell.** Lección 4a.2: el patrón terminó vacío y `findstr` devolvió todo el archivo. Alternativas robustas:
+- **Si un archivo aparece como modificado al arrancar sesión sin commit previo identificable, declararlo explícitamente.** Lección 3C-paso-3b: `Resumen.md` arrastró cambios v3.2 entre sesiones porque nunca se commiteó y se acumuló como "ruido" durante 3a y 3b. En el primer pase de cada sesión, verificar `git diff --stat` y declarar scope del archivo no-commiteado antes de empezar a editar nuevos archivos.
+- **Si Codex declara un cambio funcional no pedido, parar y pedir el diff antes de aprobar.** Lección 3C-paso-3a: Codex añadió default `fecha = LocalDate.now().toString()` para que sus tests pasaran. Aunque los tests estén verdes, revisar diff antes del commit y, si el cambio se acepta, declararlo como decisión explícita en el mensaje.
+- **Codex prefiere inserción aditiva sobre reemplazo cuando puede.** Lección 4a.1: dicté "reemplaza dos líneas de imports por estas siete" y Codex añadió las nuevas sin borrar las viejas. **Truco aplicado en 4b/5b/6:** incluir las líneas a preservar tanto en `old_str` como en `new_str` blinda el resultado contra ambos comportamientos.
+- **`findstr /N "X \"Y\""` no escapa bien en PowerShell.** Lección 4a.2. Alternativas robustas:
   - `findstr /N /C:"X \"Y\"" archivo` (con `/C:` literal)
   - `Select-String -Path 'archivo' -Pattern 'X .Y.'` (regex, el `.` cubre la comilla)
-- **Si una "deuda latente" toca escritura de FK y los tests sintéticos arrancan con `PRAGMA foreign_keys=ON`, NO es latente: es bug seguro.** Lección 4a.2 final: etiqueté el bug de `Factura.presupuestoId=0` como deuda preexistente sin tocar, y los 3 tests sintéticos que no informaban presupuesto lo dispararon de inmediato. Si la deuda implica escribir un valor que infringe una constraint con FK activas, los tests la cazarán. Tratarla como bug a fix, no como deuda diferible.
-- **`Nothing to compile - all classes are up to date` NO es prueba de que compila.** Lección 4a.1: Maven se saltó la recompilación porque los `.class` ya estaban frescos respecto al `.java` antiguo. Tras editar un archivo, usar `.\mvnw.cmd clean compile` para forzar recompilación real desde cero. Solo entonces `BUILD SUCCESS` cuenta como evidencia.
-- **Si un `clean compile` falla con `Failed to delete` en `target/classes`, es bloqueo de archivo Windows.** Lección 5a.1: la app JavaFX del smoke test anterior seguía con un .jpg abierto; Maven no podía borrar el `target/`. Solución antes de Maven: `Get-Process java | Stop-Process -Force` para cerrar instancias colgantes. IntelliJ también puede bloquear recursos.
-- **No instanciar APIs sin haberlas leído.** Lección 5a.1: dicté `new ColumnMatcher(Map.ofEntries(...))` sin haber leído `ColumnMatcher.java`. Es una `@FunctionalInterface`, no una clase concreta: se crea con lambda `h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn)`. El bloque falló en `javac` con "is abstract; cannot be instantiated". Antes de dictar `new X(...)`, leer X.java o leer un archivo que ya lo use bien (en este caso `Factura.java` tenía el patrón canónico).
-- **SQLite no aplica DEFAULT cuando se pasa NULL explícito vía `setString`/`setInt`.** Lección 5a.3: el test `importaAlbaranConDosLineas` falló con `expected: <pendiente> but was: <null>` porque `AlbaranDAO.set()` hacía `ps.setString(6, null)` y eso sobrescribe el DEFAULT del DDL. Los DEFAULT del DDL solo aplican cuando la columna se omite del INSERT, no cuando se le pasa NULL explícito. Solución: aplicar el default en Java en `ensamblarX()` antes del save. Aplica a cualquier columna con DEFAULT cuyo setter pueda recibir null.
+- **Si una "deuda latente" toca escritura de FK y los tests sintéticos arrancan con `PRAGMA foreign_keys=ON`, NO es latente: es bug seguro.** Lección 4a.2 final. Tratarla como bug a fix, no como deuda diferible.
+- **`Nothing to compile - all classes are up to date` NO es prueba de que compila.** Lección 4a.1: Maven se saltó la recompilación porque los `.class` ya estaban frescos respecto al `.java` antiguo. Tras editar un archivo, usar `.\mvnw.cmd clean compile` para forzar recompilación real desde cero.
+- **Si un `clean compile` falla con `Failed to delete` en `target/classes`, es bloqueo de archivo Windows.** Lección 5a.1: app JavaFX colgada bloqueando recursos. Solución antes de Maven: `Get-Process java | Stop-Process -Force`.
+- **No instanciar APIs sin haberlas leído.** Lección 5a.1: dicté `new ColumnMatcher(Map.ofEntries(...))` sin haber leído `ColumnMatcher.java`. Es una `@FunctionalInterface`, no una clase concreta. Antes de dictar `new X(...)`, leer X.java o un archivo que ya lo use bien.
+- **SQLite no aplica DEFAULT cuando se pasa NULL explícito vía `setString`/`setInt`.** Lección 5a.3: aplicar el default en Java en `ensamblarX()` antes del save. Aplica a cualquier columna con DEFAULT cuyo setter pueda recibir null.
+- **No diagnosticar deudas técnicas sin leer el código que las realizaría.** Lección Sprint B análisis: etiqueté la Deuda 9 ("`*.save()` sin transacción explícita") como abierta basándome en el nombre, sin haber leído `EntityImportService.insertarFilas`/`insertarGrupos`. **Sí hay tx explícita** en el servicio (setAutoCommit(false) + Savepoint por grupo + commit). La deuda real es distinta: los DAOs no la tienen cuando se invocan desde UI o desde flujos `crearDesde*`. Antes de afirmar "X está roto", leer el código que haría X.
+- **Cuando el usuario aporta información casual ("no hay nif, usa este") interpretarla con cuidado.** Sesión Sprint A: lo interpreté como "usa el placeholder de todos modos" cuando podía significar literalmente "no tengo NIFs en mi BD". El smoke detectó el malentendido (ERROR `cliente no encontrado`). No es bug pero gastó un ciclo. Si la frase del usuario es ambigua, preguntar antes de actuar.
+- **Las capturas de UI contienen información que reemplaza preguntas.** Sesión Sprint A: pedí al usuario que listara las opciones del desplegable cuando una captura del desplegable abierto resuelve la pregunta directa. Si una captura puede responder, pedirla en vez de pedir descripción manual.
 
 ---
 
@@ -40,52 +43,55 @@
 **Restricciones duras:** sin Lombok, sin Spring, sin servidores HTTP, sin nuevas dependencias salvo justificación.
 **Build commands:** `.\mvnw.cmd compile`, `.\mvnw.cmd clean compile`, `.\mvnw.cmd test`, `.\mvnw.cmd package`, `.\mvnw.cmd javafx:run`. `mvn` directo NO está en el PATH; usar siempre el wrapper.
 **Versión Maven:** 3.9.11 vía wrapper.
-**Reglas operativas:** ver `CLAUDE.md` en la raíz del proyecto. Karpathy-style: cambios quirúrgicos, mínima modificación, YAGNI, no refactorizar lo que no está roto, código auto-documentado.
+**Reglas operativas:** ver `CLAUDE.md`. Karpathy-style: cambios quirúrgicos, mínima modificación, YAGNI, no refactorizar lo que no está roto, código auto-documentado.
 
 ### Estructura relevante
 - `src/main/java/org/gipsybuho/model/` — entidades de dominio.
 - `src/main/java/org/gipsybuho/dao/` — acceso a datos JDBC.
-- `src/main/java/org/gipsybuho/service/` — lógica de servicios. `EntityImportService` está aquí.
-- `src/main/java/org/gipsybuho/service/importer/` — tipos auxiliares del importador: `EntityImportSpec`, `FieldSpec`, `ColumnMatcher` (FunctionalInterface), `DuplicatePolicy`, `ImportResult`, `RowError`, `ErrorTipo`.
+- `src/main/java/org/gipsybuho/service/` — lógica de servicios. `EntityImportService` aquí.
+- `src/main/java/org/gipsybuho/service/importer/` — tipos auxiliares del importador.
 - `src/main/java/org/gipsybuho/ui/` — vistas JavaFX.
-- `src/test/java/org/gipsybuho/service/importer/` — tests del importador. **Convención:** todos los tests nuevos del importador van aquí.
-- `src/main/java/org/gipsybuho/db/DatabaseManager.java` — DDL inline en Java (no hay `schema.sql`). Activa `PRAGMA foreign_keys = ON`; las FK se evalúan en todos los entornos, incluidos los tests con `@TempDir`.
+- `src/test/java/org/gipsybuho/service/importer/` — tests del importador.
+- `src/main/java/org/gipsybuho/db/DatabaseManager.java` — DDL inline en Java. Activa `PRAGMA foreign_keys = ON`. **Connection es singleton estático.**
 
 ### Documentos del proyecto que NO debes ignorar
 - `CLAUDE.md` — reglas operativas, Multi-IA, cambios quirúrgicos.
-- `MIGRACION_HISTORICO.md` — procedimiento Vía A para procesar archivos históricos del cliente. **Actualizado en Bloque 6 (`74f174c`):** ahora documenta las 9 entidades importables, modelo CSV ancho con cabecera repetida, FK opcionales (D5), defaults Java por entidad, limitaciones conocidas (Deudas 2, 3, 19, 20).
+- `MIGRACION_HISTORICO.md` — actualizado en Bloque 6 del sprint anterior (`74f174c`).
 
 ### Valores conocidos del enum `DuplicatePolicy`
 `SKIP_IF_EXISTS` (default), `UPDATE_EXISTING`, `CREATE_NEW`. **NO existe `UPDATE_IF_EXISTS`** — error frecuente.
 
-### Forma actual de `EntityImportSpec`
+### Forma de `DatabaseManager.getConnection()`
 ```java
-public record EntityImportSpec(
-    String nombre,
-    List<FieldSpec> campos,
-    ColumnMatcher matcher,
-    DuplicatePolicy politicaDefecto,
-    String claveAgrupacion,   // null en planos
-    String campoLineas,       // null en planos
-    EntityImportSpec specLinea // null en planos
-)
-```
-Constructor canónico valida coherencia parent-child (los 3 últimos a null o los 3 no-null). Constructor secundario de 4 argumentos para retrocompatibilidad con specs planos. Helper `esParentChild()` devuelve `specLinea != null`.
-
-### Forma de `ColumnMatcher` (clave para no romper buildSpec)
-```java
-@FunctionalInterface
-public interface ColumnMatcher {
-    String sugerirCampo(String headerArchivo);
-    static String normalize(String s) { /* lowercase + sin tildes + alfanumérico */ }
-    static String matchLongest(String norm, Map<String, List<String>> synonyms) { /* substring + el más largo gana */ }
+private static Connection connection;
+public static Connection getConnection() throws SQLException {
+    if (connection == null || connection.isClosed()) {
+        connection = DriverManager.getConnection(buildDbUrl());
+        try (Statement st = connection.createStatement()) {
+            st.execute("PRAGMA foreign_keys = ON");
+        }
+    }
+    return connection;
 }
 ```
-Patrón de uso en `buildSpec()`:
+**Implicación crítica para sprint B:** todos los DAOs y el servicio comparten el mismo objeto Connection. La atomicidad del importador funciona porque `setAutoCommit(false)` aplica al singleton y los DAOs heredan el estado sin saberlo. **Acoplamiento implícito.**
+
+### Patrón transaccional canónico en este repo
+Ya implementado en `MaterialDAO.ajustarStock` (~línea 65) y en `EntityImportService.insertarFilas`/`insertarGrupos` (~líneas 300-365):
 ```java
-var syn = Map.ofEntries(Map.entry("campo", List.of("sin1", "sin2")), ...);
-ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn);
+boolean prevAC = conn.getAutoCommit();
+conn.setAutoCommit(false);
+try {
+    // trabajo SQL
+    conn.commit();
+} catch (SQLException e) {
+    conn.rollback();
+    throw e;
+} finally {
+    conn.setAutoCommit(prevAC);
+}
 ```
+**Pero `ajustarStock` no detecta tx externa.** Si un caller ya tiene tx abierta, `commit()` la cierra prematuramente. Sprint B corrige este idiom a la variante "tx solo si no hay externa".
 
 ---
 
@@ -99,128 +105,151 @@ ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(
 4. **Tú** me pegas la respuesta del agente y yo evalúo si seguir, corregir o pedir fix-up.
 
 **Roles según `CLAUDE.md`:**
-- **Claude Code (en IDE):** preferente para planificación, revisión final, calidad, seguridad, tests, cumplimiento de reglas. No usado en Bloques 4b/5/5b/6.
-- **Codex (en IDE):** edición local, ejecución de comandos, parches quirúrgicos, inspección. Ejecutor de los bloques blindados. Confirmado en todos los Bloques 4a, 4b, 5a.1, 5a.2, 5a.3, 5a.3-fix, 5b, 6: obedece reemplazo carácter por carácter (con `apply_patch` como herramienta nativa equivalente a `str_replace`), respeta el "no commitear" cuando se le dice, y sigue las reglas de "fallar y revertir" sin improvisar. Tendencia confirmada a inserción aditiva sobre reemplazo (ver lecciones).
-- **Gemini (en IDE):** contexto amplio, arquitectura, segunda opinión, investigación. **Usado UNA VEZ en Bloque 5a** para dictamen sobre transacción explícita en DAOs (resultado: D-A-TX, diferir a sprint dedicado, `BEGIN DEFERRED`).
+- **Claude Code (en IDE):** preferente para planificación, revisión final, calidad, seguridad, tests, cumplimiento de reglas.
+- **Codex (en IDE):** edición local, ejecución de comandos, parches quirúrgicos. Ejecutor de bloques blindados. Tendencia confirmada a inserción aditiva sobre reemplazo.
+- **Gemini (en IDE):** contexto amplio, arquitectura, segunda opinión. Usado UNA VEZ en Bloque 5a para dictamen `BEGIN DEFERRED`.
 
 **Cómo redactar bloques para los agentes — lecciones consolidadas:**
-- Instrucciones cerradas, sin espacio interpretativo libre.
-- Restricciones negativas explícitas (qué NO modificar, qué NO ejecutar, qué NO invocar).
-- Criterio de éxito verificable sin reejecutar (lista de archivos, salida de tests, decisiones declaradas).
-- Una sola tarea por bloque (o sub-paso). Bloque 4a partido en 4 sub-pasos. Bloque 5a partido en 5 sub-pasos (5a.1, 5a.2, 5a.3, 5a.3-fix, commit conjunto). Bloque 6 monolítico (docs, scope limitado).
+- Instrucciones cerradas, sin espacio interpretativo.
+- Restricciones negativas explícitas.
+- Criterio de éxito verificable sin reejecutar.
+- Una sola tarea por bloque (o sub-paso).
 - Trazabilidad obligatoria al final.
-- **Declarar nombres literales** de enums, métodos, paquetes. Si no los conoces con certeza, pídelos al usuario antes de redactar el bloque.
-- **Verificar que el snippet de Java sería aceptado por `javac` aislado** antes de dictarlo: genéricos parametrizados, switch expressions exhaustivas con valor en al menos un brazo, imports presentes, **APIs realmente instanciables (cuidado con FunctionalInterface)**.
-- **Añadir `git diff --stat` al criterio de éxito** como segunda verificación barata de scope.
-- **Pedir el archivo objetivo antes de redactar bloques no triviales** sobre métodos que no se han leído en la sesión actual.
-- **Releer el bloque redactado antes de darlo por bueno.** Lección 3C-paso-3a.
-- **Para edits de archivos grandes con cambios extensos, preferir reescritura completa sobre N `str_replace`** si los cambios afectan a la mayoría de secciones. Aplicada a v3.4, v3.5, v3.6 y Bloque 6 (`MIGRACION_HISTORICO.md`).
-- **Preferir inserciones puras a reemplazos cuando las líneas afectadas pueden conservarse.** Lección 4a.1. Aplicada en 4b/5b con truco "líneas idénticas en old_str y new_str".
-- **Si un test va a ejercitar escritura de FK opcional, verificar que el DAO escribe `NULL` en lugar de `0` literal** antes de redactar el test.
-- **Si un test va a ejercitar columna con DEFAULT del DDL, verificar que el DAO no pasa NULL explícito** o aplicar el default en Java en `ensamblarX()`. Lección 5a.3.
+- Declarar nombres literales de enums, métodos, paquetes.
+- Verificar que el snippet de Java sería aceptado por `javac` aislado.
+- Añadir `git diff --stat` al criterio de éxito.
+- Pedir el archivo objetivo antes de redactar bloques no triviales.
+- Releer el bloque redactado antes de darlo por bueno.
+- Reescritura completa sobre N `str_replace` para edits extensos.
+- Inserciones puras a reemplazos cuando las líneas pueden conservarse (truco "líneas idénticas en old_str y new_str").
 
-**Aviso explícito del usuario:** "En acciones anteriores detectamos incoherencias, desobediencias y falta de fiabilidad en la ejecución de las instrucciones dadas por ti o por mi a los agentes IA del IDE". Por eso los bloques deben ser blindados y verificables. Validar siempre el entregable antes de aceptar.
-
-**Convención de commits establecida:** un bloque = un commit + push. Mensaje con título imperativo (`feat:`, `fix:`, `docs:`) ≤72 chars, línea en blanco, cuerpo con párrafos separados por líneas en blanco. Editor configurado: `git config --global core.editor "notepad"`. Para mensajes multilínea complejos, escribir a archivo temporal y `git commit -F archivo.txt`.
+**Convención de commits:** un bloque = un commit + push. Mensaje con título imperativo (`feat:`, `fix:`, `docs:`) ≤72 chars, línea en blanco, cuerpo con párrafos. Editor configurado: `git config --global core.editor "notepad"`. Multilínea complejo: archivo temporal + `git commit -F archivo.txt`.
 
 ---
 
-## SPRINT CERRADO — IMPORTACIÓN CSV
+## SPRINT ANTERIOR — IMPORTACIÓN CSV (CERRADO en v3.6)
 
-### Pedido original del usuario (literal)
-> "necesito que las clases presupuesto, factura, clientes, albaranes, materiales, empleados y nominas puedan importar con la misma funcionalidad que le hemos puesto a tarifa"
+Las 9 entidades importan CSV. HEAD anterior `74f174c`. 56/56 tests verdes (2 + 12 + 11 + 9 + 5 + 10 + 7). MIGRACION_HISTORICO.md actualizado. Detalles completos en handoff v3.6 (no se replican aquí).
 
-### Estado: SPRINT CERRADO
+---
 
-Las 9 entidades importan CSV. Documentación del procedimiento Vía A actualizada para reflejarlo.
+## SPRINT A — SMOKE TEST MANUAL DE ALBARANES (CERRADO sin commit)
 
-1. Tarifa, Cliente, Material, Empleado (ya estaban antes del sprint).
-2. Nómina (plana). HECHO (`c43118a`).
-3. Pedido (plano). HECHO (`50d5902` + fix UPDATE path en `9798225`).
-4. Presupuesto (parent-child). HECHO (`2a4ead5` motor+spec+tests + `2513a71` cableado UI).
-5. Factura (parent-child). HECHO (`e6d7a9a` motor+spec+tests+fix FK + `55de9ef` cableado UI).
-6. Albarán (parent-child). HECHO (`bfc0c1a` motor+spec+tests + `60138f2` cableado UI).
-7. Documentación Vía A. HECHO (`74f174c` actualización `MIGRACION_HISTORICO.md`).
+### Resultado
+**PASA.** El cableado completo de la importación CSV de Albaranes funciona en runtime.
 
-**Vistas con Alert "Funcionalidad próximamente":** ninguna. Las 9 entidades tienen `📥 Importar` funcional.
+### Pasos ejecutados
+1. `Get-Process java | Stop-Process -Force` (limpieza previa).
+2. `.\mvnw.cmd javafx:run` — app arrancó con `BUILD SUCCESS` en 1:05.
+3. Generado `smoke_albaran.csv` en Escritorio con 1 cabecera + 2 líneas, NIF `B12345678`:
+   ```csv
+   numero,fecha,nif,observaciones,descripcion,cantidad,unidad
+   ALB-SMOKE-001,2026-05-22,B12345678,Smoke test sprint A,Producto de prueba A,10,uds
+   ALB-SMOKE-001,2026-05-22,B12345678,Smoke test sprint A,Producto de prueba B,5,cajas
+   ```
+4. Albaranes → `📥 Importar` → **FileChooser abierto** (no Alert). Cableado 5b confirmado en runtime.
+5. Diálogo "Configurar importación de Albaranes" → 7 columnas detectadas. **Mapeo automático falló para `numero` y `nif`** (quedaron en `(ignorar)`). Resto OK.
+6. Primer intento: NIF no existía en BD → "0 importadas, 2 descartadas". Error: *"Cliente con nif 'B12345678' no encontrado para el pedido"*. Decisión D5 funcional confirmada en runtime.
+7. Cliente creado manualmente con NIF `B12345678` (nombre "Cliente Smoke Test") vía UI.
+8. Re-importación: **"1 importada, 0 actualizadas, 0 descartadas"**.
+9. Albarán `ALB-SMOKE-001` apareció en tabla con cliente correcto, fecha `2026-05-22`, estado **PENDIENTE** (default Java D-A-EST aplicado correctamente en runtime — lección 5a.3 confirmada).
+10. Limpieza manual: borrado albarán + cliente desde UI.
 
-### Decisiones funcionales tomadas (críticas, NO se rediscuten)
+### Hallazgos del smoke (Deudas nuevas registradas)
 
-| Decisión | Valor | Justificación |
+| ID | Descripción | Severidad |
 |---|---|---|
-| Modelo CSV para parent-child | **CSV ancho con cabecera repetida en cada línea, agrupar por `numero`** | Encaja con scripts Python de `MIGRACION_HISTORICO.md`. |
-| FK cliente desde CSV | Si viene `nif` y no existe → ERROR sin fallback. Si `nif` vacío → buscar por nombre+apellidos. | Nif explícito es específico; fallback enmascara errores. |
-| FK empleado desde CSV (Nómina) | nombre+apellidos. Match único → ok, múltiple → error. | Empleado no tiene clave única tan fiable. |
-| Filtro `activo=1` en empleados | Aplicado. | Deuda 2 abierta (puede romper para nóminas históricas). |
-| Política duplicados default | `SKIP_IF_EXISTS` | Patrón establecido. |
-| Clave duplicado Nómina | `(empleado_id, mes, anio)` | Natural. |
-| Clave duplicado Pedido/Presupuesto/Factura/Albarán | `numero` | Identificador natural. |
+| 21 | Mapeo automático no reconoce `numero` ni `nif` en spec de Albarán; usuario debe mapearlos a mano cada vez. Probablemente también afecta a Factura y Presupuesto. | Riesgo bajo, UX. |
+| 22 | Mensaje de error `cliente_nif` dice *"no encontrado para el pedido"* cuando es albarán/factura/presupuesto. Copia-pega no parametrizado en `EntityImportService.resolverClienteId`. | Trivial, cosmético. |
+| 23 | Diálogo de mapeo no lista campos de línea (`descripcion`, `cantidad`, `unidad`) en los desplegables pero acepta el mapeo igual. Probablemente diseño consciente; documentar. | Informativa. |
 
-### Decisiones del Bloque 3 (D1–D6, todas aplicadas)
+### Cierre Sprint A
+- **No hay commit de código** (smoke pasó, no se modificó nada).
+- Datos de prueba borrados de BD.
+- 3 deudas nuevas registradas.
 
-| ID | Decisión | Valor | Estado |
+---
+
+## SPRINT ACTUAL — TRANSACCIONES EXPLÍCITAS EN DAOS (Sprint B)
+
+### Estado: análisis en curso, parado en D-B-HELPER pendiente
+
+### Contexto del sprint
+
+**Lectura crítica realizada en esta sesión:** `PresupuestoDAO.java`, `FacturaDAO.java`, `AlbaranDAO.java`, `MaterialDAO.java`, `EntityImportService.java`, `DatabaseManager.java`.
+
+### Hallazgo principal — redefine la Deuda 9
+
+La Deuda 9 (`*.save() sin transacción explícita BEGIN/COMMIT`) estaba **mal descrita**. Realidad:
+
+1. **`EntityImportService.insertarFilas` e `insertarGrupos` SÍ tienen tx explícita.** `setAutoCommit(false)` + Savepoint por grupo + `commit()` + finally con restore. Aplica al importador desde el día 1.
+2. **Los DAOs NO tienen tx envolvente en `save()`.** `PresupuestoDAO.save(p)` hace `insert(p)` + `saveLineas(p)` en autocommit-on → **dos transacciones separadas**. Si crashea entre medias, cabecera queda con líneas viejas (saveLineas hace DELETE+INSERT). Mismo bug en `FacturaDAO.save` y `AlbaranDAO.save`.
+3. **Funciona en el importador por accidente del singleton.** `DatabaseManager.getConnection()` devuelve el mismo objeto a servicio y DAOs. El `setAutoCommit(false)` del servicio aplica al DAO sin que el DAO lo sepa. Si alguien cambia el singleton, la atomicidad del importador se rompe sin error visible.
+4. **El bug real ocurre en UI directa.** Botón Guardar de `PresupuestosView.editar` → llama `PresupuestoDAO.save(p)` con autocommit-on → 2 tx separadas → riesgo de inconsistencia si crash entre cabecera y líneas.
+5. **`crearDesde*` agravan el problema.** `FacturaDAO.crearDesdePresupuesto` encadena `save(f)` + N llamadas a `descontarMateriales` (que a su vez llama a `ajustarStock`) + `pDao.updateEstado`. Cada uno es tx separada. Si crashea a mitad, factura creada + stock parcialmente descontado + presupuesto sin actualizar.
+
+### Decisiones de diseño cerradas en esta sesión
+
+| ID | Decisión | Valor cerrado | Justificación |
 |---|---|---|---|
-| D1 | Política inconsistencia entre filas del mismo grupo | Estricta + Opción A (todos los campos de `spec.campos()` cuentan). | CERRADA. |
-| D2 | Modelado parent-child en `EntityImportSpec` | Ampliar con 3 campos opcionales. | CERRADA. |
-| D3 | `UPDATE_EXISTING` para parent-child | Bloquear con `IllegalArgumentException` al inicio de `importar()`. | CERRADA. |
-| D4 | Deuda 4 (UPDATE path Pedido) | Cerrada. | CERRADA. |
-| D5 | FKs opcionales | Resolver vía número del CSV. | **CERRADA COMPLETA** (Factura en 4a vía `presupuesto_numero`; Albarán en 5a vía `factura_numero` y `pedido_numero`). |
-| D6 | Validación fechas Fase 2 | `CAMPOS_FECHA` análogo a `CAMPOS_NUMERICOS`. | CERRADA. |
+| D-B-SCOPE | ¿Solo `save()` o también `crearDesde*`? | **B (ambos)** | `crearDesde*` es donde la cadena larga puede dejar BD inconsistente. Esfuerzo extra bajo. |
+| D-B-CONN | ¿De dónde sale la Connection en DAOs? | **A (singleton sin más)** | YAGNI. El refactor honesto (inyectar Connection en DAOs) es sprint propio, fuera de scope. |
+| D-B-CONFLICTO | ¿Cómo evitar que `save()` del DAO commitee la tx del importador? | **A (patrón "tx interno solo si no hay externo")** | Estándar JDBC. Una línea: `boolean externalTx = !conn.getAutoCommit()`. Mantiene compatibilidad con importador sin tocarlo. |
+| D-B-CREARDESDE-ALCANCE | ¿`descontarMateriales` también dentro de tx de `crearDesdePresupuesto`? | **A (sí)** | Atomicidad real: ni factura ni movimientos de stock si crash. |
+| D-B-AJUSTARSTOCK | ¿Refactorizar `MaterialDAO.ajustarStock` con el mismo patrón? | **A (sí)** | Obligatorio para que CREARDESDE-ALCANCE=A funcione. Hoy `ajustarStock` no detecta tx externa y commitea prematuramente. Cambio: una línea. |
+| D-B-TESTS | ¿Tests sintéticos de rollback? | **Sí, 4 tests mínimo** | Lección 5a.2: deuda con tx requiere prueba de rollback. 1 por DAO parent-child + 1 de tx anidada. |
+| D-B-ENTIDADES | ¿Solo los 3 parent-child o también los planos? | **Solo 3 parent-child + `MaterialDAO.ajustarStock`** | Los DAOs planos (`PedidoDAO`, `NominaDAO`, `ClienteDAO`, `EmpleadoDAO`, `TarifaDAO`) tienen `save()` mono-operación, ya atómico por JDBC. |
 
-### Decisiones del Bloque 3C-paso-3 (Presupuesto, todas aplicadas)
+### Decisión pendiente
 
-| ID | Decisión | Valor |
-|---|---|---|
-| D-CN | Semántica `CREATE_NEW` en parent-child | Bloquear. Solo `SKIP_IF_EXISTS` permitido. |
-| D-IVA | Default `ivaPorcentaje` si CSV vacío | 21.0 |
-| D-EST | Validación de `estado` | Aceptar tal cual, default `borrador` si vacío. |
-| D-FV | `fecha_validez` a `CAMPOS_FECHA` | Sí. |
-| D-CON | `condiciones` a `CAMPOS_LIBRES` | Sí, `MAX_LEN_LIBRE=1000`. |
-| D-DC | `descripcion` virtual de cabecera Presupuesto | No. |
-| D-TOT | Totales del CSV vs `calcularTotales()` | Recalcular siempre. |
-| D-SCO | Scope de 3C-paso-3 | Partir en 3a + 3b. |
-| D-FECHA-DEFAULT | Default `fecha` cabecera Presupuesto | `LocalDate.now().toString()`. |
+| ID | Decisión | Opciones | Mi opinión |
+|---|---|---|---|
+| **D-B-HELPER** | ¿Patrón inline en cada método o helper centralizado en `DatabaseManager`? | **A:** Inline. 5 copias del idiom try/finally. Karpathy-style puro, código auto-documentado.<br>**B:** Helper `DatabaseManager.withTx(SqlAction action)` + `@FunctionalInterface SqlAction`. 1 sitio donde vive el patrón. | **A.** El parámetro `Connection conn` del callback B sería decorativo porque los privados siguen yendo al singleton (mentirilla arquitectónica). Cinco copias de 7 líneas no es deuda urgente y la repetición hace el código más legible. |
 
-### Decisiones del Bloque 4a (Factura, todas aplicadas)
+**Decidir D-B-HELPER es lo primero al arrancar la próxima sesión.** El usuario quedó conforme con la propuesta global "tu opinión" pero la decisión D-B-HELPER se planteó después de esa confirmación y quedó sin cerrar por falta de cuota.
 
-| ID | Decisión | Valor |
-|---|---|---|
-| D-F-FECHA | Default `fecha` cabecera Factura | `LocalDate.now().toString()`. |
-| D-F-IVA | Default `iva_porcentaje` | 21.0. |
-| D-F-EST | Default `estado` | `'pendiente'`. |
-| D-F-FORMAPAGO | `forma_pago` | Opcional, sin default Java; BD aplica `'Transferencia bancaria'`. |
-| D-F-FV | `fecha_vencimiento` a `CAMPOS_FECHA` | Sí. |
-| D-F-TOT | Totales | Recalcular siempre. |
-| D-F-DC | `descripcion` virtual de cabecera | No. |
-| D-F-CN | Política duplicados parent-child | Bloqueo heredado. |
-| D-F-MATERIALES | Descuento de materiales | No descontar (flujo UI separado). |
-| D-F-SINONIMOS | Sinónimos sin solape `numero`/`presupuesto_numero` | Aplicado. |
-| D5 (Factura) | FK opcional `presupuesto_id` | Resolver vía `presupuesto_numero` del CSV. |
-| D-F-FK-NULL | `FacturaDAO.set()` para `presupuesto_id == 0` | `setNull(2, Types.INTEGER)`. Cierra Deuda 16. |
+### Plan de sub-bloques (pendiente de redactar tras D-B-HELPER)
 
-### Decisiones del Bloque 5a (Albarán, todas aplicadas)
+Estructura prevista (7 sub-bloques):
 
-| ID | Decisión | Valor |
-|---|---|---|
-| D-A-FECHA | Default `fecha` cabecera Albarán | `LocalDate.now().toString()`. Simetría con D-FECHA-DEFAULT y D-F-FECHA. |
-| D-A-EST | Default `estado` | **`'pendiente'` en Java** (redefinida en 5a.3-fix: SQLite no aplica DEFAULT cuando se pasa NULL explícito). |
-| D-A-OBS | `observaciones` a `CAMPOS_LIBRES` | Sí, `MAX_LEN_LIBRE=1000`. Simetría con `notas` y `condiciones`. |
-| D-A-TOT | Totales | **No aplica.** Albarán no tiene totales (sin IVA, sin precio, sin descuento). |
-| D-A-DC | `descripcion` virtual de cabecera | No. |
-| D-A-CN | Política duplicados parent-child | Bloqueo heredado. |
-| D-A-SINONIMOS | Sinónimos sin solape `numero`/`factura_numero`/`pedido_numero` | Aplicado. |
-| D5 (Albarán) | FKs opcionales `factura_id` y `pedido_id` | Resolver vía `factura_numero` y `pedido_numero` del CSV. Cierra D5 completa. |
-| D-A-LINEA | Campos línea | `descripcion` (obligatorio), `cantidad` (obligatorio), `unidad` (opcional). 3 campos. |
-| D-A-ORDEN | Campo `orden` en spec línea | No. `AlbaranDAO.saveLineas()` lo reasigna. |
-| D-A-TX | Transacción explícita en DAO | **Diferir a sprint dedicado.** Dictamen Gemini: deuda real, abordar sistemáticamente con `BEGIN DEFERRED` en sprint propio. |
+- **1a** — Si D-B-HELPER=B: implementar helper `DatabaseManager.withTx` + interfaz `SqlAction`. Si D-B-HELPER=A: este sub-bloque desaparece.
+- **1b** — `PresupuestoDAO.save()` envuelto en tx con patrón "tx solo si no hay externa" + test sintético de rollback (`PresupuestoDAOTest.saveRollbackOnLineaFailure` o equivalente).
+- **1c** — `FacturaDAO.save()` envuelto en tx + `FacturaDAO.crearDesdePresupuesto` envuelto en tx (incluyendo `descontarMateriales` + `updateEstado`) + tests rollback.
+- **1d** — `AlbaranDAO.save()` envuelto en tx + `AlbaranDAO.crearDesdeFactura` envuelto en tx + `AlbaranDAO.crearDesdePresupuesto` envuelto en tx + tests rollback.
+- **1e** — `MaterialDAO.ajustarStock` refactor con patrón "tx solo si no hay externa". Cambio mínimo: una línea para detectar tx externa.
+- **1f** — Test de tx anidada: simular flujo del importador (servicio abre tx, llama a `save`, `save` detecta tx externa, no commitea). Verificar que rollback del savepoint del servicio borra todo del grupo.
+- **1g** — Handoff v3.8 con sprint B cerrado + actualización de Deuda 9 (cerrada o redescrita) + Deudas residuales.
 
-### Decisiones del Bloque 6 (docs)
+**Convención commits sprint B:** un sub-bloque = un commit. Mensaje `feat: tx explicita en X.save()` o `feat: tx explicita en X.crearDesde*` o `test: rollback en X.save`.
 
-| ID | Decisión | Valor |
-|---|---|---|
-| D-6-SCOPE | Detalle de la sección "Estado actual del importador" | Medio (tabla 9 entidades + claves duplicado + FK opcionales + defaults Java + limitaciones). Ni mínimo ni exhaustivo. |
-| D-6-ESTRUCTURA | Edición del `.md` | Reescritura completa vía única sustitución (lección 14). Codex usó `apply_patch` como equivalente nativo de `str_replace`. |
-| D-6-CONSERVAR | Secciones existentes | Conservar literal: Procedimiento general, Convenciones CSV destino, Ejemplo xlsx Python, Otros formatos, Cuándo reevaluar Vía B. Reescribir: encabezado, Contexto, Referencias del código. Insertar nueva: Estado actual del importador. |
+### Archivos leídos en esta sesión que NO estaban en handoff v3.6
+
+- `PresupuestoDAO.java` (estado actual al cierre Sprint A).
+- `FacturaDAO.java` (estado actual al cierre Sprint A).
+- `AlbaranDAO.java` (estado actual al cierre Sprint A).
+- `MaterialDAO.java` (con `ajustarStock` transaccional pero sin detección de tx externa).
+
+### Patrón canónico del sprint (referencia para redactar bloques)
+
+```java
+public void save(Presupuesto p) throws SQLException {
+    Connection conn = DatabaseManager.getConnection();
+    boolean externalTx = !conn.getAutoCommit();
+    if (!externalTx) conn.setAutoCommit(false);
+    try {
+        if (p.getId() == 0) insert(p); else update(p);
+        saveLineas(p);
+        if (!externalTx) conn.commit();
+    } catch (SQLException e) {
+        if (!externalTx) conn.rollback();
+        throw e;
+    } finally {
+        if (!externalTx) conn.setAutoCommit(true);
+    }
+}
+```
+
+Nota: `setAutoCommit(true)` en finally restaura a true incondicionalmente porque el patrón asume que callers sin tx externa esperan autocommit-on tras la llamada. **Si esto resulta ser falso al revisar callers reales, ajustar a `setAutoCommit(prevAC)`.** Verificar antes de redactar el bloque 1b.
 
 ---
 
@@ -228,121 +257,27 @@ Las 9 entidades importan CSV. Documentación del procedimiento Vía A actualizad
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `74f174c` — `docs: actualizar MIGRACION_HISTORICO.md con las 9 entidades importables`. Sincronizado con `origin/master`.
-- **Commits del sprint en orden cronológico:**
-  - `c43118a` — Bloque 2A: importación CSV de Nóminas.
-  - `50d5902` — Bloque 2B: importación CSV de Pedidos.
-  - `9798225` — Bloque 2C: fix UPDATE path Pedido.
-  - `0bb82c7` — Bloque 3C-paso-1: ampliar `EntityImportSpec` parent-child.
-  - `fc63a50` — Bloque 3C-paso-2a: `CAMPOS_FECHA` + validación ISO Fase 2.
-  - `a8b596f` — Bloque 3C-paso-2b: infraestructura parent-child.
-  - `2310588` — Bloque 3C-paso-2c: `detectarInconsistenciaGrupo` (cierra D1).
-  - `bf9f34c` — docs: handoff v3.1.
-  - `2a4ead5` — Bloque 3C-paso-3a: Presupuestos parent-child (motor + spec + tests).
-  - `2513a71` — Bloque 3C-paso-3b: cablear importación CSV en `PresupuestosView`.
-  - `e8036f8` — docs: handoff v3.3 (cierre Bloque 3 completo).
-  - `e6d7a9a` — Bloque 4a: Facturas parent-child (motor + spec + tests + fix FK).
-  - `7126b15` — docs: handoff v3.4 (Bloque 4a cerrado).
-  - `55de9ef` — Bloque 4b: cablear importación CSV en `FacturasView`.
-  - `bfc0c1a` — Bloque 5a: Albaranes parent-child (motor + spec + tests).
-  - `60138f2` — Bloque 5b: cablear importación CSV en `AlbaranesView`.
-  - `74f174c` — Bloque 6: actualizar `MIGRACION_HISTORICO.md`.
-- **Working tree:** sólo `Resumen.md` modificado (este mismo archivo, v3.6 en curso). Tras commit del v3.6 quedará limpio.
-- **Nota:** el commit `docs: handoff v3.5` previsto al cierre de 5b no llegó a hacerse. El v3.6 absorbe el contenido del v3.5 fantasma.
+- **HEAD:** `74f174c` — `docs: actualizar MIGRACION_HISTORICO.md con las 9 entidades importables`. Sincronizado con `origin/master`. **Sin cambios desde v3.6.**
+- **Working tree:** sólo `Resumen.md` modificado (v3.7 en curso). Tras commit del v3.7 quedará limpio.
+- **Commits relevantes del sprint anterior:** ver handoff v3.6 sección "Git" (no se replican aquí).
+- **Sprint A no genera commits de código** (smoke pasó sin cambios).
+- **Sprint B no ha generado commits** (solo análisis; sin Bloque 1 redactado todavía).
 
 ### Tests
-- **56/56 verdes** al cierre. Reparto:
-  - `ClienteDAOTest` — 2
-  - `ImportBackupServiceTest` — 12
-  - `EntityImportServiceAlbaranTest` — 11
-  - `EntityImportServiceFacturaTest` — 9
-  - `EntityImportServiceNominaTest` — 5
-  - `EntityImportServicePedidoTest` — 10
-  - `EntityImportServicePresupuestoTest` — 7
+- **56/56 verdes** al cierre Sprint anterior, sin cambios. Reparto: 2 + 12 + 11 + 9 + 5 + 10 + 7.
+- Tras Sprint B: añadir ≥4 tests (1 por DAO parent-child + 1 tx anidada). Distribución exacta a determinar en redacción del Bloque 1.
 
-### Estado del archivo `EntityImportService.java`
-- Package: `org.gipsybuho.service`.
-- Imports con wildcards: `org.gipsybuho.dao.*`, `org.gipsybuho.model.*`, `org.gipsybuho.service.importer.*`.
-- Constantes: `MAX_FILAS=10_000`, `MAX_LEN=255`, `MAX_LEN_LIBRE=1_000`, `CAMPOS_NUMERICOS`, `CAMPOS_FECHA` (5 elementos), `CAMPOS_LIBRES` (4 elementos: `"notas"`, `"descripcion"`, `"condiciones"`, `"observaciones"`).
-- Records privados: `ValidRow(int numero, Map<String,String> vals)`, `ValidGroup(String clave, List<ValidRow> filas)`.
-- Fase 2.5 `agruparEnFase2_5` con `detectarInconsistenciaGrupo` invocado por grupo.
-- Fase 3 bifurcada: `insertarFilas` + `insertarGrupos`.
-- Dispatchers: `procesarFila` (planos, 6 casos) y `procesarGrupo` (parent-child, 3 casos: `"Presupuestos"`, `"Facturas"`, `"Albaranes"`).
-- Bloqueos al inicio de `importar()` para parent-child: `UPDATE_EXISTING` y `CREATE_NEW`. Solo `SKIP_IF_EXISTS` permitido.
-- Métodos privados de Presupuesto: `procesarPresupuesto`, `ensamblarPresupuesto`, `aplicarValoresPresupuestoCabecera`, `ensamblarLineaPresupuesto`.
-- Métodos privados de Factura: `procesarFactura`, `ensamblarFactura`, `aplicarValoresFacturaCabecera`, `ensamblarLineaFactura`, `resolverPresupuestoIdPorNumero`.
-- Métodos privados de Albarán: `procesarAlbaran`, `ensamblarAlbaran`, `aplicarValoresAlbaranCabecera`, `ensamblarLineaAlbaran`, `resolverFacturaIdPorNumero`, `resolverPedidoIdPorNumero`.
+### Estado de los archivos clave para Sprint B (post-lectura sesión actual)
 
-### Estado del archivo `MIGRACION_HISTORICO.md` (post-Bloque 6)
-- Última revisión: 22/05/2026. Estado: Vía A activa, Sprint 2 cerrado.
-- Sección "Estado actual del importador" nueva: tabla de 9 entidades con tipo + clave duplicado + política default, descripción del modelo CSV ancho con cabecera repetida, FK opcionales por número, defaults Java por entidad, limitaciones conocidas (Deudas 2, 3, 19, 20).
-- Secciones conservadas literales: Procedimiento general, Convenciones CSV destino, Ejemplo xlsx Python (`PRECIOS_PAPEL_PROVEEDORES_Formulas.xlsx`), Otros formatos (xlsb/pdf/docx), Cuándo reevaluar Vía B.
-- Secciones reescritas: encabezado, Contexto, Referencias del código (ahora lista 9 `IMPORT_SPEC` + nota sobre `EntityImportSpec` parent-child).
-
----
-
-## PLAN DE BLOQUES — ESTADO
-
-| Bloque | Descripción | Estado |
-|---|---|---|
-| 1 | Análisis Nómina/Albarán | ✅ HECHO |
-| 2A | Implementar Nómina + tests | ✅ HECHO. `c43118a`. |
-| 2B | Implementar Pedido + extraer `resolverFkPorNombre` + tests | ✅ HECHO. `50d5902`. |
-| 2C | Fix deuda 4: UPDATE path Pedido | ✅ HECHO. `9798225`. |
-| 3A | Análisis parent-child | ✅ HECHO. |
-| 3B | Diseño parent-child (D1–D6) | ✅ HECHO. |
-| 3C-paso-1 | Ampliar `EntityImportSpec` | ✅ HECHO. `0bb82c7`. |
-| 3C-paso-2a | `CAMPOS_FECHA` + validación ISO | ✅ HECHO. `fc63a50`. |
-| 3C-paso-2b | Infraestructura parent-child | ✅ HECHO. `a8b596f`. |
-| 3C-paso-2c | Detección inconsistencia | ✅ HECHO. `2310588`. |
-| 3C-paso-3a | Presupuesto: spec parent-child + tests | ✅ HECHO. `2a4ead5`. |
-| 3C-paso-3b | Cableado `PresupuestosView.importar()` | ✅ HECHO. `2513a71`. |
-| 4a | Factura: spec + motor parent-child + tests + fix FK | ✅ HECHO. `e6d7a9a`. |
-| 4b | Cablear `FacturasView.importar()` | ✅ HECHO. `55de9ef`. |
-| 5a | Albarán: spec + motor parent-child + tests + fix DEFAULT | ✅ HECHO. `bfc0c1a`. |
-| 5b | Cablear `AlbaranesView.importar()` | ✅ HECHO. `60138f2`. |
-| 6 | Actualizar `MIGRACION_HISTORICO.md` | ✅ HECHO. `74f174c`. |
-
-**Sprint Importación CSV CERRADO.**
-
----
-
-## PRÓXIMOS SPRINTS CANDIDATOS
-
-El sprint ha cerrado sin nuevo sprint asignado. Cuando arranque la próxima sesión, el usuario decidirá entre estas opciones (o propondrá otra). Listadas sin orden de prioridad; el usuario elige.
-
-### A. Smoke test manual de Albaranes pendiente
-Coste: minutos. Riesgo: cero (es validación, no cambia código). Acción:
-- `.\mvnw.cmd javafx:run` → ir a Albaranes → pulsar `📥 Importar` → debe abrir FileChooser, no Alert.
-- Cargar un CSV de ejemplo con 1 albarán + 2 líneas y verificar que persiste.
-- Cerrar la app correctamente (`Get-Process java | Stop-Process -Force` si se queda colgada).
-- Si todo OK, ningún commit. Si hay bug en UI, abrir fix-up.
-
-Deja la última pieza del sprint validada manualmente. Aceptable como cierre simbólico antes de empezar otro sprint.
-
-### B. Sprint de transacciones explícitas en DAOs (Deuda 9 + D-A-TX)
-Coste: medio. Riesgo: medio. Aplica a `PresupuestoDAO`, `FacturaDAO`, `AlbaranDAO` (al menos). Dictamen Gemini en 5a: usar `BEGIN DEFERRED` sistemáticamente. Necesita decisiones:
-- ¿Transacción al nivel del DAO (cada `save` parent + `saveLineas`) o al nivel del servicio importador (toda la importación en una sola tx)?
-- ¿Cómo se comporta cuando una línea falla a mitad? ¿Rollback de la cabecera ya insertada o aceptar parcial?
-- ¿Tests sintéticos que prueben rollback?
-
-### C. Sprint de empleados inactivos (Deuda 2)
-Coste: bajo. Riesgo: bajo. Hoy `resolverEmpleadoId` filtra `activo=1`. Para importar nóminas históricas de empleados ya inactivos esto rompe. Opciones:
-- Quitar filtro y dejar resolver inactivos. Riesgo: confusión en otras pantallas que esperan solo activos.
-- Añadir parámetro `incluirInactivos` a la resolución, true solo desde importador.
-- Workaround manual ya documentado (reactivar → importar → desactivar). Tal vez baste con documentar y no tocar código.
-
-### D. Sprint de defaults DDL ignorados con NULL explícito (Deuda 20)
-Coste: bajo-medio. Riesgo: bajo. Detectada en 5a.3, mitigada solo en Albarán (D-A-EST). Aplica potencialmente a `forma_pago` en `FacturaDAO`, `condiciones` en `PresupuestoDAO` y cualquier otra columna con DEFAULT cuyo setter pase NULL. Acción:
-- Auditar todos los DAOs y todos los DEFAULT del DDL.
-- Por cada combinación setter+NULL+DEFAULT_DDL, decidir si aplicar default en Java (`ensamblarX`) o cambiar el DAO para omitir la columna del INSERT.
-- Tests sintéticos que ejerciten cada caso con valor vacío en CSV.
-
-### Otros candidatos menores (no requieren sprint completo)
-- Deuda 8 (refactor `mostrarResultadoImportacion` duplicado en 8 vistas). Toca UI, fuera del scope habitual.
-- Deuda 15 (tests parent-child no cubren campos cabecera opcionales mal formados). Fácil de añadir, riesgo bajo.
-- Deuda 17 (estilo imports asimétrico en `Factura.java`). Trivial.
-- Deuda 18 / 18-bis (`cliente_id` setNull en `FacturaDAO`/`AlbaranDAO`). Riesgo nulo, podría bundlearse con sprint B.
+- `PresupuestoDAO.save()` — 2 tx separadas (insert/update + saveLineas), autocommit-on.
+- `FacturaDAO.save()` — 2 tx separadas.
+- `FacturaDAO.crearDesdePresupuesto()` — ≥4 tx separadas (save + N ajustarStock + updateEstado).
+- `AlbaranDAO.save()` — 2 tx separadas.
+- `AlbaranDAO.crearDesdeFactura()` — 2 tx separadas (save).
+- `AlbaranDAO.crearDesdePresupuesto()` — 2 tx separadas (save).
+- `MaterialDAO.ajustarStock()` — **transaccional pero sin detección de tx externa.** Commit interno revienta tx del caller.
+- `EntityImportService.insertarFilas`/`insertarGrupos` — transaccional con Savepoint por fila/grupo. **No tocar en sprint B.**
+- `DatabaseManager.getConnection()` — singleton. **No tocar en sprint B.**
 
 ---
 
@@ -353,98 +288,91 @@ Coste: bajo-medio. Riesgo: bajo. Detectada en 5a.3, mitigada solo en Albarán (D
 | 1 | Validación de fechas en Fase 2 | CERRADA en 3C-paso-2a. |
 | 2 | Filtro `activo=1` en `resolverEmpleadoId` puede romper nóminas históricas | ABIERTA. Candidata sprint C. |
 | 3 | `lower()` en SQLite no normaliza tildes | ABIERTA. |
-| 4 | UPDATE path Pedido sin guard de errores post-`aplicarValoresPedido` | CERRADA en `9798225`. |
-| 5 | Contrato `filtroExtraSql` admite `null` pero rechaza blank con excepción | ABIERTA. Riesgo bajo. |
-| 6 | `UPDATE_EXISTING` para Nómina y Pedido sin test directo | PARCIAL. Nómina sin test directo. |
-| 7 | Asimetría: `aplicarValoresNomina` no recibe `errores` | ABIERTA. Sin bug observable. |
-| 8 | `mostrarResultadoImportacion` duplicado en 8 vistas | ABIERTA. Refactor UI fuera del sprint. Reforzada en 4b/5b. |
-| 9 | `*.save()` sin transacción explícita BEGIN/COMMIT | ABIERTA. **Reforzada con dictamen Gemini en 5a (D-A-TX).** Candidata sprint B. Aplica a PresupuestoDAO, FacturaDAO, AlbaranDAO. |
-| 10 | `saveLineas` DELETE+INSERT total | CERRADA en 3C-paso-2b (bloqueo UPDATE_EXISTING parent-child). |
+| 4 | UPDATE path Pedido sin guard de errores | CERRADA en `9798225`. |
+| 5 | Contrato `filtroExtraSql` admite `null` pero rechaza blank | ABIERTA. Riesgo bajo. |
+| 6 | `UPDATE_EXISTING` para Nómina y Pedido sin test directo | PARCIAL. Nómina sin test. |
+| 7 | Asimetría: `aplicarValoresNomina` no recibe `errores` | ABIERTA. |
+| 8 | `mostrarResultadoImportacion` duplicado en 8 vistas | ABIERTA. Refactor UI fuera de scope. |
+| 9 | `*.save()` sin transacción explícita BEGIN/COMMIT (DAOs cuando se invocan desde UI directa o desde flujos `crearDesde*`) | **REDESCRITA en sesión actual.** Sprint B activo. **NO aplica al importador** (ya tiene tx). Aplica a `PresupuestoDAO.save`, `FacturaDAO.save`, `FacturaDAO.crearDesdePresupuesto`, `AlbaranDAO.save`, `AlbaranDAO.crearDesdeFactura`, `AlbaranDAO.crearDesdePresupuesto`. |
+| 10 | `saveLineas` DELETE+INSERT total | CERRADA en 3C-paso-2b. |
 | 11 | `fecha_alta` de Empleado sin validación ISO | ABIERTA, riesgo bajo. |
-| 12 | `@SuppressWarnings("unused")` en `procesarGrupo` | CERRADA en 3C-paso-3a. |
-| 13 | Detección de inconsistencia parent-child sin test | CERRADA. Tests en 3 entidades (Presupuesto, Factura, Albarán). |
-| 14 | `CREATE_NEW` para parent-child sin semántica clara | CERRADA en 3C-paso-3a (D-CN). |
-| 15 | Tests parent-child no cubren campos cabecera opcionales (fecha_validez ISO mal formada, condiciones largas, etc.) | ABIERTA, riesgo bajo. Aplica a 3 entidades. |
-| 16 | `FacturaDAO.set()` escribía `presupuesto_id=0` literal infringiendo FK | CERRADA en 4a (D-F-FK-NULL). |
-| 17 | Estilo de imports en `Factura.java` (asimetría tras 4a.1) | ABIERTA, riesgo nulo. |
-| 18 | `cliente_id` en `FacturaDAO.set()` también es FK opcional pero NO aplica `setNull` | ABIERTA, riesgo bajo. |
-| 18-bis | `cliente_id` en `AlbaranDAO.set()` también es FK opcional pero NO aplica `setNull` | ABIERTA, riesgo nulo. Análoga a Deuda 18. `resolverClienteId` garantiza match o ERROR. |
-| 19 | Validación numérica de `cantidad` ausente; valores no-numéricos persisten como 0 en BD | ABIERTA. Aplica a Pedido/Presupuesto/Factura/Albarán. Aceptada como consciente en 5a. Documentada en MIGRACION_HISTORICO.md. |
-| 20 | Defaults DDL ignorados cuando setter pasa NULL explícito | DETECTADA en 5a.3, mitigada en Albarán (D-A-EST). Candidata sprint D. **Potencialmente aplica a otras columnas con DEFAULT** (revisar `forma_pago` en `FacturaDAO`, `condiciones` en `PresupuestoDAO`, etc.). |
+| 12 | `@SuppressWarnings("unused")` en `procesarGrupo` | CERRADA. |
+| 13 | Detección de inconsistencia parent-child sin test | CERRADA. |
+| 14 | `CREATE_NEW` para parent-child sin semántica clara | CERRADA. |
+| 15 | Tests parent-child no cubren campos cabecera opcionales | ABIERTA, riesgo bajo. |
+| 16 | `FacturaDAO.set()` escribía `presupuesto_id=0` literal | CERRADA en 4a. |
+| 17 | Estilo de imports en `Factura.java` | ABIERTA, riesgo nulo. |
+| 18 | `cliente_id` en `FacturaDAO.set()` no aplica `setNull` | ABIERTA, riesgo bajo. |
+| 18-bis | `cliente_id` en `AlbaranDAO.set()` no aplica `setNull` | ABIERTA, riesgo nulo. |
+| 19 | Validación numérica de `cantidad` ausente | ABIERTA. Aceptada consciente. |
+| 20 | Defaults DDL ignorados con NULL explícito | DETECTADA en 5a.3, mitigada solo en Albarán. Candidata sprint D. |
+| **21** | **Mapeo automático no reconoce `numero` ni `nif` en spec Albarán (probablemente Factura y Presupuesto también)** | **NUEVA en Sprint A.** Riesgo bajo, UX. |
+| **22** | **Mensaje de error `cliente_nif` dice "para el pedido" en albarán/factura/presupuesto** | **NUEVA en Sprint A.** Trivial. |
+| **23** | **Diálogo de mapeo no lista campos de línea en desplegables (comportamiento intencional, documentar)** | **NUEVA en Sprint A.** Informativa. |
 
 ---
 
-## ERRORES COMETIDOS EN ESTE SPRINT (para no repetirlos)
+## PRÓXIMOS SPRINTS CANDIDATOS (post Sprint B)
 
-1. **Asumí el tipo de `Pedido.fecha` sin verificarlo** (2B). Era `LocalDate`, no `String`.
+### C. Sprint de empleados inactivos (Deuda 2)
+Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas. Coste bajo, riesgo bajo. Tres opciones: quitar filtro, parámetro `incluirInactivos`, o solo documentar workaround.
 
-2. **Fui demasiado cómplice al inicio con decisiones del usuario** (2B).
+### D. Sprint de defaults DDL ignorados con NULL (Deuda 20)
+Auditar todos los DAOs y DEFAULTs del DDL. Candidatos identificados: `forma_pago` en `FacturaDAO`, `condiciones` en `PresupuestoDAO`. Coste bajo-medio.
 
-3. **Redacté el Bloque 2B juntando dos cambios.** Aplicado: bloques partidos en 3C-paso-3, 4a, 5a.
-
-4. **Confundí `UPDATE_IF_EXISTS` con `UPDATE_EXISTING`** (2C).
-
-5. **Perdí genéricos al reescribir `EntityImportSpec`** (3C-paso-1).
-
-6. **Dicté switch expression sin brazos con valor** (3C-paso-2b).
-
-7. **Entré en pánico falso por `git status` "limpio"** (3C-paso-1).
-
-8. **El usuario pegó por error respuesta idéntica del turno anterior** (3C-paso-2b fix).
-
-9. **Casi redacto 3C-paso-2c sin pedir el archivo objetivo.**
-
-10. **Subida ambigua en sesión 3C-paso-3** (usuario subió `PresupuestosView.java` sin mensaje).
-
-11. **Dos basuras en mi propia redacción del bloque 3a** detectadas al releer.
-
-12. **Codex añadió un default no declarado en 3a.** Aplicado: D-F-FECHA declarada explícita en 4a; D-A-FECHA en 5a.
-
-13. **`Resumen.md` arrastró sin commit entre sesiones** (3b). Aplicado en 4a y 5a: handoff commiteado al cierre. **Recaída en 5b: el commit `docs: v3.5` previsto no se hizo.** El v3.6 absorbe el v3.5 fantasma.
-
-14. **Intenté actualizar el handoff con 12 `str_replace` quirúrgicos** sobre archivo a medio actualizar. Aplicado: v3.4, v3.5, v3.6 entregadas como reescritura completa.
-
-15. **Codex hizo inserción aditiva en 4a.1 cuando dicté reemplazo.** Aplicado: truco "líneas idénticas en old_str y new_str" en 4b/5b.
-
-16. **`Nothing to compile - all classes are up to date` falsa señal de "verificado".** Aplicado en todos los bloques posteriores: `clean compile`.
-
-17. **Etiqueté un bug seguro como "deuda latente"** (4a). Resuelto vía D-F-FK-NULL.
-
-18. **`findstr /N "case \"Facturas\""` no escapó bien** (4a).
-
-19. **Dicté `new ColumnMatcher(Map.ofEntries(...))` sin haber leído `ColumnMatcher.java`** (5a.1). Es FunctionalInterface, no clase concreta. Causó BUILD FAILURE. Aplicado: pedir el archivo de la API y/o un archivo que la use bien antes de dictarla.
-
-20. **No anticipé que SQLite ignora DEFAULT con NULL explícito** (5a.3). Test `importaAlbaranConDosLineas` rojo. D-A-EST redefinida en Java. Aplicado: cuando el spec marca un campo opcional con default de BD, verificar que el DAO no pasa NULL explícito o aplicar default en Java.
+### Otros candidatos menores (no requieren sprint completo)
+- Deudas 21, 22, 23 (smoke Sprint A). Bundle pequeño.
+- Deudas 8, 15, 17, 18, 18-bis.
+- Refactor B2 (inyectar Connection en DAOs) — sprint propio, complejo. Después de B.
 
 ---
 
 ## ARCHIVOS YA INSPECCIONADOS — NO PEDIRLOS DE NUEVO
 
-Estos archivos están analizados y leídos. NO pedirlos de nuevo al arrancar un nuevo sprint salvo cambio explícito:
+Estos archivos están analizados y leídos. NO pedirlos de nuevo salvo cambio explícito:
 
-- `CLAUDE.md` — reglas operativas Multi-IA.
-- `MIGRACION_HISTORICO.md` — actualizado en Bloque 6.
-- `DuplicatePolicy.java` — enum: `SKIP_IF_EXISTS`, `UPDATE_EXISTING`, `CREATE_NEW`.
-- `ColumnMatcher.java` — FunctionalInterface, patrón `h -> matchLongest(normalize(h), syn)`.
-- `Tarifa.java`, `Pedido.java`, `Presupuesto.java`, `Factura.java`, `Albaran.java` — todos con `IMPORT_SPEC`.
+**Del sprint anterior (v3.6):**
+- `CLAUDE.md`, `MIGRACION_HISTORICO.md`.
+- `DuplicatePolicy.java`, `ColumnMatcher.java`.
+- `Tarifa.java`, `Pedido.java`, `Presupuesto.java`, `Factura.java`, `Albaran.java` con IMPORT_SPEC.
 - `LineaPresupuesto.java`, `LineaFactura.java`, `LineaAlbaran.java`.
-- `PresupuestoDAO.java`, `FacturaDAO.java`, `AlbaranDAO.java`, `PedidoDAO.java`.
-- `PresupuestosView.java`, `FacturasView.java`, `AlbaranesView.java` (post cableado).
-- `TarifasView.java`, `NominasView.java`, `PedidosView.java` — plantillas de cableado.
+- `PedidoDAO.java`.
+- `PresupuestosView.java`, `FacturasView.java`, `AlbaranesView.java`.
+- `TarifasView.java`, `NominasView.java`, `PedidosView.java`.
 - `EntityImportSpec.java`, `FieldSpec.java`.
-- `EntityImportService.java` — estado al cierre 5a.
 - `EntityImportServicePedidoTest.java`, `EntityImportServicePresupuestoTest.java`, `EntityImportServiceFacturaTest.java`, `EntityImportServiceAlbaranTest.java`.
-- `DatabaseManager.java` — activa `PRAGMA foreign_keys = ON`. DDL inline.
+
+**Leídos en sesión actual (Sprint A + B análisis):**
+- `PresupuestoDAO.java` — estado actual al cierre Sprint A.
+- `FacturaDAO.java` — estado actual al cierre Sprint A.
+- `AlbaranDAO.java` — estado actual al cierre Sprint A.
+- `MaterialDAO.java` — estado actual al cierre Sprint A.
+- `EntityImportService.java` — estado actual al cierre Sprint A.
+- `DatabaseManager.java` — estado actual al cierre Sprint A.
+
+---
+
+## ERRORES COMETIDOS EN ESTA SESIÓN (para no repetirlos)
+
+1. **Etiqueté Deuda 9 como "abierta y aplicable a importador" sin leer `insertarFilas`/`insertarGrupos`.** El importador ya tenía tx explícita. Lección: no diagnosticar deudas técnicas sin leer el código que las realizaría. Aplicada al redescribir Deuda 9 al final del análisis.
+
+2. **Interpreté "no hay nif, usa este" del usuario como "usa el placeholder de todos modos".** Significaba literalmente "no tengo NIFs en mi BD". El smoke detectó el error vía ERROR `cliente no encontrado`. Lección: si frase del usuario es ambigua y la acción es costosa de revertir, preguntar antes.
+
+3. **Pedí al usuario listar opciones de desplegable cuando una captura del desplegable abierto las habría dado.** Gastó un ciclo. Lección: si captura puede responder, pedir captura, no descripción manual.
+
+4. **Recomendé sprint B sin haber leído el código del importador.** Tuve que recular públicamente cuando vi `insertarFilas` ya transaccional. Lección reforzada de Sprint anterior: pedir archivos antes de recomendar.
+
+5. **Casi olvido `MaterialDAO.ajustarStock` en el scope.** El usuario subió `MaterialDAO.java` por iniciativa propia y solo entonces vi que `ajustarStock` también necesita el patrón refactorizado para que CREARDESDE-ALCANCE=A funcione. Lección: si un sprint envuelve un método que llama a otros DAOs, leer también esos DAOs antes de cerrar el scope.
 
 ---
 
 ## RESPUESTA TÍPICA EN PRÓXIMAS SESIONES
 
-- Sin emojis salvo cita literal de código (los hay en la UI: `📥 Importar`, `📦 Material`).
+- Sin emojis salvo cita literal de código.
 - Sin "vamos a", "podríamos", "voy a intentar". Imperativo claro.
 - Listas y tablas cuando estructuran. Prosa cuando fluye.
 - Bloques de código con triple backtick y lenguaje declarado.
-- Bloques para agentes en triple backtick anidado con cinco: ` ````` ` para que el usuario los copie limpios.
+- Bloques para agentes en triple backtick anidado con cinco: ` ````` ` para copia limpia.
 - Al final de cada respuesta técnica, una pregunta concreta o un siguiente paso explícito.
 
 ---
@@ -453,20 +381,17 @@ Estos archivos están analizados y leídos. NO pedirlos de nuevo al arrancar un 
 
 El usuario abrirá un chat nuevo y pegará este documento entero. Mi primer mensaje debe ser:
 
-1. **Confirmar contexto cargado:** HEAD `74f174c` (Bloque 6 cerrado) o un commit `docs:` v3.6 inmediatamente encima, 56/56 verdes, Sprint Importación CSV CERRADO. Las 9 entidades importan CSV. Documentación Vía A actualizada.
+1. **Confirmar contexto cargado:** HEAD `74f174c` o `docs:` v3.7 inmediatamente encima, 56/56 verdes, Sprint A cerrado sin commit, Sprint B en análisis parado en D-B-HELPER.
 
 2. **Pedir verificación de estado:**
-   - `git log --oneline -5` — confirmar HEAD en un commit `docs:` v3.6 encima de `74f174c` o en el propio `74f174c`.
-   - `git status` — confirmar working tree limpio.
-   - `.\mvnw.cmd test` — confirmar 56/56 verdes con el reparto 2 + 12 + 11 + 9 + 5 + 10 + 7.
+   - `git log --oneline -5` — confirmar HEAD en `74f174c` o `docs:` v3.7 encima.
+   - `git status` — working tree limpio.
+   - `.\mvnw.cmd test` — 56/56 verdes.
 
-3. **Preguntar al usuario qué sprint arranca**, presentando las 4 opciones de la sección "Próximos sprints candidatos" (A: smoke test, B: transacciones, C: empleados inactivos, D: defaults DDL) sin recomendar una. El usuario decide. Si propone otro sprint distinto, registrar el alcance y arrancar análisis (Bloque 1 del nuevo sprint).
+3. **Resolver D-B-HELPER inmediatamente.** Es lo único que bloquea redactar el Bloque 1. Recordar mi opinión cerrada: **A (inline)**. Justificación principal: el parámetro `Connection conn` del callback de un helper sería decorativo porque los métodos privados siguen llamando al singleton. Si el usuario confirma A, arrancar Bloque 1 con 6 sub-bloques (1a desaparece). Si confirma B, arrancar con 7 sub-bloques.
 
-4. **Una vez decidido el sprint:**
-   - Si es A (smoke test): dictar comandos, esperar resultado, cerrar.
-   - Si es B/C/D: arrancar con un Bloque 1 de análisis. Pedir archivos relevantes según sprint elegido (no asumir conocimiento previo del estado de archivos no listados en "Archivos ya inspeccionados").
-   - Si es otro: dejar al usuario describir alcance, formular preguntas de diseño antes de redactar Bloque 1.
+4. **Redactar Bloque 1** = plan consolidado del sprint con sub-bloques en orden, cada uno con archivo objetivo, decisión que aplica y criterio de éxito.
 
-5. **Si la verificación de estado revela divergencia** respecto a `74f174c` o al docs v3.6 encima, diagnosticar antes de avanzar (mirar `git log --oneline -10` y comparar con commits listados en sección "Git").
+5. **Si la verificación de estado revela divergencia** respecto a `74f174c` o `docs:` v3.7 encima, diagnosticar antes de avanzar (`git log --oneline -10`).
 
 FIN DEL HANDOFF.
