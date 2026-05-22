@@ -65,7 +65,6 @@ public class AlbaranDAO {
         if (factura == null) throw new SQLException("Factura no encontrada");
 
         Albaran a = new Albaran();
-        a.setNumero(DatabaseManager.generarNumeroAlbaran());
         a.setClienteId(factura.getClienteId());
         a.setFecha(java.time.LocalDate.now().toString());
         a.setFacturaId(facturaId);
@@ -79,7 +78,20 @@ public class AlbaranDAO {
             la.setUnidad(esMaterial ? "__material__" : "ud");
             a.getLineas().add(la);
         }
-        save(a);
+
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            a.setNumero(DatabaseManager.generarNumeroAlbaran());
+            save(a);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
         return a;
     }
 
@@ -89,7 +101,6 @@ public class AlbaranDAO {
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 
         Albaran a = new Albaran();
-        a.setNumero(DatabaseManager.generarNumeroAlbaran());
         a.setClienteId(presupuesto.getClienteId());
         a.setFecha(java.time.LocalDate.now().toString());
         a.setEstado("pendiente");
@@ -102,13 +113,37 @@ public class AlbaranDAO {
             la.setUnidad(esMaterial ? "__material__" : "ud");
             a.getLineas().add(la);
         }
-        save(a);
+
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            a.setNumero(DatabaseManager.generarNumeroAlbaran());
+            save(a);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
         return a;
     }
 
     public void save(Albaran a) throws SQLException {
-        if (a.getId() == 0) insert(a); else update(a);
-        saveLineas(a);
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            if (a.getId() == 0) insert(a); else update(a);
+            saveLineas(a);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
     }
 
     private void insert(Albaran a) throws SQLException {
