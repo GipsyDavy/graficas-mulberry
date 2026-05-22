@@ -54,8 +54,19 @@ public class PresupuestoDAO {
     }
 
     public void save(Presupuesto p) throws SQLException {
-        if (p.getId() == 0) insert(p); else update(p);
-        saveLineas(p);
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            if (p.getId() == 0) insert(p); else update(p);
+            saveLineas(p);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
     }
 
     private void insert(Presupuesto p) throws SQLException {
