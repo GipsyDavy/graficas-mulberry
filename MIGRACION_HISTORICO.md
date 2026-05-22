@@ -2,8 +2,8 @@
 
 README técnico sobre cómo procesar archivos históricos de la empresa cliente cuando lleguen.
 
-**Última revisión:** 17/05/2026
-**Estado:** Vía A activa. Vía B/C reevaluables tras ver los primeros archivos reales.
+**Última revisión:** 22/05/2026
+**Estado:** Vía A activa. Sprint 2 (Importación CSV) cerrado: las 9 entidades del sistema soportan importación CSV desde la app. Vía B/C reevaluables tras ver los primeros archivos reales del cliente.
 
 ---
 
@@ -11,13 +11,13 @@ README técnico sobre cómo procesar archivos históricos de la empresa cliente 
 
 La empresa cliente trabaja con archivos en formato humano: Excel con celdas combinadas, varias hojas por libro, cabeceras decorativas, bloques laterales, totales calculados con fórmulas. También PDFs y Words generados desde software de terceros.
 
-Estos archivos no son importables directamente con el asistente de mapping (`ColumnMappingDialog` + `EntityImportService`) porque dicho asistente asume **CSV plano**: una fila = un registro, cabeceras en fila 1, sin estructura visual humana.
+Estos archivos no son importables directamente con el asistente de mapping (`ColumnMappingDialog` + `EntityImportService`) porque dicho asistente asume **CSV plano o CSV ancho con cabecera repetida**: una fila = un registro (o un grupo agrupable por clave), cabeceras en fila 1, sin estructura visual humana.
 
 Sprint 2 cerrado por Vía A en mayo 2026:
 - No se construye importador genérico capaz de tragarse formatos humanos.
 - Conversión manual a CSV limpio archivo por archivo.
-- Import con el asistente de Fase 1 ya existente.
-- Los botones "Importar" de Albaranes/Facturas/Pedidos/Nóminas/Presupuestos muestran Alert "Funcionalidad próximamente" en lugar de intentar importar.
+- Import con el asistente de Fase 1 + Fase 2 (parent-child) ya existente.
+- Las 9 vistas tienen botón `📥 Importar` funcional cableado contra `EntityImportService`. Ya no hay Alerts "Funcionalidad próximamente".
 
 ---
 
@@ -27,8 +27,8 @@ Para cada archivo que llegue:
 
 1. **Inspeccionar estructura.** Abrir el archivo, identificar qué entidades del sistema contiene, cómo están organizados los datos.
 2. **Identificar campos relevantes por entidad.** Qué columnas son cabeceras reales (no decorativas), qué celdas combinadas hay, qué bloques laterales.
-3. **Generar CSV limpio.** Un CSV por entidad. Una fila = un registro. Cabeceras en fila 1. Sin combinaciones, sin fórmulas, decimales con punto, UTF-8.
-4. **Mapear contra el IMPORT_SPEC.** Las claves del CSV deben encajar con las claves del `IMPORT_SPEC` del modelo correspondiente. Ver `Material.IMPORT_SPEC`, `Cliente.IMPORT_SPEC`, etc. en `src/main/java/org/gipsybuho/model/`.
+3. **Generar CSV limpio.** Un CSV por entidad. Para entidades planas: una fila = un registro. Para entidades parent-child (Presupuesto, Factura, Albarán): CSV ancho con cabecera repetida en cada línea, agrupable por `numero`. Cabeceras en fila 1. Sin combinaciones, sin fórmulas, decimales con punto, UTF-8.
+4. **Mapear contra el `IMPORT_SPEC`.** Las claves del CSV deben encajar con las claves del `IMPORT_SPEC` del modelo correspondiente. Ver sección "Estado actual del importador" abajo.
 5. **Importar desde la app.** Botón Importar de la vista → seleccionar CSV → `ColumnMappingDialog` resuelve el mapping casi todo automático → confirmar → revisar `ImportResult` (importadas, descartadas, errores).
 6. **Validar visualmente.** Abrir la tabla en la app, comprobar que los registros aparecen correctamente.
 
@@ -46,6 +46,82 @@ Reglas que evitan errores comunes al importar:
 - Tipos consistentes por columna. Precios solo números, sin `€`, sin texto adicional, sin `"N/A"`. Decimales con punto.
 - Nombres de columna planos: `tipo_papel`, `precio_resma`, no `Tipo de papel (€/resma)`.
 - Encoding UTF-8 al guardar.
+- Fechas en ISO `YYYY-MM-DD`. El `ImportService` normaliza fechas Excel (números seriales) a ISO antes de pasarlas a `EntityImportService`, pero si exportas a CSV manualmente, escribe directamente ISO para evitar ambigüedad.
+
+---
+
+## Estado actual del importador
+
+Las 9 entidades del sistema soportan importación CSV. Cada una tiene un `IMPORT_SPEC` público estático en su modelo.
+
+### Tabla de entidades importables
+
+| Entidad | Tipo | Clave de duplicado | Política default |
+|---|---|---|---|
+| Cliente | plana | `nif` | `SKIP_IF_EXISTS` |
+| Material | plana | `codigo` | `SKIP_IF_EXISTS` |
+| Empleado | plana | `dni` | `SKIP_IF_EXISTS` |
+| Tarifa | plana | `(material_id, cliente_id)` | `SKIP_IF_EXISTS` |
+| Nómina | plana | `(empleado_id, mes, anio)` | `SKIP_IF_EXISTS` |
+| Pedido | plana | `numero` | `SKIP_IF_EXISTS` |
+| Presupuesto | **parent-child** | `numero` | `SKIP_IF_EXISTS` |
+| Factura | **parent-child** | `numero` | `SKIP_IF_EXISTS` |
+| Albarán | **parent-child** | `numero` | `SKIP_IF_EXISTS` |
+
+Política `SKIP_IF_EXISTS`: si la clave ya existe en BD, la fila se descarta como duplicado (sin error). `UPDATE_EXISTING` y `CREATE_NEW` están **bloqueadas** para parent-child (lanzan `IllegalArgumentException` al inicio de `importar()`).
+
+### Modelo CSV ancho con cabecera repetida (parent-child)
+
+Presupuesto, Factura y Albarán son entidades parent-child: una cabecera tiene N líneas. El modelo CSV es **ancho con cabecera repetida**: cada fila del CSV contiene los campos de cabecera + los de una línea. Las filas con el mismo `numero` se agrupan en un único registro parent + N líneas.
+
+Ejemplo simplificado (Presupuesto, 2 cabeceras con 2 líneas cada una):
+
+````
+numero,cliente_nif,fecha,descripcion,cantidad,precio_unitario
+PRES-001,B12345678,2026-05-01,Cartulina A4,100,0.15
+PRES-001,B12345678,2026-05-01,Encuadernación,1,25.00
+PRES-002,A87654321,2026-05-02,Folleto díptico,500,0.30
+PRES-002,A87654321,2026-05-02,Diseño gráfico,1,80.00
+````
+
+**Política de coherencia intra-grupo (D1):** todos los campos de cabecera declarados en `spec.campos()` deben coincidir entre filas del mismo `numero`. Si una fila del grupo trae `fecha=2026-05-01` y otra `fecha=2026-05-02` para el mismo `numero`, el grupo se rechaza con `RowError` de tipo `INCONSISTENCIA_GRUPO`.
+
+### FKs opcionales por número del CSV (D5)
+
+Para evitar exigir IDs internos en los CSVs históricos, el importador resuelve FKs opcionales buscando por su número natural:
+
+| Entidad | Columna CSV | FK resuelta | Comportamiento si vacío | Comportamiento si número no encontrado |
+|---|---|---|---|---|
+| Factura | `presupuesto_numero` | `presupuesto_id` | `setNull` (sin FK) | ERROR `FK_NO_ENCONTRADA` |
+| Albarán | `factura_numero` | `factura_id` | `setNull` (sin FK) | ERROR `FK_NO_ENCONTRADA` |
+| Albarán | `pedido_numero` | `pedido_id` | `setNull` (sin FK) | ERROR `FK_NO_ENCONTRADA` |
+
+La FK de cliente NO usa este patrón: se resuelve por `nif` (match exacto requerido) o, si `nif` viene vacío, por `nombre+apellidos` (match único o ERROR). Empleado se resuelve por `nombre+apellidos`.
+
+### Defaults aplicados en Java por entidad
+
+Cuando una columna del CSV viene vacía y el campo tiene un default conocido, el importador lo aplica en Java durante `ensamblarX()`, antes del `save()`. Esto evita depender de los `DEFAULT` del DDL de SQLite, que **no se aplican cuando el DAO pasa `NULL` explícito** (lección aprendida en 5a.3, Deuda 20).
+
+| Entidad | Campo | Default Java |
+|---|---|---|
+| Presupuesto | `fecha` | `LocalDate.now().toString()` |
+| Presupuesto | `iva_porcentaje` | `21.0` |
+| Presupuesto | `estado` | `'borrador'` |
+| Factura | `fecha` | `LocalDate.now().toString()` |
+| Factura | `iva_porcentaje` | `21.0` |
+| Factura | `estado` | `'pendiente'` |
+| Factura | `forma_pago` | (no se aplica en Java; el DDL aplica `'Transferencia bancaria'` solo si la columna se omite del INSERT) |
+| Albarán | `fecha` | `LocalDate.now().toString()` |
+| Albarán | `estado` | `'pendiente'` |
+
+Si tu CSV trae un valor explícito, gana sobre el default.
+
+### Limitaciones conocidas relevantes para el operador
+
+- **Empleados inactivos (Deuda 2):** la resolución de empleado en Nómina filtra `activo = 1`. Si importas nóminas históricas de empleados ya dados de baja en la app, fallarán con `FK_NO_ENCONTRADA`. Workaround: reactivar temporalmente el empleado, importar, desactivar de nuevo.
+- **`cantidad` no se valida como numérico (Deuda 19):** si un CSV trae `cantidad=N/A` o similar en una línea de Presupuesto/Factura/Albarán/Pedido, persiste como `0` en BD sin error. Verificar manualmente con `Select-String -Pattern '[^0-9.,;]' archivo.csv` antes de importar.
+- **Totales recalculados (no respetados):** los totales del CSV en Presupuesto/Factura se ignoran. El importador llama a `calcularTotales()` tras montar cabecera+líneas. Albarán no tiene totales (no hay precios ni IVA).
+- **Tildes en match por nombre (Deuda 3):** SQLite `lower()` no normaliza tildes, así que `"García"` y `"Garcia"` no matchean. Si el match por `nombre+apellidos` falla con un nombre que sospechas existe, revisar acentuación literal en BD.
 
 ---
 
@@ -174,7 +250,7 @@ Documentar aquí el procedimiento concreto cuando se procese el primer archivo d
 
 ## Cuándo reevaluar Vía B (importador genérico nativo)
 
-Posibles desencadenantes:
+El soporte parent-child añadido en Sprint 2 ya cubre el caso de "Excel ancho con cabecera repetida". La Vía B sigue significando "importador capaz de tragarse Excel con estructura visual humana sin conversión manual previa". Posibles desencadenantes:
 
 - Que el procesamiento manual supere las 10 horas/mes de forma sostenida.
 - Que la empresa empiece a importar archivos recurrentes (mensuales) en formato siempre igual de un mismo origen. En ese caso, codificar plantilla de parseo específica para ese origen amortiza pronto.
@@ -186,7 +262,8 @@ Si ninguno de los tres, mantener Vía A indefinidamente.
 
 ## Referencias del código
 
-- `EntityImportService` (`src/main/java/org/gipsybuho/service/`): servicio de importación con 3 fases (mapeo, validación, transacción única). Acepta `EntityImportSpec`, `List<Map<String, String>>` (filas parseadas), `mapping` y `DuplicatePolicy`.
+- `EntityImportService` (`src/main/java/org/gipsybuho/service/`): servicio de importación con 3 fases para entidades planas (mapeo, validación, transacción única) más Fase 2.5 (agrupación) y Fase 3 bifurcada (`insertarFilas` + `insertarGrupos`) para parent-child. Acepta `EntityImportSpec`, `List<Map<String, String>>` (filas parseadas), `mapping` y `DuplicatePolicy`.
 - `ColumnMappingDialog` (`src/main/java/org/gipsybuho/ui/`): asistente visual de mapping de columnas.
 - `ImportService` (`src/main/java/org/gipsybuho/service/`): parseo de CSV/Excel/JSON con detección estricta de encoding UTF-8/windows-1252 y normalización de fechas Excel a ISO.
-- `Material.IMPORT_SPEC`, `Cliente.IMPORT_SPEC`, `Empleado.IMPORT_SPEC`, `Tarifa.IMPORT_SPEC`: especificaciones de campos importables por entidad plana. Definir nuevos `IMPORT_SPEC` solo cuando se decida abordar entidades parent-child (Sprint futuro Vía B/C).
+- `EntityImportSpec` (`src/main/java/org/gipsybuho/service/importer/`): record con 7 campos. Los 3 últimos (`claveAgrupacion`, `campoLineas`, `specLinea`) son `null` para entidades planas y no-`null` para parent-child. Helper `esParentChild()` discrimina.
+- **`IMPORT_SPEC` por entidad:** `Cliente.IMPORT_SPEC`, `Material.IMPORT_SPEC`, `Empleado.IMPORT_SPEC`, `Tarifa.IMPORT_SPEC`, `Nomina.IMPORT_SPEC`, `Pedido.IMPORT_SPEC`, `Presupuesto.IMPORT_SPEC`, `Factura.IMPORT_SPEC`, `Albaran.IMPORT_SPEC`. Las 3 últimas son parent-child y declaran `specLinea` con los campos de `LineaPresupuesto`/`LineaFactura`/`LineaAlbaran`.
