@@ -59,7 +59,6 @@ public class FacturaDAO {
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 
         Factura f = new Factura();
-        f.setNumero(org.gipsybuho.db.DatabaseManager.generarNumeroFactura());
         f.setPresupuestoId(presupuestoId);
         f.setClienteId(presupuesto.getClienteId());
         f.setFecha(java.time.LocalDate.now().toString());
@@ -81,9 +80,22 @@ public class FacturaDAO {
             lf.setTotal(lp.getTotal());
             f.getLineas().add(lf);
         }
-        save(f);
-        descontarMateriales(f);
-        pDao.updateEstado(presupuestoId, "facturado");
+
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            f.setNumero(org.gipsybuho.db.DatabaseManager.generarNumeroFactura());
+            save(f);
+            descontarMateriales(f);
+            pDao.updateEstado(presupuestoId, "facturado");
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
         return f;
     }
 
@@ -103,8 +115,19 @@ public class FacturaDAO {
     }
 
     public void save(Factura f) throws SQLException {
-        if (f.getId() == 0) insert(f); else update(f);
-        saveLineas(f);
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            if (f.getId() == 0) insert(f); else update(f);
+            saveLineas(f);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
     }
 
     private void insert(Factura f) throws SQLException {
