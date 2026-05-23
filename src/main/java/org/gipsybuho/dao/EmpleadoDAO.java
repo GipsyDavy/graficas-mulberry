@@ -86,7 +86,9 @@ public class EmpleadoDAO {
         ps.setString(1, e.getNombre());
         ps.setString(2, e.getApellidos());
         ps.setString(3, e.getNif());
-        ps.setString(4, e.getCategoria());
+        // Preserva DEFAULT DDL 'Operario'. Ver DatabaseManager.createTables() tabla 'empleados'.
+        // SQLite no aplica DEFAULT con NULL explicito, solo si la columna se omite del INSERT.
+        ps.setString(4, e.getCategoria() != null ? e.getCategoria() : "Operario");
         ps.setDouble(5, e.getSalarioBase());
         ps.setString(6, e.getFechaAlta());
         ps.setString(7, e.getIban());
