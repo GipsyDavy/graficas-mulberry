@@ -210,7 +210,9 @@ public class AlbaranDAO {
         ps.setString(3, a.getFecha());
         if (a.getFacturaId() > 0) ps.setInt(4, a.getFacturaId()); else ps.setNull(4, Types.INTEGER);
         if (a.getPedidoId() > 0) ps.setInt(5, a.getPedidoId()); else ps.setNull(5, Types.INTEGER);
-        ps.setString(6, a.getEstado());
+        // Coincide con DEFAULT DDL: 'pendiente'. Ver DatabaseManager.createTables() tabla 'albaranes'.
+        // SQLite no aplica DEFAULT cuando se inserta NULL explícito, solo si la columna se omite del INSERT.
+        ps.setString(6, a.getEstado() != null ? a.getEstado() : "pendiente");
         ps.setString(7, a.getObservaciones());
     }
 

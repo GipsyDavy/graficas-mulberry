@@ -18,6 +18,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class AlbaranDAOTest {
@@ -165,5 +166,23 @@ class AlbaranDAOTest {
         l.setDescuento(0);
         l.calcularTotal();
         return l;
+    }
+
+    @Test
+    void saveAplicaDefaultsDDLCuandoCamposNulos() throws Exception {
+        Cliente c = crearCliente();
+        Albaran a = new Albaran();
+        a.setClienteId(c.getId());
+        a.setNumero("A-DEF-1");
+        a.setFecha("2026-05-23");
+        // estado NO se setea: debe quedar como DEFAULT DDL 'pendiente'
+        a.setLineas(List.of(lineaAlbaran("Item", 1)));
+
+        new AlbaranDAO().save(a);
+
+        Albaran recargado = new AlbaranDAO().findById(a.getId());
+        assertNotNull(recargado, "El albaran debe persistirse");
+        assertEquals("pendiente", recargado.getEstado(),
+            "estado=null en el modelo debe quedar como DEFAULT DDL 'pendiente'");
     }
 }
