@@ -73,6 +73,26 @@ class MaterialDAOTest {
             "Sin tx externa, el movimiento queda registrado");
     }
 
+    @Test
+    void saveInsertaDefaultsDDLEnCategoriaYUnidad() throws Exception {
+        // Material construido inline SIN setear categoria ni unidad.
+        // El helper crearMaterial(...) los setea explicitamente y no sirve para este caso.
+        Material m = new Material();
+        m.setNombre("Material sin categoria ni unidad");
+        m.setReferencia("REF-DEF-DDL");
+        m.setStockActual(0.0);
+        m.setStockMinimo(0.0);
+        m.setPrecioUnidad(0.0);
+
+        new MaterialDAO().save(m);
+
+        Material recargado = new MaterialDAO().findById(m.getId());
+        assertEquals("consumibles", recargado.getCategoria(),
+            "categoria null al insertar debe preservar DEFAULT DDL 'consumibles'");
+        assertEquals("ud", recargado.getUnidad(),
+            "unidad null al insertar debe preservar DEFAULT DDL 'ud'");
+    }
+
     private Material crearMaterial(String nombre, double stock) throws SQLException {
         Material m = new Material();
         m.setNombre(nombre);

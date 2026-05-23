@@ -108,10 +108,13 @@ public class MaterialDAO {
     private void set(PreparedStatement ps, Material m) throws SQLException {
         ps.setString(1, m.getNombre());
         ps.setString(2, m.getReferencia());
-        ps.setString(3, m.getCategoria());
+        // Preserva DEFAULT DDL 'consumibles'. Ver DatabaseManager.createTables() tabla 'materiales'.
+        // SQLite no aplica DEFAULT con NULL explicito, solo si la columna se omite del INSERT.
+        ps.setString(3, m.getCategoria() != null ? m.getCategoria() : "consumibles");
         ps.setDouble(4, m.getStockActual());
         ps.setDouble(5, m.getStockMinimo());
-        ps.setString(6, m.getUnidad());
+        // Preserva DEFAULT DDL 'ud'. Ver DatabaseManager.createTables() tabla 'materiales'.
+        ps.setString(6, m.getUnidad() != null ? m.getUnidad() : "ud");
         ps.setDouble(7, m.getPrecioUnidad());
         ps.setString(8, m.getProveedor());
     }
