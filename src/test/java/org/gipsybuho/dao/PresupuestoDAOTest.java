@@ -104,4 +104,25 @@ class PresupuestoDAOTest {
         l.calcularTotal();
         return l;
     }
+
+    @Test
+    void saveAplicaDefaultsDDLCuandoCamposNulos() throws Exception {
+        Cliente c = crearCliente();
+        Presupuesto p = new Presupuesto();
+        p.setClienteId(c.getId());
+        p.setNumero("P-DEF-1");
+        p.setFecha("2026-05-23");
+        // estado y condiciones NO se setean: deben quedar como DEFAULT DDL
+        p.setIvaPorcentaje(21.0);
+        p.setLineas(List.of(linea("Item", 1, 1.0)));
+
+        new PresupuestoDAO().save(p);
+
+        Presupuesto recargado = new PresupuestoDAO().findById(p.getId());
+        assertNotNull(recargado, "El presupuesto debe persistirse");
+        assertEquals("borrador", recargado.getEstado(),
+            "estado=null en el modelo debe quedar como DEFAULT DDL 'borrador'");
+        assertEquals("Presupuesto válido por 30 días. Precios sin IVA.", recargado.getCondiciones(),
+            "condiciones=null en el modelo debe quedar como DEFAULT DDL");
+    }
 }

@@ -10,6 +10,10 @@ import java.util.List;
 
 public class PresupuestoDAO {
 
+    // Debe coincidir con DEFAULT DDL en DatabaseManager.createTables() tabla 'presupuestos'.
+    // SQLite no aplica DEFAULT cuando se inserta NULL explícito, solo si la columna se omite del INSERT.
+    private static final String DEFAULT_CONDICIONES = "Presupuesto válido por 30 días. Precios sin IVA.";
+
     public List<Presupuesto> findAll() throws SQLException {
         List<Presupuesto> list = new ArrayList<>();
         String sql = """
@@ -143,13 +147,14 @@ public class PresupuestoDAO {
         ps.setInt(2, p.getClienteId());
         ps.setString(3, p.getFecha());
         ps.setString(4, p.getFechaValidez());
-        ps.setString(5, p.getEstado());
+        // Coincide con DEFAULT DDL: 'borrador'. Ver DatabaseManager.createTables() tabla 'presupuestos'.
+        ps.setString(5, p.getEstado() != null ? p.getEstado() : "borrador");
         ps.setDouble(6, p.getBaseImponible());
         ps.setDouble(7, p.getIvaPorcentaje());
         ps.setDouble(8, p.getIvaImporte());
         ps.setDouble(9, p.getTotal());
         ps.setString(10, p.getNotas());
-        ps.setString(11, p.getCondiciones());
+        ps.setString(11, p.getCondiciones() != null ? p.getCondiciones() : DEFAULT_CONDICIONES);
     }
 
     private Presupuesto map(ResultSet rs) throws SQLException {
