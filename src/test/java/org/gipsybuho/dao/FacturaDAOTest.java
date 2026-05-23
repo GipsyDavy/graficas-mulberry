@@ -145,4 +145,25 @@ class FacturaDAOTest {
         l.setTotal(0);
         return l;
     }
+
+    @Test
+    void saveAplicaDefaultsDDLCuandoCamposNulos() throws Exception {
+        Cliente c = crearCliente();
+        Factura f = new Factura();
+        f.setClienteId(c.getId());
+        f.setNumero("F-DEF-1");
+        f.setFecha("2026-05-23");
+        // estado y formaPago NO se setean: deben quedar como DEFAULT DDL
+        f.setIvaPorcentaje(21.0);
+        f.setLineas(List.of(lineaFactura("Item", 1, 1.0)));
+
+        new FacturaDAO().save(f);
+
+        Factura recargado = new FacturaDAO().findById(f.getId());
+        assertNotNull(recargado, "La factura debe persistirse");
+        assertEquals("pendiente", recargado.getEstado(),
+            "estado=null en el modelo debe quedar como DEFAULT DDL 'pendiente'");
+        assertEquals("Transferencia bancaria", recargado.getFormaPago(),
+            "formaPago=null en el modelo debe quedar como DEFAULT DDL 'Transferencia bancaria'");
+    }
 }

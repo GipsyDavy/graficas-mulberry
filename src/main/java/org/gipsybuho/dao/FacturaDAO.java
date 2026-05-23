@@ -255,8 +255,11 @@ public class FacturaDAO {
         ps.setInt(3, f.getClienteId());
         ps.setString(4, f.getFecha());
         ps.setString(5, f.getFechaVencimiento());
-        ps.setString(6, f.getEstado());
-        ps.setString(7, f.getFormaPago());
+        // Coincide con DEFAULT DDL: 'pendiente'. Ver DatabaseManager.createTables() tabla 'facturas'.
+        // SQLite no aplica DEFAULT cuando se inserta NULL explícito, solo si la columna se omite del INSERT.
+        ps.setString(6, f.getEstado() != null ? f.getEstado() : "pendiente");
+        // Coincide con DEFAULT DDL: 'Transferencia bancaria'. Ver DatabaseManager.createTables() tabla 'facturas'.
+        ps.setString(7, f.getFormaPago() != null ? f.getFormaPago() : "Transferencia bancaria");
         ps.setDouble(8, f.getBaseImponible());
         ps.setDouble(9, f.getIvaPorcentaje());
         ps.setDouble(10, f.getIvaImporte());
