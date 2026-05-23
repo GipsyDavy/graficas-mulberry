@@ -141,7 +141,9 @@ public class PagoMaterialDAO {
         ps.setDouble(5, p.getCantidadComprada());
         ps.setString(6, p.getUnidad());
         ps.setDouble(7, p.getImporteTotal());
-        ps.setString(8, p.getFormaPago());
+        // Preserva DEFAULT DDL 'Contado'. Ver DatabaseManager.createTables() tabla 'pagos_material'.
+        // SQLite no aplica DEFAULT con NULL explicito, solo si la columna se omite del INSERT.
+        ps.setString(8, p.getFormaPago() != null ? p.getFormaPago() : "Contado");
         ps.setString(9, p.getFechaVencimiento() != null ? p.getFechaVencimiento().toString() : null);
         ps.setString(10, p.getEstado() != null ? p.getEstado() : "pendiente");
         ps.setString(11, p.getFechaPago() != null ? p.getFechaPago().toString() : null);
