@@ -199,12 +199,17 @@ public class MainView extends BorderPane {
         footerIconos.getStyleClass().add("sidebar-footer-icons");
         footerIconos.setAlignment(Pos.CENTER_LEFT);
 
-        if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)
-                || loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
+        if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)) {
             Button btnBackup = buildFooterBtn(Icons.download(), "Copia de seguridad",
                 () -> mostrarVista(new ImportBackupView(), "Copia de seguridad"),
                 ImportBackupView::new);
             footerIconos.getChildren().add(btnBackup);
+        }
+        if (loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
+            Button btnExport = buildFooterBtn(Icons.upload(), "Exportar base de datos",
+                () -> mostrarVista(new ExportView(), "Exportar base de datos"),
+                ExportView::new);
+            footerIconos.getChildren().add(btnExport);
         }
         if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
             Button btnConfig = buildFooterBtn(Icons.settings(), "Configuración",
