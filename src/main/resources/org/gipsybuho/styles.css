@@ -429,6 +429,45 @@
     -fx-opacity: 0.75;
 }
 
+/* ── COMMAND BAR ─────────────────────────────────────────── */
+.command-bar {
+    -fx-padding: 0 0 10 0;
+    -fx-spacing: 6;
+}
+
+/* ── BOTONES DE TOOLBAR ──────────────────────────────────── */
+.btn-toolbar {
+    -fx-background-color: -c-tab-bg;
+    -fx-text-fill: -c-text;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 5;
+    -fx-background-radius: 5;
+    -fx-padding: 7 14;
+    -fx-cursor: hand;
+    -fx-font-size: 13px;
+}
+
+.btn-toolbar:hover {
+    -fx-background-color: -c-row-hover;
+    -fx-border-color: -c-primary;
+    -fx-text-fill: -c-primary;
+}
+
+.btn-toolbar:pressed {
+    -fx-opacity: 0.80;
+}
+
+.root.modo-oscuro .btn-toolbar {
+    -fx-background-color: -c-tab-bg;
+    -fx-border-color: -c-border;
+}
+
+.root.modo-oscuro .btn-toolbar:hover {
+    -fx-background-color: -c-nav-hover;
+    -fx-border-color: -c-accent;
+    -fx-text-fill: -c-accent;
+}
+
 /* ── DIÁLOGOS ────────────────────────────────────────────── */
 .dialog-pane {
     -fx-background-color: -c-card-bg;
