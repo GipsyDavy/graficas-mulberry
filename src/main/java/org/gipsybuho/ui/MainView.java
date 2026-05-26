@@ -17,8 +17,10 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.control.Tooltip;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.animation.RotateTransition;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import javafx.stage.Stage;
 import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserPermissions;
@@ -79,8 +81,10 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
         sidebar.getChildren().add(logoBox);
 
-        Label userInfoLabel = new Label("👤  " + loggedInUser.getUsername()
+        Label userInfoLabel = new Label(loggedInUser.getUsername()
             + "  ·  " + loggedInUser.getRole().getLabel());
+        userInfoLabel.setGraphic(Icons.person());
+        userInfoLabel.setGraphicTextGap(8);
         userInfoLabel.getStyleClass().add("sidebar-user-info");
         VBox.setMargin(userInfoLabel, new Insets(10, 0, 0, 10));
         sidebar.getChildren().add(userInfoLabel);
@@ -103,39 +107,39 @@ public class MainView extends BorderPane {
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
         addIfPermiso(navMenu, UserPermissions.DASHBOARD,
-            navBtn("🏠  Panel principal", DashboardView::new));
+            navBtn(Icons.home(), "Panel principal", DashboardView::new));
         navMenu.getChildren().addAll(
             navGrupo("CLIENTES Y MAESTROS",
-                navBtn(UserPermissions.CLIENTES, "👥  Clientes", ClientesView::new),
-                navBtn(UserPermissions.TARIFAS,  "💰  Tarifas",  TarifasView::new)
+                navBtn(UserPermissions.CLIENTES, Icons.users(),      "Clientes",    ClientesView::new),
+                navBtn(UserPermissions.TARIFAS,  Icons.tag(),        "Tarifas",     TarifasView::new)
             ),
             navGrupo("COMERCIAL",
-                navBtn(UserPermissions.PRESUPUESTOS, "📋  Presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.PEDIDOS,      "📦  Pedidos",      PedidosView::new),
-                navBtn(UserPermissions.ALBARANES,    "📄  Albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.FACTURAS,     "🧾  Facturas",     FacturasView::new)
+                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(), "Presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),       "Pedidos",      PedidosView::new),
+                navBtn(UserPermissions.ALBARANES,    Icons.file(),       "Albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),    "Facturas",     FacturasView::new)
             ),
             navGrupo("ALMACÉN",
-                navBtn(UserPermissions.MATERIALES, "🧱  Materiales", MaterialesView::new)
+                navBtn(UserPermissions.MATERIALES, Icons.layers(), "Materiales", MaterialesView::new)
             ),
             navGrupo("PERSONAL",
-                navBtn(UserPermissions.EMPLEADOS, "👤  Empleados", EmpleadosView::new),
-                navBtn(UserPermissions.NOMINAS,   "💼  Nóminas",   NominasView::new)
+                navBtn(UserPermissions.EMPLEADOS, Icons.person(),  "Empleados", EmpleadosView::new),
+                navBtn(UserPermissions.NOMINAS,   Icons.work(),    "Nóminas",   NominasView::new)
             ),
             navGrupo("ANALÍTICA",
-                navBtn(UserPermissions.ESTADISTICAS, "📊  Estadísticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO,   "📅  Calendario",   CalendarioView::new),
-                navBtn(UserPermissions.IA, "🤖  Asistente IA",
-                    () -> mostrarVista(iaView, "🤖  Asistente IA"),
+                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(),  "Estadísticas", EstadisticasView::new),
+                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(),  "Calendario",   CalendarioView::new),
+                navBtn(UserPermissions.IA, Icons.robot(), "Asistente IA",
+                    () -> mostrarVista(iaView, "Asistente IA"),
                     IAView::new)
             ),
             navGrupo("SISTEMA",
-                navBtn(UserPermissions.IMPORTAR_BACKUP, "📥  Importar Backup",   ImportBackupView::new),
-                navBtn(UserPermissions.EXPORTAR_BACKUP, "💾  Exportar / Backup", ExportView::new),
-                navBtn(UserPermissions.CONFIGURACION,   "⚙  Configuración",
+                navBtn(UserPermissions.IMPORTAR_BACKUP, Icons.download(), "Importar Backup",   ImportBackupView::new),
+                navBtn(UserPermissions.EXPORTAR_BACKUP, Icons.upload(),   "Exportar / Backup", ExportView::new),
+                navBtn(UserPermissions.CONFIGURACION,   Icons.settings(), "Configuración",
                     () -> new ConfiguracionView(visualAssistant)),
                 loggedInUser.isAdmin()
-                    ? navBtn("👥  Gestión de usuarios",
+                    ? navBtn(Icons.users(), "Gestión de usuarios",
                         () -> new UserManagementView(authService, loggedInUser))
                     : null
             )
@@ -149,7 +153,9 @@ public class MainView extends BorderPane {
         VBox.setVgrow(scroll, Priority.ALWAYS);
         sidebar.getChildren().add(scroll);
 
-        Button btnCerrarApp = new Button("⏻  Salir");
+        Button btnCerrarApp = new Button("Salir");
+        btnCerrarApp.setGraphic(Icons.power());
+        btnCerrarApp.setGraphicTextGap(8);
         btnCerrarApp.getStyleClass().add("sidebar-exit-btn");
         btnCerrarApp.setMaxWidth(Double.MAX_VALUE);
         btnCerrarApp.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
@@ -169,13 +175,13 @@ public class MainView extends BorderPane {
     }
 
     private void actualizarBotonAsistente(Label label) {
-        label.setText(visualAssistant.isActivo()
-            ? "🧭  Desactivar asistente"
-            : "🧭  Activar asistente");
+        label.setText(visualAssistant.isActivo() ? "Desactivar asistente" : "Activar asistente");
     }
 
     private StackPane buildBotonAsistenteVisual() {
         Label label = new Label();
+        label.setGraphic(Icons.compass());
+        label.setGraphicTextGap(10);
         label.setMaxWidth(Double.MAX_VALUE);
         label.getStyleClass().add("nav-btn");
         StackPane boton = new StackPane(label);
@@ -216,12 +222,12 @@ public class MainView extends BorderPane {
      * muestra en el área central; clic derecho abre el menú contextual con la
      * opción de abrir en ventana emergente (también crea una nueva instancia).
      */
-    private StackPane navBtn(String texto, Supplier<javafx.scene.Parent> factory) {
-        return navBtnImpl(texto, () -> mostrarVista(factory.get(), texto), factory, texto);
+    private StackPane navBtn(Node icon, String texto, Supplier<javafx.scene.Parent> factory) {
+        return navBtnImpl(icon, texto, () -> mostrarVista(factory.get(), texto), factory, texto);
     }
 
-    private StackPane navBtn(String permiso, String texto, Supplier<javafx.scene.Parent> factory) {
-        return loggedInUser.hasPermission(permiso) ? navBtn(texto, factory) : null;
+    private StackPane navBtn(String permiso, Node icon, String texto, Supplier<javafx.scene.Parent> factory) {
+        return loggedInUser.hasPermission(permiso) ? navBtn(icon, texto, factory) : null;
     }
 
     private void addIfPermiso(VBox parent, String permiso, StackPane node) {
@@ -240,20 +246,24 @@ public class MainView extends BorderPane {
      * Botón especial: permite separar la acción de clic izquierdo (p.ej. reusar
      * una instancia existente) de la fábrica usada para crear ventanas emergentes.
      */
-    private StackPane navBtnEspecial(String texto, Runnable accionPrincipal,
+    private StackPane navBtnEspecial(Node icon, String texto, Runnable accionPrincipal,
                                      Supplier<javafx.scene.Parent> popupFactory) {
-        return navBtnImpl(texto, accionPrincipal, popupFactory, texto);
+        return navBtnImpl(icon, texto, accionPrincipal, popupFactory, texto);
     }
 
-    private StackPane navBtn(String permiso, String texto, Runnable accion,
+    private StackPane navBtn(String permiso, Node icon, String texto, Runnable accion,
                              Supplier<javafx.scene.Parent> popupFactory) {
         return loggedInUser.hasPermission(permiso)
-            ? navBtnEspecial(texto, accion, popupFactory) : null;
+            ? navBtnEspecial(icon, texto, accion, popupFactory) : null;
     }
 
-    private StackPane navBtnImpl(String texto, Runnable accionPrincipal,
+    private StackPane navBtnImpl(Node icon, String texto, Runnable accionPrincipal,
                                   Supplier<javafx.scene.Parent> popupFactory, String titulo) {
         Label lbl = new Label(texto);
+        if (icon != null) {
+            lbl.setGraphic(icon);
+            lbl.setGraphicTextGap(10);
+        }
         lbl.setMaxWidth(Double.MAX_VALUE);
         lbl.getStyleClass().add("nav-btn");
 
@@ -332,8 +342,7 @@ public class MainView extends BorderPane {
             return empty;
         }
 
-        Label arrow = new Label("▶");
-        arrow.getStyleClass().add("nav-group-arrow");
+        StackPane arrow = Icons.navArrow();
 
         Label lblTitulo = new Label(titulo);
         lblTitulo.setMaxWidth(Double.MAX_VALUE);
@@ -358,7 +367,9 @@ public class MainView extends BorderPane {
                 boolean expand = !contenido.isVisible();
                 contenido.setVisible(expand);
                 contenido.setManaged(expand);
-                arrow.setText(expand ? "▼" : "▶");
+                RotateTransition rt = new RotateTransition(Duration.millis(180), arrow);
+                rt.setToAngle(expand ? 90 : 0);
+                rt.play();
                 visualAssistant.decir(expand
                     ? "Grupo " + titulo + ": aquí tienes los módulos relacionados con esta área."
                     : "Grupo " + titulo + " contraído.");
