@@ -74,6 +74,10 @@
     -fx-fill: white;
 }
 
+.content-icon {
+    -fx-fill: -c-text-secondary;
+}
+
 .nav-group-arrow-icon {
     -fx-fill: -c-sidebar-nav-text;
 }
