@@ -95,6 +95,7 @@ public class NominasView extends VBox {
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
@@ -609,8 +610,9 @@ public class NominasView extends VBox {
     }
 
     private Button btn(String t, String color, Runnable r) {
-        Button b = new Button(t);
-        b.setStyle("-fx-background-color:" + color + ";-fx-text-fill:white;-fx-font-weight:bold;-fx-padding:6 14;");
+        String label = t.replaceFirst("^\\P{L}+", "").strip();
+        Button b = new Button(label);
+        b.getStyleClass().add("btn-toolbar");
         b.setOnAction(e -> r.run()); return b;
     }
 

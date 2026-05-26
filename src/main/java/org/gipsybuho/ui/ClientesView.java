@@ -98,6 +98,7 @@ public class ClientesView extends VBox {
         HBox.setHgrow(spacer, Priority.ALWAYS);
         HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
@@ -548,10 +549,11 @@ public class ClientesView extends VBox {
         return c;
     }
 
-    private Button btn(String texto, String color, Runnable accion) {
-        Button b = new Button(texto);
-        b.setStyle("-fx-background-color:" + color + "; -fx-text-fill:white; -fx-font-weight:bold; -fx-padding:6 14;");
-        b.setOnAction(e -> accion.run());
+    private Button btn(String t, String color, Runnable r) {
+        String label = t.replaceFirst("^\\P{L}+", "").strip();
+        Button b = new Button(label);
+        b.getStyleClass().add("btn-toolbar");
+        b.setOnAction(e -> r.run());
         return b;
     }
 

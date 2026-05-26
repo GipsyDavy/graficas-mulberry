@@ -83,6 +83,7 @@ public class TarifasView extends VBox {
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
@@ -559,9 +560,10 @@ public class TarifasView extends VBox {
         });
     }
 
-    private Button btn(String texto, String color, Runnable r) {
-        Button b = new Button(texto);
-        b.setStyle("-fx-background-color:" + color + ";-fx-text-fill:white;-fx-font-weight:bold;-fx-padding:6 14;");
+    private Button btn(String t, String color, Runnable r) {
+        String label = t.replaceFirst("^\\P{L}+", "").strip();
+        Button b = new Button(label);
+        b.getStyleClass().add("btn-toolbar");
         b.setOnAction(e -> r.run()); return b;
     }
 
