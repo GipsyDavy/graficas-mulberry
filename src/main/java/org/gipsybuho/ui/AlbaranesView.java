@@ -101,14 +101,14 @@ public class AlbaranesView extends VBox {
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
-                setText(v.toUpperCase());
-                String color = switch (v) {
-                    case "firmado"   -> "#27AE60";
-                    case "entregado" -> "#4C9BE8";
-                    default          -> "#F39C12";
+                if (empty || v == null) { setText(null); setGraphic(null); return; }
+                String variant = switch (v) {
+                    case "firmado"   -> "success";
+                    case "entregado" -> "info";
+                    default          -> "warning";
                 };
-                setStyle("-fx-text-fill:" + color + ";-fx-font-weight:bold;");
+                setText(null);
+                setGraphic(Icons.statusBadge(v, variant));
             }
         });
 

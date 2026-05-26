@@ -108,16 +108,16 @@ public class PresupuestosView extends VBox {
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
-                setText(v.toUpperCase());
-                String color = switch(v) {
-                    case "aceptado"  -> "#27AE60";
-                    case "rechazado" -> "#E74C3C";
-                    case "enviado"   -> "#F39C12";
-                    case "facturado" -> "#9B59B6";
-                    default          -> "#95A5A6";
+                if (empty || v == null) { setText(null); setGraphic(null); return; }
+                String variant = switch (v) {
+                    case "aceptado"  -> "success";
+                    case "rechazado" -> "danger";
+                    case "enviado"   -> "warning";
+                    case "facturado" -> "info";
+                    default          -> "neutral";
                 };
-                setStyle("-fx-text-fill:" + color + ";-fx-font-weight:bold;");
+                setText(null);
+                setGraphic(Icons.statusBadge(v, variant));
             }
         });
 

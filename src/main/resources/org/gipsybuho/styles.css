@@ -688,6 +688,20 @@
     -fx-background-color: transparent;
 }
 
+/* ── STATUS BADGES ───────────────────────────────────────── */
+.status-badge {
+    -fx-padding: 3 10 3 10;
+    -fx-background-radius: 9999;
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+.status-badge-success  { -fx-background-color: #27AE60; }
+.status-badge-warning  { -fx-background-color: #F39C12; }
+.status-badge-danger   { -fx-background-color: #E74C3C; }
+.status-badge-info     { -fx-background-color: #3498DB; }
+.status-badge-neutral  { -fx-background-color: #95A5A6; }
+
 /* ── AVISOS DASHBOARD ────────────────────────────────────── */
 .avisos-panel {
     -fx-background-color: -c-card-bg;

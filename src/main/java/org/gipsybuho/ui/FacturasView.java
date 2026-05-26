@@ -104,15 +104,15 @@ public class FacturasView extends VBox {
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(String v, boolean empty) {
                 super.updateItem(v, empty);
-                if (empty || v == null) { setText(null); setStyle(""); return; }
-                setText(v.toUpperCase());
-                String color = switch(v) {
-                    case "pagada"   -> "#27AE60";
-                    case "vencida"  -> "#E74C3C";
-                    case "anulada"  -> "#95A5A6";
-                    default         -> "#F39C12";
+                if (empty || v == null) { setText(null); setGraphic(null); return; }
+                String variant = switch (v) {
+                    case "pagada"   -> "success";
+                    case "vencida"  -> "danger";
+                    case "anulada"  -> "neutral";
+                    default         -> "warning";
                 };
-                setStyle("-fx-text-fill:" + color + ";-fx-font-weight:bold;");
+                setText(null);
+                setGraphic(Icons.statusBadge(v, variant));
             }
         });
 

@@ -1,5 +1,6 @@
 package org.gipsybuho.ui;
 
+import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
@@ -80,6 +81,16 @@ public final class Icons {
         pane.setMaxSize(size, size);
         pane.setMinSize(size, size);
         return pane;
+    }
+
+    /**
+     * Pill badge para columnas de estado en tablas.
+     * @param variant "success" | "warning" | "danger" | "info" | "neutral"
+     */
+    public static Label statusBadge(String texto, String variant) {
+        Label lbl = new Label(texto.toUpperCase());
+        lbl.getStyleClass().addAll("status-badge", "status-badge-" + variant);
+        return lbl;
     }
 
     // ── Icono estándar de sidebar (15×15, clase nav-icon para CSS) ───────────
