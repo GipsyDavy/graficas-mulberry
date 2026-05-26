@@ -85,6 +85,23 @@ public final class Icons {
         return pane;
     }
 
+    /**
+     * Activa validación visual en un TextField obligatorio.
+     * Al perder el foco: borde rojo si vacío, borde normal si tiene valor.
+     */
+    public static void markRequired(javafx.scene.control.TextField tf) {
+        tf.focusedProperty().addListener((obs, wasFocused, focused) -> {
+            if (!focused) {
+                if (tf.getText().isBlank()) {
+                    if (!tf.getStyleClass().contains("input-error"))
+                        tf.getStyleClass().add("input-error");
+                } else {
+                    tf.getStyleClass().remove("input-error");
+                }
+            }
+        });
+    }
+
     /** Placeholder de tabla vacía con icono y texto centrado. */
     public static VBox emptyState(String mensaje) {
         SVGPath path = new SVGPath();

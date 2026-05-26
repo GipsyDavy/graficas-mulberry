@@ -281,7 +281,7 @@ public class EmpleadosView extends VBox {
 
         dlg.getDialogPane().setContent(grid);
 
-        // Validar nombre obligatorio
+        Icons.markRequired(fNombre);
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.setDisable(fNombre.getText().isBlank());
         fNombre.textProperty().addListener((o, a, b) -> okBtn.setDisable(b.isBlank()));

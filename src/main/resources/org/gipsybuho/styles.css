@@ -442,6 +442,21 @@
     -fx-background-color: #29232E;
 }
 
+/* ── VALIDACIÓN VISUAL ───────────────────────────────────── */
+.input-error {
+    -fx-border-color: #E74C3C;
+    -fx-border-width: 1.5;
+}
+
+.input-error:focused {
+    -fx-border-color: #E74C3C;
+}
+
+.field-error-msg {
+    -fx-font-size: 11px;
+    -fx-text-fill: #E74C3C;
+}
+
 /* ── FORMULARIOS ─────────────────────────────────────────── */
 .text-field, .text-area, .combo-box {
     -fx-background-color: -c-card-bg;
