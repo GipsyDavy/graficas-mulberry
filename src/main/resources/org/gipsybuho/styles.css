@@ -164,6 +164,90 @@
     -fx-background-color: derive(-c-primary, 12%);
 }
 
+/* ── SIDEBAR COLAPSO ─────────────────────────────────────── */
+.sidebar-collapse-row {
+    -fx-padding: 4 4 0 0;
+}
+
+.sidebar-collapse-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 4 6;
+    -fx-cursor: hand;
+    -fx-min-width: 28;
+    -fx-pref-width: 28;
+}
+
+.sidebar-collapse-btn:hover {
+    -fx-background-color: derive(-c-primary-dark, 15%);
+    -fx-background-radius: 4;
+}
+
+.sidebar-collapse-btn .nav-group-arrow-icon {
+    -fx-fill: -c-sidebar-version-text;
+}
+
+.sidebar-collapsed {
+    -fx-pref-width: 64;
+    -fx-min-width: 64;
+}
+
+.sidebar-collapsed .sidebar-empresa {
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
+
+.sidebar-collapsed .sidebar-user-info {
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-padding: 8 0 4 0;
+}
+
+.sidebar-collapsed .sidebar-version {
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
+
+.sidebar-collapsed .nav-group-header {
+    -fx-pref-height: 0;
+    -fx-min-height: 0;
+    -fx-max-height: 0;
+    -fx-opacity: 0;
+}
+
+.sidebar-collapsed .nav-btn {
+    -fx-content-display: graphic-only;
+    -fx-alignment: center;
+    -fx-padding: 10 0;
+}
+
+.sidebar-collapsed .nav-btn-pane {
+    -fx-padding: 0;
+}
+
+.sidebar-collapsed .sidebar-exit-btn {
+    -fx-content-display: graphic-only;
+}
+
+/* ── BUSCADOR SIDEBAR ────────────────────────────────────── */
+.sidebar-search {
+    -fx-background-color: derive(-c-primary-dark, 12%);
+    -fx-text-fill: -c-sidebar-text;
+    -fx-prompt-text-fill: -c-sidebar-version-text;
+    -fx-border-color: derive(-c-primary-dark, 20%);
+    -fx-border-width: 0 0 1 0;
+    -fx-background-radius: 0;
+    -fx-padding: 7 10;
+}
+
+.sidebar-search:focused {
+    -fx-border-color: -c-accent;
+}
+
 /* ── BOTONES DE NAVEGACIÓN ───────────────────────────────── */
 .nav-btn-pane {
     -fx-padding: 0;

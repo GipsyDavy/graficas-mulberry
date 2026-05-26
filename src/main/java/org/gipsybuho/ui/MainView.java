@@ -14,7 +14,10 @@ import javafx.scene.control.Label;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.ScrollPane;
+import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.KeyEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.animation.RotateTransition;
@@ -38,6 +41,8 @@ public class MainView extends BorderPane {
     private final StackPane contentArea = new StackPane();
     private final VisualAssistantView visualAssistant;
     private VBox sidebar;
+    private boolean sidebarCollapsed = false;
+    private TextField tfBusqueda;
     private final IAView iaView;
     private final User loggedInUser;
     private final AuthService authService;
@@ -52,6 +57,12 @@ public class MainView extends BorderPane {
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");
+        addEventFilter(KeyEvent.KEY_PRESSED, e -> {
+            if (e.isControlDown() && e.getCode() == KeyCode.K) {
+                toggleBusqueda();
+                e.consume();
+            }
+        });
         if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
             mostrarVista(new DashboardView(), "Panel principal");
         } else {
@@ -79,7 +90,27 @@ public class MainView extends BorderPane {
         Label lblEmpresa = new Label("Gráficas Mulberry");
         lblEmpresa.getStyleClass().add("sidebar-empresa");
         logoBox.getChildren().add(lblEmpresa);
-        sidebar.getChildren().add(logoBox);
+
+        // Toggle colapso del sidebar
+        StackPane collapseArrow = Icons.navArrow();
+        Button btnCollapse = new Button();
+        btnCollapse.setGraphic(collapseArrow);
+        btnCollapse.getStyleClass().add("sidebar-collapse-btn");
+        btnCollapse.setOnAction(e -> {
+            sidebarCollapsed = !sidebarCollapsed;
+            if (sidebarCollapsed) {
+                sidebar.getStyleClass().add("sidebar-collapsed");
+            } else {
+                sidebar.getStyleClass().remove("sidebar-collapsed");
+            }
+            RotateTransition rt = new RotateTransition(Duration.millis(180), collapseArrow);
+            rt.setToAngle(sidebarCollapsed ? 180 : 0);
+            rt.play();
+        });
+        HBox collapseRow = new HBox(new Region(), btnCollapse);
+        HBox.setHgrow(collapseRow.getChildren().get(0), Priority.ALWAYS);
+        collapseRow.getStyleClass().add("sidebar-collapse-row");
+        sidebar.getChildren().addAll(collapseRow, logoBox);
 
         Label userInfoLabel = new Label(loggedInUser.getUsername()
             + "  ·  " + loggedInUser.getRole().getLabel());
@@ -103,6 +134,17 @@ public class MainView extends BorderPane {
         sep.getStyleClass().add("sidebar-sep");
         sep.setPrefHeight(1);
         sidebar.getChildren().add(sep);
+
+        // Buscador de módulos (Ctrl+K)
+        tfBusqueda = new TextField();
+        tfBusqueda.setPromptText("Buscar módulo… (Esc para cerrar)");
+        tfBusqueda.getStyleClass().add("sidebar-search");
+        tfBusqueda.setVisible(false);
+        tfBusqueda.setManaged(false);
+        tfBusqueda.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) toggleBusqueda();
+        });
+        sidebar.getChildren().add(tfBusqueda);
 
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
@@ -144,6 +186,8 @@ public class MainView extends BorderPane {
                     : null
             )
         );
+
+        tfBusqueda.textProperty().addListener((obs, old, q) -> filtrarNav(q, navMenu));
 
         ScrollPane scroll = new ScrollPane(navMenu);
         scroll.setFitToWidth(true);
@@ -379,6 +423,58 @@ public class MainView extends BorderPane {
         VBox grupo = new VBox(header, contenido);
         grupo.getStyleClass().add("nav-group");
         return grupo;
+    }
+
+    private void toggleBusqueda() {
+        boolean show = !tfBusqueda.isVisible();
+        tfBusqueda.setVisible(show);
+        tfBusqueda.setManaged(show);
+        if (show) {
+            tfBusqueda.requestFocus();
+            tfBusqueda.clear();
+        } else {
+            tfBusqueda.clear();
+        }
+    }
+
+    private void filtrarNav(String query, VBox navMenu) {
+        boolean blank = query == null || query.isBlank();
+        String q = blank ? "" : query.toLowerCase();
+
+        navMenu.getChildren().forEach(node -> {
+            if (blank) {
+                node.setVisible(true);
+                node.setManaged(true);
+                if (node instanceof VBox grupo) {
+                    grupo.getChildren().stream()
+                        .filter(c -> c.getStyleClass().contains("nav-group-content"))
+                        .forEach(c -> { c.setVisible(false); c.setManaged(false); });
+                }
+                return;
+            }
+            if (node instanceof VBox grupo) {
+                boolean hasMatch = grupo.getChildren().stream()
+                    .filter(c -> c.getStyleClass().contains("nav-group-content"))
+                    .flatMap(c -> ((VBox) c).getChildren().stream())
+                    .filter(p -> p instanceof StackPane)
+                    .flatMap(p -> ((StackPane) p).getChildren().stream())
+                    .filter(l -> l instanceof Label)
+                    .anyMatch(l -> ((Label) l).getText().toLowerCase().contains(q));
+                node.setVisible(hasMatch);
+                node.setManaged(hasMatch);
+                if (hasMatch) {
+                    grupo.getChildren().stream()
+                        .filter(c -> c.getStyleClass().contains("nav-group-content"))
+                        .forEach(c -> { c.setVisible(true); c.setManaged(true); });
+                }
+            } else if (node instanceof StackPane pane) {
+                boolean matches = pane.getChildren().stream()
+                    .filter(l -> l instanceof Label)
+                    .anyMatch(l -> ((Label) l).getText().toLowerCase().contains(q));
+                node.setVisible(matches);
+                node.setManaged(matches);
+            }
+        });
     }
 
     private void mostrarVista(Node vista, String titulo) {
