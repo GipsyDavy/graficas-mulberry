@@ -274,6 +274,11 @@
     -fx-font-weight: bold;
 }
 
+.card-context {
+    -fx-font-size: 11px;
+    -fx-text-fill: -c-text-secondary;
+}
+
 /* ── TABLAS ──────────────────────────────────────────────── */
 .data-table {
     -fx-background-color: -c-card-bg;
