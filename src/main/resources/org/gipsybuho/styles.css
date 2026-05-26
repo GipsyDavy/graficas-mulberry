@@ -518,6 +518,25 @@
     -fx-opacity: 0.75;
 }
 
+/* ── TOAST NOTIFICATIONS ─────────────────────────────────── */
+.toast-stack {
+    -fx-padding: 0 16 16 0;
+}
+
+.toast {
+    -fx-padding: 10 16;
+    -fx-background-radius: 6;
+    -fx-font-size: 13px;
+    -fx-text-fill: white;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.3), 8, 0, 0, 2);
+    -fx-cursor: hand;
+}
+
+.toast-success { -fx-background-color: #27AE60; }
+.toast-warning { -fx-background-color: #F39C12; }
+.toast-error   { -fx-background-color: #E74C3C; }
+.toast-info    { -fx-background-color: #3498DB; }
+
 /* ── COMMAND BAR ─────────────────────────────────────────── */
 .command-bar {
     -fx-padding: 0 0 10 0;
