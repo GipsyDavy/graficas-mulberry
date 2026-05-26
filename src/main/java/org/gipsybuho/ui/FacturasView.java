@@ -85,6 +85,15 @@ public class FacturasView extends VBox {
         Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
+        btnEditar.setTooltip(new Tooltip("Editar la factura seleccionada"));
+        btnImportar.setTooltip(new Tooltip("Importar facturas desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar facturas a PDF, Excel, Word u otros formatos"));
+        btnAlbaran.setTooltip(new Tooltip("Crear albarán de entrega para la factura seleccionada"));
+        btnPagada.setTooltip(new Tooltip("Marcar la factura seleccionada como pagada"));
+        btnAnular.setTooltip(new Tooltip("Anular la factura seleccionada"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar permanentemente la factura seleccionada"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar la factura en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);

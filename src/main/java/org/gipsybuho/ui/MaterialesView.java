@@ -141,6 +141,16 @@ public class MaterialesView extends VBox {
         Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
+        chkSoloAlerta.setTooltip(new Tooltip("Filtrar solo materiales con stock por debajo del mínimo"));
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo material o producto"));
+        btnEditar.setTooltip(new Tooltip("Editar el material seleccionado"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar el material seleccionado"));
+        btnEntrada.setTooltip(new Tooltip("Registrar entrada de stock para el material seleccionado"));
+        btnSalida.setTooltip(new Tooltip("Registrar salida de stock para el material seleccionado"));
+        btnImportar.setTooltip(new Tooltip("Importar materiales desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar materiales a PDF, Excel u otros formatos"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar el material en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);

@@ -89,6 +89,15 @@ public class EmpleadosView extends VBox {
         Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
+        chkMostrarBajas.setTooltip(new Tooltip("Incluir en la tabla los empleados dados de baja"));
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo empleado"));
+        btnEditar.setTooltip(new Tooltip("Editar el empleado seleccionado"));
+        btnBaja.setTooltip(new Tooltip("Dar de baja al empleado seleccionado"));
+        btnReactivar.setTooltip(new Tooltip("Reactivar un empleado dado de baja"));
+        btnImportar.setTooltip(new Tooltip("Importar empleados desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar empleados a PDF, Excel u otros formatos"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar ficha del empleado en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);

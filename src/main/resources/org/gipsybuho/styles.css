@@ -356,6 +356,19 @@
     -fx-fill: -c-sidebar-nav-text;
 }
 
+/* ── TOOLTIPS ────────────────────────────────────────────── */
+.tooltip {
+    -fx-background-color: #2D1A28;
+    -fx-text-fill: #D4B8CC;
+    -fx-font-size: 11px;
+    -fx-padding: 6 10;
+    -fx-background-radius: 6;
+    -fx-border-color: #4A2A42;
+    -fx-border-width: 1;
+    -fx-border-radius: 6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 5, 0, 0, 2);
+}
+
 /* ── ÁREA DE CONTENIDO ───────────────────────────────────── */
 .content-view {
     -fx-background-color: -c-bg;

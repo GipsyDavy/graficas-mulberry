@@ -5,6 +5,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
+import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
 import org.gipsybuho.dao.*;
@@ -69,6 +70,16 @@ public class DashboardView extends VBox {
         ctx.getStyleClass().add("card-context");
 
         card.getChildren().addAll(header, val, ctx);
+
+        String tipText = switch (id) {
+            case "c1" -> "Total de clientes registrados en la base de datos";
+            case "c2" -> "Presupuestos enviados pendientes de confirmación";
+            case "c3" -> "Facturas emitidas pendientes de cobro";
+            case "c4" -> "Materiales con stock por debajo del mínimo configurado";
+            case "c5" -> "Total facturado y cobrado en el año en curso";
+            default   -> titulo;
+        };
+        Tooltip.install(card, new Tooltip(tipText));
 
         TranslateTransition liftIn  = new TranslateTransition(Duration.millis(200), card);
         liftIn.setToY(-2);

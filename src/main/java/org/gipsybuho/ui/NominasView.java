@@ -91,6 +91,14 @@ public class NominasView extends VBox {
         Button btnGenMes    = btn("⚡ Generar mes para todos","#9B59B6", this::generarMesCompleto);
         Button btnPreview   = btn("👁 Previsualizar",         "#6B2D5E", this::previsualizar);
         Button btnColumnas  = btn("⚙ Columnas",               "#34495E", dynamicColumns::configure);
+        btnNueva.setTooltip(new Tooltip("Crear una nueva nómina"));
+        btnEditar.setTooltip(new Tooltip("Editar la nómina seleccionada"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar la nómina seleccionada"));
+        btnImportar.setTooltip(new Tooltip("Importar nóminas desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar nóminas a PDF, Excel u otros formatos"));
+        btnGenMes.setTooltip(new Tooltip("Generar automáticamente las nóminas del mes para todos los empleados"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar la nómina seleccionada en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);

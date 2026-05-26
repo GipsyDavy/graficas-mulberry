@@ -80,6 +80,14 @@ public class TarifasView extends VBox {
         Button btnExportar   = btn("📤 Exportar",      "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",       "#34495E", dynamicColumns::configure);
+        btnNuevo.setTooltip(new Tooltip("Crear una nueva tarifa de impresión"));
+        btnEditar.setTooltip(new Tooltip("Editar la tarifa seleccionada"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar la tarifa seleccionada"));
+        btnTramos.setTooltip(new Tooltip("Ver y editar los tramos de precio de la tarifa seleccionada"));
+        btnImportar.setTooltip(new Tooltip("Importar tarifas desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar tarifas a PDF, Excel u otros formatos"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar la tarifa en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);

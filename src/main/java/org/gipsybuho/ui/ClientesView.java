@@ -93,6 +93,14 @@ public class ClientesView extends VBox {
         Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
         Button btnColumnas = btn("⚙ Columnas", "#34495E", this::configurarColumnas);
+        txtBuscar.setTooltip(new Tooltip("Filtrar por nombre, apellido, NIF o email"));
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo cliente"));
+        btnEditar.setTooltip(new Tooltip("Editar el cliente seleccionado"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar el cliente seleccionado"));
+        btnImportar.setTooltip(new Tooltip("Importar clientes desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar clientes a PDF, Excel, Word u otros formatos"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar ficha del cliente en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);

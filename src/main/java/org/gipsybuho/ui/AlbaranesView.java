@@ -82,6 +82,14 @@ public class AlbaranesView extends VBox {
         Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
         Button btnPreview    = btn("👁 Previsualizar",    "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",          "#34495E", dynamicColumns::configure);
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo albarán de entrega"));
+        btnEditar.setTooltip(new Tooltip("Editar el albarán seleccionado"));
+        btnFirmado.setTooltip(new Tooltip("Marcar el albarán como firmado por el cliente"));
+        btnImportar.setTooltip(new Tooltip("Importar albaranes desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar albaranes a PDF, Excel u otros formatos"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar el albarán seleccionado"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar el albarán en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);

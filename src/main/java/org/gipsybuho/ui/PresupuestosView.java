@@ -89,6 +89,15 @@ public class PresupuestosView extends VBox {
         Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
         Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo presupuesto"));
+        btnEditar.setTooltip(new Tooltip("Editar el presupuesto seleccionado"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar el presupuesto seleccionado"));
+        btnImportar.setTooltip(new Tooltip("Importar presupuestos desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar presupuestos a PDF, Excel u otros formatos"));
+        btnAlbaran.setTooltip(new Tooltip("Generar albarán de entrega desde este presupuesto"));
+        btnFacturar.setTooltip(new Tooltip("Convertir el presupuesto en factura"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar el presupuesto en PDF"));
+        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnAlbaran, btnFacturar, btnPreview, btnColumnas);

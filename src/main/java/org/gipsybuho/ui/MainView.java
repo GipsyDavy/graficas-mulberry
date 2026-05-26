@@ -98,6 +98,7 @@ public class MainView extends BorderPane {
         Button btnCollapse = new Button();
         btnCollapse.setGraphic(collapseArrow);
         btnCollapse.getStyleClass().add("sidebar-collapse-btn");
+        Tooltip.install(btnCollapse, new Tooltip("Colapsar / expandir la barra lateral"));
         btnCollapse.setOnAction(e -> {
             sidebarCollapsed = !sidebarCollapsed;
             if (sidebarCollapsed) {
@@ -141,6 +142,7 @@ public class MainView extends BorderPane {
         tfBusqueda = new TextField();
         tfBusqueda.setPromptText("Buscar módulo… (Esc para cerrar)");
         tfBusqueda.getStyleClass().add("sidebar-search");
+        tfBusqueda.setTooltip(new Tooltip("Buscar módulo · Esc para cerrar (Ctrl+K)"));
         tfBusqueda.setVisible(false);
         tfBusqueda.setManaged(false);
         tfBusqueda.setOnKeyPressed(e -> {
@@ -200,17 +202,20 @@ public class MainView extends BorderPane {
         if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)
                 || loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
             Button btnBackup = buildFooterBtn(Icons.download(), "Copia de seguridad",
-                () -> mostrarVista(new ImportBackupView(), "Copia de seguridad"));
+                () -> mostrarVista(new ImportBackupView(), "Copia de seguridad"),
+                ImportBackupView::new);
             footerIconos.getChildren().add(btnBackup);
         }
         if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
             Button btnConfig = buildFooterBtn(Icons.settings(), "Configuración",
-                () -> mostrarVista(new ConfiguracionView(visualAssistant), "Configuración"));
+                () -> mostrarVista(new ConfiguracionView(visualAssistant), "Configuración"),
+                () -> new ConfiguracionView(visualAssistant));
             footerIconos.getChildren().add(btnConfig);
         }
         if (loggedInUser.isAdmin()) {
             Button btnUsers = buildFooterBtn(Icons.users(), "Gestión de usuarios",
-                () -> mostrarVista(new UserManagementView(authService, loggedInUser), "Gestión de usuarios"));
+                () -> mostrarVista(new UserManagementView(authService, loggedInUser), "Gestión de usuarios"),
+                () -> new UserManagementView(authService, loggedInUser));
             footerIconos.getChildren().add(btnUsers);
         }
 
@@ -219,6 +224,7 @@ public class MainView extends BorderPane {
         btnCerrarApp.setGraphicTextGap(8);
         btnCerrarApp.getStyleClass().add("sidebar-exit-btn");
         btnCerrarApp.setMaxWidth(Double.MAX_VALUE);
+        btnCerrarApp.setTooltip(new Tooltip("Cerrar la aplicación"));
         btnCerrarApp.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
         btnCerrarApp.setOnAction(e -> {
             if (confirmarSalida()) {
@@ -239,11 +245,12 @@ public class MainView extends BorderPane {
         return sidebar;
     }
 
-    private Button buildFooterBtn(javafx.scene.Node icon, String tooltip, Runnable accion) {
+    private Button buildFooterBtn(javafx.scene.Node icon, String tooltipText, Runnable accion,
+                                   Supplier<javafx.scene.Parent> popupFactory) {
         Button btn = new Button();
         btn.setGraphic(icon);
         btn.getStyleClass().add("sidebar-footer-btn");
-        Tooltip tip = new Tooltip(tooltip);
+        Tooltip tip = new Tooltip(tooltipText + "\n\nClic derecho → Abrir en ventana aparte");
         tip.setStyle("-fx-font-size:11;");
         Tooltip.install(btn, tip);
         btn.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
@@ -251,6 +258,18 @@ public class MainView extends BorderPane {
             SoundService.play(SoundService.Sound.NAVIGATE);
             accion.run();
         });
+        ContextMenu ctx = new ContextMenu();
+        MenuItem miVentana = new MenuItem("🪟  Abrir en ventana aparte");
+        miVentana.setStyle("-fx-font-weight: bold;");
+        miVentana.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.WINDOW_OPEN);
+            List<String> css = getScene() != null
+                ? new ArrayList<>(getScene().getStylesheets()) : List.of();
+            ModuloWindowManager.abrirEnVentana(tooltipText, popupFactory, css,
+                visualAssistant::instalarAyudaAutomatica);
+        });
+        ctx.getItems().add(miVentana);
+        btn.setOnContextMenuRequested(e -> ctx.show(btn, e.getScreenX(), e.getScreenY()));
         return btn;
     }
 
@@ -351,9 +370,24 @@ public class MainView extends BorderPane {
         pane.getStyleClass().add("nav-btn-pane");
         pane.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
-        // Tooltip de ayuda para el clic derecho
-        Tooltip tip = new Tooltip("Clic para abrir · Clic derecho → ventana emergente");
-        tip.setStyle("-fx-font-size:10;");
+        String tipDesc = switch (texto) {
+            case "Inicio"       -> "Panel de resumen: actividad, facturas y stock";
+            case "Clientes"     -> "Gestionar clientes de la empresa";
+            case "Tarifas"      -> "Precios y técnicas de impresión";
+            case "Presupuestos" -> "Crear y gestionar presupuestos";
+            case "Pedidos"      -> "Control de pedidos y pagos";
+            case "Albaranes"    -> "Albaranes de entrega";
+            case "Facturas"     -> "Facturación y cobros";
+            case "Materiales"   -> "Stock de materiales y proveedores";
+            case "Empleados"    -> "Datos y gestión de empleados";
+            case "Nóminas"      -> "Nóminas mensuales del personal";
+            case "Estadísticas" -> "Gráficos e informes de actividad";
+            case "Calendario"   -> "Agenda y recordatorios";
+            case "Asistente"    -> "Asistente IA (requiere Ollama)";
+            default             -> texto;
+        };
+        Tooltip tip = new Tooltip(tipDesc + "\n\nClic derecho → Abrir en ventana aparte");
+        tip.setStyle("-fx-font-size:11;");
         Tooltip.install(pane, tip);
 
         // ── Clic izquierdo: abrir en área principal ──────────────────────

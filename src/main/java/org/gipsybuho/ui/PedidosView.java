@@ -198,6 +198,13 @@ public class PedidosView extends VBox {
         Button btnExportar = btn("📤 Exportar",     "#8E44AD", this::exportar);
         Button btnBorrar     = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
         Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
+        txtBusqueda.setTooltip(new Tooltip("Buscar por cliente o número de pedido"));
+        btnNuevo.setTooltip(new Tooltip("Crear un nuevo pedido"));
+        btnEditar.setTooltip(new Tooltip("Editar el pedido seleccionado"));
+        btnImportar.setTooltip(new Tooltip("Importar pedidos desde CSV, Excel o JSON"));
+        btnExportar.setTooltip(new Tooltip("Exportar pedidos a PDF, Excel u otros formatos"));
+        btnBorrar.setTooltip(new Tooltip("Eliminar el pedido seleccionado"));
+        btnPreview.setTooltip(new Tooltip("Previsualizar el pedido en PDF"));
 
         HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
