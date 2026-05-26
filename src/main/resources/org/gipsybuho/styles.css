@@ -6,8 +6,8 @@
 
 /* ── PALETA POR DEFECTO (tema Mulberry) ──────────────────── */
 .root {
-    -fx-font-family: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-    -fx-font-size: 13px;
+    -fx-font-family: "Segoe UI Variable", "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+    -fx-font-size: 14px;
 
     -c-primary:         #6B2D5E;
     -c-primary-dark:    #2D1A28;
@@ -173,7 +173,7 @@
 .sidebar .nav-btn {
     -fx-text-fill: -c-sidebar-nav-text;
     -fx-font-size: 13px;
-    -fx-padding: 12 18;
+    -fx-padding: 11 18;
     -fx-max-width: infinity;
     -fx-alignment: CENTER-LEFT;
     -fx-background-color: transparent;
@@ -241,7 +241,7 @@
 }
 
 .view-subtitle {
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
     -fx-text-fill: -c-text-secondary;
     -fx-padding: -6 0 4 0;
 }
@@ -290,7 +290,7 @@
 .data-table .column-header .label {
     -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
     -fx-font-weight: bold;
-    -fx-font-size: 12px;
+    -fx-font-size: 13px;
 }
 
 .data-table .column-header-background {
@@ -357,9 +357,9 @@
 .text-field, .text-area, .combo-box {
     -fx-background-color: -c-card-bg;
     -fx-border-color: -c-border;
-    -fx-border-radius: 4;
-    -fx-background-radius: 4;
-    -fx-padding: 6 10;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 9 12;
     -fx-text-fill: -c-text;
 }
 
