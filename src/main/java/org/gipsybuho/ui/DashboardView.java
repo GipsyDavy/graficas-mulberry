@@ -1,10 +1,12 @@
 package org.gipsybuho.ui;
 
+import javafx.animation.TranslateTransition;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.layout.*;
+import javafx.util.Duration;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.NotaCalendario;
 import java.time.LocalDate;
@@ -67,6 +69,14 @@ public class DashboardView extends VBox {
         ctx.getStyleClass().add("card-context");
 
         card.getChildren().addAll(header, val, ctx);
+
+        TranslateTransition liftIn  = new TranslateTransition(Duration.millis(200), card);
+        liftIn.setToY(-2);
+        TranslateTransition liftOut = new TranslateTransition(Duration.millis(200), card);
+        liftOut.setToY(0);
+        card.setOnMouseEntered(e -> liftIn.playFromStart());
+        card.setOnMouseExited(e  -> liftOut.playFromStart());
+
         return card;
     }
 

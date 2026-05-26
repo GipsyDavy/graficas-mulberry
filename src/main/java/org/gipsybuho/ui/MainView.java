@@ -20,7 +20,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.animation.FadeTransition;
 import javafx.animation.RotateTransition;
+import javafx.animation.TranslateTransition;
 import javafx.scene.input.MouseButton;
 import javafx.scene.layout.*;
 import javafx.util.Duration;
@@ -478,7 +480,12 @@ public class MainView extends BorderPane {
     }
 
     private void mostrarVista(Node vista, String titulo) {
+        vista.setOpacity(0);
         contentArea.getChildren().setAll(vista);
+        FadeTransition ft = new FadeTransition(Duration.millis(150), vista);
+        ft.setFromValue(0);
+        ft.setToValue(1);
+        ft.play();
         if (vista instanceof Parent parent) {
             visualAssistant.instalarAyudaAutomatica(parent);
         }
