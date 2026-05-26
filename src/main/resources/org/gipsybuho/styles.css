@@ -79,11 +79,11 @@
 }
 
 .nav-group-arrow-icon {
-    -fx-fill: -c-sidebar-nav-text;
+    -fx-fill: -c-sidebar-version-text;
 }
 
 .sidebar .nav-group-header:hover .nav-group-arrow-icon {
-    -fx-fill: white;
+    -fx-fill: -c-sidebar-nav-text;
 }
 
 .sidebar .sidebar-exit-btn .nav-icon {
@@ -98,8 +98,8 @@
 .sidebar {
     -fx-background-color: -c-primary-dark;
     -fx-padding: 0;
-    -fx-min-width: 210px;
-    -fx-pref-width: 210px;
+    -fx-min-width: 220px;
+    -fx-pref-width: 220px;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 6, 0, 2, 0);
 }
 
@@ -226,7 +226,7 @@
 }
 
 .sidebar-collapsed .nav-btn-pane {
-    -fx-padding: 0;
+    -fx-padding: 1 4;
 }
 
 .sidebar-collapsed .sidebar-exit-btn {
@@ -250,29 +250,32 @@
 
 /* ── BOTONES DE NAVEGACIÓN ───────────────────────────────── */
 .nav-btn-pane {
-    -fx-padding: 0;
+    -fx-padding: 1 8;
     -fx-cursor: hand;
 }
 
 .sidebar .nav-btn {
     -fx-text-fill: -c-sidebar-nav-text;
     -fx-font-size: 13px;
-    -fx-padding: 11 18;
+    -fx-padding: 9 12;
     -fx-max-width: infinity;
     -fx-alignment: CENTER-LEFT;
     -fx-background-color: transparent;
+    -fx-background-radius: 7;
     -fx-border-width: 0;
 }
 
 .sidebar .nav-btn-pane:hover .nav-btn {
     -fx-text-fill: white;
     -fx-background-color: -c-nav-hover;
+    -fx-background-radius: 7;
 }
 
 .sidebar .nav-btn-active .nav-btn {
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-color: -c-primary;
+    -fx-background-radius: 7;
 }
 
 .nav-btn-active {
@@ -282,33 +285,37 @@
 
 /* ── GRUPOS DE NAVEGACIÓN ────────────────────────────────── */
 .nav-group {
-    -fx-padding: 0;
+    -fx-padding: 8 0 2 0;
 }
 
 .nav-group-header {
-    -fx-padding: 7 14 7 12;
+    -fx-padding: 4 14 4 12;
     -fx-cursor: hand;
     -fx-max-width: infinity;
 }
 
 .nav-group-header:hover {
-    -fx-background-color: -c-nav-hover;
+    -fx-background-color: transparent;
+}
+
+.nav-group-header:hover .nav-group-title {
+    -fx-text-fill: -c-sidebar-nav-text;
 }
 
 .sidebar .nav-group-title {
-    -fx-font-size: 10px;
+    -fx-font-size: 9px;
     -fx-font-weight: bold;
-    -fx-text-fill: -c-sidebar-nav-text;
+    -fx-text-fill: -c-sidebar-version-text;
 }
 
 .sidebar .nav-group-arrow {
     -fx-font-size: 9px;
-    -fx-text-fill: -c-sidebar-nav-text;
+    -fx-text-fill: -c-sidebar-version-text;
     -fx-min-width: 10px;
 }
 
 .nav-group-content .nav-btn {
-    -fx-padding: 10 18 10 26;
+    -fx-padding: 9 12 9 14;
 }
 
 /* ── ÁREA DE CONTENIDO ───────────────────────────────────── */

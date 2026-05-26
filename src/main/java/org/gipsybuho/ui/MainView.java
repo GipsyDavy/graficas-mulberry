@@ -75,7 +75,7 @@ public class MainView extends BorderPane {
     private VBox buildSidebar() {
         sidebar = new VBox();
         sidebar.getStyleClass().add("sidebar");
-        sidebar.setPrefWidth(210);
+        sidebar.setPrefWidth(220);
 
         // Logo
         VBox logoBox = new VBox(6);
@@ -401,11 +401,13 @@ public class MainView extends BorderPane {
         header.setMaxWidth(Double.MAX_VALUE);
         header.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
+        arrow.setRotate(90);
+
         VBox contenido = new VBox();
         contenido.getStyleClass().add("nav-group-content");
         contenido.getChildren().addAll(visibles);
-        contenido.setVisible(false);
-        contenido.setManaged(false);
+        contenido.setVisible(true);
+        contenido.setManaged(true);
 
         header.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {
@@ -450,7 +452,7 @@ public class MainView extends BorderPane {
                 if (node instanceof VBox grupo) {
                     grupo.getChildren().stream()
                         .filter(c -> c.getStyleClass().contains("nav-group-content"))
-                        .forEach(c -> { c.setVisible(false); c.setManaged(false); });
+                        .forEach(c -> { c.setVisible(true); c.setManaged(true); });
                 }
                 return;
             }

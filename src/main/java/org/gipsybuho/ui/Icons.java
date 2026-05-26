@@ -130,16 +130,16 @@ public final class Icons {
         return lbl;
     }
 
-    // ── Icono estándar de sidebar (15×15, clase nav-icon para CSS) ───────────
+    // ── Icono estándar de sidebar (18×18, clase nav-icon para CSS) ───────────
     private static StackPane navIcon(String pathData) {
         SVGPath path = new SVGPath();
         path.setContent(pathData);
         path.getStyleClass().add("nav-icon");
-        path.getTransforms().add(new Scale(15.0 / 24.0, 15.0 / 24.0, 0, 0));
+        path.getTransforms().add(new Scale(18.0 / 24.0, 18.0 / 24.0, 0, 0));
         StackPane pane = new StackPane(path);
-        pane.setPrefSize(15, 15);
-        pane.setMaxSize(15, 15);
-        pane.setMinSize(15, 15);
+        pane.setPrefSize(18, 18);
+        pane.setMaxSize(18, 18);
+        pane.setMinSize(18, 18);
         return pane;
     }
 }

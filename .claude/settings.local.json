@@ -119,7 +119,9 @@
       "WebFetch(domain:www.graficasmulberry.com)",
       "Bash(./mvnw.cmd compile *)",
       "Bash(Get-ChildItem -Recurse -Directory -Path \"src/main/java\")",
-      "Bash(python *)"
+      "Bash(python *)",
+      "Bash(.\\\\mvnw compile *)",
+      "PowerShell(cd \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; powershell -ExecutionPolicy Bypass -File \".\\\\build-nsis.ps1\" 2>&1)"
     ]
   },
   "hooks": {
