@@ -120,7 +120,7 @@ public class AlbaranesView extends VBox {
             col("Pedido ref.", "pedidoNumero",   130),
             colEstado
         );
-        tabla.setPlaceholder(new Label("No hay albaranes registrados"));
+        tabla.setPlaceholder(Icons.emptyState("No hay albaranes registrados todavía"));
         return tabla;
     }
 

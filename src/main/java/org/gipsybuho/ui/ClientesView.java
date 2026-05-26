@@ -119,7 +119,7 @@ public class ClientesView extends VBox {
             col("Email",     "email",     180),
             col("Ciudad",    "ciudad",    120)
         );
-        tabla.setPlaceholder(new Label("No hay clientes registrados"));
+        tabla.setPlaceholder(Icons.emptyState("No hay clientes registrados todavía"));
         return tabla;
     }
 

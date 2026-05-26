@@ -139,7 +139,7 @@ public class PresupuestosView extends VBox {
             colEstado,
             colTotal
         );
-        tabla.setPlaceholder(new Label("No hay presupuestos registrados"));
+        tabla.setPlaceholder(Icons.emptyState("No hay presupuestos registrados todavía"));
         return tabla;
     }
 

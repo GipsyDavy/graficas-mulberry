@@ -772,6 +772,21 @@
     -fx-background-color: transparent;
 }
 
+/* ── EMPTY STATE ─────────────────────────────────────────── */
+.empty-state {
+    -fx-padding: 32 0 32 0;
+    -fx-alignment: center;
+}
+
+.empty-state-icon {
+    -fx-fill: -c-border;
+}
+
+.empty-state-text {
+    -fx-font-size: 13px;
+    -fx-text-fill: -c-text-secondary;
+}
+
 /* ── STATUS BADGES ───────────────────────────────────────── */
 .status-badge {
     -fx-padding: 3 10 3 10;

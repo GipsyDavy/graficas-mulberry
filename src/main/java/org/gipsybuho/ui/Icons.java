@@ -1,7 +1,9 @@
 package org.gipsybuho.ui;
 
+import javafx.geometry.Pos;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
+import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
 import javafx.scene.transform.Scale;
 
@@ -81,6 +83,24 @@ public final class Icons {
         pane.setMaxSize(size, size);
         pane.setMinSize(size, size);
         return pane;
+    }
+
+    /** Placeholder de tabla vacía con icono y texto centrado. */
+    public static VBox emptyState(String mensaje) {
+        SVGPath path = new SVGPath();
+        path.setContent(FILE);
+        path.getStyleClass().add("empty-state-icon");
+        path.getTransforms().add(new Scale(32.0 / 24.0, 32.0 / 24.0, 0, 0));
+        StackPane icon = new StackPane(path);
+        icon.setPrefSize(32, 32);
+
+        Label lbl = new Label(mensaje);
+        lbl.getStyleClass().add("empty-state-text");
+
+        VBox box = new VBox(12, icon, lbl);
+        box.getStyleClass().add("empty-state");
+        box.setAlignment(Pos.CENTER);
+        return box;
     }
 
     /**

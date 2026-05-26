@@ -205,7 +205,7 @@ public class MaterialesView extends VBox {
             col("Nombre", "nombre", 200), col("Referencia", "referencia", 100),
             col("Categoría", "categoria", 100), colStock, colMin, colPrecio,
             col("Proveedor", "proveedor", 140));
-        tabla.setPlaceholder(new Label("No hay materiales registrados"));
+        tabla.setPlaceholder(Icons.emptyState("No hay materiales registrados todavía"));
         return tabla;
     }
 

@@ -141,7 +141,7 @@ public class NominasView extends VBox {
             col("Período", "periodo", 130),
             colBruto, colNeto, colCosteEmp
         );
-        tabla.setPlaceholder(new Label("No hay nóminas registradas"));
+        tabla.setPlaceholder(Icons.emptyState("No hay nóminas registradas todavía"));
         return tabla;
     }
 

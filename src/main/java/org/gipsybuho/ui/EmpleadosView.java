@@ -155,7 +155,7 @@ public class EmpleadosView extends VBox {
             col("Email",      "email",      170),
             colEstado
         );
-        tabla.setPlaceholder(new Label("No hay empleados registrados"));
+        tabla.setPlaceholder(Icons.emptyState("No hay empleados registrados todavía"));
         return tabla;
     }
 

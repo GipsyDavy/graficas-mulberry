@@ -133,7 +133,7 @@ public class TarifasView extends VBox {
         colTramos.setUserData("usa_tiempo");
 
         tabla.getColumns().addAll(colTecnica, colNombre, colPrecio, colSetup, colMin, colTramos);
-        tabla.setPlaceholder(new Label("No hay tarifas registradas"));
+        tabla.setPlaceholder(Icons.emptyState("No hay tarifas registradas todavía"));
         return tabla;
     }
 

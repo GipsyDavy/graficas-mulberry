@@ -135,7 +135,7 @@ public class FacturasView extends VBox {
             colEstado,
             colTotal
         );
-        tabla.setPlaceholder(new Label("No hay facturas registradas"));
+        tabla.setPlaceholder(Icons.emptyState("No hay facturas registradas todavía"));
         return tabla;
     }
 

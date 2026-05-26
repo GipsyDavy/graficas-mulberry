@@ -314,7 +314,7 @@ public class PedidosView extends VBox {
 
         tablaPedidos.getColumns().addAll(
             colEst, colNum, colCli, colFecha, colEntrega, colDesc, colTotal, colCobrado, colPend, colVenc);
-        tablaPedidos.setPlaceholder(new Label("No hay pedidos registrados"));
+        tablaPedidos.setPlaceholder(Icons.emptyState("No hay pedidos registrados todavía"));
 
         // Al seleccionar un pedido, cargar sus pagos en el panel inferior
         tablaPedidos.getSelectionModel().selectedItemProperty().addListener((o, a, sel) -> {
