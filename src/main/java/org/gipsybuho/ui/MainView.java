@@ -151,41 +151,29 @@ public class MainView extends BorderPane {
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
         addIfPermiso(navMenu, UserPermissions.DASHBOARD,
-            navBtn(Icons.home(), "Panel principal", DashboardView::new));
+            navBtn(Icons.home(), "Inicio", DashboardView::new));
         navMenu.getChildren().addAll(
-            navGrupo("CLIENTES Y MAESTROS",
-                navBtn(UserPermissions.CLIENTES, Icons.users(),      "Clientes",    ClientesView::new),
-                navBtn(UserPermissions.TARIFAS,  Icons.tag(),        "Tarifas",     TarifasView::new)
+            navGrupo("CLIENTES",
+                navBtn(UserPermissions.CLIENTES, Icons.users(), "Clientes", ClientesView::new),
+                navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "Tarifas",  TarifasView::new)
             ),
             navGrupo("COMERCIAL",
                 navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(), "Presupuestos", PresupuestosView::new),
                 navBtn(UserPermissions.PEDIDOS,      Icons.cart(),       "Pedidos",      PedidosView::new),
                 navBtn(UserPermissions.ALBARANES,    Icons.file(),       "Albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),    "Facturas",     FacturasView::new)
-            ),
-            navGrupo("ALMACÉN",
-                navBtn(UserPermissions.MATERIALES, Icons.layers(), "Materiales", MaterialesView::new)
+                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),    "Facturas",     FacturasView::new),
+                navBtn(UserPermissions.MATERIALES,   Icons.layers(),     "Materiales",   MaterialesView::new)
             ),
             navGrupo("PERSONAL",
-                navBtn(UserPermissions.EMPLEADOS, Icons.person(),  "Empleados", EmpleadosView::new),
-                navBtn(UserPermissions.NOMINAS,   Icons.work(),    "Nóminas",   NominasView::new)
+                navBtn(UserPermissions.EMPLEADOS, Icons.person(), "Empleados", EmpleadosView::new),
+                navBtn(UserPermissions.NOMINAS,   Icons.work(),   "Nóminas",   NominasView::new)
             ),
             navGrupo("ANALÍTICA",
-                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(),  "Estadísticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(),  "Calendario",   CalendarioView::new),
-                navBtn(UserPermissions.IA, Icons.robot(), "Asistente IA",
+                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(), "Estadísticas", EstadisticasView::new),
+                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "Calendario",   CalendarioView::new),
+                navBtn(UserPermissions.IA, Icons.robot(), "Asistente",
                     () -> mostrarVista(iaView, "Asistente IA"),
                     IAView::new)
-            ),
-            navGrupo("SISTEMA",
-                navBtn(UserPermissions.IMPORTAR_BACKUP, Icons.download(), "Importar Backup",   ImportBackupView::new),
-                navBtn(UserPermissions.EXPORTAR_BACKUP, Icons.upload(),   "Exportar / Backup", ExportView::new),
-                navBtn(UserPermissions.CONFIGURACION,   Icons.settings(), "Configuración",
-                    () -> new ConfiguracionView(visualAssistant)),
-                loggedInUser.isAdmin()
-                    ? navBtn(Icons.users(), "Gestión de usuarios",
-                        () -> new UserManagementView(authService, loggedInUser))
-                    : null
             )
         );
 
@@ -199,6 +187,33 @@ public class MainView extends BorderPane {
         VBox.setVgrow(scroll, Priority.ALWAYS);
         sidebar.getChildren().add(scroll);
 
+        // ── Footer de sistema ────────────────────────────────────────────
+        Region sepFooter = new Region();
+        sepFooter.getStyleClass().add("sidebar-sep");
+        sepFooter.setPrefHeight(1);
+        sidebar.getChildren().add(sepFooter);
+
+        HBox footerIconos = new HBox(4);
+        footerIconos.getStyleClass().add("sidebar-footer-icons");
+        footerIconos.setAlignment(Pos.CENTER_LEFT);
+
+        if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)
+                || loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
+            Button btnBackup = buildFooterBtn(Icons.download(), "Copia de seguridad",
+                () -> mostrarVista(new ImportBackupView(), "Copia de seguridad"));
+            footerIconos.getChildren().add(btnBackup);
+        }
+        if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
+            Button btnConfig = buildFooterBtn(Icons.settings(), "Configuración",
+                () -> mostrarVista(new ConfiguracionView(visualAssistant), "Configuración"));
+            footerIconos.getChildren().add(btnConfig);
+        }
+        if (loggedInUser.isAdmin()) {
+            Button btnUsers = buildFooterBtn(Icons.users(), "Gestión de usuarios",
+                () -> mostrarVista(new UserManagementView(authService, loggedInUser), "Gestión de usuarios"));
+            footerIconos.getChildren().add(btnUsers);
+        }
+
         Button btnCerrarApp = new Button("Salir");
         btnCerrarApp.setGraphic(Icons.power());
         btnCerrarApp.setGraphicTextGap(8);
@@ -210,6 +225,10 @@ public class MainView extends BorderPane {
                 Platform.exit();
             }
         });
+
+        if (!footerIconos.getChildren().isEmpty()) {
+            sidebar.getChildren().add(footerIconos);
+        }
         sidebar.getChildren().add(btnCerrarApp);
 
         Label version = new Label("v13.5.0 · Almería, España");
@@ -218,6 +237,21 @@ public class MainView extends BorderPane {
         sidebar.getChildren().add(version);
 
         return sidebar;
+    }
+
+    private Button buildFooterBtn(javafx.scene.Node icon, String tooltip, Runnable accion) {
+        Button btn = new Button();
+        btn.setGraphic(icon);
+        btn.getStyleClass().add("sidebar-footer-btn");
+        Tooltip tip = new Tooltip(tooltip);
+        tip.setStyle("-fx-font-size:11;");
+        Tooltip.install(btn, tip);
+        btn.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
+        btn.setOnAction(e -> {
+            SoundService.play(SoundService.Sound.NAVIGATE);
+            accion.run();
+        });
+        return btn;
     }
 
     private void actualizarBotonAsistente(Label label) {

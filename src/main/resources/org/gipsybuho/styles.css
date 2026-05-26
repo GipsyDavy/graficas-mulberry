@@ -233,6 +233,16 @@
     -fx-content-display: graphic-only;
 }
 
+.sidebar-collapsed .sidebar-footer-icons {
+    -fx-padding: 6 4 4 4;
+    -fx-alignment: center;
+}
+
+.sidebar-collapsed .sidebar-footer-btn {
+    -fx-min-width: 40;
+    -fx-pref-width: 40;
+}
+
 /* ── BUSCADOR SIDEBAR ────────────────────────────────────── */
 .sidebar-search {
     -fx-background-color: derive(-c-primary-dark, 12%);
@@ -316,6 +326,34 @@
 
 .nav-group-content .nav-btn {
     -fx-padding: 9 12 9 14;
+}
+
+/* ── FOOTER DE SISTEMA (iconos compactos) ────────────────── */
+.sidebar-footer-icons {
+    -fx-padding: 6 10 4 10;
+}
+
+.sidebar-footer-btn {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+    -fx-padding: 6 7;
+    -fx-background-radius: 7;
+    -fx-cursor: hand;
+    -fx-min-width: 32;
+    -fx-pref-width: 32;
+}
+
+.sidebar-footer-btn:hover {
+    -fx-background-color: -c-nav-hover;
+    -fx-background-radius: 7;
+}
+
+.sidebar-footer-btn .nav-icon {
+    -fx-fill: -c-sidebar-version-text;
+}
+
+.sidebar-footer-btn:hover .nav-icon {
+    -fx-fill: -c-sidebar-nav-text;
 }
 
 /* ── ÁREA DE CONTENIDO ───────────────────────────────────── */
