@@ -30,6 +30,11 @@
     -c-row-border:      #F0E8EE;
     -c-tab-bg:          #EDE3EB;
     -c-card-bg:         white;
+    -c-status-success:  #27AE60;
+    -c-status-warning:  #F39C12;
+    -c-status-danger:   #E74C3C;
+    -c-status-info:     #3498DB;
+    -c-status-neutral:  #95A5A6;
 }
 
 .root.modo-oscuro {
@@ -54,6 +59,11 @@
     -c-row-border:      #332937;
     -c-tab-bg:          #221B26;
     -c-card-bg:         #1D1821;
+    -c-status-success:  #2ECC71;
+    -c-status-warning:  #E67E22;
+    -c-status-danger:   #EC7063;
+    -c-status-info:     #5DADE2;
+    -c-status-neutral:  #AAB7B8;
 }
 
 /* ── VENTANA PRINCIPAL ───────────────────────────────────── */
@@ -358,12 +368,12 @@
 
 /* ── TOOLTIPS ────────────────────────────────────────────── */
 .tooltip {
-    -fx-background-color: #2D1A28;
-    -fx-text-fill: #D4B8CC;
+    -fx-background-color: -c-primary-dark;
+    -fx-text-fill: -c-sidebar-text;
     -fx-font-size: 11px;
     -fx-padding: 6 10;
     -fx-background-radius: 6;
-    -fx-border-color: #4A2A42;
+    -fx-border-color: -c-sidebar-sep;
     -fx-border-width: 1;
     -fx-border-radius: 6;
     -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.35), 5, 0, 0, 2);
@@ -502,17 +512,17 @@
 
 /* ── VALIDACIÓN VISUAL ───────────────────────────────────── */
 .input-error {
-    -fx-border-color: #E74C3C;
+    -fx-border-color: -c-status-danger;
     -fx-border-width: 1.5;
 }
 
 .input-error:focused {
-    -fx-border-color: #E74C3C;
+    -fx-border-color: -c-status-danger;
 }
 
 .field-error-msg {
     -fx-font-size: 11px;
-    -fx-text-fill: #E74C3C;
+    -fx-text-fill: -c-status-danger;
 }
 
 /* ── FORMULARIOS ─────────────────────────────────────────── */
@@ -887,11 +897,11 @@
     -fx-font-weight: bold;
     -fx-text-fill: white;
 }
-.status-badge-success  { -fx-background-color: #27AE60; }
-.status-badge-warning  { -fx-background-color: #F39C12; }
-.status-badge-danger   { -fx-background-color: #E74C3C; }
-.status-badge-info     { -fx-background-color: #3498DB; }
-.status-badge-neutral  { -fx-background-color: #95A5A6; }
+.status-badge-success  { -fx-background-color: -c-status-success; }
+.status-badge-warning  { -fx-background-color: -c-status-warning; }
+.status-badge-danger   { -fx-background-color: -c-status-danger; }
+.status-badge-info     { -fx-background-color: -c-status-info; }
+.status-badge-neutral  { -fx-background-color: -c-status-neutral; }
 
 /* ── AVISOS DASHBOARD ────────────────────────────────────── */
 .avisos-panel {
