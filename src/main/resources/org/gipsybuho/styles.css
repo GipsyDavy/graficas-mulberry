@@ -525,6 +525,20 @@
     -fx-text-fill: -c-status-danger;
 }
 
+.input-success {
+    -fx-border-color: -c-status-success;
+    -fx-border-width: 1.5;
+}
+
+.input-success:focused {
+    -fx-border-color: -c-status-success;
+}
+
+.field-success-msg {
+    -fx-font-size: 11px;
+    -fx-text-fill: -c-status-success;
+}
+
 /* ── FORMULARIOS ─────────────────────────────────────────── */
 .text-field, .text-area, .combo-box {
     -fx-background-color: -c-card-bg;
@@ -657,6 +671,24 @@
     -fx-background-color: -c-nav-hover;
     -fx-border-color: -c-accent;
     -fx-text-fill: -c-accent;
+}
+
+.btn-toolbar-active {
+    -fx-background-color: -c-primary;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+    -fx-border-color: -c-primary;
+    -fx-font-weight: bold;
+}
+
+.btn-toolbar-active:hover {
+    -fx-background-color: derive(-c-primary, 12%);
+    -fx-border-color: derive(-c-primary, 12%);
+}
+
+.root.modo-oscuro .btn-toolbar-active {
+    -fx-background-color: -c-primary;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+    -fx-border-color: -c-accent;
 }
 
 /* ── DIÁLOGOS ────────────────────────────────────────────── */
@@ -1155,4 +1187,175 @@
     -fx-text-fill: -c-text;
     -fx-font-size: 12px;
     -fx-line-spacing: 2;
+}
+
+/* ── DATE PICKER ─────────────────────────────────────────── */
+.date-picker .arrow-button {
+    -fx-background-color: -c-tab-bg;
+    -fx-cursor: hand;
+}
+
+.date-picker .arrow-button:hover {
+    -fx-background-color: -c-primary;
+}
+
+.date-picker .arrow-button .arrow {
+    -fx-background-color: -c-text;
+}
+
+.date-picker .arrow-button:hover .arrow {
+    -fx-background-color: white;
+}
+
+.date-picker-popup {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.18), 8, 0, 0, 3);
+}
+
+.date-picker-popup .month-year-pane {
+    -fx-background-color: -c-primary;
+    -fx-padding: 8 10;
+}
+
+.date-picker-popup .spinner .label {
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup .spinner .left-button,
+.date-picker-popup .spinner .right-button {
+    -fx-background-color: transparent;
+    -fx-cursor: hand;
+    -fx-padding: 4 8;
+}
+
+.date-picker-popup .spinner .left-button:hover,
+.date-picker-popup .spinner .right-button:hover {
+    -fx-background-color: derive(-c-primary, -20%);
+    -fx-background-radius: 4;
+}
+
+.date-picker-popup .spinner .left-button .left-arrow,
+.date-picker-popup .spinner .right-button .right-arrow {
+    -fx-background-color: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+}
+
+.date-picker-popup .day-name-cell {
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+    -fx-text-fill: -c-text-secondary;
+}
+
+.date-picker-popup .day-cell {
+    -fx-background-color: transparent;
+    -fx-text-fill: -c-text;
+    -fx-background-radius: 4;
+    -fx-cursor: hand;
+}
+
+.date-picker-popup .day-cell:hover {
+    -fx-background-color: -c-row-hover;
+}
+
+.date-picker-popup .day-cell:selected {
+    -fx-background-color: -c-primary;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup .day-cell:today {
+    -fx-text-fill: -c-primary;
+    -fx-font-weight: bold;
+}
+
+.date-picker-popup .day-cell:previous-month,
+.date-picker-popup .day-cell:next-month {
+    -fx-text-fill: -c-muted;
+}
+
+.date-picker-popup .calendar-grid {
+    -fx-padding: 6;
+}
+
+/* ── PROGRESS BAR ────────────────────────────────────────── */
+.progress-bar {
+    -fx-pref-height: 8;
+    -fx-background-color: -c-tab-bg;
+    -fx-background-radius: 4;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 4;
+}
+
+.progress-bar .track {
+    -fx-background-color: -c-tab-bg;
+    -fx-background-radius: 4;
+}
+
+.progress-bar .bar {
+    -fx-background-color: -c-primary;
+    -fx-background-radius: 4;
+    -fx-background-insets: 2;
+}
+
+.progress-indicator {
+    -fx-progress-color: -c-primary;
+}
+
+.progress-indicator .indicator {
+    -fx-border-color: -c-border;
+}
+
+/* ── RADIO BUTTON ────────────────────────────────────────── */
+.radio-button .radio {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 10;
+    -fx-background-radius: 10;
+}
+
+.radio-button:selected .radio {
+    -fx-background-color: -c-primary;
+    -fx-border-color: -c-primary;
+}
+
+.radio-button:selected .dot {
+    -fx-background-color: white;
+    -fx-background-radius: 10;
+}
+
+.radio-button .text {
+    -fx-text-fill: -c-text;
+}
+
+/* ── CONTEXT MENU ────────────────────────────────────────── */
+.context-menu {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-border;
+    -fx-border-radius: 6;
+    -fx-background-radius: 6;
+    -fx-padding: 4 0;
+    -fx-effect: dropshadow(three-pass-box, rgba(0,0,0,0.18), 8, 0, 0, 3);
+}
+
+.context-menu .menu-item {
+    -fx-padding: 7 16;
+    -fx-background-color: transparent;
+}
+
+.context-menu .menu-item:focused,
+.context-menu .menu-item:hover {
+    -fx-background-color: -c-row-hover;
+}
+
+.context-menu .menu-item .label {
+    -fx-text-fill: -c-text;
+    -fx-font-size: 13px;
+}
+
+.context-menu .separator .line {
+    -fx-border-color: -c-border;
+    -fx-border-width: 0.5 0 0 0;
 }
