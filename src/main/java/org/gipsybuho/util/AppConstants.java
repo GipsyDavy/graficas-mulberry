@@ -4,7 +4,6 @@ import java.awt.Color;
 
 /**
  * AppConstants: Centraliza todas las constantes del sistema ERP y el Asistente IA.
- * VERSIÓN DE ÚLTIMA GENERACIÓN: Fusión total (Negocio + IA + SQL + UI + API).
  */
 public final class AppConstants {
     private AppConstants() {
@@ -144,9 +143,6 @@ public final class AppConstants {
     public static final String TABLE_FACTURAS     = "facturas";
     public static final String TABLE_MATERIALES   = "materiales";
 
-    public static final String SQL_SELECT_ALL_CLIENTES = "SELECT * FROM " + TABLE_CLIENTES + " ORDER BY nombre ASC";
-    public static final String SQL_SELECT_LOW_STOCK    = "SELECT * FROM " + TABLE_MATERIALES + " WHERE stock <= stock_minimo";
-
     // =========================================================================
     // 9. SUGERENCIAS CONTEXTUALES (INTEGRAL)
     // =========================================================================
@@ -163,6 +159,4 @@ public final class AppConstants {
     public static final String TEXT_TITULO_EXPORTAR       = "Guardar historial de chat";
     public static final String TEXT_ERROR_EXPORTAR_TITULO = "Error al exportar";
     public static final String MSG_NO_OPEN_WINDOW_MODULE  = "Error: No hay una ventana activa para este módulo.";
-    public static final String DEBUG_GESTION_MODELOS      = "DEBUG: Solicitada apertura de panel de modelos.";
-    public static final String DEBUG_REDIR_OLLAMA        = "Redirigiendo a la descarga de Ollama...";
 }
