@@ -81,14 +81,14 @@ public class EmpleadosView extends VBox {
         chkMostrarBajas = new CheckBox("Mostrar empleados dados de baja");
         chkMostrarBajas.setOnAction(e -> cargar());
 
-        Button btnNuevo     = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
-        Button btnEditar    = btn("✏ Editar",          "#F39C12", this::editar);
-        Button btnBaja      = btn("🚫 Dar de baja",    "#E74C3C", this::darDeBaja);
-        Button btnReactivar = btn("✅ Reactivar",      "#27AE60", this::reactivar);
-        Button btnImportar  = btn("📥 Importar",       "#2980B9", this::importar);
-        Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
+        Button btnNuevo     = btn("+ Nuevo", this::nuevo);
+        Button btnEditar    = btn("✏ Editar", this::editar);
+        Button btnBaja      = btn("🚫 Dar de baja", this::darDeBaja);
+        Button btnReactivar = btn("✅ Reactivar", this::reactivar);
+        Button btnImportar  = btn("📥 Importar", this::importar);
+        Button btnExportar   = btn("📤 Exportar", this::exportar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
         chkMostrarBajas.setTooltip(new Tooltip("Incluir en la tabla los empleados dados de baja"));
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo empleado"));
         btnEditar.setTooltip(new Tooltip("Editar el empleado seleccionado"));
@@ -554,7 +554,7 @@ public class EmpleadosView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

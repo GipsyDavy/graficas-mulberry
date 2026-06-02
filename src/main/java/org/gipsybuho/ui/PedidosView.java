@@ -192,12 +192,12 @@ public class PedidosView extends VBox {
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo    = btn("+ Nuevo pedido", "#4C9BE8", this::nuevoPedido);
-        Button btnEditar   = btn("✏ Editar",        "#F39C12", this::editarPedido);
-        Button btnImportar = btn("📥 Importar",     "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",     "#8E44AD", this::exportar);
-        Button btnBorrar     = btn("🗑 Eliminar",      "#E74C3C", this::eliminarPedido);
-        Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
+        Button btnNuevo    = btn("+ Nuevo pedido", this::nuevoPedido);
+        Button btnEditar   = btn("✏ Editar",       this::editarPedido);
+        Button btnImportar = btn("📥 Importar",    this::importar);
+        Button btnExportar = btn("📤 Exportar",    this::exportar);
+        Button btnBorrar     = btn("🗑 Eliminar",     this::eliminarPedido);
+        Button btnPreview    = btn("👁 Previsualizar",this::previsualizar);
         txtBusqueda.setTooltip(new Tooltip("Buscar por cliente o número de pedido"));
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo pedido"));
         btnEditar.setTooltip(new Tooltip("Editar el pedido seleccionado"));
@@ -354,10 +354,10 @@ public class PedidosView extends VBox {
         lblPedidoSeleccionado = new Label("Selecciona un pedido para ver sus pagos");
         lblPedidoSeleccionado.setStyle("-fx-font-weight:bold;-fx-font-size:12px;");
 
-        Button btnAnadir     = btn("+ Añadir pago",    "#4C9BE8", this::anadirPago);
-        Button btnFraccionar = btn("⚡ Fraccionar",     "#8E44AD", this::fraccionarPago);
-        Button btnMarcar     = btn("✓ Marcar cobrado",  "#27AE60", this::marcarPagoPedido);
-        Button btnEliminar   = btn("🗑 Eliminar",        "#E74C3C", this::eliminarPagoPedido);
+        Button btnAnadir     = btn("+ Añadir pago",   this::anadirPago);
+        Button btnFraccionar = btn("⚡ Fraccionar",    this::fraccionarPago);
+        Button btnMarcar     = btn("✓ Marcar cobrado", this::marcarPagoPedido);
+        Button btnEliminar   = btn("🗑 Eliminar",       this::eliminarPagoPedido);
 
         HBox toolbar = new HBox(8, btnAnadir, btnFraccionar, btnMarcar, btnEliminar);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -401,8 +401,8 @@ public class PedidosView extends VBox {
             return row;
         });
 
-        Button btnMarcar   = btn("✓ Marcar cobrado", "#27AE60", () -> marcarPagoDesdeTabla(tablaTodosPagos));
-        Button btnEliminar = btn("🗑 Eliminar",        "#E74C3C", () -> eliminarPagoDesdeTabla(tablaTodosPagos));
+        Button btnMarcar   = btn("✓ Marcar cobrado", () -> marcarPagoDesdeTabla(tablaTodosPagos));
+        Button btnEliminar = btn("🗑 Eliminar",       () -> eliminarPagoDesdeTabla(tablaTodosPagos));
         HBox acciones = new HBox(8, btnMarcar, btnEliminar);
 
         box.getChildren().addAll(tablaTodosPagos, acciones);
@@ -1233,7 +1233,7 @@ public class PedidosView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

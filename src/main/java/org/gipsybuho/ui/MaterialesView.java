@@ -132,15 +132,15 @@ public class MaterialesView extends VBox {
         chkSoloAlerta = new CheckBox("Solo materiales con stock bajo");
         chkSoloAlerta.setOnAction(e -> cargar());
 
-        Button btnNuevo    = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",          "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",         "#E74C3C", this::borrar);
-        Button btnEntrada  = btn("📥 Entrada",        "#27AE60", this::ajustarEntrada);
-        Button btnSalida   = btn("📤 Salida",         "#E67E22", this::ajustarSalida);
-        Button btnImportar = btn("📂 Importar",       "#1ABC9C", this::importar);
-        Button btnExportar   = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",        "#34495E", dynamicColumns::configure);
+        Button btnNuevo    = btn("+ Nuevo",         this::nuevo);
+        Button btnEditar   = btn("✏ Editar",         this::editar);
+        Button btnBorrar   = btn("🗑 Borrar",        this::borrar);
+        Button btnEntrada  = btn("📥 Entrada",       this::ajustarEntrada);
+        Button btnSalida   = btn("📤 Salida",        this::ajustarSalida);
+        Button btnImportar = btn("📂 Importar",      this::importar);
+        Button btnExportar   = btn("📤 Exportar",      this::exportar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas",       dynamicColumns::configure);
         chkSoloAlerta.setTooltip(new Tooltip("Filtrar solo materiales con stock por debajo del mínimo"));
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo material o producto"));
         btnEditar.setTooltip(new Tooltip("Editar el material seleccionado"));
@@ -334,9 +334,9 @@ public class MaterialesView extends VBox {
             colCant, colConsumo("Unidad", "unidad", 80));
         tablaConsumo.setPlaceholder(new Label("Sin reglas de consumo."));
         VBox.setVgrow(tablaConsumo, Priority.ALWAYS);
-        Button btnAdd  = btn("+ Añadir regla", "#4C9BE8", this::nuevaRegla);
-        Button btnEdit = btn("✏ Editar",        "#F39C12", this::editarRegla);
-        Button btnDel  = btn("🗑 Eliminar",      "#E74C3C", this::eliminarRegla);
+        Button btnAdd  = btn("+ Añadir regla", this::nuevaRegla);
+        Button btnEdit = btn("✏ Editar",       this::editarRegla);
+        Button btnDel  = btn("🗑 Eliminar",     this::eliminarRegla);
         box.getChildren().addAll(info, tablaConsumo, new HBox(8, btnAdd, btnEdit, btnDel));
         return box;
     }
@@ -460,10 +460,10 @@ public class MaterialesView extends VBox {
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo   = btn("+ Nueva compra",   "#4C9BE8", this::nuevoPago);
-        Button btnPagado  = btn("✓ Marcar pagado",  "#27AE60", this::marcarPagado);
-        Button btnEditar  = btn("✏ Editar",          "#F39C12", this::editarPago);
-        Button btnBorrar  = btn("🗑 Eliminar",        "#E74C3C", this::eliminarPago);
+        Button btnNuevo   = btn("+ Nueva compra",  this::nuevoPago);
+        Button btnPagado  = btn("✓ Marcar pagado", this::marcarPagado);
+        Button btnEditar  = btn("✏ Editar",         this::editarPago);
+        Button btnBorrar  = btn("🗑 Eliminar",       this::eliminarPago);
 
         HBox bar = new HBox(10, filtros, sp, btnNuevo, btnPagado, btnEditar, btnBorrar);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -1079,7 +1079,7 @@ public class MaterialesView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

@@ -76,15 +76,15 @@ public class FacturasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnEditar   = btn("✏ Editar",           "#F39C12", this::editar);
-        Button btnImportar = btn("📥 Importar",        "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
-        Button btnAlbaran  = btn("📋 Crear Albarán",   "#9B59B6", this::crearAlbaran);
-        Button btnPagada   = btn("✅ Marcar pagada",   "#4C9BE8", this::marcarPagada);
-        Button btnAnular   = btn("❌ Anular",           "#E74C3C", this::anular);
-        Button btnBorrar   = btn("🗑 Borrar",           "#95A5A6", this::borrar);
-        Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
+        Button btnEditar   = btn("✏ Editar", this::editar);
+        Button btnImportar = btn("📥 Importar", this::importar);
+        Button btnExportar = btn("📤 Exportar", this::exportar);
+        Button btnAlbaran  = btn("📋 Crear Albarán", this::crearAlbaran);
+        Button btnPagada   = btn("✅ Marcar pagada", this::marcarPagada);
+        Button btnAnular   = btn("❌ Anular", this::anular);
+        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
         btnEditar.setTooltip(new Tooltip("Editar la factura seleccionada"));
         btnImportar.setTooltip(new Tooltip("Importar facturas desde CSV, Excel o JSON"));
         btnExportar.setTooltip(new Tooltip("Exportar facturas a PDF, Excel, Word u otros formatos"));
@@ -264,12 +264,12 @@ public class FacturasView extends VBox {
 
         t.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cTotal);
 
-        Button btnAdd  = btn("+ Añadir",  "#4C9BE8", () -> dialogoLineaFactura(null, lineas, t));
-        Button btnEdit = btn("✏ Editar",  "#F39C12", () -> {
+        Button btnAdd  = btn("+ Añadir", () -> dialogoLineaFactura(null, lineas, t));
+        Button btnEdit = btn("✏ Editar", () -> {
             LineaFactura sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLineaFactura(sel, lineas, t);
         });
-        Button btnDel  = btn("🗑 Quitar", "#E74C3C", () -> {
+        Button btnDel  = btn("🗑 Quitar", () -> {
             LineaFactura sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
@@ -415,7 +415,7 @@ public class FacturasView extends VBox {
             lineasMat.add(lf);
         });
 
-        Button btnQuitar = btn("🗑 Quitar", "#E74C3C", () -> {
+        Button btnQuitar = btn("🗑 Quitar", () -> {
             LineaFactura sel = tablaMat.getSelectionModel().getSelectedItem();
             if (sel != null) lineasMat.remove(sel);
         });
@@ -760,7 +760,7 @@ public class FacturasView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

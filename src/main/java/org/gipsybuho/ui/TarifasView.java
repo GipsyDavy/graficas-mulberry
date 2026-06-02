@@ -72,14 +72,14 @@ public class TarifasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo    = btn("+ Nueva tarifa",  "#4C9BE8", this::nueva);
-        Button btnEditar   = btn("✏ Editar",         "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",        "#E74C3C", this::borrar);
-        Button btnTramos   = btn("⏱ Tramos",        "#1A7A4A", this::verTramos);
-        Button btnImportar   = btn("📥 Importar",      "#27AE60", this::importar);
-        Button btnExportar   = btn("📤 Exportar",      "#8E44AD", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar", "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",       "#34495E", dynamicColumns::configure);
+        Button btnNuevo    = btn("+ Nueva tarifa", this::nueva);
+        Button btnEditar   = btn("✏ Editar", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
+        Button btnTramos   = btn("⏱ Tramos", this::verTramos);
+        Button btnImportar   = btn("📥 Importar", this::importar);
+        Button btnExportar   = btn("📤 Exportar", this::exportar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
         btnNuevo.setTooltip(new Tooltip("Crear una nueva tarifa de impresión"));
         btnEditar.setTooltip(new Tooltip("Editar la tarifa seleccionada"));
         btnBorrar.setTooltip(new Tooltip("Eliminar la tarifa seleccionada"));
@@ -275,19 +275,19 @@ public class TarifasView extends VBox {
         };
         recargar.run();
 
-        Button btnAdd = btn("+ Añadir", "#4C9BE8", () -> {
+        Button btnAdd = btn("+ Añadir", () -> {
             dialogoTramo(tarifa, new TarifaTramo(tarifa.getId(), 0, 0)).ifPresent(tramo -> {
                 try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
             });
         });
-        Button btnEdit = btn("✏ Editar", "#F39C12", () -> {
+        Button btnEdit = btn("✏ Editar", () -> {
             TarifaTramo sel = tablaTramos.getSelectionModel().getSelectedItem();
             if (sel == null) { alerta("Selecciona un tramo para editar."); return; }
             dialogoTramo(tarifa, sel).ifPresent(tramo -> {
                 try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
             });
         });
-        Button btnDel = btn("🗑 Borrar", "#E74C3C", () -> {
+        Button btnDel = btn("🗑 Borrar", () -> {
             TarifaTramo sel = tablaTramos.getSelectionModel().getSelectedItem();
             if (sel == null) { alerta("Selecciona un tramo para borrar."); return; }
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
@@ -568,7 +568,7 @@ public class TarifasView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

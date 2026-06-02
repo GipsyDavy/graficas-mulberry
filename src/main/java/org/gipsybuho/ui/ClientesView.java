@@ -86,13 +86,13 @@ public class ClientesView extends VBox {
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
-        Button btnNuevo    = btn("+ Nuevo",          "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",          "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",         "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar",       "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",       "#8E44AD", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar",  "#6B2D5E", this::previsualizar);
-        Button btnColumnas = btn("⚙ Columnas", "#34495E", this::configurarColumnas);
+        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
+        Button btnEditar   = btn("✏ Editar", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
+        Button btnImportar = btn("📥 Importar", this::importar);
+        Button btnExportar = btn("📤 Exportar", this::exportar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas = btn("⚙ Columnas", this::configurarColumnas);
         txtBuscar.setTooltip(new Tooltip("Filtrar por nombre, apellido, NIF o email"));
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo cliente"));
         btnEditar.setTooltip(new Tooltip("Editar el cliente seleccionado"));
@@ -558,7 +558,7 @@ public class ClientesView extends VBox {
         return c;
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

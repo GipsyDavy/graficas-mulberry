@@ -74,14 +74,14 @@ public class AlbaranesView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo    = btn("+ Nuevo",            "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",            "#F39C12", this::editar);
-        Button btnFirmado  = btn("✅ Marcar firmado",   "#27AE60", this::marcarFirmado);
-        Button btnImportar = btn("📥 Importar",         "#16A085", this::importar);
-        Button btnExportar = btn("📤 Exportar",         "#8E44AD", this::exportar);
-        Button btnBorrar   = btn("🗑 Borrar",           "#E74C3C", this::borrar);
-        Button btnPreview    = btn("👁 Previsualizar",    "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",          "#34495E", dynamicColumns::configure);
+        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
+        Button btnEditar   = btn("✏ Editar", this::editar);
+        Button btnFirmado  = btn("✅ Marcar firmado", this::marcarFirmado);
+        Button btnImportar = btn("📥 Importar", this::importar);
+        Button btnExportar = btn("📤 Exportar", this::exportar);
+        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo albarán de entrega"));
         btnEditar.setTooltip(new Tooltip("Editar el albarán seleccionado"));
         btnFirmado.setTooltip(new Tooltip("Marcar el albarán como firmado por el cliente"));
@@ -269,13 +269,13 @@ public class AlbaranesView extends VBox {
         t.getColumns().addAll(cDesc, cCant, cUnid);
 
         HBox buttons = new HBox(8);
-        Button btnAdd      = btn("+ Añadir",         "#4C9BE8", () -> dialogoLinea(null, lineas));
-        Button btnStock    = btn("📦 Desde stock",   "#9B59B6", () -> dialogoDesdeStock(lineas));
-        Button btnEdit     = btn("✏ Editar",          "#F39C12", () -> {
+        Button btnAdd      = btn("+ Añadir", () -> dialogoLinea(null, lineas));
+        Button btnStock    = btn("📦 Desde stock", () -> dialogoDesdeStock(lineas));
+        Button btnEdit     = btn("✏ Editar", () -> {
             LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLinea(sel, lineas);
         });
-        Button btnDel      = btn("🗑 Quitar",         "#E74C3C", () -> {
+        Button btnDel      = btn("🗑 Quitar", () -> {
             LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
@@ -621,7 +621,7 @@ public class AlbaranesView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");

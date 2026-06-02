@@ -80,15 +80,15 @@ public class PresupuestosView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo    = btn("+ Nuevo",           "#4C9BE8", this::nuevo);
-        Button btnEditar   = btn("✏ Editar",           "#F39C12", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",          "#E74C3C", this::borrar);
-        Button btnImportar = btn("📥 Importar",        "#27AE60", this::importar);
-        Button btnExportar = btn("📤 Exportar",        "#8E44AD", this::exportar);
-        Button btnAlbaran  = btn("📋 Crear Albarán",   "#7D3C98", this::crearAlbaran);
-        Button btnFacturar = btn("🧾 Crear Factura",   "#9B59B6", this::crearFactura);
-        Button btnPreview    = btn("👁 Previsualizar",   "#6B2D5E", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",         "#34495E", dynamicColumns::configure);
+        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
+        Button btnEditar   = btn("✏ Editar", this::editar);
+        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
+        Button btnImportar = btn("📥 Importar", this::importar);
+        Button btnExportar = btn("📤 Exportar", this::exportar);
+        Button btnAlbaran  = btn("📋 Crear Albarán", this::crearAlbaran);
+        Button btnFacturar = btn("🧾 Crear Factura", this::crearFactura);
+        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
+        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo presupuesto"));
         btnEditar.setTooltip(new Tooltip("Editar el presupuesto seleccionado"));
         btnBorrar.setTooltip(new Tooltip("Eliminar el presupuesto seleccionado"));
@@ -362,12 +362,12 @@ public class PresupuestosView extends VBox {
         t.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cDto, cTotal);
 
         HBox buttons = new HBox(8);
-        Button btnAdd = btn("+ Añadir línea", "#4C9BE8", () -> dialogoLinea(null, lineas));
-        Button btnEdit = btn("✏ Editar", "#F39C12", () -> {
+        Button btnAdd = btn("+ Añadir línea", () -> dialogoLinea(null, lineas));
+        Button btnEdit = btn("✏ Editar", () -> {
             LineaPresupuesto sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLinea(sel, lineas);
         });
-        Button btnDel = btn("🗑 Quitar", "#E74C3C", () -> {
+        Button btnDel = btn("🗑 Quitar", () -> {
             LineaPresupuesto sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
@@ -575,7 +575,7 @@ public class PresupuestosView extends VBox {
             lineasMat.add(lm);
         });
 
-        Button btnQuitar = btn("🗑 Quitar seleccionado", "#E74C3C", () -> {
+        Button btnQuitar = btn("🗑 Quitar seleccionado", () -> {
             LineaPresupuesto sel = tablaMat.getSelectionModel().getSelectedItem();
             if (sel != null) lineasMat.remove(sel);
         });
@@ -898,7 +898,7 @@ public class PresupuestosView extends VBox {
         });
     }
 
-    private Button btn(String t, String color, Runnable r) {
+    private Button btn(String t, Runnable r) {
         String label = t.replaceFirst("^\\P{L}+", "").strip();
         Button b = new Button(label);
         b.getStyleClass().add("btn-toolbar");
