@@ -58,11 +58,22 @@ Claude Code opera **siempre y simultáneamente** con los cuatro perfiles experto
 
 ## Documentos del proyecto que DEBES leer antes de actuar
 
-1. `CLAUDE.md` — reglas operativas, Multi-IA, cambios quirúrgicos.
-2. `Resumen.md` — estado técnico completo, handoff, deudas, próximos sprints.
-3. `interfaz.md` — estado UI/UX, diagnóstico visual, sprints pendientes.
-4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — roles, arquitectura, filosofía, seguridad.
+1. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — **PRIMERO Y SIEMPRE.** Roles activos, skills, seguridad permanente, formato de respuesta, Multi-IA. Sin leerlo el agente opera en modo genérico.
+2. `CLAUDE.md` — reglas operativas, cambios quirúrgicos, convenciones de commit.
+3. `Resumen.md` — estado técnico completo, handoff, deudas, próximos sprints.
+4. `interfaz.md` — estado UI/UX, diagnóstico visual, sprints pendientes.
 5. Este `continuar.md`.
+
+### Regla de seguridad permanente (del MACRO-PROMPT)
+
+**VibeSec y security-review se invocan obligatoriamente en cualquier sprint que toque:**
+- Autenticación, cambio de contraseña, sesiones (`AuthService`, `UserDAO`, `LoginView`)
+- Roles y permisos (`UserRole`, `UserPermissions`, `UserManagementView`)
+- Rutas de archivos en import/export (path traversal)
+- Datos sensibles: nóminas, clientes, facturas
+- Cualquier entrada de usuario que vaya a SQL
+
+**Siempre:** PreparedStatements, BCrypt, mínimo privilegio. Nunca SQL por concatenación, nunca loguear contraseñas.
 
 ---
 
@@ -146,7 +157,7 @@ Este override es efímero (solo para la sesión PowerShell actual). No hacerlo p
 
 ## Protocolo de inicio de sesión
 
-1. Leer: `CLAUDE.md`, `Resumen.md`, este `continuar.md` — en ese orden.
+1. Leer: `MACRO-PROMPT-GRAFICAS-MULBERRY.md` primero, luego `CLAUDE.md`, `Resumen.md`, este `continuar.md`.
 2. Verificar git: `git log --oneline -5` + `git status --short`
 3. Ejecutar: `.\mvnw.cmd test`
 4. Declarar estado y proponer el siguiente paso.
@@ -155,20 +166,20 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-02)
+## Estado técnico al cierre de sesión (2026-06-02, actualizado)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `1fb1904` — `fix: restaurar botón Exportar base de datos en footer de sidebar`
-- **Working tree:** cambios `.md` sin commitear (documentación de auditoría: `AUDITORIA.md`, `FASES.md`, `interfaz.md`, `INFORME-FINAL.md`, `continuar.md`, `Resumen.md`, `MACRO-PROMPT-GRAFICAS-MULBERRY.md`). Commitear antes de empezar código.
-- **Sincronizado con `origin/master`** (código — la documentación no está pusheada)
+- **HEAD:** `d19a342` — `fix: preservar DEFAULT DDL en ClienteDAO.setBase para tipo y ciudad`
+- **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
+- **Sincronizado con `origin/master`**
 
 ### Tests
-- **72/72 verdes** (D-ter 1d pendiente → 73/73 cuando se complete)
+- **73/73 verdes**
 
 | Suite | Tests |
-|-------|-------|
-| `ClienteDAOTest` | 2 |
+|---|---|
+| `ClienteDAOTest` | 3 |
 | `PresupuestoDAOTest` | 3 |
 | `MaterialDAOTest` | 3 |
 | `FacturaDAOTest` | 3 |
@@ -184,31 +195,26 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 ### Sprints completados (histórico)
 - **Sprint B** — Transacciones explícitas en DAOs (5 commits, 12 tests nuevos).
 - **Sprint D** — Defaults DDL TEXT en Presupuesto/Factura/Albarán (3 commits, 3 tests nuevos).
-- **Sprint D-ter (parcial)** — Defaults DDL en EmpleadoDAO, MaterialDAO, PagoMaterialDAO (3 commits, 1 test nuevo).
+- **Sprint D-ter** — Defaults DDL en EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO (4 commits, 2 tests nuevos). **COMPLETO.**
 - **Sprint UI/UX Bloques 1-10** — Modernización visual completa (14 commits).
 
-### Sprint actual y cola de trabajo
+### Cola de trabajo (ver `INFORME-FINAL.md` para detalle)
 
-**Inmediato: D-ter 1d** — `ClienteDAO.setBase` preserva DEFAULT en `tipo` ('empresa') y `ciudad` ('Almería'). Leer `ClienteDAOTest.java` antes de redactar el test.
-
-**Cola después de 1d** (ver `INFORME-FINAL.md` para detalle):
-1. Sprint SEC — 5 correcciones de seguridad (~2h). SEC-2 es crítica.
-2. Sprint COD — eliminar dead code (~45 min).
-3. Sprint UI-A/B/C — mejoras visuales CSS + Java (ver `interfaz.md`).
-4. Sprint C — empleados inactivos (Deuda 2).
-5. Refactor B2 — largo plazo.
-
-**Antes de empezar código:** commitear los cambios `.md` de la sesión de auditoría.
+1. **Sprint SEC** — 5 correcciones de seguridad (~2h). **SEC-2 es P0 crítico.** Invocar VibeSec/security-review.
+2. **Sprint COD** — eliminar dead code (~45 min).
+3. **Sprint UI-A/B/C** — mejoras visuales CSS + Java (ver `interfaz.md`).
+4. **Sprint C** — empleados inactivos (Deuda 2).
+5. **Refactor B2** — largo plazo.
 
 ---
 
 ## Deudas técnicas abiertas (resumen)
 
 | ID | Descripción | Prioridad |
-|----|-------------|-----------|
+|---|---|---|
 | 2 | Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas | Media |
 | 20-bis | Defaults DDL numéricos primitivos (`double`→`Double`) | Baja |
-| 20-ter | ClienteDAO 1d pendiente (único restante del scope TEXT) | INMEDIATA |
+| 20-ter | **CERRADA** — ClienteDAO.setBase completado en `d19a342` | — |
 | 24 | Sin tests JDBC en 5 DAOs (EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO) | Media |
 | 3, 5, 6, 7... | Otras deudas menores | Baja |
 
@@ -218,17 +224,17 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Sprint D-ter 1d (INMEDIATO)** — ClienteDAO.setBase, coste mínimo.
-2. **Sprint C** — Empleados inactivos (Deuda 2), coste bajo.
-3. **Sprint UI/UX siguiente** — Ver `interfaz.md` para candidatos.
-4. **Sprint cobertura tests** — Crear tests JDBC para 5 DAOs (Deuda 24).
-5. **Refactor B2** — Inyectar Connection en DAOs (amplio, después de otros).
+1. **Sprint SEC (INMEDIATO)** — 5 fixes de seguridad, SEC-2 P0 crítico. Leer `AuthService.java` y `UserDAO.java` antes de tocar nada.
+2. **Sprint COD** — dead code, coste mínimo.
+3. **Sprint UI-A** — solo CSS, sin riesgo de regresión en tests.
+4. **Sprint C** — empleados inactivos (Deuda 2), coste bajo.
+5. **Refactor B2** — Inyectar Connection en DAOs (amplio, después de todos los anteriores).
 
 ---
 
 ## Procedimiento al retomar
 
-1. Leer: `CLAUDE.md`, `Resumen.md`, este `continuar.md`, `interfaz.md`.
+1. Leer: `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `CLAUDE.md`, `Resumen.md`, este `continuar.md`, `interfaz.md`.
 2. Verificar estado git:
    ```powershell
    git log --oneline -8
@@ -238,7 +244,7 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    ```powershell
    .\mvnw.cmd test
    ```
-   Esperado: 72/72 verdes.
+   Esperado: 73/73 verdes.
 4. Continuar con el sprint pendiente o preguntar qué arrancar.
 
 ---
