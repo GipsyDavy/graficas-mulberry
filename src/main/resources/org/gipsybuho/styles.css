@@ -1359,3 +1359,58 @@
     -fx-border-color: -c-border;
     -fx-border-width: 0.5 0 0 0;
 }
+
+/* ── IA VIEW ─────────────────────────────────────────────── */
+.ia-lbl-verificando  { -fx-text-fill: -c-text-secondary; }
+.ia-lbl-conectado    { -fx-text-fill: -c-status-success; -fx-font-weight: bold; }
+.ia-lbl-desconectado { -fx-text-fill: -c-status-danger;  -fx-font-weight: bold; }
+
+.ia-btn-enviar {
+    -fx-background-color: -c-primary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6;
+    -fx-padding: 8 18;
+    -fx-cursor: hand;
+}
+.ia-btn-enviar:hover { -fx-background-color: -c-primary-dark; }
+
+.btn-voz-activo {
+    -fx-background-color: -c-status-success;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 18;
+    -fx-border-color: derive(-c-status-success, 40%);
+    -fx-border-width: 2;
+    -fx-border-radius: 18;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+.btn-voz-silenciado {
+    -fx-background-color: -c-text-secondary;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 18;
+    -fx-border-color: -c-primary-dark;
+    -fx-border-width: 2;
+    -fx-border-radius: 18;
+    -fx-padding: 6 12;
+    -fx-cursor: hand;
+}
+
+.ia-burbuja-usuario {
+    -fx-background-color: -c-primary;
+    -fx-background-radius: 15 15 2 15;
+}
+.ia-burbuja-ia {
+    -fx-background-color: -c-row-alt;
+    -fx-background-radius: 15 15 15 2;
+    -fx-border-color: -c-border;
+    -fx-border-width: 1;
+    -fx-border-radius: 15 15 15 2;
+}
+.ia-msg-sistema {
+    -fx-text-fill: -c-text-secondary;
+    -fx-font-style: italic;
+    -fx-font-size: 11px;
+}

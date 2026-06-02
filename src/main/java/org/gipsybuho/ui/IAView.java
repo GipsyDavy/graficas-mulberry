@@ -78,7 +78,7 @@ public class IAView extends VBox {
     }
 
     private HBox buildEstadoBar() {
-        lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_DARK_GRAY_HEX + "; -fx-font-weight: bold;");
+        lblEstado.getStyleClass().add("ia-lbl-verificando");
 
         // CORRECCIÓN: 'TEXT_PROMPT_MODELO' no existe en AppConstants.
         cbModelo.setPromptText("Seleccionar modelo");
@@ -90,7 +90,7 @@ public class IAView extends VBox {
             }
         });
 
-        btnInstalarOllama.setStyle("-fx-background-color: #" + AppConstants.COLOR_MULBERRY_HEX + "; -fx-text-fill: white;");
+        btnInstalarOllama.getStyleClass().add("ia-btn-enviar");
         btnInstalarOllama.setVisible(false);
         btnInstalarOllama.setManaged(false);
         btnInstalarOllama.setOnAction(e -> abrirInstalador());
@@ -137,15 +137,18 @@ public class IAView extends VBox {
         verificarDisponibilidadVoz();
 
         Button btnModelos = new Button(AppConstants.TEXT_BTN_GESTION_MODELOS);
+        btnModelos.getStyleClass().add("btn-toolbar");
         btnModelos.setOnAction(e -> {
             SoundService.play(SoundService.Sound.WINDOW_OPEN);
             abrirGestionModelos();
         });
 
         Button btnExportar = new Button(AppConstants.TEXT_BTN_EXPORTAR);
+        btnExportar.getStyleClass().add("btn-toolbar");
         btnExportar.setOnAction(e -> exportarChat());
 
         Button btnLimpiar = new Button(AppConstants.TEXT_BTN_LIMPIAR);
+        btnLimpiar.getStyleClass().add("btn-toolbar");
         btnLimpiar.setOnAction(e -> {
             TextToSpeechService.stop();
             chatBox.getChildren().clear();
@@ -159,7 +162,7 @@ public class IAView extends VBox {
         HBox bar = new HBox(10, lblEstado, btnInstalarOllama, spacer, cbContexto, btnVoz, cbVozTts, cbModelo, btnModelos, btnExportar, btnLimpiar);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(8));
-        bar.setStyle(AppConstants.STYLE_ESTADO_BAR);
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
@@ -167,29 +170,15 @@ public class IAView extends VBox {
         if (btnVoz.isSelected()) {
             btnVoz.setText("🔊 Voz activada");
             btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA se leerá por voz"));
-            btnVoz.setStyle(
-                "-fx-background-color: #1F8F4D; "
-                    + "-fx-text-fill: white; "
-                    + "-fx-font-weight: bold; "
-                    + "-fx-background-radius: 18; "
-                    + "-fx-border-color: #B7F7CE; "
-                    + "-fx-border-width: 2; "
-                    + "-fx-border-radius: 18; "
-                    + "-fx-padding: 6 12;"
-            );
+            btnVoz.getStyleClass().remove("btn-voz-silenciado");
+            if (!btnVoz.getStyleClass().contains("btn-voz-activo"))
+                btnVoz.getStyleClass().add("btn-voz-activo");
         } else {
             btnVoz.setText("🔇 Voz silenciada");
             btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA no se leerá por voz"));
-            btnVoz.setStyle(
-                "-fx-background-color: #5F6673; "
-                    + "-fx-text-fill: white; "
-                    + "-fx-font-weight: bold; "
-                    + "-fx-background-radius: 18; "
-                    + "-fx-border-color: #2F3540; "
-                    + "-fx-border-width: 2; "
-                    + "-fx-border-radius: 18; "
-                    + "-fx-padding: 6 12;"
-            );
+            btnVoz.getStyleClass().remove("btn-voz-activo");
+            if (!btnVoz.getStyleClass().contains("btn-voz-silenciado"))
+                btnVoz.getStyleClass().add("btn-voz-silenciado");
         }
     }
 
@@ -215,7 +204,7 @@ public class IAView extends VBox {
             }
         });
 
-        btnEnviar.setStyle("-fx-background-color: #" + AppConstants.COLOR_MULBERRY_HEX + "; -fx-text-fill: white;");
+        btnEnviar.getStyleClass().add("ia-btn-enviar");
         btnEnviar.setOnAction(e -> enviar());
 
         FlowPane chips = new FlowPane(5, 5);
@@ -310,6 +299,11 @@ public class IAView extends VBox {
         });
     }
 
+    private void setEstadoClass(String cls) {
+        lblEstado.getStyleClass().removeAll("ia-lbl-conectado", "ia-lbl-desconectado", "ia-lbl-verificando");
+        lblEstado.getStyleClass().add(cls);
+    }
+
     private void verificarOllama() {
         Thread.ofVirtual().start(() -> {
             if (OllamaManager.isInstalled() && !OllamaManager.isRunning()) {
@@ -321,7 +315,7 @@ public class IAView extends VBox {
                 btnInstalarOllama.setVisible(false);
                 btnInstalarOllama.setManaged(false);
                 if (ok) {
-                    lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_SUCCESS_HEX + "; -fx-font-weight: bold;");
+                    setEstadoClass("ia-lbl-conectado");
                     cbModelo.getItems().setAll(modelos.stream().map(m -> m.nombre).toList());
                     if (!cbModelo.getItems().isEmpty() && cbModelo.getValue() == null) {
                         cbModelo.getSelectionModel().selectFirst();
@@ -330,11 +324,11 @@ public class IAView extends VBox {
                     actualizarEstadoConModelo();
                 } else if (OllamaManager.isRunning() || OllamaManager.isInstalled()) {
                     lblEstado.setText("Ollama instalado, sin modelos IA");
-                    lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_ERROR_HEX + "; -fx-font-weight: bold;");
+                    setEstadoClass("ia-lbl-desconectado");
                     cbModelo.getItems().clear();
                 } else {
                     lblEstado.setText(AppConstants.TEXT_ESTADO_DESCONECTADO);
-                    lblEstado.setStyle("-fx-text-fill: #" + AppConstants.COLOR_ERROR_HEX + "; -fx-font-weight: bold;");
+                    setEstadoClass("ia-lbl-desconectado");
                     btnInstalarOllama.setVisible(true);
                     btnInstalarOllama.setManaged(true);
                 }
@@ -440,8 +434,7 @@ public class IAView extends VBox {
         Text text = new Text(t); text.setFill(Color.WHITE);
         TextFlow tf = new TextFlow(text);
         tf.setPadding(new Insets(10));
-        // Usando color Mulberry de AppConstants
-        tf.setStyle("-fx-background-color: #" + AppConstants.COLOR_MULBERRY_HEX + "; -fx-background-radius: 15 15 2 15;");
+        tf.getStyleClass().add("ia-burbuja-usuario");
         HBox row = new HBox(tf); row.setAlignment(Pos.CENTER_RIGHT);
         chatBox.getChildren().add(row);
         scrollAbajo();
@@ -449,7 +442,7 @@ public class IAView extends VBox {
 
     private void addMensajeSistema(String t) {
         Label l = new Label(t);
-        l.setStyle(AppConstants.STYLE_MSG_SISTEMA);
+        l.getStyleClass().add("ia-msg-sistema");
         chatBox.getChildren().add(new HBox(l));
     }
 
@@ -457,7 +450,7 @@ public class IAView extends VBox {
     private BurbujaIA crearBurbujaIA() {
         TextFlow tf = new TextFlow();
         tf.setPadding(new Insets(10));
-        tf.setStyle(AppConstants.STYLE_BURBUJA_IA);
+        tf.getStyleClass().add("ia-burbuja-ia");
         VBox v = new VBox(tf);
         HBox r = new HBox(v);
         return new BurbujaIA(r, tf, v);

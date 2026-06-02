@@ -109,19 +109,24 @@ public class UserManagementView extends VBox {
 
     private HBox buildActionBar() {
         Button changePasswordButton = new Button("Cambiar contraseña");
+        changePasswordButton.getStyleClass().add("btn-toolbar");
         changePasswordButton.setOnAction(e -> changeSelectedPassword());
 
         Button editButton = new Button("Editar rol y permisos");
+        editButton.getStyleClass().add("btn-toolbar");
         editButton.setOnAction(e -> startEditSelectedUser());
 
         Button deleteButton = new Button("Eliminar usuario");
+        deleteButton.getStyleClass().add("btn-toolbar");
         deleteButton.setOnAction(e -> deleteSelectedUser());
 
         Button newButton = new Button("Nuevo usuario");
+        newButton.getStyleClass().addAll("btn-toolbar", "btn-toolbar-active");
         newButton.setOnAction(e -> resetForm());
 
         HBox bar = new HBox(8, changePasswordButton, editButton, deleteButton, newButton);
         bar.setAlignment(Pos.CENTER_LEFT);
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
@@ -415,12 +420,16 @@ public class UserManagementView extends VBox {
     }
 
     private void showSuccess(String message) {
-        msgLabel.setStyle("-fx-text-fill: #27ae60;");
+        msgLabel.getStyleClass().removeAll("field-error-msg");
+        if (!msgLabel.getStyleClass().contains("field-success-msg"))
+            msgLabel.getStyleClass().add("field-success-msg");
         msgLabel.setText(message);
     }
 
     private void showError(String message) {
-        msgLabel.setStyle("-fx-text-fill: #c0392b;");
+        msgLabel.getStyleClass().removeAll("field-success-msg");
+        if (!msgLabel.getStyleClass().contains("field-error-msg"))
+            msgLabel.getStyleClass().add("field-error-msg");
         msgLabel.setText(message);
     }
 

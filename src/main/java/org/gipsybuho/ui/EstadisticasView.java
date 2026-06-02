@@ -78,17 +78,17 @@ public class EstadisticasView extends VBox {
         });
 
         btnExportarPDF = new Button("📄  Exportar PDF");
-        btnExportarPDF.setStyle("-fx-padding:5 14; -fx-background-radius:4;");
+        btnExportarPDF.getStyleClass().add("btn-toolbar");
         btnExportarPDF.setOnAction(e -> exportarPDF());
 
         Button btnPreview = new Button("👁  Previsualizar");
-        btnPreview.setStyle("-fx-padding:5 14; -fx-background-radius:4; -fx-background-color:#6B2D5E; -fx-text-fill:white; -fx-font-weight:bold;");
+        btnPreview.getStyleClass().addAll("btn-toolbar", "btn-toolbar-active");
         btnPreview.setOnAction(e -> previsualizar());
 
         HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnExportarPDF, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(6, 10, 6, 10));
-        bar.setStyle("-fx-background-color:-c-tab-bg; -fx-background-radius:6;");
+        bar.getStyleClass().add("command-bar");
         return bar;
     }
 
