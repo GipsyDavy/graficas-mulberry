@@ -349,7 +349,7 @@ public class UserManagementView extends VBox {
 
         dialog.setResultConverter(button -> button == ButtonType.OK ? newPasswordField.getText() : null);
         dialog.showAndWait().ifPresent(password -> {
-            if (authService.changePassword(selected.getId(), password)) {
+            if (authService.resetPasswordAdmin(selected.getId(), password)) {
                 loadUsers();
                 showSuccess("Contraseña actualizada correctamente.");
             } else {

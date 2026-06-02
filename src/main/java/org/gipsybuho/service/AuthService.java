@@ -43,7 +43,17 @@ public class AuthService {
         return userDAO.createUser(user);
     }
 
-    public boolean changePassword(int userId, String newPassword) {
+    public boolean changePassword(int userId, String oldPassword, String newPassword) {
+        return userDAO.findById(userId)
+            .filter(u -> BCrypt.checkpw(oldPassword, u.getPasswordHash()))
+            .map(u -> {
+                u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+                return userDAO.updateUser(u);
+            }).orElse(false);
+    }
+
+    // Reset forzado por ADMINISTRADOR — no requiere contraseña actual. Solo llamar desde flujos autorizados de admin.
+    public boolean resetPasswordAdmin(int userId, String newPassword) {
         return userDAO.findById(userId).map(u -> {
             u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
             return userDAO.updateUser(u);
