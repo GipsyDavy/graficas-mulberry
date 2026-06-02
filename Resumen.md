@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprint D-ter PENDIENTE (3/4) + Auditoría completa
-# Versión: 4.0 · Fecha cierre sesión: 02/06/2026 · Checkpoint: Auditoría técnica completa (8 fases, ver INFORME-FINAL.md). Sprint D-ter: 1d ClienteDAO pendiente (único restante). Working tree: cambios .md sin commitear (documentación de auditoría — commitear antes de empezar código).
+# HANDOFF — Graficas Mulberry · Sprints D-ter + SEC + COD + UI-A/B/C CERRADOS
+# Versión: 4.1 · Fecha cierre sesión: 03/06/2026 · HEAD: a58a8b7 · Tests: 73/73 verdes. Cola activa: Sprint C (Deuda 2 — empleados inactivos), Refactor B2, Deuda 24 (tests JDBC en 5 DAOs).
 
 ---
 
@@ -252,15 +252,23 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `1fb1904` — `fix: restaurar botón Exportar base de datos en footer de sidebar`.
+- **HEAD actual:** `a58a8b7` — `docs: actualizar continuar.md — Sprints UI-A, UI-B, UI-C cerrados`.
 - **Sincronizado con `origin/master`.**
-- **Commits Sprint D-ter (3):** `5f50954`, `8c2c0d1`, `cfb83fa`.
-- **Commits Sprint UI/UX (14):** `7ab849d` → `1fb1904` (Bloques 1-10 + post-polish + fix).
 - **Working tree:** limpio (solo `settings.local.json` modificado, esperado).
 
+### Commits de sprints relevantes
+| Sprint | Commits | Descripción |
+|--------|---------|-------------|
+| Sprint D-ter | `5f50954`, `8c2c0d1`, `cfb83fa`, `d19a342` | EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO |
+| Sprint SEC | `8060734`, `1c892ea`, `f1e9b01`, `7cd651d` | 5 correcciones de seguridad P0/P1 |
+| Sprint COD | `2dd1f11` | Dead code eliminado en AppConstants |
+| Sprint UI-A | `467a2b5`, `cc0b2c2`, `5718971` | CSS variables, nuevos componentes, theme-mulberry |
+| Sprint UI-B | `632e355`, `ef7ec17` | btn() color param, FadeTransition, AppConstants.APP_VERSION |
+| Sprint UI-C | `34bca4c` | IAView command-bar + audit EstadisticasView + UserManagementView |
+
 ### Tests
-- **72/72 verdes** (pendiente sub-bloque 1d → 73/73). Reparto actual:
-  - `ClienteDAOTest`: 2
+- **73/73 verdes.** Reparto:
+  - `ClienteDAOTest`: 3 (+1 en Sprint D-ter 1d)
   - `PresupuestoDAOTest`: 3 (+1 en Sprint D)
   - `MaterialDAOTest`: 3 (+1 en Sprint D-ter 1b)
   - `FacturaDAOTest`: 3 (+1 en Sprint D)
@@ -273,7 +281,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
   - `EntityImportServicePedidoTest`: 10
   - `EntityImportServicePresupuestoTest`: 7
 
-### Estado de los archivos clave tras Sprint D + Sprint D-ter parcial
+### Estado de los archivos clave
 
 - `PresupuestoDAO.set` — preserva DEFAULT en `estado` ('borrador') y `condiciones` (vía constante `DEFAULT_CONDICIONES`).
 - `FacturaDAO.set` — preserva DEFAULT en `estado` ('pendiente') y `forma_pago` ('Transferencia bancaria').
@@ -281,7 +289,14 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 - `EmpleadoDAO.set` — preserva DEFAULT en `categoria` ('Operario'). *(Sprint D-ter 1a)*
 - `MaterialDAO.set` — preserva DEFAULT en `categoria` ('consumibles') y `unidad` ('ud'). *(Sprint D-ter 1b)*
 - `PagoMaterialDAO.bind` — preserva DEFAULT en `forma_pago` ('Contado'). *(Sprint D-ter 1c)*
-- `ClienteDAO.setBase` — **PENDIENTE** (tipo 'empresa', ciudad 'Almería'). *(Sprint D-ter 1d)*
+- `ClienteDAO.setBase` — preserva DEFAULT en `tipo` ('empresa') y `ciudad` ('Almería'). *(Sprint D-ter 1d)*
+- `AuthService.java` — `changePassword` verifica contraseña actual; `resetPasswordAdmin` separado. *(Sprint SEC)*
+- `UserDAO.java` — no cierra singleton Connection; rol desconocido lanza excepción. *(Sprint SEC)*
+- `DatabaseManager.java` — `runMigrations` solo silencia "column already exists". *(Sprint SEC)*
+- `LoginView.java` + `AdminSetupView.java` — mínimo 8 chars ejecutable. *(Sprint SEC)*
+- `styles.css` — variables `-c-status-*`, `.btn-toolbar-active`, `.input-success`, DatePicker, ProgressBar, RadioButton, ContextMenu, IA view. *(Sprint UI-A + UI-C)*
+- `theme-mulberry.css` — solo variables `.root`, sin sobreescrituras de componentes. *(Sprint UI-A UA-9)*
+- `IAView.java` — `command-bar`, `btn-toolbar`, clases CSS IA, sin `setStyle()` hardcodeados. *(Sprint UI-C)*
 - Tx-awareness de Sprint B intacta en todos los DAOs modificados.
 - `DatabaseManager.getConnection()`, `buildDbUrl()`, `createTables()` — sin cambios.
 
@@ -313,7 +328,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | 19 | Validación numérica de `cantidad` ausente | ABIERTA. Aceptada consciente. |
 | **20** | Defaults DDL ignorados con NULL explícito (columnas TEXT en Presupuesto/Factura/Albarán) | **CERRADA en Sprint D.** Patrón "literal Java-side con ternario" aplicado a los 5 sitios afectados. |
 | **20-bis** | Defaults DDL numéricos primitivos pisados con `double=0.0` (ej. `iva_porcentaje DEFAULT 21.0`) | **NUEVA, ABIERTA.** Requiere cambio modelo `double`→`Double` con blast radius mayor. En la práctica todos los flujos setean IVA explícitamente; bug teórico. |
-| **20-ter** | Defaults DDL TEXT en DAOs fuera Sprint D | **PARCIALMENTE CERRADA en Sprint D-ter.** EmpleadoDAO, MaterialDAO, PagoMaterialDAO cerrados. ClienteDAO pendiente (1d). PedidoDAO y PagoPedidoDAO ya estaban limpios. NominaDAO fuera scope (no tiene DEFAULT TEXT no-trivial). |
+| **20-ter** | Defaults DDL TEXT en DAOs fuera Sprint D | **CERRADA en Sprint D-ter.** EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO corregidos. PedidoDAO y PagoPedidoDAO ya estaban limpios. NominaDAO fuera scope (no tiene DEFAULT TEXT no-trivial). |
 | **24** | Ausencia de tests JDBC en EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO | **NUEVA, ABIERTA.** Registrada en Sprint D-ter. Ninguno tiene archivo `*DAOTest.java`. Sprint de cobertura futuro. |
 | **25** | Asimetría `forma_pago` vs `estado` en `PagoMaterialDAO.bind` | **NACIÓ Y MURIÓ en Sprint D-ter 1c.** Cerrada en el mismo commit. |
 | 21 | Mapeo automático no reconoce `numero` ni `nif` en spec Albarán | ABIERTA. Riesgo bajo, UX. |
@@ -322,7 +337,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ---
 
-## SPRINT ACTUAL — DEFAULTS DDL EN DAOs RESTANTES (Sprint D-ter) — EN CURSO
+## SPRINT D-ter — DEFAULTS DDL EN DAOs RESTANTES — CERRADO
 
 ### Objetivo
 Aplicar el patrón `ternario + comentario DDL` a los DAOs que quedaron fuera del Sprint D. Scope efectivo: 4 DAOs (EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO), 6 columnas TEXT en total.
@@ -340,93 +355,34 @@ Aplicar el patrón `ternario + comentario DDL` a los DAOs que quedaron fuera del
 | **1a** | `5f50954` | `EmpleadoDAO.set` preserva DEFAULT 'Operario' en categoria | Sin test (no existe EmpleadoDAOTest — Deuda 24) | Patrón validado |
 | **1b** | `8c2c0d1` | `MaterialDAO.set` preserva DEFAULT 'consumibles' (categoria) y 'ud' (unidad) | +1 (`MaterialDAOTest`: 2→3) con red-green explícito confirmado | Test falló con `expected: <consumibles> but was: <null>` antes del fix |
 | **1c** | `cfb83fa` | `PagoMaterialDAO.bind` preserva DEFAULT 'Contado' en forma_pago | Sin test (no existe PagoMaterialDAOTest — Deuda 24) | Cerró asimetría con `estado` que ya usaba ternario |
-
-### Pendiente al reanudar
-
-#### 1d — ClienteDAO.setBase preserva DEFAULT en tipo y ciudad
-
-**Nota arquitectónica:** `insert()` y `update()` construyen SQL dinámico con extras. `setBase()` rellena solo las 10 columnas fijas (índices 1-10). El fix solo toca `setBase`.
-
-**Doble constructor de Cliente — atención:** El test DEBE usar `new Cliente()` sin args y `setNombre(...)` luego. El constructor de 9 args setearía tipo y ciudad y mataría el ternario.
-
-**Cambio en `ClienteDAO.java`, método `setBase`:**
-
-```java
-// DE:
-ps.setString(3, c.getTipo());
-ps.setString(6, c.getCiudad());
-
-// A:
-// Preserva DEFAULT DDL 'empresa'. Ver DatabaseManager.createTables() tabla 'clientes'.
-// SQLite no aplica DEFAULT con NULL explicito, solo si la columna se omite del INSERT.
-ps.setString(3, c.getTipo() != null ? c.getTipo() : "empresa");
-// Preserva DEFAULT DDL 'Almería'. Ver DatabaseManager.createTables() tabla 'clientes'.
-ps.setString(6, c.getCiudad() != null ? c.getCiudad() : "Almería");
-```
-
-**Encoding:** Verificar que 'í' en "Almería" no sea mangled por el editor/agente. Tras el edit: `Select-String -Path 'ClienteDAO.java' -Pattern 'Almer.a'`.
-
-**Test en `ClienteDAOTest.java` — leer el archivo primero antes de redactar:**
-
-```java
-@Test
-void saveInsertaDefaultsDDLEnTipoYCiudad() throws Exception {
-    Cliente c = new Cliente();
-    c.setNombre("Cliente sin tipo ni ciudad");
-    // NO setear tipo ni ciudad: deben tomar DEFAULT DDL.
-    new ClienteDAO().save(c);
-    Cliente recargado = new ClienteDAO().findById(c.getId());
-    assertEquals("empresa", recargado.getTipo());
-    assertEquals("Almería", recargado.getCiudad());
-}
-```
-Adaptar imports y estilo al patrón real de ClienteDAOTest una vez leído.
-
-**Commit tentativo:**
-```
-feat: preservar default DDL en ClienteDAO.setBase (tipo, ciudad)
-```
-Tests al cierre de 1d: 73/73. `ClienteDAOTest` pasa de 2 a 3.
-
-#### 1e — Resumen.md v4.0
-
-Redactar handoff v4.0 con Sprint D-ter cerrado, Deuda 20-ter cerrada en scope TEXT, Deuda 24 nueva abierta (ausencia tests JDBC en 5 DAOs), cierre de Deuda 25 (PagoMaterialDAO.bind asimetría forma_pago), hallazgos PedidoDAO/NominaDAO, reparto final 73/73.
+| **1d** | `d19a342` | `ClienteDAO.setBase` preserva DEFAULT 'empresa' (tipo) y 'Almería' (ciudad) | +1 (`ClienteDAOTest`: 2→3) | Deuda 20-ter completamente cerrada en scope TEXT |
 
 ### Archivos leídos en sesión Sprint D-ter
 
 - `DatabaseManager.java` (completo, releído)
 - `PedidoDAO.java`, `ClienteDAO.java`, `EmpleadoDAO.java`, `PagoPedidoDAO.java`, `MaterialDAO.java`, `PagoMaterialDAO.java` (todos completos)
-- `MaterialDAOTest.java` (completo)
-- `Cliente.java` (completo)
-
-**Archivo NO leído — pedir antes de 1d:** `ClienteDAOTest.java` (obligatorio para diseñar el test).
+- `MaterialDAOTest.java`, `ClienteDAOTest.java`, `Cliente.java` (completos)
 
 ---
 
 ## PRÓXIMOS SPRINTS CANDIDATOS
 
-### 1. D-ter 1d — ClienteDAO.setBase (INMEDIATO — único restante)
-Dos ternarios (tipo 'empresa', ciudad 'Almería') + 1 test en ClienteDAOTest. **Leer ClienteDAOTest.java antes de redactar el test.** Coste muy bajo. Al cierre: 73/73 tests, Deuda 20-ter cerrada en scope TEXT.
+### 1. Sprint C — Empleados inactivos (Deuda 2) ← SIGUIENTE
+Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas de empleados dados de baja.
+Archivo: `EntityImportServiceNomina` o equivalente DAO. Coste estimado: bajo (~1h).
+Riesgo: medio si hay tests que usen empleados activos como precondición.
 
-### 2. Sprint SEC — Seguridad (ALTA PRIORIDAD — post D-ter 1d)
-5 correcciones del `INFORME-FINAL.md`, ~2h total. Orden recomendado:
-1. `AuthService.java` — SEC-2: `changePassword` + `resetPasswordAdmin` (crítico)
-2. `UserDAO.java` — SEC-1/ARCH-1: quitar try-with-resources del Connection
-3. `UserDAO.java` — SEC-6: relanzar excepción en rol desconocido
-4. `DatabaseManager.java` — SEC-5: filtrar solo "column already exists"
-5. `LoginView.java` + `AdminSetupView.java` — SEC-4: mínimo 8 chars ejecutable
+### 2. Deuda 24 — Tests JDBC en 5 DAOs sin cobertura
+`EmpleadoDAO`, `PagoMaterialDAO`, `NominaDAO`, `PedidoDAO`, `PagoPedidoDAO` — ninguno tiene `*DAOTest.java`.
+Coste: medio-alto (5 harnesses nuevos). No bloquea funcionalidad, pero el riesgo de regresión silenciosa es real.
 
-### 3. Sprint COD — Limpieza dead code (~45 min)
-Eliminar `SQL_SELECT_LOW_STOCK` (COD-2), `SQL_SELECT_ALL_CLIENTES` (COD-4), comentario "VERSIÓN DE ÚLTIMA GENERACIÓN" (COD-5), constantes `DEBUG_*`.
+### 3. Sprint D-bis — Defaults DDL numéricos primitivos (Deuda 20-bis)
+`iva_porcentaje DEFAULT 21.0` pisado por `double = 0.0`. Requiere cambio modelo `double`→`Double`.
+Blast radius mayor. Bajo urgencia porque los flujos actuales setean IVA explícitamente.
 
-### 4. Sprint UI-A/B/C — Mejoras visuales
-Ver `interfaz.md` y `INFORME-FINAL.md` para detalle. Solo CSS primero (UI-A), luego Java rápido (UI-B), luego IAView (UI-C).
-
-### 5. Sprint C — Empleados inactivos (Deuda 2)
-Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas. Coste bajo.
-
-### 6. D-bis / Cobertura tests / Refactor B2 — Largo plazo
-Ver deudas 20-bis, 24 y descripción de Refactor B2 más abajo.
+### 4. Refactor B2 — Inyección de Connection en DAOs (largo plazo)
+Eliminar dependencia del singleton estático inyectando `Connection` por constructor o parámetro.
+Desbloquea tests paralelos y abre la puerta a desconectar el singleton. Amplio.
 
 ---
 
@@ -456,8 +412,8 @@ Ver deudas 20-bis, 24 y descripción de Refactor B2 más abajo.
 - `MaterialDAOTest.java` — completo.
 - `Cliente.java` — completo. Confirmado: doble constructor (0 args / 9 args). Con 0 args, tipo y ciudad son null.
 
-**NO leído en Sprint D-ter — pedir en próxima sesión antes de 1d:**
-- `ClienteDAOTest.java` — obligatorio antes de redactar el test de 1d.
+**Leídos completos en Sprint D-ter (completado):**
+- `ClienteDAOTest.java` — leído antes de 1d. Confirmado: patrón de harness idéntico al resto.
 
 **Tests JDBC del Sprint B, Sprint D y Sprint D-ter:**
 - `PresupuestoDAOTest.java`, `MaterialDAOTest.java`, `FacturaDAOTest.java`, `AlbaranDAOTest.java`, `TxAnidadaTest.java`.
@@ -482,16 +438,14 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD y si hay commits nuevos respecto a `1fb1904`.
-   - `git status --short` — declarar si hay archivos sin commitear (working tree de auditoría).
+   - `git log --oneline -5` — confirmar HEAD `a58a8b7` y que no hay commits inesperados.
+   - `git status --short` — declarar si hay archivos sin commitear (solo `.claude/settings.local.json` es esperado).
 
-3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 72/72 (o 73/73 si D-ter 1d ya fue ejecutado).
+3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 73/73 verdes.
 
-4. **Declarar situación:** ejemplo:
-   > HEAD `1fb1904`, tests 72/72 verdes. Working tree tiene cambios .md de la sesión de auditoría sin commitear. Sprint pendiente: D-ter 1d (ClienteDAO.setBase). Después: Sprint SEC (ver INFORME-FINAL.md). ¿Arrancamos con un commit de documentación primero o directamente con 1d?
+4. **Declarar situación:**
+   > HEAD `a58a8b7`, tests 73/73 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C. Siguiente candidato: Sprint C (Deuda 2 — filtro `activo=1` en `resolverEmpleadoId`). ¿Arrancamos?
 
-5. **Si D-ter 1d ya está hecho:** saltar a Sprint SEC. Leer `AuthService.java` antes de tocar nada.
-
-6. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
+5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 
 FIN DEL HANDOFF.

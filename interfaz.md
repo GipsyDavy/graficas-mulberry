@@ -151,24 +151,24 @@ Los items marcados con `[VERIFICAR]` deben confirmarse antes de implementar.
 
 ### 2.1 Problemas Críticos 🔴 (bloquean coherencia o funcionalidad visual)
 
-| ID | Problema | Verificado | Archivo probable |
-|----|----------|-----------|-----------------|
-| C-1 | `styles.css` tiene variables de tooltip hardcodeadas (`#2D1A28`, `#D4B8CC`, `#4A2A42`) que no usan las variables `-c-*`. En modo oscuro y otros temas el tooltip no cambia. | ✅ Código | `styles.css:360-370` |
-| C-2 | Validación de formularios (`input-error`) no tiene indicador de éxito (`.input-success`). El usuario no sabe cuándo un campo queda correcto. | ✅ Código | `styles.css:503-516` |
-| C-3 | Status badges usan colores hardcodeados (`#27AE60`, `#E74C3C`, etc.) desconectados del sistema de temas. Pueden chocar con ciertos temas. | ✅ Código | `styles.css:890-894` |
+| ID | Problema | Estado |
+|----|----------|--------|
+| C-1 | Tooltip hex hardcodeados en `styles.css` | ✅ RESUELTO — Sprint UI-A UA-1 (`467a2b5`) |
+| C-2 | `.input-success` ausente — usuario no ve confirmación visual | ✅ RESUELTO — Sprint UI-A UA-4 (`cc0b2c2`) |
+| C-3 | Status badges hardcodeados, desconectados del sistema de temas | ✅ RESUELTO — Sprint UI-A UA-2 (`467a2b5`) |
 
 ### 2.2 Problemas Altos 🟠 (degradan la experiencia)
 
-| ID | Problema | Verificado | Archivo probable |
-|----|----------|-----------|-----------------|
-| A-1 | `theme-mulberry.css` sobreescribe `.text-field` y `.text-area` con `background-color: -c-border, -c-card-bg` usando background layers. Puede causar inconsistencia con el selector de `styles.css`. | ✅ Código | `theme-mulberry.css:60-65` |
-| A-2 | `theme-mulberry.css` sobreescribe `config-section-title` con `color: -c-primary` en lugar de `-c-text`. Inconsistencia de semántica de color entre temas. | ✅ Código | `theme-mulberry.css:29-33` |
-| A-3 | No existe clase CSS para estado de carga (skeleton loader / spinner) en tablas. Cuando una tabla carga datos lentamente, no hay feedback visual. | ✅ Código | `styles.css` (ausente) |
-| A-4 | Botones `.button` genérico solo tiene `opacity: 0.88` en hover — sin color real de hover. Contraste bajo en algunos temas. | ✅ Código | `styles.css:580-593` |
-| A-5 | No hay clase CSS para el estado "seleccionado" de los `.btn-toolbar`. Si un filtro está activo, no hay indicador visual diferente. | ✅ Código | `styles.css` (ausente) |
-| A-6 | [VERIFICAR] ¿Los módulos que reciben `Bloque 3 (CommandBar)` tienen un espaciado vertical uniforme entre la CommandBar y la tabla? | [VERIFICAR] | Vistas individuales |
-| A-7 | [VERIFICAR] ¿La vista de Estadísticas muestra correctamente los gráficos en modo oscuro con los colores de tema? | [VERIFICAR] | `EstadisticasView.java` |
-| A-8 | `IAView.java` no tiene CommandBar (`.btn-toolbar`) ni empty state (`.empty-state`) en su construcción. Verificado en las primeras 80 líneas por Codex — puede existir más adelante pero es improbable que no sea visible en el constructor. Módulo incompleto visualmente. | ✅ Parcial | `IAView.java` |
+| ID | Problema | Estado |
+|----|----------|--------|
+| A-1 | `theme-mulberry.css` sobreescribía `.text-field` y `.text-area` | ✅ RESUELTO — Sprint UI-A UA-9 (`5718971`) |
+| A-2 | `theme-mulberry.css` sobreescribía `config-section-title` | ✅ RESUELTO — Sprint UI-A UA-9 (`5718971`) |
+| A-3 | No existe clase CSS para estado de carga (skeleton loader) en tablas | 🔴 ABIERTO — Sprint UI-D pendiente |
+| A-4 | Botón genérico sin color real en hover | 🟠 ABIERTO — bajo impacto |
+| A-5 | No hay `.btn-toolbar-active` para estado seleccionado de filtros | ✅ RESUELTO — Sprint UI-A UA-3 (`cc0b2c2`) |
+| A-6 | Espaciado vertical uniforme entre CommandBar y tabla | [VERIFICAR] — requiere inspección visual |
+| A-7 | Estadísticas en modo oscuro con colores de tema | [VERIFICAR] — requiere inspección visual |
+| A-8 | `IAView.java` sin CommandBar ni estilos del sistema | ✅ RESUELTO — Sprint UI-C (`34bca4c`) |
 
 ### 2.3 Problemas Medios 🟡 (polish)
 
@@ -187,7 +187,7 @@ Los items marcados con `[VERIFICAR]` deben confirmarse antes de implementar.
 
 | ID | Problema | Verificado |
 |----|----------|-----------|
-| AP-1 | `theme-mulberry.css` sobreescribe estilos de **componentes** (`.text-field`, `.tab`, `config-section-title`) en lugar de solo sobreescribir variables `.root`. **Si otros temas siguen este patrón, se pierde la ventaja de centralización en `styles.css` y se duplican estilos.** Gemini confirma que los archivos de tema deben modificar SOLO variables, no componentes. Los temas azul/verde/rojo/claro no cometen este error — solo `theme-mulberry.css`. | ✅ Código |
+| AP-1 | `theme-mulberry.css` sobreescribía estilos de componentes en lugar de solo variables | ✅ RESUELTO — Sprint UI-A UA-9 (`5718971`). Los 5 temas ahora solo definen variables `.root`. |
 
 ---
 
@@ -238,49 +238,46 @@ identidad visual propia, considerar añadir una fuente de display para títulos 
 
 ## PARTE 4 — PLAN DE IMPLEMENTACIÓN
 
-### SPRINT UI-A — Correcciones CSS (solo styles.css + theme-mulberry.css)
+### SPRINT UI-A — Correcciones CSS ✅ COMPLETO (2026-06-03)
 
-**Objetivo**: corregir coherencia del sistema de temas y añadir componentes faltantes.
-**Coste bajo-medio. Solo CSS. Sin tocar Java. Sin riesgo de regresión en tests.**
-**Priorización validada por Gemini (2026-06-02).**
+Commits: `467a2b5`, `cc0b2c2`, `5718971`
 
-| Tarea | Archivo | Descripción | Coste | Prioridad |
-|-------|---------|-------------|-------|-----------|
-| UA-1 | `styles.css` | Tooltip: reemplazar hex hardcodeados por `-c-primary-dark`, `-c-sidebar-text`, `-c-sidebar-sep` | Bajo | 🔴 Alta |
-| UA-2 | `styles.css` | Status badges: añadir variables `-c-status-success/warning/danger/info/neutral` en `.root` y usar en `.status-badge-*` | Bajo | 🔴 Alta |
-| UA-3 | `styles.css` | Añadir `.btn-toolbar-active` (fondo `-c-primary`, texto blanco, borde `-c-primary`) | Bajo | 🟠 Media |
-| UA-4 | `styles.css` | Añadir `.input-success` (borde verde, texto feedback positivo) | Bajo | 🟠 Media |
-| UA-5 | `styles.css` | Añadir estilos `DatePicker` coherentes con `.text-field` | Medio | 🟠 Media |
-| UA-6 | `styles.css` | Añadir estilos `ProgressBar` / `ProgressIndicator` | Bajo | 🟡 Media |
-| UA-7 | `styles.css` | Añadir estilos `RadioButton` | Bajo | 🟡 Media |
-| UA-8 | `styles.css` | Añadir estilos `ContextMenu` (identificado por Gemini) | Medio | 🟡 Media |
-| UA-9 | `theme-mulberry.css` | Mover estilos de componentes (`.text-field`, `.tab`, `.config-section-title`) a `styles.css` con variables. El tema solo debe definir variables `.root`. | Medio | 🟠 Media (anti-patrón AP-1) |
+| Tarea | Estado | Commit |
+|-------|--------|--------|
+| UA-1 Tooltip hex → variables CSS | ✅ | `467a2b5` |
+| UA-2 Status badges → `-c-status-*` | ✅ | `467a2b5` |
+| UA-3 `.btn-toolbar-active` | ✅ | `cc0b2c2` |
+| UA-4 `.input-success` | ✅ | `cc0b2c2` |
+| UA-5 DatePicker styles | ✅ | `cc0b2c2` |
+| UA-6 ProgressBar/Indicator | ✅ | `cc0b2c2` |
+| UA-7 RadioButton | ✅ | `cc0b2c2` |
+| UA-8 ContextMenu | ✅ | `cc0b2c2` |
+| UA-9 Sanear theme-mulberry.css (anti-patrón AP-1) | ✅ | `5718971` |
 
-### SPRINT UI-B — Correcciones de código rápidas (verificado en Fase 5)
+### SPRINT UI-B — Correcciones de código rápidas ✅ COMPLETO (2026-06-03)
 
-**Objetivo**: correcciones menores en Java tras la auditoría de código.
-**NOTA:** La transición entre vistas YA EXISTE — `mostrarVista()` tiene `FadeTransition(150ms)`.
-No hay que crearla, solo ajustar su duración.
+Commits: `632e355`, `ef7ec17`
 
-| Tarea | Archivo | Descripción | Esfuerzo |
-|-------|---------|-------------|----------|
-| UB-1 | `MainView.java:560` | Cambiar `Duration.millis(150)` → `Duration.millis(220)` | 5 min |
-| UB-2 | 9 vistas con `btn()` | Eliminar parámetro `color` de `btn()` — es dead code ignorado | 30 min |
-| UB-3 | `MainView.java:245` | Versión leída desde `AppConstants.APP_VERSION` (constante faltante) | 20 min |
-| UB-4 | `MainView.java:488` | `FadeTransition(150ms)` en expand de grupos de navegación | 20 min |
+| Tarea | Estado | Commit |
+|-------|--------|--------|
+| UB-1 FadeTransition 150→220ms en `mostrarVista` | ✅ | `ef7ec17` |
+| UB-2 Eliminar param `color` de `btn()` en 9 vistas | ✅ | `632e355` |
+| UB-3 Versión desde `AppConstants.APP_VERSION` | ✅ | `ef7ec17` |
+| UB-4 FadeTransition 150ms en expand de nav groups | ✅ | `ef7ec17` |
 
-### SPRINT UI-C — Auditoría visual de módulos [REQUIERE VERIFICACIÓN VISUAL]
+### SPRINT UI-C — Auditoría visual de módulos ✅ COMPLETO (2026-06-03)
 
-**Objetivo**: revisar que todos los módulos tienen CommandBar, empty state y estilos uniformes.
+Commit: `34bca4c`
 
-Módulos a auditar visualmente:
-- `IAView.java` — ¿tiene CommandBar? ¿empty state? ¿estilos específicos?
-- `EstadisticasView.java` — ¿gráficas en modo oscuro correctas?
-- `NominasView.java` — ¿empty state? ¿status badges en estado de nómina?
-- `CalendarioView.java` — ¿integración con el sistema de temas correcta?
-- `UserManagementView.java` — ¿CommandBar? ¿empty state?
-- `ConfiguracionView.java` — ¿coherencia con el resto de vistas?
-- `VisualAssistantConfigView.java` — ¿estilos propios o hereda de styles.css?
+| Módulo | Resultado |
+|--------|-----------|
+| `IAView.java` | ✅ `command-bar` añadida; `btn-toolbar` en botones; todos los `setStyle()` hardcodeados reemplazados por clases CSS; burbujas y estados del sistema de temas |
+| `EstadisticasView.java` | ✅ `command-bar` + `btn-toolbar`; hex `#6B2D5E` eliminado |
+| `NominasView.java` | ✅ Ya tenía `command-bar` y `empty-state` — sin cambios necesarios |
+| `UserManagementView.java` | ✅ `command-bar` + `btn-toolbar`; `showSuccess/showError` usan `field-success-msg/field-error-msg` |
+| `CalendarioView.java` | Sin cambios — `setStyle()` son para contenido dinámico programático (justificado) |
+| `ConfiguracionView.java` | Sin cambios — `setStyle()` para previsualización de temas (justificado) |
+| `VisualAssistantConfigView.java` | Sin cambios — hereda de `styles.css` correctamente |
 
 ### SPRINT UI-D — Skeleton loading / spinner en tablas
 
@@ -304,14 +301,16 @@ Módulos a auditar visualmente:
 
 ### Checklist de coherencia visual
 
-- [ ] Todos los módulos tienen `CommandBar` con `.btn-toolbar`.
-- [ ] Todos los módulos con lista tienen `empty state` con icono SVG y texto descriptivo.
-- [ ] Todos los módulos con columna de estado usan `status badge`.
-- [ ] Todos los campos de formulario usan `.text-field` / `.text-area` / `.combo-box` estilizados.
-- [ ] Tooltips funcionan en modo oscuro (sin hardcode de hex).
-- [ ] `DatePicker` estilizado coherentemente con el resto de inputs.
-- [ ] `ProgressBar` / `ProgressIndicator` estilizados.
-- [ ] Transiciones entre vistas (fadeIn al cambiar módulo).
+- [x] Todos los módulos principales tienen `CommandBar` con `.btn-toolbar` — Sprint UI-C.
+- [x] Todos los módulos con lista tienen `empty state` — Bloque 7 + Sprint UI-C.
+- [x] Todos los módulos con columna de estado usan `status badge` — Bloque 5.
+- [x] Todos los campos de formulario usan `.text-field` / `.text-area` / `.combo-box` estilizados.
+- [x] Tooltips funcionan en modo oscuro (sin hardcode de hex) — Sprint UI-A UA-1.
+- [x] `DatePicker` estilizado coherentemente con el resto de inputs — Sprint UI-A UA-5.
+- [x] `ProgressBar` / `ProgressIndicator` estilizados — Sprint UI-A UA-6.
+- [x] Transiciones entre vistas (fadeIn al cambiar módulo) — Sprint UI-B UB-1.
+- [ ] Estado de carga visual en tablas (skeleton loader) — Sprint UI-D pendiente.
+- [ ] Verificación visual en modo oscuro con cada tema — requiere `mvn javafx:run`.
 
 ---
 
@@ -326,30 +325,27 @@ Módulos a auditar visualmente:
 - Los status badges son semánticamente correctos (color por significado, no por capricho).
 - El sidebar con grupos colapsables y búsqueda Ctrl+K mejora significativamente la navegación.
 
-### 6.2 Lo que quedó pendiente / puede mejorar
+### 6.2 Estado post-Sprint UI-A/B/C (2026-06-03)
 
-- **Tooltip hardcodeados**: un problema estructural que rompe la coherencia de temas.
-- **Sin estado de carga visual en tablas**: experiencia percibida como "congelada" durante cargas.
-- **Sin transición entre vistas**: cambio abrupto entre módulos.
-- **`DatePicker`, `ProgressBar`, `RadioButton` sin estilos**: elementos que rompen la coherencia.
-- **Sin `.btn-toolbar-active`**: no se puede indicar visualmente un filtro activo.
-- **Verificación visual pendiente** de los módulos menos frecuentes (IA, Estadísticas, etc.).
+**Resuelto en esta sesión:**
+- ✅ Tooltip hardcodeados → variables CSS (UA-1)
+- ✅ Status badges → variables CSS (UA-2)
+- ✅ `.btn-toolbar-active` añadido (UA-3)
+- ✅ `.input-success` añadido (UA-4)
+- ✅ DatePicker, ProgressBar, RadioButton, ContextMenu estilizados (UA-5 a UA-8)
+- ✅ `theme-mulberry.css` saneado — solo variables (UA-9)
+- ✅ Transición entre vistas 220ms (UB-1)
+- ✅ IAView con `command-bar` y sistema de temas completo (UI-C)
+
+**Pendiente:**
+- Estado de carga visual en tablas (Sprint UI-D — skeleton loader).
+- Verificación visual en modo oscuro con cada tema (requiere `mvn javafx:run`).
 
 ### 6.3 Próximo sprint UI recomendado
 
-**Sprint UI-A** validado por Gemini + Codex (2026-06-02):
-
-Orden de ejecución recomendado por impacto/coste:
-1. **UA-1**: Tooltip hex hardcodeados → variables CSS. *(Crítico, 15 min)*
-2. **UA-2**: Status badges hardcodeados → variables CSS. *(Crítico, 20 min)*
-3. **UA-3**: `.btn-toolbar-active`. *(Bajo, 10 min)*
-4. **UA-4**: `.input-success`. *(Bajo, 10 min)*
-5. **UA-9**: Sanear `theme-mulberry.css` (mover componentes a `styles.css`). *(Medio, 30 min)*
-6. **UA-5**: `DatePicker`. *(Medio, 45 min — selectores JavaFX complejos)*
-7. **UA-6+UA-7**: `ProgressBar` + `RadioButton`. *(Bajo, 20 min)*
-8. **UA-8**: `ContextMenu`. *(Medio, 30 min)*
-
-Coste total estimado: **3-4 horas**, solo CSS. Sin tocar Java. Sin riesgo de regresión.
+**Sprint UI-D** — Skeleton loading / spinner en tablas:
+- UD-1: Clase CSS `.skeleton-row` con animación shimmer
+- UD-2: `ProgressIndicator` superpuesto en tablas durante carga
 
 ### 6.4 Validación de arquitectura CSS por Gemini
 
@@ -375,4 +371,4 @@ Por impacto en percepción de calidad cuando no están estilizados:
 
 ---
 
-*interfaz.md — Gráficas Mulberry — 2026-06-02*
+*interfaz.md — Gráficas Mulberry — 2026-06-03 — Sprints UI-A/B/C completados*
