@@ -88,7 +88,7 @@ public class LoginView extends VBox {
 
         PasswordField newPwField     = new PasswordField();
         PasswordField confirmPwField = new PasswordField();
-        newPwField.setPromptText("Nueva contraseña (mín. 6 caracteres)");
+        newPwField.setPromptText("Nueva contraseña (mín. 8 caracteres)");
         confirmPwField.setPromptText("Confirmar contraseña");
 
         CheckBox showPwRec = new CheckBox("Mostrar contraseña");
@@ -148,8 +148,8 @@ public class LoginView extends VBox {
             if (!newPw.equals(confirm)) {
                 msgRec.setText("Las contraseñas no coinciden."); event.consume(); return;
             }
-            if (newPw.length() < 6) {
-                msgRec.setText("La contraseña debe tener al menos 6 caracteres."); event.consume(); return;
+            if (newPw.length() < 8) {
+                msgRec.setText("La contraseña debe tener al menos 8 caracteres."); event.consume(); return;
             }
             if (!authService.resetPasswordWithAnswer(selected.getUsername(), answer, newPw)) {
                 msgRec.setText("Respuesta incorrecta. Inténtalo de nuevo."); event.consume();

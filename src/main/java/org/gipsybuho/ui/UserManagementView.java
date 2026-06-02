@@ -341,8 +341,8 @@ public class UserManagementView extends VBox {
             } else if (!password.equals(confirm)) {
                 showError("Las contraseñas no coinciden.");
                 event.consume();
-            } else if (password.length() < 6) {
-                showError("La contraseña debe tener al menos 6 caracteres.");
+            } else if (password.length() < 8) {
+                showError("La contraseña debe tener al menos 8 caracteres.");
                 event.consume();
             }
         });
