@@ -31,6 +31,7 @@ import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserPermissions;
 import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.util.AppConstants;
 
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -242,7 +243,7 @@ public class MainView extends BorderPane {
         }
         sidebar.getChildren().add(btnCerrarApp);
 
-        Label version = new Label("v13.5.0 · Almería, España");
+        Label version = new Label(AppConstants.APP_VERSION + " · Almería, España");
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -491,6 +492,13 @@ public class MainView extends BorderPane {
                 RotateTransition rt = new RotateTransition(Duration.millis(180), arrow);
                 rt.setToAngle(expand ? 90 : 0);
                 rt.play();
+                if (expand) {
+                    contenido.setOpacity(0);
+                    FadeTransition ftGroup = new FadeTransition(Duration.millis(150), contenido);
+                    ftGroup.setFromValue(0);
+                    ftGroup.setToValue(1);
+                    ftGroup.play();
+                }
                 visualAssistant.decir(expand
                     ? "Grupo " + titulo + ": aquí tienes los módulos relacionados con esta área."
                     : "Grupo " + titulo + " contraído.");
@@ -557,7 +565,7 @@ public class MainView extends BorderPane {
     private void mostrarVista(Node vista, String titulo) {
         vista.setOpacity(0);
         contentArea.getChildren().setAll(vista);
-        FadeTransition ft = new FadeTransition(Duration.millis(150), vista);
+        FadeTransition ft = new FadeTransition(Duration.millis(220), vista);
         ft.setFromValue(0);
         ft.setToValue(1);
         ft.play();
