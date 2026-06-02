@@ -170,9 +170,8 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `2dd1f11` — `chore: eliminar dead code en AppConstants (Sprint COD)`
+- **HEAD:** `34bca4c` — `feat: Sprint UI-C — IAView command-bar, CSS variables y audit visual`
 - **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
-- **Sincronizado con `origin/master`**
 
 ### Tests
 - **73/73 verdes**
@@ -199,14 +198,15 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint UI/UX Bloques 1-10** — Modernización visual completa (14 commits).
 - **Sprint SEC** — 5 fixes de seguridad P0/P1 (4 commits). **COMPLETO.** (`8060734`→`7cd651d`)
 - **Sprint COD** — Dead code eliminado en AppConstants (1 commit). **COMPLETO.** (`2dd1f11`)
+- **Sprint UI-A** — CSS: variables para tooltip, badges, DatePicker, ProgressBar, RadioButton, ContextMenu, btn-toolbar-active, input-success; sanear theme-mulberry (5 commits). **COMPLETO.** (`467a2b5`→`5718971`)
+- **Sprint UI-B** — FadeTransition 150→220ms, param color muerto en btn() eliminado en 9 vistas, versión desde AppConstants, FadeTransition en nav groups (2 commits). **COMPLETO.** (`632e355`→`ef7ec17`)
+- **Sprint UI-C** — IAView command-bar + 10 clases CSS IA; audit EstadisticasView y UserManagementView; eliminar setStyle() hardcodeados (1 commit). **COMPLETO.** (`34bca4c`)
 
-### Cola de trabajo (ver `INFORME-FINAL.md` para detalle)
+### Cola de trabajo
 
-1. **Sprint UI-A** — CSS-only: tooltips/badges/botones con variables CSS, DatePicker, ContextMenu, theme-mulberry (ver `interfaz.md`). Sin riesgo de regresión en tests.
-2. **Sprint UI-B** — Java rápido: FadeTransition 150→220ms, quitar param `color` en `btn()`, leer versión desde `AppConstants`.
-3. **Sprint UI-C** — IAView CommandBar + estado vacío.
-4. **Sprint C** — empleados inactivos (Deuda 2).
-5. **Refactor B2** — largo plazo.
+1. **Sprint C** — `resolverEmpleadoId` filtro `activo=1` rompe nóminas históricas (Deuda 2). Coste bajo.
+2. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo).
+3. **Deuda 24** — Tests JDBC para EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO.
 
 ---
 
