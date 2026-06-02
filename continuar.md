@@ -166,11 +166,11 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-02, actualizado)
+## Estado técnico al cierre de sesión (2026-06-03, actualizado)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `d19a342` — `fix: preservar DEFAULT DDL en ClienteDAO.setBase para tipo y ciudad`
+- **HEAD:** `2dd1f11` — `chore: eliminar dead code en AppConstants (Sprint COD)`
 - **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
 - **Sincronizado con `origin/master`**
 
@@ -197,12 +197,14 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint D** — Defaults DDL TEXT en Presupuesto/Factura/Albarán (3 commits, 3 tests nuevos).
 - **Sprint D-ter** — Defaults DDL en EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO (4 commits, 2 tests nuevos). **COMPLETO.**
 - **Sprint UI/UX Bloques 1-10** — Modernización visual completa (14 commits).
+- **Sprint SEC** — 5 fixes de seguridad P0/P1 (4 commits). **COMPLETO.** (`8060734`→`7cd651d`)
+- **Sprint COD** — Dead code eliminado en AppConstants (1 commit). **COMPLETO.** (`2dd1f11`)
 
 ### Cola de trabajo (ver `INFORME-FINAL.md` para detalle)
 
-1. **Sprint SEC** — 5 correcciones de seguridad (~2h). **SEC-2 es P0 crítico.** Invocar VibeSec/security-review.
-2. **Sprint COD** — eliminar dead code (~45 min).
-3. **Sprint UI-A/B/C** — mejoras visuales CSS + Java (ver `interfaz.md`).
+1. **Sprint UI-A** — CSS-only: tooltips/badges/botones con variables CSS, DatePicker, ContextMenu, theme-mulberry (ver `interfaz.md`). Sin riesgo de regresión en tests.
+2. **Sprint UI-B** — Java rápido: FadeTransition 150→220ms, quitar param `color` en `btn()`, leer versión desde `AppConstants`.
+3. **Sprint UI-C** — IAView CommandBar + estado vacío.
 4. **Sprint C** — empleados inactivos (Deuda 2).
 5. **Refactor B2** — largo plazo.
 
@@ -224,9 +226,9 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Sprint SEC (INMEDIATO)** — 5 fixes de seguridad, SEC-2 P0 crítico. Leer `AuthService.java` y `UserDAO.java` antes de tocar nada.
-2. **Sprint COD** — dead code, coste mínimo.
-3. **Sprint UI-A** — solo CSS, sin riesgo de regresión en tests.
+1. **Sprint UI-A** — CSS-only, sin riesgo de regresión en tests (ver `interfaz.md`).
+2. **Sprint UI-B** — Java rápido (~1h).
+3. **Sprint UI-C** — IAView (~1.5h).
 4. **Sprint C** — empleados inactivos (Deuda 2), coste bajo.
 5. **Refactor B2** — Inyectar Connection en DAOs (amplio, después de todos los anteriores).
 
@@ -259,4 +261,4 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ---
 
-*continuar.md — Gráficas Mulberry — 2026-06-02*
+*continuar.md — Gráficas Mulberry — 2026-06-03*
