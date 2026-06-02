@@ -125,10 +125,12 @@ public class ClienteDAO {
     private void setBase(PreparedStatement ps, Cliente c) throws SQLException {
         ps.setString(1, c.getNombre());
         ps.setString(2, c.getApellidos());
-        ps.setString(3, c.getTipo());
+        // Preserva DEFAULT DDL 'empresa'. Ver DatabaseManager.createTables() tabla 'clientes'.
+        ps.setString(3, c.getTipo() != null ? c.getTipo() : "empresa");
         ps.setString(4, c.getNif());
         ps.setString(5, c.getDireccion());
-        ps.setString(6, c.getCiudad());
+        // Preserva DEFAULT DDL 'Almería'. Ver DatabaseManager.createTables() tabla 'clientes'.
+        ps.setString(6, c.getCiudad() != null ? c.getCiudad() : "Almería");
         ps.setString(7, c.getCp());
         ps.setString(8, c.getTelefono());
         ps.setString(9, c.getEmail());

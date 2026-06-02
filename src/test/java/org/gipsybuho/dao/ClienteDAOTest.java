@@ -1,10 +1,15 @@
 package org.gipsybuho.dao;
 
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
+import java.nio.file.Path;
 import java.sql.ResultSet;
 import java.sql.ResultSetMetaData;
 import java.util.List;
@@ -13,6 +18,37 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ClienteDAOTest {
+
+    @TempDir
+    Path tempDir;
+
+    @BeforeEach
+    void setUp() throws Exception {
+        DatabaseManager.closeConnection();
+        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+        DatabaseManager.initialize();
+    }
+
+    @AfterEach
+    void tearDown() {
+        DatabaseManager.closeConnection();
+        System.clearProperty("graficas.mulberry.db.url");
+    }
+
+    @Test
+    void saveInsertaDefaultsDDLEnTipoYCiudad() throws Exception {
+        Cliente c = new Cliente();
+        c.setNombre("Test Empresa");
+        // tipo y ciudad se dejan a null para verificar que setBase aplica el fallback Java-side.
+
+        new ClienteDAO().save(c);
+
+        Cliente recargado = new ClienteDAO().findById(c.getId());
+        assertEquals("empresa", recargado.getTipo(),
+            "tipo null al insertar debe preservar DEFAULT DDL 'empresa'");
+        assertEquals("Almería", recargado.getCiudad(),
+            "ciudad null al insertar debe preservar DEFAULT DDL 'Almería'");
+    }
 
     @Test
     void mapMantieneApellidosCuandoApellidoLegacyEstaVacio() throws Exception {
