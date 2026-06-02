@@ -105,8 +105,12 @@ public class DatabaseManager {
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
                 st.execute(sql);
-            } catch (SQLException ignored) {
-                // Ignorar errores si la columna ya existe (ej. al ejecutar varias veces)
+            } catch (SQLException e) {
+                // Solo ignorar si la columna ya existe (ALTER TABLE ADD COLUMN repetido).
+                // Cualquier otro error de migración se registra — no silenciar fallos reales.
+                if (e.getMessage() == null || !e.getMessage().contains("duplicate column name")) {
+                    System.err.println("Error en migración: " + e.getMessage() + " | SQL: " + sql.substring(0, Math.min(80, sql.length())));
+                }
             }
         }
     }
