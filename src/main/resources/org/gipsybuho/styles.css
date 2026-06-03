@@ -1308,6 +1308,15 @@
     -fx-border-color: -c-border;
 }
 
+/* ── Skeleton loader ──────────────────────────────────────────────────────── */
+.skeleton-row {
+    -fx-background-color: linear-gradient(to right,
+        derive(-c-border, 10%), -c-bg, derive(-c-border, 10%));
+    -fx-background-radius: 4;
+    -fx-min-height: 32;
+    -fx-opacity: 0.7;
+}
+
 /* ── RADIO BUTTON ────────────────────────────────────────── */
 .radio-button .radio {
     -fx-background-color: -c-card-bg;

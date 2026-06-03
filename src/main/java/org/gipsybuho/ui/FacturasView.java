@@ -41,6 +41,7 @@ public class FacturasView extends VBox {
     private final ClienteDAO clienteDAO = new ClienteDAO();
     private final ObservableList<Factura> datos = FXCollections.observableArrayList();
     private final TableView<Factura> tabla = new TableView<>(datos);
+    private final ProgressIndicator cargando = new ProgressIndicator();
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
     static {
         COLUMNAS_BASE.put("numero", "Número");
@@ -69,8 +70,11 @@ public class FacturasView extends VBox {
         Label titulo = new Label("Facturas");
         titulo.getStyleClass().add("view-title");
 
-        getChildren().addAll(titulo, buildToolbar(), buildTabla());
-        VBox.setVgrow(tabla, Priority.ALWAYS);
+        cargando.setMaxSize(48, 48);
+        cargando.setVisible(false);
+        StackPane tableStack = new StackPane(buildTabla(), cargando);
+        getChildren().addAll(titulo, buildToolbar(), tableStack);
+        VBox.setVgrow(tableStack, Priority.ALWAYS);
         cargar();
         dynamicColumns.apply();
     }
@@ -149,7 +153,11 @@ public class FacturasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
+        cargando.setVisible(true);
+        tabla.setDisable(true);
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); }
+        catch (Exception e) { mostrarError(e); }
+        finally { cargando.setVisible(false); tabla.setDisable(false); }
     }
 
     private void editar() {

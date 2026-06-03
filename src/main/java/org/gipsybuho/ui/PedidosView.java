@@ -56,6 +56,7 @@ public class PedidosView extends VBox {
     // ── Tab Pedidos ───────────────────────────────────────────────────────────
     private final ObservableList<Pedido>     datosPedidos     = FXCollections.observableArrayList();
     private final TableView<Pedido>          tablaPedidos     = new TableView<>(datosPedidos);
+    private final ProgressIndicator          cargando         = new ProgressIndicator();
     private String filtroPedidos = "todos";
     private TextField txtBusqueda;
 
@@ -164,8 +165,11 @@ public class PedidosView extends VBox {
         VBox pnlPagos = buildPanelPagosPedido();
 
         buildTablaPedidos();
-        VBox pnlSup = new VBox(tablaPedidos);
-        VBox.setVgrow(tablaPedidos, Priority.ALWAYS);
+        cargando.setMaxSize(48, 48);
+        cargando.setVisible(false);
+        StackPane tablaPedidosStack = new StackPane(tablaPedidos, cargando);
+        VBox pnlSup = new VBox(tablaPedidosStack);
+        VBox.setVgrow(tablaPedidosStack, Priority.ALWAYS);
 
         split.getItems().addAll(pnlSup, pnlPagos);
         box.getChildren().add(split);
@@ -521,6 +525,8 @@ public class PedidosView extends VBox {
     // ═════════════════════════════════════════════════════════════════════════
 
     private void cargarPedidos() {
+        cargando.setVisible(true);
+        tablaPedidos.setDisable(true);
         try {
             List<Pedido> todos = pedidoDao.findAll();
             actualizarResumen(todos);
@@ -542,6 +548,7 @@ public class PedidosView extends VBox {
             }
             datosPedidos.setAll(resultado);
         } catch (Exception e) { mostrarError(e); }
+        finally { cargando.setVisible(false); tablaPedidos.setDisable(false); }
     }
 
     private void cargarPagosDePedido(int pedidoId) {

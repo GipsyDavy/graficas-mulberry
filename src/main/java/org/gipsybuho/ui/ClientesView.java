@@ -42,6 +42,7 @@ public class ClientesView extends VBox {
     private final ColumnConfigDAO columnConfigDAO = new ColumnConfigDAO();
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
+    private final ProgressIndicator cargando = new ProgressIndicator();
     private static final String TABLE_NAME = "clientes";
     private static final Set<String> COLUMNAS_IGNORADAS = Set.of("apellido");
 
@@ -72,8 +73,11 @@ public class ClientesView extends VBox {
         Label titulo = new Label("Clientes");
         titulo.getStyleClass().add("view-title");
 
-        getChildren().addAll(titulo, buildToolbar(), buildTabla());
-        VBox.setVgrow(tabla, Priority.ALWAYS);
+        cargando.setMaxSize(48, 48);
+        cargando.setVisible(false);
+        StackPane tableStack = new StackPane(buildTabla(), cargando);
+        getChildren().addAll(titulo, buildToolbar(), tableStack);
+        VBox.setVgrow(tableStack, Priority.ALWAYS);
         cargar();
         actualizarColumnasDinamicas();
     }
@@ -177,7 +181,11 @@ public class ClientesView extends VBox {
     // ── CRUD ──────────────────────────────────────────────────────────────────
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); } catch (Exception e) { mostrarError(e); }
+        cargando.setVisible(true);
+        tabla.setDisable(true);
+        try { datos.setAll(dao.findAll()); }
+        catch (Exception e) { mostrarError(e); }
+        finally { cargando.setVisible(false); tabla.setDisable(false); }
     }
 
     private void buscar(String texto) {
