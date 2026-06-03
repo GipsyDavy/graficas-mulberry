@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprints D-ter + SEC + COD + UI-A/B/C CERRADOS
-# Versión: 4.1 · Fecha cierre sesión: 03/06/2026 · HEAD: a58a8b7 · Tests: 73/73 verdes. Cola activa: Sprint C (Deuda 2 — empleados inactivos), Refactor B2, Deuda 24 (tests JDBC en 5 DAOs).
+# HANDOFF — Graficas Mulberry · Sprints D-ter + SEC + COD + UI-A/B/C/D + Sprint C + Deuda 24 CERRADOS
+# Versión: 4.2 · Fecha cierre sesión: 03/06/2026 · HEAD: d4109c2 · Tests: 89/89 verdes. Cola activa: Refactor B2 (largo plazo).
 
 ---
 
@@ -252,8 +252,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `a58a8b7` — `docs: actualizar continuar.md — Sprints UI-A, UI-B, UI-C cerrados`.
-- **Sincronizado con `origin/master`.**
+- **HEAD actual:** `d4109c2` — `feat: Sprint UI-D — skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas y Pedidos`.
 - **Working tree:** limpio (solo `settings.local.json` modificado, esperado).
 
 ### Commits de sprints relevantes
@@ -265,19 +264,27 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | Sprint UI-A | `467a2b5`, `cc0b2c2`, `5718971` | CSS variables, nuevos componentes, theme-mulberry |
 | Sprint UI-B | `632e355`, `ef7ec17` | btn() color param, FadeTransition, AppConstants.APP_VERSION |
 | Sprint UI-C | `34bca4c` | IAView command-bar + audit EstadisticasView + UserManagementView |
+| Sprint C | `1851216` | Fix resolverEmpleadoId filtro activo=1 (Deuda 2) |
+| Deuda 24 | `acc81a3` | 15 tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO |
+| Sprint UI-D | `d4109c2` | .skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas, Pedidos |
 
 ### Tests
-- **73/73 verdes.** Reparto:
-  - `ClienteDAOTest`: 3 (+1 en Sprint D-ter 1d)
-  - `PresupuestoDAOTest`: 3 (+1 en Sprint D)
-  - `MaterialDAOTest`: 3 (+1 en Sprint D-ter 1b)
-  - `FacturaDAOTest`: 3 (+1 en Sprint D)
-  - `AlbaranDAOTest`: 4 (+1 en Sprint D)
+- **89/89 verdes.** Reparto:
+  - `ClienteDAOTest`: 3
+  - `EmpleadoDAOTest`: 3 (+3 Deuda 24)
+  - `NominaDAOTest`: 3 (+3 Deuda 24)
+  - `PagoMaterialDAOTest`: 3 (+3 Deuda 24)
+  - `PedidoDAOTest`: 3 (+3 Deuda 24)
+  - `PagoPedidoDAOTest`: 3 (+3 Deuda 24)
+  - `PresupuestoDAOTest`: 3
+  - `MaterialDAOTest`: 3
+  - `FacturaDAOTest`: 3
+  - `AlbaranDAOTest`: 4
   - `TxAnidadaTest`: 3
   - `ImportBackupServiceTest`: 12
   - `EntityImportServiceAlbaranTest`: 11
   - `EntityImportServiceFacturaTest`: 9
-  - `EntityImportServiceNominaTest`: 5
+  - `EntityImportServiceNominaTest`: 6 (+1 Sprint C)
   - `EntityImportServicePedidoTest`: 10
   - `EntityImportServicePresupuestoTest`: 7
 
@@ -294,9 +301,11 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 - `UserDAO.java` — no cierra singleton Connection; rol desconocido lanza excepción. *(Sprint SEC)*
 - `DatabaseManager.java` — `runMigrations` solo silencia "column already exists". *(Sprint SEC)*
 - `LoginView.java` + `AdminSetupView.java` — mínimo 8 chars ejecutable. *(Sprint SEC)*
-- `styles.css` — variables `-c-status-*`, `.btn-toolbar-active`, `.input-success`, DatePicker, ProgressBar, RadioButton, ContextMenu, IA view. *(Sprint UI-A + UI-C)*
+- `styles.css` — variables `-c-status-*`, `.btn-toolbar-active`, `.input-success`, DatePicker, ProgressBar, RadioButton, ContextMenu, IA view, `.skeleton-row`. *(Sprint UI-A + UI-C + UI-D)*
 - `theme-mulberry.css` — solo variables `.root`, sin sobreescrituras de componentes. *(Sprint UI-A UA-9)*
 - `IAView.java` — `command-bar`, `btn-toolbar`, clases CSS IA, sin `setStyle()` hardcodeados. *(Sprint UI-C)*
+- `ClientesView.java` / `FacturasView.java` / `PedidosView.java` — `ProgressIndicator` overlay sobre `StackPane` wrapping `TableView`; visible durante carga JDBC síncrona. *(Sprint UI-D)*
+- `EntityImportService.java` — `resolverEmpleadoId` sin filtro `activo=1`; nóminas históricas de empleados inactivos importables. *(Sprint C)*
 - Tx-awareness de Sprint B intacta en todos los DAOs modificados.
 - `DatabaseManager.getConnection()`, `buildDbUrl()`, `createTables()` — sin cambios.
 
@@ -438,13 +447,13 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD `a58a8b7` y que no hay commits inesperados.
+   - `git log --oneline -5` — confirmar HEAD `d4109c2` y que no hay commits inesperados.
    - `git status --short` — declarar si hay archivos sin commitear (solo `.claude/settings.local.json` es esperado).
 
-3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 73/73 verdes.
+3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 89/89 verdes.
 
 4. **Declarar situación:**
-   > HEAD `a58a8b7`, tests 73/73 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C. Siguiente candidato: Sprint C (Deuda 2 — filtro `activo=1` en `resolverEmpleadoId`). ¿Arrancamos?
+   > HEAD `d4109c2`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24. Cola activa: Refactor B2 (inyectar Connection en DAOs, largo plazo). ¿Arrancamos?
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 

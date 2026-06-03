@@ -163,7 +163,7 @@ Los items marcados con `[VERIFICAR]` deben confirmarse antes de implementar.
 |----|----------|--------|
 | A-1 | `theme-mulberry.css` sobreescribía `.text-field` y `.text-area` | ✅ RESUELTO — Sprint UI-A UA-9 (`5718971`) |
 | A-2 | `theme-mulberry.css` sobreescribía `config-section-title` | ✅ RESUELTO — Sprint UI-A UA-9 (`5718971`) |
-| A-3 | No existe clase CSS para estado de carga (skeleton loader) en tablas | 🔴 ABIERTO — Sprint UI-D pendiente |
+| A-3 | No existe clase CSS para estado de carga (skeleton loader) en tablas | ✅ RESUELTO — Sprint UI-D (`d4109c2`) |
 | A-4 | Botón genérico sin color real en hover | 🟠 ABIERTO — bajo impacto |
 | A-5 | No hay `.btn-toolbar-active` para estado seleccionado de filtros | ✅ RESUELTO — Sprint UI-A UA-3 (`cc0b2c2`) |
 | A-6 | Espaciado vertical uniforme entre CommandBar y tabla | [VERIFICAR] — requiere inspección visual |
@@ -283,10 +283,10 @@ Commit: `34bca4c`
 
 **Objetivo**: mostrar feedback visual durante la carga de datos en TableView.
 
-| Tarea | Descripción |
-|-------|-------------|
-| UD-1 | Añadir clase CSS `.skeleton-row` con animación shimmer |
-| UD-2 | Implementar un `ProgressIndicator` superpuesto en tablas durante carga |
+| Tarea | Descripción | Estado |
+|-------|-------------|--------|
+| UD-1 | Añadir clase CSS `.skeleton-row` con animación shimmer | ✅ `d4109c2` — gradiente estático (JavaFX no soporta @keyframes) |
+| UD-2 | Implementar un `ProgressIndicator` superpuesto en tablas durante carga | ✅ `d4109c2` — Clientes, Facturas, Pedidos |
 
 ---
 
@@ -309,7 +309,7 @@ Commit: `34bca4c`
 - [x] `DatePicker` estilizado coherentemente con el resto de inputs — Sprint UI-A UA-5.
 - [x] `ProgressBar` / `ProgressIndicator` estilizados — Sprint UI-A UA-6.
 - [x] Transiciones entre vistas (fadeIn al cambiar módulo) — Sprint UI-B UB-1.
-- [ ] Estado de carga visual en tablas (skeleton loader) — Sprint UI-D pendiente.
+- [x] Estado de carga visual en tablas (skeleton loader) — Sprint UI-D (`d4109c2`).
 - [ ] Verificación visual en modo oscuro con cada tema — requiere `mvn javafx:run`.
 
 ---
@@ -325,9 +325,9 @@ Commit: `34bca4c`
 - Los status badges son semánticamente correctos (color por significado, no por capricho).
 - El sidebar con grupos colapsables y búsqueda Ctrl+K mejora significativamente la navegación.
 
-### 6.2 Estado post-Sprint UI-A/B/C (2026-06-03)
+### 6.2 Estado post-Sprint UI-A/B/C/D (2026-06-03)
 
-**Resuelto en esta sesión:**
+**Resuelto:**
 - ✅ Tooltip hardcodeados → variables CSS (UA-1)
 - ✅ Status badges → variables CSS (UA-2)
 - ✅ `.btn-toolbar-active` añadido (UA-3)
@@ -336,16 +336,14 @@ Commit: `34bca4c`
 - ✅ `theme-mulberry.css` saneado — solo variables (UA-9)
 - ✅ Transición entre vistas 220ms (UB-1)
 - ✅ IAView con `command-bar` y sistema de temas completo (UI-C)
+- ✅ `.skeleton-row` CSS + `ProgressIndicator` overlay en Clientes, Facturas, Pedidos (UI-D, `d4109c2`)
 
 **Pendiente:**
-- Estado de carga visual en tablas (Sprint UI-D — skeleton loader).
 - Verificación visual en modo oscuro con cada tema (requiere `mvn javafx:run`).
 
 ### 6.3 Próximo sprint UI recomendado
 
-**Sprint UI-D** — Skeleton loading / spinner en tablas:
-- UD-1: Clase CSS `.skeleton-row` con animación shimmer
-- UD-2: `ProgressIndicator` superpuesto en tablas durante carga
+Sin sprints UI inmediatos pendientes. Cola activa: **Refactor B2** (inyectar Connection en DAOs — largo plazo, amplio impacto).
 
 ### 6.4 Validación de arquitectura CSS por Gemini
 

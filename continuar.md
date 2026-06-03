@@ -170,24 +170,29 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `34bca4c` — `feat: Sprint UI-C — IAView command-bar, CSS variables y audit visual`
+- **HEAD:** `d4109c2` — `feat: Sprint UI-D — skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas y Pedidos`
 - **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
 
 ### Tests
-- **73/73 verdes**
+- **89/89 verdes**
 
 | Suite | Tests |
 |---|---|
 | `ClienteDAOTest` | 3 |
+| `EmpleadoDAOTest` | 3 |
+| `NominaDAOTest` | 3 |
+| `PagoMaterialDAOTest` | 3 |
+| `PedidoDAOTest` | 3 |
+| `PagoPedidoDAOTest` | 3 |
 | `PresupuestoDAOTest` | 3 |
-| `MaterialDAOTest` | 3 |
 | `FacturaDAOTest` | 3 |
+| `MaterialDAOTest` | 3 |
 | `AlbaranDAOTest` | 4 |
 | `TxAnidadaTest` | 3 |
 | `ImportBackupServiceTest` | 12 |
 | `EntityImportServiceAlbaranTest` | 11 |
 | `EntityImportServiceFacturaTest` | 9 |
-| `EntityImportServiceNominaTest` | 5 |
+| `EntityImportServiceNominaTest` | 6 |
 | `EntityImportServicePedidoTest` | 10 |
 | `EntityImportServicePresupuestoTest` | 7 |
 
@@ -201,12 +206,13 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint UI-A** — CSS: variables para tooltip, badges, DatePicker, ProgressBar, RadioButton, ContextMenu, btn-toolbar-active, input-success; sanear theme-mulberry (5 commits). **COMPLETO.** (`467a2b5`→`5718971`)
 - **Sprint UI-B** — FadeTransition 150→220ms, param color muerto en btn() eliminado en 9 vistas, versión desde AppConstants, FadeTransition en nav groups (2 commits). **COMPLETO.** (`632e355`→`ef7ec17`)
 - **Sprint UI-C** — IAView command-bar + 10 clases CSS IA; audit EstadisticasView y UserManagementView; eliminar setStyle() hardcodeados (1 commit). **COMPLETO.** (`34bca4c`)
+- **Sprint C** — Fix `resolverEmpleadoId` filtro `activo=1` (Deuda 2), test empleado inactivo. **COMPLETO.** (`1851216`)
+- **Deuda 24** — Tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO (15 tests). **COMPLETO.** (`acc81a3`)
+- **Sprint UI-D** — `.skeleton-row` CSS + `ProgressIndicator` overlay en ClientesView, FacturasView, PedidosView (1 commit). **COMPLETO.** (`d4109c2`)
 
 ### Cola de trabajo
 
-1. **Sprint C** — `resolverEmpleadoId` filtro `activo=1` rompe nóminas históricas (Deuda 2). Coste bajo.
-2. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo).
-3. **Deuda 24** — Tests JDBC para EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO.
+1. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo).
 
 ---
 
@@ -214,10 +220,10 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 | ID | Descripción | Prioridad |
 |---|---|---|
-| 2 | Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas | Media |
+| 2 | **CERRADA** — Fix `resolverEmpleadoId` null en `1851216` | — |
 | 20-bis | Defaults DDL numéricos primitivos (`double`→`Double`) | Baja |
 | 20-ter | **CERRADA** — ClienteDAO.setBase completado en `d19a342` | — |
-| 24 | Sin tests JDBC en 5 DAOs (EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO) | Media |
+| 24 | **CERRADA** — 15 tests JDBC en `acc81a3` | — |
 | 3, 5, 6, 7... | Otras deudas menores | Baja |
 
 Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
@@ -246,7 +252,7 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    ```powershell
    .\mvnw.cmd test
    ```
-   Esperado: 73/73 verdes.
+   Esperado: 89/89 verdes.
 4. Continuar con el sprint pendiente o preguntar qué arrancar.
 
 ---
