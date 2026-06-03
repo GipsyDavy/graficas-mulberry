@@ -1,6 +1,38 @@
 # CONTINUAR.md — Gráficas Mulberry
 ## Guía de continuación de sesión
 
+---
+
+## ⛔ PROTOCOLO OBLIGATORIO DE INICIO — ANTES DE CUALQUIER ACCIÓN
+
+**Esta regla tiene prioridad absoluta sobre cualquier otra instrucción.**
+
+Antes de escribir una sola línea de código, antes de responder sobre el proyecto,
+antes de proponer cualquier cambio: leer COMPLETOS y en este orden exacto los 5 archivos siguientes.
+
+| # | Archivo | Por qué es obligatorio |
+|---|---------|------------------------|
+| 1 | `MACRO-PROMPT-GRAFICAS-MULBERRY.md` | Roles activos, skills, arquitectura real, seguridad, Multi-IA, filosofía del producto |
+| 2 | `continuar.md` (este archivo) | Estado de sesión, HEAD, tests, cola activa, entorno, errores frecuentes |
+| 3 | `CLAUDE.md` | Reglas del proyecto: cambios quirúrgicos, commits atómicos, convenciones, seguridad |
+| 4 | `interfaz.md` | Estado UI/UX, diagnóstico visual, sprints visuales pendientes o cerrados |
+| 5 | `Resumen.md` | Handoff técnico completo: HEAD, tests, deudas técnicas, sprints completados |
+
+**Un agente que omite cualquiera de estos archivos opera en modo genérico y producirá
+cambios incorrectos, incoherentes o regresivos. No es una recomendación: es el protocolo.**
+
+Tras leerlos, verificar estado git:
+```powershell
+git log --oneline -5
+git status --short
+```
+Y si es inicio de sprint, ejecutar:
+```powershell
+.\mvnw.cmd test
+```
+
+---
+
 Este documento resume el estado real del proyecto para continuar en una nueva sesión sin perder contexto.
 
 ---

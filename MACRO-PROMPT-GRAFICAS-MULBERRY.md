@@ -56,7 +56,7 @@ Base de datos local SQLite vía JDBC directo.
 ## Estado actual
 **Proyecto existente y funcional.** No es un proyecto nuevo.
 Versión actual de la app: v3.3 (instalador Windows disponible).
-Handoff técnico en `Resumen.md` (actualmente v3.9.1).
+Handoff técnico en `Resumen.md` (actualmente v4.2).
 
 ## Raíz del proyecto
 `C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`
@@ -78,17 +78,22 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 # CONTEXTO DE ESTADO ACTUAL
 
-## Estado técnico verificado (2026-06-02)
+## Estado técnico verificado (2026-06-03)
 
 | Componente | Estado | Notas |
 |---|---|---|
-| Build Maven | Funcional | `.\mvnw.cmd test` — 72/72 verdes |
+| Build Maven | Funcional | `.\mvnw.cmd test` — 89/89 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
 | Sistema de temas | Funcional | 5 temas CSS + modo oscuro, `TemaManager` |
 | UI/UX Sprint (10 bloques) | COMPLETADO | Bloques 1-10 implementados, post-polish aplicado |
-| Sprint D-ter | EN CURSO | 3/4 sub-bloques cerrados, pendiente `ClienteDAO` 1d |
-| Tests JDBC | 72/72 verdes | Harness con BD efímera `@TempDir` |
+| Sprint D-ter | COMPLETADO | 4/4 sub-bloques cerrados (incluye ClienteDAO 1d) |
+| Sprint SEC | COMPLETADO | 5 fixes seguridad P0/P1 |
+| Sprint COD | COMPLETADO | Dead code eliminado |
+| Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
+| Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
+| Deuda 24 | COMPLETADO | 15 tests JDBC nuevos (5 DAOs sin cobertura) |
+| Tests JDBC | 89/89 verdes | Harness con BD efímera `@TempDir` |
 | Instalador Windows | v3.3 disponible | NSIS + jpackage pipeline |
 | Integración Ollama | Funcional | IA local opcional vía `OllamaService` |
 | TTS / Asistente visual | Funcional | `TextToSpeechService`, `VisualAssistantView` |
@@ -107,7 +112,7 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 ## Lo que está pendiente o tiene deuda técnica
 
 Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
-Deuda más urgente: `ClienteDAO.setBase` 1d (Sprint D-ter, casi completado).
+Cola activa: **Refactor B2** — inyectar `Connection` en DAOs vía constructor (amplio, largo plazo).
 
 ---
 
@@ -470,26 +475,35 @@ Al final de cada bloque importante para Codex o Gemini, indicar claramente:
 
 # INICIO
 
-Al iniciar una nueva sesión:
+## ⛔ PROTOCOLO OBLIGATORIO — LEER ANTES DE CUALQUIER ACCIÓN
 
-1. Leer `Resumen.md` — estado técnico completo, HEAD, tests, deudas abiertas.
-2. Leer `interfaz.md` — estado UI/UX, sprints visuales pendientes.
-3. Leer `continuar.md` — contexto de sesión, entorno, workflow.
-4. Leer `CLAUDE.md` — reglas del proyecto.
-5. Verificar estado git: `git log --oneline -8` + `git status`.
-6. Preguntar qué sprint arrancar si no está ya indicado.
+**Esta regla es absoluta. No hay excepción. No importa cuánto contexto haya en el chat.**
 
-A continuación preguntar si no está claro:
+Antes de escribir una sola línea de código o proponer cualquier cambio,
+leer COMPLETOS y en este orden exacto:
 
-**¿Por dónde empezamos?**
+| # | Archivo | Contenido |
+|---|---------|-----------|
+| 1 | `MACRO-PROMPT-GRAFICAS-MULBERRY.md` | **Este archivo.** Roles, skills, arquitectura, seguridad, Multi-IA |
+| 2 | `continuar.md` | Estado de sesión, HEAD, tests, cola activa, entorno |
+| 3 | `CLAUDE.md` | Reglas del proyecto: cambios quirúrgicos, commits, convenciones |
+| 4 | `interfaz.md` | Estado UI/UX, diagnóstico visual, sprints visuales |
+| 5 | `Resumen.md` | Handoff técnico completo: HEAD, tests, deudas, sprints |
 
-A) Completar Sprint D-ter 1d (ClienteDAO — INMEDIATO)
-B) Iniciar sprint UI/UX siguiente (ver interfaz.md)
-C) Sprint de cobertura tests JDBC (Deuda 24)
-D) Auditoría de seguridad
-E) Otra cosa
+Tras leerlos, verificar:
+```powershell
+git log --oneline -5
+git status --short
+.\mvnw.cmd test
+```
+
+Declarar el estado y preguntar al usuario qué sprint arrancar si no está ya indicado.
+
+**Motivo de esta regla:** en sesiones anteriores se omitió este protocolo y el agente
+operó con información obsoleta (tests, HEAD, sprints completados). Eso provocó trabajo
+redundante y desincronización. Esta regla existe para evitar que vuelva a ocurrir.
 
 ---
 
-*MACRO-PROMPT-GRAFICAS-MULBERRY.md — Claude Code — 2026-06-02*
+*MACRO-PROMPT-GRAFICAS-MULBERRY.md — Claude Code — 2026-06-03*
 *Adaptado de MACRO-PROMPT-RECETAS-FAMILIA.md y MACRO-PROMPT-NEMETERIAL.md al stack real del proyecto.*
