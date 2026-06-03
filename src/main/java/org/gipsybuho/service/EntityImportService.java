@@ -669,8 +669,9 @@ public class EntityImportService {
 
     private int resolverEmpleadoId(Connection conn, String nombre, String apellidos,
                                    List<RowError> errores, int numFila) throws SQLException {
+        // Sin filtro activo: las nóminas históricas pueden pertenecer a empleados inactivos.
         return resolverFkPorNombre(conn, "empleados", "nombre", "apellidos",
-            nombre, apellidos, "activo=1", "Empleado", "la nómina", errores, numFila);
+            nombre, apellidos, null, "Empleado", "la nómina", errores, numFila);
     }
 
     // ── Pedido ───────────────────────────────────────────────────────────────

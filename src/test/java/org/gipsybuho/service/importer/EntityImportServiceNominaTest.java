@@ -96,6 +96,20 @@ class EntityImportServiceNominaTest {
     }
 
     @Test
+    void importaNominaDeEmpleadoInactivo() throws Exception {
+        Empleado empleado = crearEmpleado("Maria", "Ruiz");
+        new EmpleadoDAO().delete(empleado.getId());
+
+        ImportResult result = importar(List.of(
+            fila("Maria", "Ruiz", "3", "2025", "1100")
+        ), DuplicatePolicy.SKIP_IF_EXISTS);
+
+        assertEquals(1, result.filasImportadas());
+        assertEquals(0, result.errores().size());
+        assertEquals(1, new NominaDAO().findAll().size());
+    }
+
+    @Test
     void rechazaCampoNumericoMalFormado() throws Exception {
         crearEmpleado("Ana", "Garcia");
 
