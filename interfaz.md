@@ -389,11 +389,11 @@ adecuado y sin bloquear el trabajo de usuarios expertos.
 
 ### 7.3 Próximo sprint UI recomendado
 
-Sin sprints UI inmediatos pendientes. Para próximos sprints funcionales, incorporar
-**la capa completa de ayuda integrada**: centro de ayuda, ayuda contextual, manual,
-guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, buscador,
+Sin sprints UI inmediatos pendientes. La **capa completa de ayuda integrada** queda para más adelante
+con este orden: DOC-SYNC → HELP-0 → HELP-1 → HELP-2. Debe cubrir centro de ayuda, ayuda contextual,
+manual, guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, buscador,
 enlaces desde errores a soluciones, documentación offline y modo principiante/avanzado.
-Cola activa técnica: **Refactor B2** (inyectar Connection en DAOs — largo plazo, amplio impacto).
+Refactor B2 queda después de HELP-2 porque es amplio y de mayor riesgo.
 
 ### 7.4 Validación de arquitectura CSS por Gemini
 

@@ -78,11 +78,11 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 # CONTEXTO DE ESTADO ACTUAL
 
-## Estado técnico verificado (2026-06-03)
+## Estado técnico verificado (2026-06-10)
 
 | Componente | Estado | Notas |
 |---|---|---|
-| HEAD documental | `90413e4` | Protocolo obligatorio de inicio + macro-prompt actualizado a estado real |
+| HEAD documental | `4bc6c9c` | Sprint IMPORT-UPGRADE + Sprint DOC-SYNC |
 | Build Maven | Funcional | `.\mvnw.cmd test` — 89/89 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
@@ -90,6 +90,7 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | UI/UX Sprint (10 bloques) | COMPLETADO | Bloques 1-10 implementados, post-polish aplicado |
 | Sprint D-ter | COMPLETADO | 4/4 sub-bloques cerrados (incluye ClienteDAO 1d) |
 | Sprint SEC | COMPLETADO | 5 fixes seguridad P0/P1 |
+| Sprint IMPORT-UPGRADE | COMPLETADO | XLSB/XLSM + campo nuevo en importación (`4bc6c9c`) |
 | Sprint COD | COMPLETADO | Dead code eliminado |
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
@@ -113,7 +114,24 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 ## Lo que está pendiente o tiene deuda técnica
 
 Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
-Cola activa: **Refactor B2** — inyectar `Connection` en DAOs vía constructor (amplio, largo plazo).
+Cola activa prioritaria: **Sprint MIGRACION-COMPLEJA** — retomar la migración de tablas complejas
+históricas desde Excel/PDF/Word humanos. No confundir con la importación CSV/Excel limpio ya cerrada.
+Después, el orden recomendado es: **DOC-SYNC → HELP-0 → HELP-1 → HELP-2 → Refactor B2**.
+Refactor B2 queda como trabajo técnico posterior porque es amplio y de mayor riesgo.
+
+## Prioridad actual — Migración de tablas complejas
+
+El problema pendiente es migrar archivos reales del cliente con estructura humana:
+- Excel con celdas combinadas, varias mini-tablas por hoja, cabeceras decorativas y fórmulas.
+- PDFs con tablas seleccionables o escaneadas.
+- Word con tablas o texto tabular.
+
+La estrategia documentada en `MIGRACION_HISTORICO.md` es:
+- no construir de entrada un importador genérico para cualquier Excel humano;
+- inventariar archivos reales;
+- clasificar cada archivo por vía A1/A2/B/C;
+- convertir primero a CSV limpio compatible con `IMPORT_SPEC`;
+- solo crear scripts o código Java específico si el volumen y recurrencia lo justifican.
 
 ---
 
@@ -378,12 +396,17 @@ Checklist mínimo por sprint funcional:
 - Revisar que la ayuda funcione sin internet.
 - Validar accesibilidad básica: labels claros, foco, teclado y mensajes legibles.
 
-## Hoja de ruta futura — Sprint DOC/HELP
+## Hoja de ruta futura — Sistema de ayuda completo
 
-La capa de ayuda se implementará más adelante como sprint propio, de forma incremental
-y adaptada al ERP de Gráficas Mulberry. No copiar la estructura de aplicaciones de
-conversión de archivos: aquí la ayuda debe explicar flujos de negocio, criterios
-operativos, estados, permisos, documentos comerciales y riesgos reales de gestión.
+La capa de ayuda se implementará más adelante, de forma incremental y adaptada al ERP de
+Gráficas Mulberry. No copiar la estructura de aplicaciones de conversión de archivos:
+aquí la ayuda debe explicar flujos de negocio, criterios operativos, estados, permisos,
+documentos comerciales y riesgos reales de gestión.
+
+Debe ser un sistema de ayuda totalmente completo, con todas las posibilidades y opciones
+útiles integradas en la propia aplicación: centro de ayuda, manual, guías, FAQ, glosario,
+ayuda contextual, onboarding, buscador, errores accionables, enlaces a soluciones y modo
+principiante/avanzado.
 
 Prioridad de módulos para ayuda:
 - **Importación / Exportación** — CSV, backups, PDF, Excel, errores de formato, rutas y datos sensibles.
@@ -392,13 +415,17 @@ Prioridad de módulos para ayuda:
 - **Usuarios / Roles / Configuración** — permisos, seguridad, temas, IA local y ajustes.
 - **Calendario / Estadísticas / IA / Asistente visual** — uso operativo y límites.
 
-Sprints recomendados:
+Orden recomendado:
+- **Sprint DOC-SYNC:** corregir estado documental real antes de abrir la implementación de ayuda.
 - **HELP-0 — Especificación documental:** definir arquitectura de ayuda, taxonomía de artículos,
   mapa módulo → ayuda, criterios de aceptación y textos base. Sin tocar código Java.
 - **HELP-1 — Documentación offline:** crear estructura versionada de artículos locales en recursos
   de la app, con primeros pasos, manual básico, FAQ y glosario.
 - **HELP-2 — Centro de ayuda JavaFX:** implementar una vista buscable para navegar artículos,
   abrir temas por módulo y funcionar sin internet.
+- **Refactor B2:** dejarlo para después, porque es amplio y de mayor riesgo.
+
+Sprints posteriores de ayuda:
 - **HELP-3 — Ayuda contextual:** conectar `F1`, botones de ayuda, popovers y enlaces desde cada
   pantalla principal al artículo correspondiente.
 - **HELP-4 — Errores accionables:** mejorar mensajes de validación, importación/exportación y

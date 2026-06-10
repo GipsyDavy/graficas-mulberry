@@ -8,6 +8,8 @@ Agentes de apoyo: Codex (IDE), Gemini (IDE)
 > **Estado documental:** histórico cerrado. Este archivo describe la auditoría de 2026-06-02.
 > Para estado vigente, HEAD actual, tests y cola activa, usar `Resumen.md`,
 > `continuar.md`, `interfaz.md` y `MACRO-PROMPT-GRAFICAS-MULBERRY.md`.
+> Si la sesión trata sobre importación de Excel, archivos históricos o tablas complejas,
+> usar además `MIGRACION_HISTORICO.md`: la cola prioritaria es `Sprint MIGRACION-COMPLEJA`.
 
 ---
 

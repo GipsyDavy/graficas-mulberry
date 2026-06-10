@@ -2,8 +2,8 @@
 
 README técnico sobre cómo procesar archivos históricos de la empresa cliente cuando lleguen.
 
-**Última revisión:** 03/06/2026
-**Estado:** Vía A activa. Sprint 2 (Importación CSV) cerrado: las 9 entidades del sistema soportan importación CSV desde la app. Vía B/C reevaluables tras ver los primeros archivos reales del cliente.
+**Última revisión:** 10/06/2026 (actualizado Sprint IMPORT-UPGRADE)
+**Estado:** Vía A activa y documentada. Sprint 2 (Importación CSV) cerrado. Sprint IMPORT-UPGRADE (`4bc6c9c`) cerrado: soporte nativo XLSB/XLSM via `WorkbookFactory`, creación de campos nuevos desde el diálogo. El problema pendiente NO es importar CSV plano, sino migrar **tablas complejas en formato humano** (Excel con celdas combinadas, bloques laterales, varias mini-tablas por hoja, fórmulas, PDFs o Word). La siguiente línea de trabajo debe centrarse en esa migración compleja antes de abrir otros sprints funcionales.
 
 ---
 
@@ -19,6 +19,11 @@ Sprint 2 cerrado por Vía A en mayo 2026:
 - Import con el asistente de Fase 1 + Fase 2 (parent-child) ya existente.
 - Las 9 vistas tienen botón `📥 Importar` funcional cableado contra `EntityImportService`. Ya no hay Alerts "Funcionalidad próximamente".
 
+**Aclaración para próximas sesiones:** si el usuario pregunta por "Excel", "tablas complejas",
+"migración de archivos" o "lo que quedó por la 3.9", NO arrancar Refactor B2 ni DOC/HELP.
+Primero retomar esta línea: analizar archivos reales, definir conversión a CSV limpio o plantilla
+específica, y documentar el procedimiento.
+
 ---
 
 ## Procedimiento general
@@ -31,6 +36,84 @@ Para cada archivo que llegue:
 4. **Mapear contra el `IMPORT_SPEC`.** Las claves del CSV deben encajar con las claves del `IMPORT_SPEC` del modelo correspondiente. Ver sección "Estado actual del importador" abajo.
 5. **Importar desde la app.** Botón Importar de la vista → seleccionar CSV → `ColumnMappingDialog` resuelve el mapping casi todo automático → confirmar → revisar `ImportResult` (importadas, descartadas, errores).
 6. **Validar visualmente.** Abrir la tabla en la app, comprobar que los registros aparecen correctamente.
+
+---
+
+## Próximos pasos obligatorios — Sprint MIGRACION-COMPLEJA
+
+Objetivo: resolver la migración de tablas complejas reales, no reabrir el importador CSV ya cerrado.
+
+### Paso 1 — Inventario de archivos reales
+
+Recopilar una muestra representativa de archivos del cliente:
+- Excel `.xlsx/.xls/.xlsm/.xlsb` con tablas humanas.
+- PDFs con tablas seleccionables o escaneadas.
+- Word `.docx/.doc` con tablas.
+- Cualquier exportación antigua del software previo.
+
+Para cada archivo anotar:
+- entidad destino: cliente, material, presupuesto, factura, albarán, pedido, nómina, tarifa, empleado;
+- número de hojas o tablas;
+- fila real de cabecera;
+- presencia de celdas combinadas;
+- fórmulas;
+- bloques laterales;
+- totales calculados;
+- volumen aproximado de filas;
+- periodicidad: puntual o recurrente.
+
+### Paso 2 — Clasificación por vía
+
+Clasificar cada archivo en una de estas vías:
+
+| Vía | Cuándo usarla | Resultado |
+|---|---|---|
+| A1 — Conversión manual simple | Archivo puntual o pequeño | CSV limpio generado a mano |
+| A2 — Script específico | Archivo recurrente con estructura estable | Script Python por plantilla de origen |
+| B — Importador nativo específico | Alto volumen mensual y estructura estable | Código Java/servicio dedicado |
+| C — OCR/manual asistido | PDF escaneado o documento libre | Extracción manual revisada |
+
+La vía por defecto sigue siendo A1/A2. No construir B hasta demostrar que el coste manual supera
+el coste de mantener código específico.
+
+### Paso 3 — Plantilla de CSV destino por entidad
+
+Para cada entidad afectada, crear una plantilla de columnas destino compatible con `IMPORT_SPEC`.
+Para parent-child usar CSV ancho con cabecera repetida y agrupación por `numero`.
+
+Entidades parent-child:
+- Presupuesto: cabecera + líneas, agrupado por `numero`.
+- Factura: cabecera + líneas, agrupado por `numero`.
+- Albarán: cabecera + líneas, agrupado por `numero`.
+
+Entidades planas:
+- Cliente, Material, Empleado, Tarifa, Nómina, Pedido.
+
+### Paso 4 — Prototipo de conversión
+
+Para el primer archivo real de cada familia:
+- inspeccionar estructura;
+- generar CSV limpio manualmente o con script;
+- importar en una base de prueba;
+- revisar `ImportResult`;
+- verificar visualmente en la app;
+- documentar el procedimiento exacto aquí.
+
+### Paso 5 — Decisión de automatización
+
+Solo después del prototipo decidir:
+- mantener conversión manual;
+- crear script Python específico;
+- añadir soporte Java nativo;
+- aplazar por bajo volumen.
+
+### Criterio de cierre del sprint
+
+- Al menos un archivo real complejo convertido e importado correctamente en entorno de prueba.
+- Procedimiento documentado en este archivo.
+- Plantilla CSV destino documentada para la entidad afectada.
+- Limitaciones anotadas.
+- No tocar código Java salvo autorización explícita posterior.
 
 ---
 
@@ -52,7 +135,20 @@ Reglas que evitan errores comunes al importar:
 
 ## Estado actual del importador
 
-Las 9 entidades del sistema soportan importación CSV. Cada una tiene un `IMPORT_SPEC` público estático en su modelo.
+Las 9 entidades del sistema soportan importación desde CSV, XLSX, XLS, XLSB, XLSM, XLTX, XLTM y JSON. Cada entidad tiene un `IMPORT_SPEC` público estático en su modelo.
+
+### Formatos soportados (Sprint IMPORT-UPGRADE, `4bc6c9c`)
+
+`ImportService.parseFile()` detecta la extensión y enruta:
+- `.csv` / `.txt` → `parseCSV()`
+- `.json` → `parseJSON()`
+- `.xlsx` / `.xls` / `.xlsb` / `.xlsm` / `.xltx` / `.xltm` → `parseExcel()` via `WorkbookFactory.create(file, null, true)`
+
+`WorkbookFactory` (Apache POI `poi-ooxml-full`) gestiona todos los formatos Excel de forma transparente. Ya no hay código separado para HSSF/XSSF.
+
+### Creación de campos nuevos desde el diálogo de importación
+
+`ColumnMappingDialog` tiene un botón "➕ Nuevo campo…" (visible solo para entidades planas con `tableName()` no nulo). Permite crear una columna dinámica en la tabla SQLite (`ALTER TABLE … ADD COLUMN`) y registrarla en `column_configs` directamente desde el asistente de importación, sin salir del flujo. Los valores de esa columna se escriben vía `DynamicColumnValueDAO.updateValues()` tras cada INSERT/UPDATE. **Entidades parent-child (Presupuesto, Factura, Albarán) no tienen este botón.**
 
 ### Tabla de entidades importables
 

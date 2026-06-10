@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprints D-ter + SEC + COD + UI-A/B/C/D + Sprint C + Deuda 24 CERRADOS
-# Versión: 4.2 · Fecha cierre sesión: 03/06/2026 · HEAD: 90413e4 · Tests: 89/89 verdes. Cola activa: Refactor B2 (largo plazo) + Sprint DOC/HELP.
+# HANDOFF — Graficas Mulberry · Sprint IMPORT-UPGRADE CERRADO (+ D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24)
+# Versión: 4.4 · Fecha revisión documentación: 10/06/2026 · HEAD: 4bc6c9c · Tests: 89/89 verdes. Cola activa prioritaria: Sprint MIGRACION-COMPLEJA.
 
 ---
 
@@ -187,6 +187,7 @@ Auditoría de 8 fases realizada con Claude Code + Gemini + Codex. Resultado: `IN
 - **Sprint Importación CSV** (handoff v3.6, HEAD `74f174c`): 9 entidades importables, 56 tests verdes (2+12+11+9+5+10+7).
 - **Sprint A — Smoke Test manual de Albaranes** (sin commit de código): PASA. 3 deudas nuevas registradas (21, 22, 23).
 - **Sprint B — Transacciones explícitas en DAOs** (handoff v3.8, HEAD `fbc6fc8`): 5 commits, 12 tests nuevos (9 unit + 3 cross-DAO), 68/68 verdes. Deuda 9 cerrada.
+- **Sprint IMPORT-UPGRADE** (HEAD `4bc6c9c`): XLSB/XLSM via `WorkbookFactory`; `EntityImportSpec.tableName()`; `procesarFila()` → `int[3]`; escritura de columnas dinámicas en import; `ColumnMappingDialog` + "➕ Nuevo campo…"; 10 vistas actualizadas. 89/89 verdes. Sin nuevas deudas.
 
 ---
 
@@ -253,8 +254,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `90413e4` — `docs: protocolo obligatorio de inicio + actualizar MACRO-PROMPT a estado real (2026-06-03)`.
-- **Working tree:** limpio (solo `settings.local.json` modificado, esperado).
+- **HEAD actual:** `4bc6c9c` — `feat: Sprint IMPORT-UPGRADE — XLSB/XLSM + campo nuevo en importación`.
+- **Working tree:** limpio al cierre del sprint (10/06/2026).
 
 ### Commits de sprints relevantes
 | Sprint | Commits | Descripción |
@@ -269,6 +270,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | Deuda 24 | `acc81a3` | 15 tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO |
 | Sprint UI-D | `d4109c2` | .skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas, Pedidos |
 | Docs estado real | `ccb8e35`, `90413e4` | Actualización documental post UI-D y protocolo obligatorio de inicio |
+| Docs Selene / migración compleja | `67ae150` | Consolidación documental y eliminación de manuales antiguos en `installer/` |
+| **Sprint IMPORT-UPGRADE** | **`4bc6c9c`** | **XLSB/XLSM via WorkbookFactory; entityId en procesarFila(); escritura columnas dinámicas; ColumnMappingDialog + "➕ Nuevo campo…"; filtros 10 vistas** |
 
 ### Tests
 - **89/89 verdes.** Reparto:
@@ -308,6 +311,11 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 - `IAView.java` — `command-bar`, `btn-toolbar`, clases CSS IA, sin `setStyle()` hardcodeados. *(Sprint UI-C)*
 - `ClientesView.java` / `FacturasView.java` / `PedidosView.java` — `ProgressIndicator` overlay sobre `StackPane` wrapping `TableView`; visible durante carga JDBC síncrona. *(Sprint UI-D)*
 - `EntityImportService.java` — `resolverEmpleadoId` sin filtro `activo=1`; nóminas históricas de empleados inactivos importables. *(Sprint C)*
+- `ImportService.java` — `parseFile()` enruta `.xlsb/.xlsm/.xltx/.xltm` a `parseExcel()`; `parseExcel()` usa `WorkbookFactory.create(file, null, true)` — cubre todos los formatos Excel. *(Sprint IMPORT-UPGRADE)*
+- `EntityImportSpec.java` — `tableName()` computed method: mapea nombre del spec a tabla SQLite; devuelve `null` para entidades parent-child (Presupuestos, Facturas, Albaranes). *(Sprint IMPORT-UPGRADE)*
+- `EntityImportService.java` — `procesarFila()` devuelve `int[3]{insertadas, actualizadas, entityId}`; `insertarFilas()` detecta columnas extra y las escribe via `DynamicColumnValueDAO`. *(Sprint IMPORT-UPGRADE)*
+- `ColumnMappingDialog.java` — `opciones` es `ObservableList<String>` compartida entre todas las `CampoCelda`; botón "➕ Nuevo campo…" crea columna dinámica via `ColumnConfigDAO.addDynamicColumn()` y actualiza todos los ComboBoxes al instante. *(Sprint IMPORT-UPGRADE)*
+- FileChooser en 10 vistas — añadidos `.xlsb`, `.xlsm` a los filtros. *(Sprint IMPORT-UPGRADE)*
 - Tx-awareness de Sprint B intacta en todos los DAOs modificados.
 - `DatabaseManager.getConnection()`, `buildDbUrl()`, `createTables()` — sin cambios.
 
@@ -343,6 +351,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **24** | Ausencia de tests JDBC en EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO | **CERRADA en `acc81a3`.** 15 tests JDBC añadidos. |
 | **25** | Asimetría `forma_pago` vs `estado` en `PagoMaterialDAO.bind` | **NACIÓ Y MURIÓ en Sprint D-ter 1c.** Cerrada en el mismo commit. |
 | **26** | Capa completa de ayuda integrada dentro de la aplicación | **NUEVA, ABIERTA.** Debe cubrir centro de ayuda, ayuda contextual, manual integrado, guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, advertencias, documentación offline, buscador, enlaces desde errores a soluciones y modo principiante/avanzado. |
+| **27** | Migración de tablas complejas desde archivos humanos (Excel con celdas combinadas, varias tablas por hoja, fórmulas, PDF/Word) | **ABIERTA, PRIORITARIA.** Ver `MIGRACION_HISTORICO.md`. No confundir con importación CSV/Excel limpio ya cerrada. |
 | 21 | Mapeo automático no reconoce `numero` ni `nif` en spec Albarán | ABIERTA. Riesgo bajo, UX. |
 | 22 | Mensaje de error `cliente_nif` dice "para el pedido" en albarán/factura/presupuesto | ABIERTA. Trivial. |
 | 23 | Diálogo de mapeo no lista campos de línea en desplegables | ABIERTA. Informativa. |
@@ -377,17 +386,85 @@ Aplicar el patrón `ternario + comentario DDL` a los DAOs que quedaron fuera del
 
 ---
 
+## SPRINT IMPORT-UPGRADE — XLSB/XLSM + CAMPO NUEVO EN IMPORTACIÓN — CERRADO
+
+### Objetivo
+Ampliar el asistente de importación para: (a) soportar archivos XLSB/XLSM de forma nativa, (b) escribir columnas dinámicas durante el import y (c) permitir crear campos nuevos directamente desde `ColumnMappingDialog` sin salir del flujo.
+
+### Cambios ejecutados
+
+| Archivo | Cambio |
+|---|---|
+| `ImportService.java` | `parseFile()` enruta XLSB/XLSM/XLTX/XLTM; `parseExcel()` usa `WorkbookFactory.create(file, null, true)` |
+| `EntityImportSpec.java` | `tableName()` computed: mapea spec → tabla SQLite; `null` para parent-child |
+| `EntityImportService.java` | `procesarFila()` → `int[3]{insertadas,actualizadas,entityId}`; `insertarFilas()` detecta columnas extra y escribe via `DynamicColumnValueDAO` |
+| `ColumnMappingDialog.java` | `opciones` como `ObservableList<String>` compartida; botón "➕ Nuevo campo…" con `ColumnConfigDAO.addDynamicColumn()` |
+| 10 vistas | Filtros FileChooser añaden `.xlsb` y `.xlsm` |
+
+### Sub-bloques ejecutados
+
+| Sub-bloque | Commit | Cambios |
+|---|---|---|
+| **Sprint completo** | `4bc6c9c` | Todo el sprint en un único commit atómico. 89/89 tests verdes. `clean compile` OK. |
+
+### Archivos leídos en esta sesión
+- `ImportService.java`, `EntityImportService.java`, `EntityImportSpec.java`, `FieldSpec.java`, `ColumnMatcher.java`
+- `MappingResult.java`, `DynamicColumnValueDAO.java`, `ColumnConfigDAO.java`, `DynamicColumnRuntime.java`
+- `ColumnMappingDialog.java` (completo)
+- `ClientesView.java`, `EmpleadosView.java`, `FacturasView.java`, `AlbaranesView.java`, `MaterialesView.java`, `NominasView.java`, `PedidosView.java`, `PresupuestosView.java`, `TarifasView.java`, `ImportView.java` (secciones de FileChooser)
+- `ImportarClientesService.java`, `ImportBackupService.java`
+
+---
+
 ## PRÓXIMOS SPRINTS CANDIDATOS
 
-### 1. Sprint D-bis — Defaults DDL numéricos primitivos (Deuda 20-bis)
+### 1. Sprint MIGRACION-COMPLEJA — Tablas complejas históricas (Deuda 27)
+
+Retomar el problema original de migración de archivos reales del cliente: Excel con estructura humana,
+celdas combinadas, bloques laterales, fórmulas, varias mini-tablas por hoja, PDFs y Word.
+
+Objetivo inmediato:
+- inventariar archivos reales;
+- clasificar cada archivo por vía A1/A2/B/C;
+- convertir al menos un archivo complejo a CSV limpio;
+- probar importación en entorno de prueba;
+- documentar plantilla y procedimiento en `MIGRACION_HISTORICO.md`.
+
+No tocar código Java en este sprint salvo autorización explícita posterior. Primero cerrar diagnóstico,
+plantilla y procedimiento.
+
+### 2. Sprint DOC-SYNC — COMPLETO (`4bc6c9c`)
+
+Documentación sincronizada con HEAD real tras Sprint IMPORT-UPGRADE. `continuar.md`, `Resumen.md` y `MIGRACION_HISTORICO.md` actualizados.
+
+### 3. HELP-0 — Especificación de ayuda completa (más adelante)
+
+Definir arquitectura de ayuda, taxonomía de artículos, mapa módulo-artículo y criterios de aceptación.
+Debe cubrir todas las posibilidades y opciones integradas en la ayuda: centro de ayuda, manual,
+guías, FAQ, glosario, ayuda contextual, onboarding, buscador, errores con solución y modo
+principiante/avanzado. Sin tocar código Java en esta fase.
+
+### 4. HELP-1 — Documentación offline versionada (más adelante)
+
+Crear la estructura de documentación local empaquetable con la aplicación: artículos, primeros pasos,
+manual básico, FAQ, glosario, guías por módulo y advertencias operativas.
+
+### 5. HELP-2 — Centro de ayuda JavaFX (más adelante)
+
+Implementar una vista JavaFX buscable para navegar la ayuda offline, abrir artículos por módulo y
+servir como base para ayuda contextual posterior.
+
+### 6. Refactor B2 — Inyección de Connection en DAOs (después de HELP-2)
+
+Eliminar dependencia del singleton estático inyectando `Connection` por constructor o parámetro.
+Desbloquea tests paralelos y abre la puerta a desconectar el singleton. Amplio y de mayor riesgo:
+dejarlo para después de DOC-SYNC, HELP-0, HELP-1 y HELP-2.
+
+### 7. Sprint D-bis — Defaults DDL numéricos primitivos (Deuda 20-bis)
 `iva_porcentaje DEFAULT 21.0` pisado por `double = 0.0`. Requiere cambio modelo `double`→`Double`.
 Blast radius mayor. Bajo urgencia porque los flujos actuales setean IVA explícitamente.
 
-### 2. Refactor B2 — Inyección de Connection en DAOs (largo plazo)
-Eliminar dependencia del singleton estático inyectando `Connection` por constructor o parámetro.
-Desbloquea tests paralelos y abre la puerta a desconectar el singleton. Amplio.
-
-### 3. Sprint DOC/HELP — Capa completa de ayuda integrada
+### 8. Sprint DOC/HELP — Capa completa de ayuda integrada (roadmap global)
 Incorporar una capa de ayuda dentro de la aplicación, usable sin soporte externo:
 centro de ayuda, ayuda contextual por pantalla, manual integrado, guías paso a paso,
 primer arranque/onboarding, tooltips avanzados, ejemplos de uso, FAQ, glosario de formatos,
@@ -450,13 +527,13 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD `90413e4` o documentar cualquier commit posterior.
+   - `git log --oneline -5` — confirmar HEAD `67ae150` o documentar cualquier commit posterior.
    - `git status --short` — declarar si hay archivos sin commitear (solo `.claude/settings.local.json` es esperado).
 
 3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 89/89 verdes.
 
 4. **Declarar situación:**
-   > HEAD `90413e4`, tests 89/89 verdes. Working tree limpio salvo cambios locales esperados. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24. Cola activa: Refactor B2 (inyectar Connection en DAOs, largo plazo) + Sprint DOC/HELP. ¿Arrancamos?
+   > HEAD `4bc6c9c`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24, Sprint IMPORT-UPGRADE, Sprint DOC-SYNC. Cola activa prioritaria: Sprint MIGRACION-COMPLEJA (tablas complejas históricas). No arrancar Refactor B2 ni DOC/HELP antes de cerrar el plan de migración. ¿Arrancamos?
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 

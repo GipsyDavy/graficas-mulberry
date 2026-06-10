@@ -198,12 +198,12 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-03, actualizado)
+## Estado técnico al cierre de sesión (2026-06-10, actualizado)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `90413e4` — `docs: protocolo obligatorio de inicio + actualizar MACRO-PROMPT a estado real (2026-06-03)`
-- **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
+- **HEAD:** `4bc6c9c` — `feat: Sprint IMPORT-UPGRADE — XLSB/XLSM + campo nuevo en importación`
+- **Working tree:** limpio al cierre del sprint
 
 ### Tests
 - **89/89 verdes**
@@ -241,10 +241,18 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint C** — Fix `resolverEmpleadoId` filtro `activo=1` (Deuda 2), test empleado inactivo. **COMPLETO.** (`1851216`)
 - **Deuda 24** — Tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO (15 tests). **COMPLETO.** (`acc81a3`)
 - **Sprint UI-D** — `.skeleton-row` CSS + `ProgressIndicator` overlay en ClientesView, FacturasView, PedidosView (1 commit). **COMPLETO.** (`d4109c2`)
+- **Sprint IMPORT-UPGRADE** — XLSB/XLSM vía `WorkbookFactory`; `EntityImportSpec.tableName()`; `procesarFila()` devuelve `int[3]` con entityId; escritura de columnas dinámicas en import; `ColumnMappingDialog` con `ObservableList` compartida + botón "➕ Nuevo campo…" con `ColumnConfigDAO`; filtros FileChooser actualizados en 10 vistas (1 commit). **COMPLETO.** (`4bc6c9c`)
 
 ### Cola de trabajo
 
-1. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo).
+1. **Sprint MIGRACION-COMPLEJA** — retomar migración de tablas complejas reales (Excel humano, PDF/Word, celdas combinadas, varias tablas por hoja, fórmulas). Ver `MIGRACION_HISTORICO.md`.
+2. **HELP-0** — especificar arquitectura de ayuda completa, taxonomía, mapa módulo-artículo y criterios de aceptación.
+3. **HELP-1 / HELP-2** — documentación offline + vista JavaFX de ayuda buscable.
+4. **Refactor B2** — inyección de Connection en DAOs (después de HELP-2).
+5. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
+4. **HELP-1** — crear documentación offline versionada.
+5. **HELP-2** — implementar centro de ayuda JavaFX.
+6. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo; después de HELP-2).
 
 ---
 
@@ -257,6 +265,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 | 20-ter | **CERRADA** — ClienteDAO.setBase completado en `d19a342` | — |
 | 24 | **CERRADA** — 15 tests JDBC en `acc81a3` | — |
 | 26 | Capa completa de ayuda integrada dentro de la aplicación | Media |
+| 27 | Migración de tablas complejas históricas desde Excel/PDF/Word humanos | Alta |
 | 3, 5, 6, 7... | Otras deudas menores | Baja |
 
 Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
@@ -265,9 +274,13 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Refactor B2** — Inyectar Connection en DAOs (amplio, largo plazo).
-2. **Sprint DOC/HELP** — centro de ayuda, ayuda contextual, manual, guías, onboarding, ejemplos, FAQ, glosario, buscador, errores con soluciones y modo principiante/avanzado.
-3. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
+1. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales, clasificar vía A1/A2/B/C, convertir al menos un archivo complejo a CSV limpio y documentar el procedimiento.
+2. **Sprint DOC-SYNC** — corregir estado documental real.
+3. **HELP-0** — especificar arquitectura de ayuda, taxonomía, mapa módulo-artículo y criterios de aceptación.
+4. **HELP-1** — crear documentación offline versionada.
+5. **HELP-2** — implementar centro de ayuda JavaFX.
+6. **Refactor B2** — dejarlo para después, porque es amplio y de mayor riesgo.
+7. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
 
 ---
 
