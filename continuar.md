@@ -132,7 +132,7 @@ Claude Code opera **siempre y simultáneamente** con los cuatro perfiles experto
 ```powershell
 .\mvnw.cmd compile            # compilar
 .\mvnw.cmd clean compile      # compilar desde cero (forzar tras ediciones)
-.\mvnw.cmd test               # ejecutar tests (72/72 verdes en HEAD actual)
+.\mvnw.cmd test               # ejecutar tests (89/89 verdes en HEAD documentado)
 .\mvnw.cmd javafx:run         # arrancar la aplicación
 .\mvnw.cmd package            # generar JAR
 .\mvnw.cmd package -Ppackage-windows  # generar instalador Windows
@@ -202,7 +202,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `d4109c2` — `feat: Sprint UI-D — skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas y Pedidos`
+- **HEAD:** `90413e4` — `docs: protocolo obligatorio de inicio + actualizar MACRO-PROMPT a estado real (2026-06-03)`
 - **Working tree:** limpio (solo `.claude/settings.local.json` modificado — esperado, no commitear)
 
 ### Tests
@@ -256,6 +256,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 | 20-bis | Defaults DDL numéricos primitivos (`double`→`Double`) | Baja |
 | 20-ter | **CERRADA** — ClienteDAO.setBase completado en `d19a342` | — |
 | 24 | **CERRADA** — 15 tests JDBC en `acc81a3` | — |
+| 26 | Capa completa de ayuda integrada dentro de la aplicación | Media |
 | 3, 5, 6, 7... | Otras deudas menores | Baja |
 
 Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
@@ -264,11 +265,9 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Sprint UI-A** — CSS-only, sin riesgo de regresión en tests (ver `interfaz.md`).
-2. **Sprint UI-B** — Java rápido (~1h).
-3. **Sprint UI-C** — IAView (~1.5h).
-4. **Sprint C** — empleados inactivos (Deuda 2), coste bajo.
-5. **Refactor B2** — Inyectar Connection en DAOs (amplio, después de todos los anteriores).
+1. **Refactor B2** — Inyectar Connection en DAOs (amplio, largo plazo).
+2. **Sprint DOC/HELP** — centro de ayuda, ayuda contextual, manual, guías, onboarding, ejemplos, FAQ, glosario, buscador, errores con soluciones y modo principiante/avanzado.
+3. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
 
 ---
 

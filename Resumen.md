@@ -1,5 +1,5 @@
 # HANDOFF — Graficas Mulberry · Sprints D-ter + SEC + COD + UI-A/B/C/D + Sprint C + Deuda 24 CERRADOS
-# Versión: 4.2 · Fecha cierre sesión: 03/06/2026 · HEAD: d4109c2 · Tests: 89/89 verdes. Cola activa: Refactor B2 (largo plazo).
+# Versión: 4.2 · Fecha cierre sesión: 03/06/2026 · HEAD: 90413e4 · Tests: 89/89 verdes. Cola activa: Refactor B2 (largo plazo) + Sprint DOC/HELP.
 
 ---
 
@@ -177,7 +177,8 @@ Auditoría de 8 fases realizada con Claude Code + Gemini + Codex. Resultado: `IN
 - **P2 (medios):** ARCH-1, COD-2 dead code SQL incorrecto, UI-4 colores hardcodeados en Dashboard, UI-5 IAView sin CommandBar.
 - **P3 (backlog):** COD-1/3/4, UI-1/2/3, AP-1, ARCH-2/4. Ver `INFORME-FINAL.md`.
 
-**Tests:** 72/72 ✅ · **Archivos nuevos:** `AUDITORIA.md`, `INFORME-FINAL.md`, `FASES.md`, `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `interfaz.md`, `continuar.md`, `_cajon-desastre/` (20 archivos movidos).
+**Tests en esa auditoría:** 72/72 ✅ · **Estado histórico:** superado por sprints posteriores. Estado vigente: 89/89 verdes.
+**Archivos nuevos:** `AUDITORIA.md`, `INFORME-FINAL.md`, `FASES.md`, `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `interfaz.md`, `continuar.md`, `_cajon-desastre/` (20 archivos movidos).
 
 ---
 
@@ -252,7 +253,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `d4109c2` — `feat: Sprint UI-D — skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas y Pedidos`.
+- **HEAD actual:** `90413e4` — `docs: protocolo obligatorio de inicio + actualizar MACRO-PROMPT a estado real (2026-06-03)`.
 - **Working tree:** limpio (solo `settings.local.json` modificado, esperado).
 
 ### Commits de sprints relevantes
@@ -267,6 +268,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | Sprint C | `1851216` | Fix resolverEmpleadoId filtro activo=1 (Deuda 2) |
 | Deuda 24 | `acc81a3` | 15 tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO |
 | Sprint UI-D | `d4109c2` | .skeleton-row CSS + ProgressIndicator overlay en Clientes, Facturas, Pedidos |
+| Docs estado real | `ccb8e35`, `90413e4` | Actualización documental post UI-D y protocolo obligatorio de inicio |
 
 ### Tests
 - **89/89 verdes.** Reparto:
@@ -316,7 +318,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | ID | Descripción | Estado |
 |---|---|---|
 | 1 | Validación de fechas en Fase 2 | CERRADA en 3C-paso-2a. |
-| 2 | Filtro `activo=1` en `resolverEmpleadoId` puede romper nóminas históricas | ABIERTA. Candidata sprint C. |
+| 2 | Filtro `activo=1` en `resolverEmpleadoId` podía romper nóminas históricas | CERRADA en `1851216`. |
 | 3 | `lower()` en SQLite no normaliza tildes | ABIERTA. |
 | 4 | UPDATE path Pedido sin guard de errores | CERRADA en `9798225`. |
 | 5 | Contrato `filtroExtraSql` admite `null` pero rechaza blank | ABIERTA. Riesgo bajo. |
@@ -338,8 +340,9 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **20** | Defaults DDL ignorados con NULL explícito (columnas TEXT en Presupuesto/Factura/Albarán) | **CERRADA en Sprint D.** Patrón "literal Java-side con ternario" aplicado a los 5 sitios afectados. |
 | **20-bis** | Defaults DDL numéricos primitivos pisados con `double=0.0` (ej. `iva_porcentaje DEFAULT 21.0`) | **NUEVA, ABIERTA.** Requiere cambio modelo `double`→`Double` con blast radius mayor. En la práctica todos los flujos setean IVA explícitamente; bug teórico. |
 | **20-ter** | Defaults DDL TEXT en DAOs fuera Sprint D | **CERRADA en Sprint D-ter.** EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO corregidos. PedidoDAO y PagoPedidoDAO ya estaban limpios. NominaDAO fuera scope (no tiene DEFAULT TEXT no-trivial). |
-| **24** | Ausencia de tests JDBC en EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO | **NUEVA, ABIERTA.** Registrada en Sprint D-ter. Ninguno tiene archivo `*DAOTest.java`. Sprint de cobertura futuro. |
+| **24** | Ausencia de tests JDBC en EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO | **CERRADA en `acc81a3`.** 15 tests JDBC añadidos. |
 | **25** | Asimetría `forma_pago` vs `estado` en `PagoMaterialDAO.bind` | **NACIÓ Y MURIÓ en Sprint D-ter 1c.** Cerrada en el mismo commit. |
+| **26** | Capa completa de ayuda integrada dentro de la aplicación | **NUEVA, ABIERTA.** Debe cubrir centro de ayuda, ayuda contextual, manual integrado, guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, advertencias, documentación offline, buscador, enlaces desde errores a soluciones y modo principiante/avanzado. |
 | 21 | Mapeo automático no reconoce `numero` ni `nif` en spec Albarán | ABIERTA. Riesgo bajo, UX. |
 | 22 | Mensaje de error `cliente_nif` dice "para el pedido" en albarán/factura/presupuesto | ABIERTA. Trivial. |
 | 23 | Diálogo de mapeo no lista campos de línea en desplegables | ABIERTA. Informativa. |
@@ -376,22 +379,22 @@ Aplicar el patrón `ternario + comentario DDL` a los DAOs que quedaron fuera del
 
 ## PRÓXIMOS SPRINTS CANDIDATOS
 
-### 1. Sprint C — Empleados inactivos (Deuda 2) ← SIGUIENTE
-Filtro `activo=1` en `resolverEmpleadoId` rompe nóminas históricas de empleados dados de baja.
-Archivo: `EntityImportServiceNomina` o equivalente DAO. Coste estimado: bajo (~1h).
-Riesgo: medio si hay tests que usen empleados activos como precondición.
-
-### 2. Deuda 24 — Tests JDBC en 5 DAOs sin cobertura
-`EmpleadoDAO`, `PagoMaterialDAO`, `NominaDAO`, `PedidoDAO`, `PagoPedidoDAO` — ninguno tiene `*DAOTest.java`.
-Coste: medio-alto (5 harnesses nuevos). No bloquea funcionalidad, pero el riesgo de regresión silenciosa es real.
-
-### 3. Sprint D-bis — Defaults DDL numéricos primitivos (Deuda 20-bis)
+### 1. Sprint D-bis — Defaults DDL numéricos primitivos (Deuda 20-bis)
 `iva_porcentaje DEFAULT 21.0` pisado por `double = 0.0`. Requiere cambio modelo `double`→`Double`.
 Blast radius mayor. Bajo urgencia porque los flujos actuales setean IVA explícitamente.
 
-### 4. Refactor B2 — Inyección de Connection en DAOs (largo plazo)
+### 2. Refactor B2 — Inyección de Connection en DAOs (largo plazo)
 Eliminar dependencia del singleton estático inyectando `Connection` por constructor o parámetro.
 Desbloquea tests paralelos y abre la puerta a desconectar el singleton. Amplio.
+
+### 3. Sprint DOC/HELP — Capa completa de ayuda integrada
+Incorporar una capa de ayuda dentro de la aplicación, usable sin soporte externo:
+centro de ayuda, ayuda contextual por pantalla, manual integrado, guías paso a paso,
+primer arranque/onboarding, tooltips avanzados, ejemplos de uso, FAQ, glosario de formatos,
+explicación de riesgos y advertencias, documentación offline, buscador de ayuda,
+enlaces desde errores a soluciones y modo principiante/avanzado.
+Debe ejecutarse de forma incremental: cada sprint funcional futuro debe incluir su parte
+de ayuda, documentación y asistencia al usuario.
 
 ---
 
@@ -447,13 +450,13 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD `d4109c2` y que no hay commits inesperados.
+   - `git log --oneline -5` — confirmar HEAD `90413e4` o documentar cualquier commit posterior.
    - `git status --short` — declarar si hay archivos sin commitear (solo `.claude/settings.local.json` es esperado).
 
 3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 89/89 verdes.
 
 4. **Declarar situación:**
-   > HEAD `d4109c2`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24. Cola activa: Refactor B2 (inyectar Connection en DAOs, largo plazo). ¿Arrancamos?
+   > HEAD `90413e4`, tests 89/89 verdes. Working tree limpio salvo cambios locales esperados. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24. Cola activa: Refactor B2 (inyectar Connection en DAOs, largo plazo) + Sprint DOC/HELP. ¿Arrancamos?
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 

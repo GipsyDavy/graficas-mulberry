@@ -290,7 +290,50 @@ Commit: `34bca4c`
 
 ---
 
-## PARTE 5 — CRITERIOS DE CALIDAD
+## PARTE 5 — CAPA DE AYUDA INTEGRADA
+
+### 5.1 Objetivo
+
+Incorporar una capa completa de ayuda al usuario dentro de la aplicación: documentación
+integrada, guías paso a paso, manuales, ayuda contextual, tooltips, onboarding, ejemplos,
+preguntas frecuentes y asistencia para entender cada funcionalidad sin depender de
+soporte externo.
+
+La ayuda debe formar parte de la experiencia de usuario, no ser un añadido externo.
+Cada pantalla debe explicar lo necesario en el momento adecuado, con el nivel de detalle
+adecuado y sin bloquear el trabajo de usuarios expertos.
+
+### 5.2 Componentes previstos
+
+| Componente | Objetivo | Estado |
+|---|---|---|
+| Centro de ayuda | Punto único para buscar y navegar documentación dentro de la app | Pendiente |
+| Ayuda contextual por pantalla | Explicar acciones, campos, estados y flujos desde cada módulo | Pendiente |
+| Manual de usuario integrado | Manual offline mantenido con el comportamiento real de la aplicación | Pendiente |
+| Guías paso a paso | Acompañar tareas principales: crear cliente, factura, pedido, importar CSV, exportar PDF | Pendiente |
+| Primer arranque / onboarding | Orientar a usuarios nuevos en la primera ejecución o primer acceso a módulos clave | Pendiente |
+| Tooltips avanzados | Sustituir tooltips pobres por ayuda breve, específica y accionable | Pendiente |
+| Ejemplos de uso | Mostrar casos reales o plantillas de ejemplo para reducir ambigüedad | Pendiente |
+| FAQ | Resolver dudas frecuentes sin soporte externo | Pendiente |
+| Glosario de formatos | Explicar CSV, PDF, Excel, NIF, IVA, estados, roles, importes y columnas esperadas | Pendiente |
+| Riesgos y advertencias | Explicar consecuencias antes de importaciones, borrados, cambios de rol o datos sensibles | Pendiente |
+| Documentación offline | Empaquetar la ayuda con la aplicación, sin depender de internet | Pendiente |
+| Buscador de ayuda | Buscar por módulo, palabra clave, acción, error o formato | Pendiente |
+| Enlaces desde errores | Conectar mensajes de error con soluciones o guías relacionadas | Pendiente |
+| Modo principiante / avanzado | Ajustar densidad de ayuda según experiencia del usuario | Pendiente |
+
+### 5.3 Reglas de diseño
+
+- La ayuda debe ser contextual: mostrar lo útil en la pantalla donde surge la duda.
+- Los mensajes de error deben decir qué pasó, por qué importa y cómo corregirlo.
+- Las advertencias deben explicar riesgos reales, no asustar por defecto.
+- El modo avanzado no debe ocultar información crítica de seguridad o pérdida de datos.
+- La documentación debe mantenerse offline y versionada con la app.
+- Cada sprint funcional futuro debe incluir su impacto en esta capa de ayuda.
+
+---
+
+## PARTE 6 — CRITERIOS DE CALIDAD
 
 ### Por sprint
 
@@ -298,6 +341,8 @@ Commit: `34bca4c`
 - `.\mvnw.cmd test` — todos los tests en verde (sin regresiones).
 - Verificación visual del módulo modificado en modo claro y modo oscuro.
 - Verificación en el tema mulberry (primario) y al menos un tema alternativo.
+- Verificación de ayuda al usuario: documentación integrada, ayuda contextual,
+  tooltips avanzados, guía paso a paso, FAQ, glosario, onboarding o manual cuando aplique.
 
 ### Checklist de coherencia visual
 
@@ -310,13 +355,14 @@ Commit: `34bca4c`
 - [x] `ProgressBar` / `ProgressIndicator` estilizados — Sprint UI-A UA-6.
 - [x] Transiciones entre vistas (fadeIn al cambiar módulo) — Sprint UI-B UB-1.
 - [x] Estado de carga visual en tablas (skeleton loader) — Sprint UI-D (`d4109c2`).
+- [ ] Capa completa de ayuda integrada por módulo — centro de ayuda, manual, guías, FAQ, buscador y ayuda contextual.
 - [ ] Verificación visual en modo oscuro con cada tema — requiere `mvn javafx:run`.
 
 ---
 
-## PARTE 6 — AUDITORÍA POST-BLOQUE 10
+## PARTE 7 — AUDITORÍA POST-BLOQUE 10
 
-### 6.1 Lo que se implementó bien
+### 7.1 Lo que se implementó bien
 
 - El sistema de temas CSS con variables looked-up es sólido y extensible.
 - La separación de `styles.css` (base) + `theme-X.css` (sobreescritura de variables) es la arquitectura correcta.
@@ -325,7 +371,7 @@ Commit: `34bca4c`
 - Los status badges son semánticamente correctos (color por significado, no por capricho).
 - El sidebar con grupos colapsables y búsqueda Ctrl+K mejora significativamente la navegación.
 
-### 6.2 Estado post-Sprint UI-A/B/C/D (2026-06-03)
+### 7.2 Estado post-Sprint UI-A/B/C/D (2026-06-03)
 
 **Resuelto:**
 - ✅ Tooltip hardcodeados → variables CSS (UA-1)
@@ -341,11 +387,15 @@ Commit: `34bca4c`
 **Pendiente:**
 - Verificación visual en modo oscuro con cada tema (requiere `mvn javafx:run`).
 
-### 6.3 Próximo sprint UI recomendado
+### 7.3 Próximo sprint UI recomendado
 
-Sin sprints UI inmediatos pendientes. Cola activa: **Refactor B2** (inyectar Connection en DAOs — largo plazo, amplio impacto).
+Sin sprints UI inmediatos pendientes. Para próximos sprints funcionales, incorporar
+**la capa completa de ayuda integrada**: centro de ayuda, ayuda contextual, manual,
+guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, buscador,
+enlaces desde errores a soluciones, documentación offline y modo principiante/avanzado.
+Cola activa técnica: **Refactor B2** (inyectar Connection en DAOs — largo plazo, amplio impacto).
 
-### 6.4 Validación de arquitectura CSS por Gemini
+### 7.4 Validación de arquitectura CSS por Gemini
 
 ✅ **Confirmado**: el patrón variables looked-up + theme files es correcto para JavaFX.
 Es equivalente a CSS Custom Properties en web y es el enfoque óptimo.
@@ -353,7 +403,7 @@ Es equivalente a CSS Custom Properties en web y es el enfoque óptimo.
 ⚠️ **Riesgo confirmado**: `theme-mulberry.css` sobreescribe componentes (no solo variables).
 Los otros 4 temas están limpios. Debe corregirse antes de añadir más temas.
 
-### 6.5 Componentes JavaFX críticos para un ERP (lista Gemini)
+### 7.5 Componentes JavaFX críticos para un ERP (lista Gemini)
 
 Por impacto en percepción de calidad cuando no están estilizados:
 1. **DatePicker** — crítico, muy visible en formularios con fechas

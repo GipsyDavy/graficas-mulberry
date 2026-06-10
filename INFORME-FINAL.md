@@ -8,6 +8,11 @@
 **Tests al cierre:** 72/72 ✅ · BUILD SUCCESS  
 **Referencia completa:** `AUDITORIA.md`
 
+> **Nota de vigencia:** informe histórico del 2026-06-02. Sus hallazgos fueron la base
+> de sprints posteriores ya ejecutados: SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C y
+> Deuda 24. Para el estado actual usar `Resumen.md`, `continuar.md`, `interfaz.md` y
+> `MACRO-PROMPT-GRAFICAS-MULBERRY.md`.
+
 ---
 
 ## VEREDICTO GENERAL

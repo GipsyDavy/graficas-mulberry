@@ -1,3 +1,0 @@
-ABRIR CMD Y PEGAR una de estas - solo lo que esta entre las "": 
-- "ollama pull llama3.2" (son 2GB)
-- "ollama pull llama4"   (son 67GB)

@@ -2,7 +2,7 @@
 
 README técnico sobre cómo procesar archivos históricos de la empresa cliente cuando lleguen.
 
-**Última revisión:** 22/05/2026
+**Última revisión:** 03/06/2026
 **Estado:** Vía A activa. Sprint 2 (Importación CSV) cerrado: las 9 entidades del sistema soportan importación CSV desde la app. Vía B/C reevaluables tras ver los primeros archivos reales del cliente.
 
 ---
@@ -118,7 +118,7 @@ Si tu CSV trae un valor explícito, gana sobre el default.
 
 ### Limitaciones conocidas relevantes para el operador
 
-- **Empleados inactivos (Deuda 2):** la resolución de empleado en Nómina filtra `activo = 1`. Si importas nóminas históricas de empleados ya dados de baja en la app, fallarán con `FK_NO_ENCONTRADA`. Workaround: reactivar temporalmente el empleado, importar, desactivar de nuevo.
+- **Empleados inactivos:** corregido en Sprint C (`1851216`). La resolución de empleado para Nómina ya no filtra `activo = 1`, por lo que las nóminas históricas de empleados dados de baja pueden importarse si el empleado existe en la base de datos.
 - **`cantidad` no se valida como numérico (Deuda 19):** si un CSV trae `cantidad=N/A` o similar en una línea de Presupuesto/Factura/Albarán/Pedido, persiste como `0` en BD sin error. Verificar manualmente con `Select-String -Pattern '[^0-9.,;]' archivo.csv` antes de importar.
 - **Totales recalculados (no respetados):** los totales del CSV en Presupuesto/Factura se ignoran. El importador llama a `calcularTotales()` tras montar cabecera+líneas. Albarán no tiene totales (no hay precios ni IVA).
 - **Tildes en match por nombre (Deuda 3):** SQLite `lower()` no normaliza tildes, así que `"García"` y `"Garcia"` no matchean. Si el match por `nombre+apellidos` falla con un nombre que sospechas existe, revisar acentuación literal en BD.

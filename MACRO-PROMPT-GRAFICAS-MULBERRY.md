@@ -82,6 +82,7 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 | Componente | Estado | Notas |
 |---|---|---|
+| HEAD documental | `90413e4` | Protocolo obligatorio de inicio + macro-prompt actualizado a estado real |
 | Build Maven | Funcional | `.\mvnw.cmd test` — 89/89 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
@@ -341,6 +342,80 @@ Transiciones:   FadeTransition, TranslateTransition, RotateTransition (JavaFX)
 - **Validación visual** en formularios (`.input-error`, `.field-error-msg`).
 - **Micro-interacciones** fade y hover lift en tarjetas y botones.
 - **Tooltips** en todos los módulos, botones de navegación y footer.
+
+## Capa completa de ayuda integrada
+
+**Regla obligatoria para próximos sprints:** la aplicación debe incorporar una capa
+completa de ayuda al usuario dentro del propio producto, no solo documentación externa.
+Cada funcionalidad nueva o modificada debe contemplar cómo será entendida, descubierta,
+aprendida y corregida por un usuario real sin depender de soporte externo.
+
+Objetivo: que cualquier empleado pueda entender qué hace cada módulo, cómo completar
+cada flujo principal, qué significan los estados/errores, qué riesgos existen y qué
+pasos seguir cuando algo falla. No basta con que la funcionalidad exista; debe ser
+autodescriptiva, guiada, buscable y utilizable offline.
+
+Componentes objetivo de la capa de ayuda:
+- **Centro de ayuda** integrado en la aplicación.
+- **Ayuda contextual por pantalla**, formulario, tabla y acción crítica.
+- **Manual de usuario integrado** y mantenido con el comportamiento real.
+- **Guías paso a paso** para flujos principales y tareas poco frecuentes.
+- **Primer arranque / onboarding** para orientar a usuarios nuevos.
+- **Tooltips avanzados** con explicación útil, no solo etiquetas repetidas.
+- **Ejemplos de uso** con casos reales de clientes, facturas, pedidos, importaciones, etc.
+- **FAQ** con preguntas frecuentes operativas.
+- **Glosario de formatos y términos**: CSV, PDF, estados, roles, NIF, IVA, importes.
+- **Explicación de riesgos y advertencias** antes de acciones destructivas o sensibles.
+- **Documentación offline**, empaquetada con la aplicación.
+- **Buscador de ayuda** por módulo, acción, error o palabra clave.
+- **Enlaces desde errores a soluciones** o pasos de corrección.
+- **Modo principiante / avanzado** para ajustar densidad de ayuda y fricción.
+
+Checklist mínimo por sprint funcional:
+- Definir qué ayuda necesita la funcionalidad tocada.
+- Añadir o actualizar textos de ayuda, tooltips, empty states y errores accionables.
+- Actualizar manual/guía/FAQ/glosario si cambia el comportamiento.
+- Revisar que la ayuda funcione sin internet.
+- Validar accesibilidad básica: labels claros, foco, teclado y mensajes legibles.
+
+## Hoja de ruta futura — Sprint DOC/HELP
+
+La capa de ayuda se implementará más adelante como sprint propio, de forma incremental
+y adaptada al ERP de Gráficas Mulberry. No copiar la estructura de aplicaciones de
+conversión de archivos: aquí la ayuda debe explicar flujos de negocio, criterios
+operativos, estados, permisos, documentos comerciales y riesgos reales de gestión.
+
+Prioridad de módulos para ayuda:
+- **Importación / Exportación** — CSV, backups, PDF, Excel, errores de formato, rutas y datos sensibles.
+- **Clientes / Presupuestos / Facturas / Albaranes / Pedidos** — flujo comercial completo y estados.
+- **Materiales / Tarifas / Nóminas** — operaciones con impacto económico o de stock.
+- **Usuarios / Roles / Configuración** — permisos, seguridad, temas, IA local y ajustes.
+- **Calendario / Estadísticas / IA / Asistente visual** — uso operativo y límites.
+
+Sprints recomendados:
+- **HELP-0 — Especificación documental:** definir arquitectura de ayuda, taxonomía de artículos,
+  mapa módulo → ayuda, criterios de aceptación y textos base. Sin tocar código Java.
+- **HELP-1 — Documentación offline:** crear estructura versionada de artículos locales en recursos
+  de la app, con primeros pasos, manual básico, FAQ y glosario.
+- **HELP-2 — Centro de ayuda JavaFX:** implementar una vista buscable para navegar artículos,
+  abrir temas por módulo y funcionar sin internet.
+- **HELP-3 — Ayuda contextual:** conectar `F1`, botones de ayuda, popovers y enlaces desde cada
+  pantalla principal al artículo correspondiente.
+- **HELP-4 — Errores accionables:** mejorar mensajes de validación, importación/exportación y
+  acciones críticas con explicación, causa probable y enlace a solución.
+- **HELP-5 — Onboarding y modo principiante/avanzado:** añadir primera guía de uso, ayuda
+  progresiva y control de densidad de explicación sin ocultar advertencias críticas.
+
+Reglas específicas de implementación:
+- No introducir dependencias nuevas para renderizar ayuda salvo justificación fuerte.
+- Preferir recursos locales simples (`.md`, `.html` reducido o modelo Java propio) empaquetados
+  con la aplicación.
+- Mantener la ayuda sincronizada con el comportamiento real; si una pantalla cambia, su artículo
+  o ayuda contextual debe revisarse.
+- No bloquear a usuarios expertos con modales informativos repetitivos; usar ayuda contextual,
+  popovers, banners y enlaces.
+- Las advertencias de seguridad, pérdida de datos, sobrescritura, importación y permisos no se
+  pueden desactivar por completo en modo avanzado.
 
 ## Estándares de animación
 

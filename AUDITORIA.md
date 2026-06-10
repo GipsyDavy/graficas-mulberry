@@ -8,6 +8,11 @@
 `ImportBackupService.java` (completo), `OllamaService.java` (parcial), `LoginView.java`  
 **Tests:** 72/72 verdes en HEAD `1fb1904`
 
+> **Nota de vigencia:** documento histórico de auditoría del 2026-06-02. Varios hallazgos
+> aquí descritos fueron corregidos posteriormente en Sprint SEC, Sprint COD y Sprints UI-A/B/C/D.
+> Para estado vigente usar `Resumen.md`, `continuar.md`, `interfaz.md` y
+> `MACRO-PROMPT-GRAFICAS-MULBERRY.md`.
+
 ---
 
 ## RESUMEN EJECUTIVO

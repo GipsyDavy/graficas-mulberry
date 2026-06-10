@@ -5,6 +5,10 @@ Proyecto: Graficas Mulberry (`C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`)
 Agente líder: Claude Code  
 Agentes de apoyo: Codex (IDE), Gemini (IDE)
 
+> **Estado documental:** histórico cerrado. Este archivo describe la auditoría de 2026-06-02.
+> Para estado vigente, HEAD actual, tests y cola activa, usar `Resumen.md`,
+> `continuar.md`, `interfaz.md` y `MACRO-PROMPT-GRAFICAS-MULBERRY.md`.
+
 ---
 
 ## Objetivo general
@@ -48,40 +52,40 @@ Agentes de apoyo: Codex (IDE), Gemini (IDE)
 
 ---
 
-### Fase 3 — Creación y adaptación de archivos `.md`
+### Fase 3 — Creación y adaptación de archivos `.md` ✅ COMPLETADA
 - Crear o adaptar al proyecto los siguientes archivos:
   - `interfaz.md` — guía de interfaz gráfica adaptada a Graficas Mulberry
   - `continuar.md` — instrucciones de continuación de sesión adaptadas
   - `resumen.md` — resumen del estado del proyecto adaptado
   - `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — macro-prompt principal adaptado al proyecto
 - Respetar el estilo y propósito de los archivos de referencia.
-- **Estado:** Pendiente de autorización
+- **Estado:** ✅ Completada (2026-06-02)
 
 ---
 
-### Fase 4 — Auditoría técnica: código, arquitectura, seguridad
+### Fase 4 — Auditoría técnica: código, arquitectura, seguridad ✅ COMPLETADA
 - Revisar el código fuente como senior developer + experto en ciberseguridad.
 - Buscar vulnerabilidades, fallos, código sucio, ruido, anti-patrones y problemas de arquitectura.
 - Analizar backend: acceso a datos (DAO), servicios, modelos, integración Ollama, autenticación BCrypt.
 - Identificar riesgos de seguridad: inyección SQL, acceso a ficheros, manejo de secretos, errores silenciados.
-- **Estado:** Pendiente de autorización
+- **Estado:** ✅ Completada (2026-06-02)
 
 ---
 
-### Fase 5 — Auditoría de diseño: UI/UX, gráficos, animaciones, frontend
+### Fase 5 — Auditoría de diseño: UI/UX, gráficos, animaciones, frontend ✅ COMPLETADA
 - Revisar las pantallas JavaFX: FXML, CSS, controladores y componentes visuales.
 - Analizar la coherencia del diseño gráfico, la paleta de colores, tipografía y espaciado.
 - Evaluar animaciones, micro-interacciones, tooltips, transiciones y estado hover/focus.
 - Proponer mejoras concretas de UI/UX sin implementarlas hasta autorización.
-- **Estado:** Pendiente de autorización
+- **Estado:** ✅ Completada (2026-06-02)
 
 ---
 
-### Fase 6 — Bloque Gemini: análisis de contexto amplio y propuestas
+### Fase 6 — Bloque Gemini: análisis de contexto amplio y propuestas ✅ COMPLETADA
 - Generar un bloque autocontenido para pegar en **Gemini Code Assist** (IDE).
 - Objetivo: análisis arquitectónico, propuestas de mejora de alto nivel, revisión de alternativas técnicas.
 - Claude Code indicará exactamente cuándo pegar el bloque y qué hacer con la respuesta.
-- **Estado:** Pendiente de autorización
+- **Estado:** ✅ Completada (2026-06-02)
 
 ---
 
