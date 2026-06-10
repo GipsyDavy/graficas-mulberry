@@ -148,9 +148,9 @@ public class ImportView extends VBox {
             FileChooser fc = new FileChooser();
             fc.setTitle("Seleccionar archivo de datos");
             fc.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Archivos de datos", "*.csv", "*.xlsx", "*.xls", "*.json", "*.txt"),
+                new FileChooser.ExtensionFilter("Archivos de datos", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json", "*.txt"),
                 new FileChooser.ExtensionFilter("CSV", "*.csv", "*.txt"),
-                new FileChooser.ExtensionFilter("Excel", "*.xlsx", "*.xls"),
+                new FileChooser.ExtensionFilter("Excel", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm"),
                 new FileChooser.ExtensionFilter("JSON", "*.json"),
                 new FileChooser.ExtensionFilter("Todos", "*.*")
             );

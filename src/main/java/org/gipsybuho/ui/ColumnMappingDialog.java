@@ -11,9 +11,11 @@ import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.StringConverter;
+import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.service.importer.*;
 
 import java.util.*;
@@ -38,9 +40,9 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         if (owner != null) initOwner(owner);
         setTitle("Configurar importación de " + spec.nombre());
         setResizable(true);
-        getDialogPane().setPrefSize(720, 520);
+        getDialogPane().setPrefSize(760, 560);
 
-        // clave → etiqueta legible para el converter del ComboBox
+        // clave → etiqueta legible para el converter del ComboBox (mutable — se añaden campos nuevos)
         Map<String, String> claveToEtiqueta = spec.campos().stream()
             .collect(Collectors.toMap(FieldSpec::clave, FieldSpec::etiqueta,
                 (a, b) -> a, LinkedHashMap::new));
@@ -57,8 +59,8 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
                 sugerido != null ? sugerido : IGNORAR, oblSugerido));
         }
 
-        // Opciones del ComboBox de campo destino
-        List<String> opciones = new ArrayList<>();
+        // ObservableList compartida entre todas las CampoCelda: al añadir aquí se actualiza todo
+        ObservableList<String> opciones = FXCollections.observableArrayList();
         opciones.add(IGNORAR);
         spec.campos().forEach(f -> opciones.add(f.clave()));
 
@@ -68,6 +70,36 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         // ComboBox de política de duplicados
         ComboBox<DuplicatePolicy> cbPolicy = buildPolicyCombo(spec);
 
+        // Botón "Nuevo campo" — solo activo para entidades planas con tableName conocido
+        String tableName = spec.tableName();
+        Button btnNuevoCampo = new Button("➕  Nuevo campo…");
+        btnNuevoCampo.setStyle("-fx-background-color:#27AE60;-fx-text-fill:white;-fx-font-size:11px;-fx-padding:4 10;-fx-background-radius:4;");
+        btnNuevoCampo.setVisible(tableName != null);
+        btnNuevoCampo.setManaged(tableName != null);
+        btnNuevoCampo.setOnAction(e -> {
+            TextInputDialog tid = new TextInputDialog();
+            tid.setTitle("Crear campo nuevo");
+            tid.setHeaderText("Nombre visible del nuevo campo");
+            tid.setContentText("Etiqueta:");
+            if (getDialogPane().getScene() != null)
+                tid.getDialogPane().getStylesheets().addAll(getDialogPane().getScene().getStylesheets());
+            tid.showAndWait().ifPresent(label -> {
+                if (label.isBlank()) return;
+                try {
+                    Set<String> especClaves = spec.campos().stream()
+                        .map(FieldSpec::clave).collect(Collectors.toSet());
+                    ColumnConfigDAO.ColumnConfig config =
+                        new ColumnConfigDAO().addDynamicColumn(tableName, label, especClaves);
+                    // Añadir a la lista compartida: todos los ComboBox se actualizan automáticamente
+                    opciones.add(config.columnName());
+                    claveToEtiqueta.put(config.columnName(), config.label());
+                } catch (Exception ex) {
+                    new Alert(Alert.AlertType.ERROR,
+                        "No se pudo crear el campo:\n" + ex.getMessage(), ButtonType.OK).showAndWait();
+                }
+            });
+        });
+
         // Layout
         Label infoLabel = new Label(headers.size() + " columnas detectadas → " + spec.nombre());
         infoLabel.setStyle("-fx-text-fill:-c-text-muted;-fx-font-size:12px;");
@@ -75,7 +107,9 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         Label validationLabel = new Label();
         validationLabel.setStyle("-fx-text-fill:#E74C3C;-fx-font-size:12px;");
 
-        HBox bottomBox = new HBox(8, new Label("Si el registro ya existe:"), cbPolicy);
+        Region spacer = new Region();
+        HBox.setHgrow(spacer, Priority.ALWAYS);
+        HBox bottomBox = new HBox(8, new Label("Si el registro ya existe:"), cbPolicy, spacer, btnNuevoCampo);
         bottomBox.setAlignment(Pos.CENTER_LEFT);
         bottomBox.setPadding(new Insets(10, 0, 4, 0));
 
@@ -131,7 +165,7 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
     }
 
     private TableView<ColumnRow> buildTable(ObservableList<ColumnRow> items,
-                                             List<String> opciones,
+                                             ObservableList<String> opciones,
                                              Map<String, String> claveToEtiqueta,
                                              Set<String> obligClaves) {
         TableView<ColumnRow> tabla = new TableView<>(items);
@@ -255,8 +289,8 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         private final ComboBox<String> combo;
         private boolean actualizando;
 
-        CampoCelda(List<String> opciones, Map<String, String> claveToEtiqueta) {
-            combo = new ComboBox<>(FXCollections.observableArrayList(opciones));
+        CampoCelda(ObservableList<String> opciones, Map<String, String> claveToEtiqueta) {
+            combo = new ComboBox<>(opciones);  // lista compartida: nuevos campos aparecen automáticamente
             combo.setMaxWidth(Double.MAX_VALUE);
             combo.setConverter(new StringConverter<>() {
                 @Override public String toString(String clave) {

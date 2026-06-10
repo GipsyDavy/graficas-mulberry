@@ -58,4 +58,21 @@ public record EntityImportSpec(
     public List<FieldSpec> camposOpcionales() {
         return campos.stream().filter(f -> !f.obligatorio()).toList();
     }
+
+    /**
+     * Nombre físico de la tabla SQLite para este spec.
+     * Devuelve null para entidades parent-child (Presupuestos, Facturas, Albaranes)
+     * donde la creación de campos extra no está soportada en el flujo de importación.
+     */
+    public String tableName() {
+        return switch (nombre()) {
+            case "Clientes"   -> "clientes";
+            case "Materiales" -> "materiales";
+            case "Empleados"  -> "empleados";
+            case "Tarifas"    -> "tarifas";
+            case "Nominas"    -> "nominas";
+            case "Pedidos"    -> "pedidos";
+            default           -> null;
+        };
+    }
 }

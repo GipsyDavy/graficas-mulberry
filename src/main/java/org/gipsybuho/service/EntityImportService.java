@@ -3,6 +3,7 @@ package org.gipsybuho.service;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
+import org.gipsybuho.dao.DynamicColumnValueDAO;
 import org.gipsybuho.service.importer.*;
 import java.time.format.DateTimeParseException;
 
@@ -11,6 +12,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Importa filas ya parseadas y mapeadas a una entidad del dominio.
@@ -266,6 +268,17 @@ public class EntityImportService {
         int insertadas = 0, actualizadas = 0;
         Connection conn = DatabaseManager.getConnection();
         boolean prevAC = conn.getAutoCommit();
+
+        // Columnas extra: claves del mapping que no están en el spec (campos dinámicos creados durante el diálogo)
+        Set<String> specClaves = spec.campos().stream().map(FieldSpec::clave).collect(Collectors.toSet());
+        Set<String> extraClaves = validas.isEmpty() ? Set.of() :
+            validas.get(0).vals().keySet().stream()
+                .filter(k -> !specClaves.contains(k))
+                .collect(Collectors.toSet());
+        String tableName = spec.tableName();
+        boolean tieneExtras = !extraClaves.isEmpty() && tableName != null;
+        DynamicColumnValueDAO valueDAO = tieneExtras ? new DynamicColumnValueDAO() : null;
+
         conn.setAutoCommit(false);
         try {
             for (ValidRow vr : validas) {
@@ -274,6 +287,15 @@ public class EntityImportService {
                     int[] r = procesarFila(conn, spec, vr, policy, errores);
                     insertadas   += r[0];
                     actualizadas += r[1];
+                    int entityId  = r[2];
+                    if (tieneExtras && entityId > 0) {
+                        Map<String, String> extraVals = new LinkedHashMap<>();
+                        for (String k : extraClaves) {
+                            String v = vr.vals().getOrDefault(k, "");
+                            if (v != null && !v.isBlank()) extraVals.put(k, v);
+                        }
+                        if (!extraVals.isEmpty()) valueDAO.updateValues(tableName, entityId, extraVals);
+                    }
                 } catch (SQLException sqle) {
                     conn.rollback(sp);
                     errores.add(new RowError(vr.numero(), null, null, ErrorTipo.OTRO,
@@ -327,6 +349,8 @@ public class EntityImportService {
         return new int[]{insertadas, actualizadas, filasOk};
     }
 
+    // Devuelve int[]{insertadas, actualizadas, entityId}
+    // entityId > 0 cuando la fila fue insertada o actualizada; 0 cuando fue omitida o hay error.
     private int[] procesarFila(Connection conn, EntityImportSpec spec, ValidRow vr,
                                 DuplicatePolicy policy, List<RowError> errores) throws SQLException {
         return switch (spec.nombre()) {
@@ -368,29 +392,29 @@ public class EntityImportService {
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(m);
-            return new int[]{1, 0};
+            return new int[]{1, 0, m.getId()};
         }
 
         String ref = m.getReferencia();
         if (ref == null || ref.isBlank()) {
             errores.add(new RowError(vr.numero(), "referencia", ref, ErrorTipo.OTRO,
                 "Sin clave de negocio ('referencia') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         int existingId = buscarId(conn, "SELECT id FROM materiales WHERE referencia=?", ref);
         if (existingId == 0) {
             dao.save(m);
-            return new int[]{1, 0};
+            return new int[]{1, 0, m.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         // UPDATE_EXISTING: cargar existente y sobreescribir solo los campos importados
         Material existente = dao.findById(existingId);
         aplicarValoresMaterial(existente, vr.vals());
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Material ensamblarMaterial(Map<String, String> vals) {
@@ -424,28 +448,28 @@ public class EntityImportService {
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(emp);
-            return new int[]{1, 0};
+            return new int[]{1, 0, emp.getId()};
         }
 
         String nif = emp.getNif();
         if (nif == null || nif.isBlank()) {
             errores.add(new RowError(vr.numero(), "nif", nif, ErrorTipo.OTRO,
                 "Sin clave de negocio ('nif') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         int existingId = buscarId(conn, "SELECT id FROM empleados WHERE nif=?", nif);
         if (existingId == 0) {
             dao.save(emp);
-            return new int[]{1, 0};
+            return new int[]{1, 0, emp.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         Empleado existente = dao.findById(existingId);
         aplicarValoresEmpleado(existente, vr.vals());
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Empleado ensamblarEmpleado(Map<String, String> vals) {
@@ -483,28 +507,28 @@ public class EntityImportService {
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(c);
-            return new int[]{1, 0};
+            return new int[]{1, 0, c.getId()};
         }
 
         String nif = c.getNif();
         if (nif == null || nif.isBlank()) {
             errores.add(new RowError(vr.numero(), "nif", nif, ErrorTipo.OTRO,
                 "Sin clave de negocio ('nif') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         int existingId = buscarId(conn, "SELECT id FROM clientes WHERE nif=?", nif);
         if (existingId == 0) {
             dao.save(c);
-            return new int[]{1, 0};
+            return new int[]{1, 0, c.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         Cliente existente = dao.findById(existingId);
         aplicarValoresCliente(existente, vr.vals());
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Cliente ensamblarCliente(Map<String, String> vals) {
@@ -540,7 +564,7 @@ public class EntityImportService {
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(t);
-            return new int[]{1, 0};
+            return new int[]{1, 0, t.getId()};
         }
 
         String tecnica = t.getTecnica();
@@ -550,22 +574,22 @@ public class EntityImportService {
             errores.add(new RowError(vr.numero(), "tecnica+nombre",
                 tecnica + "/" + nombre, ErrorTipo.OTRO,
                 "Sin clave de negocio ('tecnica'+'nombre') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         // TODO: añadir UNIQUE(tecnica, nombre) en migración futura para defensa en profundidad
         int existingId = buscarIdTarifa(conn, tecnica, nombre);
         if (existingId == 0) {
             dao.save(t);
-            return new int[]{1, 0};
+            return new int[]{1, 0, t.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         Tarifa existente = dao.findById(existingId);
         aplicarValoresTarifa(existente, vr.vals());
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Tarifa ensamblarTarifa(Map<String, String> vals) {
@@ -595,11 +619,11 @@ public class EntityImportService {
                                   List<RowError> errores) throws SQLException {
         NominaDAO dao = new NominaDAO();
         Nomina n = ensamblarNomina(vr.vals(), conn, errores, vr.numero());
-        if (n == null) return new int[]{0, 0};
+        if (n == null) return new int[]{0, 0, 0};
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(n);
-            return new int[]{1, 0};
+            return new int[]{1, 0, n.getId()};
         }
 
         int empleadoId = n.getEmpleadoId();
@@ -609,16 +633,16 @@ public class EntityImportService {
             errores.add(new RowError(vr.numero(), "empleado_id+mes+anio",
                 empleadoId + "/" + mes + "/" + anio, ErrorTipo.OTRO,
                 "Sin clave de negocio ('empleado_id'+'mes'+'anio') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         int existingId = buscarIdNomina(conn, empleadoId, mes, anio);
         if (existingId == 0) {
             dao.save(n);
-            return new int[]{1, 0};
+            return new int[]{1, 0, n.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         Nomina existente = dao.findById(existingId);
         aplicarValoresNomina(existente, vr.vals());
@@ -626,7 +650,7 @@ public class EntityImportService {
         existente.setMes(mes);
         existente.setAnio(anio);
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Nomina ensamblarNomina(Map<String, String> vals, Connection conn,
@@ -680,37 +704,37 @@ public class EntityImportService {
                                   List<RowError> errores) throws SQLException {
         PedidoDAO dao = new PedidoDAO();
         Pedido p = ensamblarPedido(vr.vals(), conn, errores, vr.numero());
-        if (p == null) return new int[]{0, 0};
+        if (p == null) return new int[]{0, 0, 0};
 
         if (policy == DuplicatePolicy.CREATE_NEW) {
             dao.save(p);
-            return new int[]{1, 0};
+            return new int[]{1, 0, p.getId()};
         }
 
         String numero = p.getNumero();
         if (numero == null || numero.isBlank()) {
             errores.add(new RowError(vr.numero(), "numero", numero, ErrorTipo.OTRO,
                 "Sin clave de negocio ('numero') requerida por la política " + policy));
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
 
         int existingId = buscarId(conn, "SELECT id FROM pedidos WHERE numero=?", numero);
         if (existingId == 0) {
             dao.save(p);
-            return new int[]{1, 0};
+            return new int[]{1, 0, p.getId()};
         }
         if (policy == DuplicatePolicy.SKIP_IF_EXISTS) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         Pedido existente = dao.findById(existingId);
         int erroresAntes = errores.size();
         aplicarValoresPedido(existente, vr.vals(), errores, vr.numero());
         if (errores.size() > erroresAntes) {
-            return new int[]{0, 0};
+            return new int[]{0, 0, 0};
         }
         existente.setClienteId(p.getClienteId());
         dao.save(existente);
-        return new int[]{0, 1};
+        return new int[]{0, 1, existingId};
     }
 
     private Pedido ensamblarPedido(Map<String, String> vals, Connection conn,

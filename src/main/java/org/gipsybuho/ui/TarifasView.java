@@ -341,7 +341,7 @@ public class TarifasView extends VBox {
         FileChooser fc = new FileChooser();
         fc.setTitle("Importar tarifas");
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.json"),
+            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
             new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;

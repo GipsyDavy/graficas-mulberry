@@ -2,9 +2,8 @@ package org.gipsybuho.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.*;
 
@@ -71,13 +70,16 @@ public class ImportService {
 
     public ImportResult parseFile(File file) throws Exception {
         String name = file.getName().toLowerCase();
-        if (name.endsWith(".xlsx"))
-            return parseExcel(file, false);
-        if (name.endsWith(".xls"))
-            return parseExcel(file, true);
         if (name.endsWith(".json"))
             return parseJSON(file);
-        return parseCSV(file);  // CSV, TXT, or unknown
+        if (name.endsWith(".csv") || name.endsWith(".txt"))
+            return parseCSV(file);
+        // Todos los formatos Excel: xlsx, xls, xlsb, xlsm, xltx, xltm…
+        if (name.endsWith(".xlsx") || name.endsWith(".xls")
+                || name.endsWith(".xlsb") || name.endsWith(".xlsm")
+                || name.endsWith(".xltx") || name.endsWith(".xltm"))
+            return parseExcel(file);
+        return parseCSV(file);  // desconocido → intentar CSV
     }
 
     private ImportResult parseCSV(File file) throws Exception {
@@ -156,18 +158,18 @@ public class ImportService {
             .toString();
     }
 
-    private ImportResult parseExcel(File file, boolean legacy) throws Exception {
+    private ImportResult parseExcel(File file) throws Exception {
         List<String> headers = new ArrayList<>();
         List<Map<String, String>> rows = new ArrayList<>();
+        String ext = file.getName().toLowerCase().replaceAll(".*\\.", "").toUpperCase();
 
-        try (InputStream is = new FileInputStream(file)) {
-            Workbook wb = legacy ? new HSSFWorkbook(is) : new XSSFWorkbook(is);
+        try (Workbook wb = WorkbookFactory.create(file, null, true)) {
             Sheet sheet = wb.getSheetAt(0);
             FormulaEvaluator ev = wb.getCreationHelper().createFormulaEvaluator();
 
             int firstRow = sheet.getFirstRowNum();
             Row hRow = sheet.getRow(firstRow);
-            if (hRow == null) { wb.close(); return new ImportResult(headers, rows, legacy ? "XLS" : "XLSX"); }
+            if (hRow == null) return new ImportResult(headers, rows, ext);
 
             for (Cell c : hRow) headers.add(cellStr(c, ev));
 
@@ -184,9 +186,8 @@ public class ImportService {
                 }
                 if (hasData) rows.add(map);
             }
-            wb.close();
         }
-        return new ImportResult(headers, rows, legacy ? "XLS" : "XLSX");
+        return new ImportResult(headers, rows, ext);
     }
 
     private String cellStr(Cell cell, FormulaEvaluator ev) {
