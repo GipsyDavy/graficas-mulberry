@@ -84,11 +84,13 @@ public class ColumnConfiguratorDialog {
 
         Button add = new Button("+ Añadir");
         Button rename = new Button("Renombrar");
+        Button changeType = new Button("Tipo…");
         Button show = new Button("Mostrar");
         Button hide = new Button("Ocultar");
         Button delete = new Button("Eliminar");
         add.setMaxWidth(Double.MAX_VALUE);
         rename.setMaxWidth(Double.MAX_VALUE);
+        changeType.setMaxWidth(Double.MAX_VALUE);
         show.setMaxWidth(Double.MAX_VALUE);
         hide.setMaxWidth(Double.MAX_VALUE);
         delete.setMaxWidth(Double.MAX_VALUE);
@@ -96,11 +98,12 @@ public class ColumnConfiguratorDialog {
 
         add.setOnAction(e -> addColumn());
         rename.setOnAction(e -> renameColumn(listView.getSelectionModel().getSelectedItem()));
+        changeType.setOnAction(e -> changeColumnType(listView.getSelectionModel().getSelectedItem()));
         show.setOnAction(e -> showColumn(listView.getSelectionModel().getSelectedItem()));
         hide.setOnAction(e -> hideColumn(listView.getSelectionModel().getSelectedItem()));
         delete.setOnAction(e -> deleteColumn(listView.getSelectionModel().getSelectedItem()));
 
-        VBox actions = new VBox(8, add, rename, show, hide, delete);
+        VBox actions = new VBox(8, add, rename, changeType, show, hide, delete);
         HBox.setHgrow(listView, Priority.ALWAYS);
         HBox content = new HBox(12, listView, actions);
         content.setPadding(new Insets(12));
@@ -239,6 +242,54 @@ public class ColumnConfiguratorDialog {
         confirm.showAndWait().filter(ButtonType.YES::equals).ifPresent(button -> {
             try {
                 dao.deleteDynamic(tableName, selected.columnName());
+                changed = true;
+                load();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        });
+    }
+
+    private void changeColumnType(ColumnConfig selected) {
+        if (selected == null) return;
+
+        String currentInternal = selected.dataType() != null ? selected.dataType() : "TEXTO";
+        String currentDisplay = switch (currentInternal) {
+            case "NUMERICO" -> "NUMÉRICO";
+            case "PRECIO"   -> "PRECIO";
+            case "FECHA"    -> "FECHA";
+            default         -> "TEXTO";
+        };
+
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Cambiar tipo de dato");
+        dialog.setHeaderText("Columna: " + selected.label());
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getStylesheets().addAll(stylesheets);
+
+        ComboBox<String> cbTipo = new ComboBox<>(FXCollections.observableArrayList(
+            "TEXTO", "NUMÉRICO", "PRECIO", "FECHA"));
+        cbTipo.setValue(currentDisplay);
+        cbTipo.setPrefWidth(200);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(12));
+        grid.add(new Label("Tipo de dato:"), 0, 0);
+        grid.add(cbTipo, 1, 0);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.showAndWait().filter(ButtonType.OK::equals).ifPresent(bt -> {
+            String newType = switch (cbTipo.getValue()) {
+                case "NUMÉRICO" -> "NUMERICO";
+                case "PRECIO"   -> "PRECIO";
+                case "FECHA"    -> "FECHA";
+                default         -> "TEXTO";
+            };
+            if (newType.equals(currentInternal)) return;
+            try {
+                dao.updateDataType(tableName, selected.columnName(), newType);
                 changed = true;
                 load();
             } catch (Exception ex) {
