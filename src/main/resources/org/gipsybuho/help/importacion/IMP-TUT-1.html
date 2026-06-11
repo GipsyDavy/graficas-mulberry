@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Crear un campo personalizado durante la importación</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="TUT">
+  <meta name="tags" content="campo nuevo,personalizado,importación,columna dinámica,crear">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Crear un campo personalizado durante la importación</h1>
+
+<p>Si tu archivo contiene una columna que no existe en el sistema (p. ej. "Sector de actividad" para clientes,
+o "Proveedor habitual" para materiales), puedes crear ese campo directamente desde el diálogo
+de importación sin necesidad de salir.</p>
+
+<div class="note">Esta función solo está disponible para módulos planos: Clientes, Materiales,
+Empleados, Pedidos, Nóminas y Tarifas. No está disponible en Presupuestos, Facturas ni Albaranes.</div>
+
+<h2>Paso a paso</h2>
+<ol class="steps">
+  <li>Inicia la importación normalmente y abre el <strong>diálogo de mapeo de columnas</strong>.</li>
+  <li>Identifica la columna del archivo para la que no existe campo destino.</li>
+  <li>Haz clic en el botón verde <strong>➕ Nuevo campo…</strong> en la parte inferior del diálogo.
+      (Si no aparece, estás importando un módulo parent-child que no lo soporta.)</li>
+  <li>Escribe el nombre visible del campo, por ejemplo: <code>Sector de actividad</code>.</li>
+  <li>Haz clic en <strong>Aceptar</strong>. El sistema crea automáticamente:
+    <ul>
+      <li>Una columna nueva en la tabla de la base de datos.</li>
+      <li>Un registro en la configuración de columnas para que aparezca en la tabla del módulo.</li>
+    </ul>
+  </li>
+  <li>El nuevo campo aparece ahora en el desplegable de <em>Campo destino</em> de todas las filas.
+      Asígnalo a la columna del archivo correspondiente.</li>
+  <li>Al finalizar la importación, los valores de esa columna se guardarán en el nuevo campo.</li>
+</ol>
+
+<h2>¿Dónde aparece el nuevo campo?</h2>
+<p>El campo creado aparece como una columna adicional en la tabla del módulo.
+Para verlo o editarlo en registros individuales, ve al módulo y abre el registro correspondiente.</p>
+
+<h2>¿Se puede eliminar el campo creado?</h2>
+<p>Sí, desde <em>Configuración → Columnas personalizadas</em>. Ten en cuenta que
+al eliminar el campo se pierden todos los valores almacenados en él.</p>
+
+<div class="tip">El nombre que introduces (p. ej. "Sector de actividad") es la etiqueta visible.
+El nombre interno de la columna en la base de datos se genera automáticamente como
+<code>ext_sector_de_actividad</code>. No necesitas conocerlo para usarlo.</div>
+</body>
+</html>

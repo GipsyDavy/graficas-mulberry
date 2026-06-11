@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Estados de una factura</title>
+<meta name="module" content="facturas"><meta name="category" content="REF">
+<meta name="tags" content="factura,estado,pendiente,pagada,anulada,vencida"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Facturas</p>
+<h1>Estados de una factura</h1>
+<table class="field-ref">
+  <thead><tr><th>Estado</th><th>Significado</th><th>Acciones disponibles</th></tr></thead>
+  <tbody>
+    <tr><td>Pendiente</td><td>Factura emitida y no cobrada todavía.</td><td>Editar, marcar como pagada, anular.</td></tr>
+    <tr><td>Pagada</td><td>El cobro ha sido registrado.</td><td>Visualizar. Solo se puede revertir a Pendiente si no se ha exportado.</td></tr>
+    <tr><td>Anulada</td><td>La factura se ha cancelado. No computa en estadísticas de ventas.</td><td>Visualizar únicamente.</td></tr>
+  </tbody>
+</table>
+<div class="warning">Anular una factura es irreversible. Úsalo solo cuando la factura fue emitida por error. Para correcciones parciales, emite una factura rectificativa manualmente.</div>
+<div class="tip">Las facturas cuya fecha de vencimiento ha pasado y siguen en estado Pendiente aparecen resaltadas en rojo en la tabla.</div>
+</body></html>

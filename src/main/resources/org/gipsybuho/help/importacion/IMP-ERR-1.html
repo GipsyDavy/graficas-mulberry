@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Error NIF o número no encontrado al importar</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="ERR">
+  <meta name="tags" content="error,NIF,número,no encontrado,FK,importar,cliente">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Error: NIF o número no encontrado al importar</h1>
+
+<h2>¿Qué significa este error?</h2>
+<p>Al importar facturas, albaranes o presupuestos, el sistema necesita saber a qué cliente o
+proveedor pertenecen. Lo hace buscando el NIF del cliente en la base de datos.
+Si el NIF indicado en el archivo no existe en el sistema, aparece este error.</p>
+
+<p>Ejemplo de mensaje: <code>NIF "B12345678" no encontrado para el cliente</code></p>
+
+<h2>Causas habituales</h2>
+<ul>
+  <li>El cliente aún no está dado de alta en el sistema.</li>
+  <li>El NIF en el archivo tiene un formato diferente al registrado (p. ej. con espacios, guiones o diferente capitalización).</li>
+  <li>El archivo tiene una columna de NIF incorrectamente asignada a otro campo en el mapeo.</li>
+</ul>
+
+<h2>Cómo resolverlo</h2>
+<ol class="steps">
+  <li>Anota el NIF o número que aparece en el error.</li>
+  <li>Ve al módulo <em>Clientes</em> y busca si existe ese NIF. Usa el campo de búsqueda.</li>
+  <li>Si no existe: primero importa o da de alta el cliente, luego vuelve a importar el archivo original.</li>
+  <li>Si existe pero con diferente formato (p. ej. <code>b12345678</code> vs <code>B12345678</code>):
+      corrige el NIF en el archivo antes de importar.</li>
+  <li>Si el error es de número (p. ej. <code>Factura FAC-001 no encontrada</code> al importar un albarán):
+      primero importa las facturas, luego los albaranes.</li>
+</ol>
+
+<div class="tip">El orden de importación correcto para documentos vinculados es:
+<strong>Clientes → Presupuestos → Facturas → Albaranes</strong>.
+Nunca importes un documento que referencia otro antes de haber importado el referenciado.</div>
+</body>
+</html>

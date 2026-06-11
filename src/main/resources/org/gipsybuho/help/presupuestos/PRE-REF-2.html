@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Líneas de presupuesto: campos y cálculo de totales</title>
+<meta name="module" content="presupuestos"><meta name="category" content="REF">
+<meta name="tags" content="presupuesto,líneas,descripción,cantidad,precio,total,IVA"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Presupuestos</p>
+<h1>Líneas de presupuesto: campos y cálculo de totales</h1>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Descripción</td><td>Texto descriptivo del concepto o servicio. Aparece en el PDF del presupuesto.</td></tr>
+    <tr><td>Cantidad</td><td>Número de unidades. Debe ser un número positivo.</td></tr>
+    <tr><td>Precio unitario</td><td>Precio sin IVA de cada unidad.</td></tr>
+    <tr><td>Subtotal</td><td>Calculado automáticamente: Cantidad × Precio unitario.</td></tr>
+  </tbody>
+</table>
+<h2>Cálculo del total del presupuesto</h2>
+<ul>
+  <li><strong>Base imponible</strong> = suma de todos los subtotales de las líneas.</li>
+  <li><strong>IVA</strong> = Base imponible × porcentaje de IVA del presupuesto.</li>
+  <li><strong>Total</strong> = Base imponible + IVA.</li>
+</ul>
+<div class="note">El porcentaje de IVA se aplica a todo el presupuesto, no por línea.
+Por defecto es el 21%. Cámbialo en el encabezado del presupuesto si es necesario.</div>
+</body></html>

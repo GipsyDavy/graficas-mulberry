@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Política de duplicados: omitir, actualizar o crear nuevo</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="REF">
+  <meta name="tags" content="duplicados,política,omitir,actualizar,crear,SKIP,UPDATE,CREATE">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Política de duplicados: omitir, actualizar o crear nuevo</h1>
+
+<p>Cuando importas un archivo que contiene registros cuya clave (NIF, DNI, número…) ya existe
+en la base de datos, el sistema aplica la <strong>política de duplicados</strong> que hayas elegido
+en el diálogo de mapeo.</p>
+
+<h2>Opciones disponibles</h2>
+
+<table class="field-ref">
+  <thead><tr><th>Opción</th><th>Descripción</th><th>Cuándo usarla</th></tr></thead>
+  <tbody>
+    <tr>
+      <td><strong>Omitir si existe</strong><br>(por defecto)</td>
+      <td>Si la clave ya existe en la BD, esa fila se descarta sin error. Solo se importan los registros nuevos.</td>
+      <td>Primera importación de datos históricos. Cuando los datos de la BD están actualizados y no quieres sobreescribir nada.</td>
+    </tr>
+    <tr>
+      <td><strong>Actualizar existente</strong></td>
+      <td>Si la clave ya existe, se actualizan los campos del registro con los valores del archivo. Si no existe, se inserta como nuevo.</td>
+      <td>Actualización masiva de datos ya importados (p. ej. cambio de tarifas, actualización de stock).</td>
+    </tr>
+    <tr>
+      <td><strong>Crear siempre</strong></td>
+      <td>Se inserta un registro nuevo independientemente de si la clave ya existe. El sistema genera una clave nueva.</td>
+      <td>Solo para datos sin clave natural única. <em>No usar para clientes, materiales o empleados</em>.</td>
+    </tr>
+  </tbody>
+</table>
+
+<div class="warning">La opción <strong>Actualizar existente</strong> sobreescribe los campos
+del registro existente. Los campos que no vengan en el archivo quedan sin cambios,
+pero los que sí vengan se sobreescriben aunque el valor sea vacío.
+Haz un backup antes de usarla. Ver <a href="IMP-ADV-1.html">Qué campos sobreescribe la política Actualizar</a>.</div>
+
+<div class="note">La opción <strong>Crear siempre</strong> no está disponible para módulos parent-child
+(Presupuestos, Facturas, Albaranes). Estos módulos usan el número de documento como clave y
+deben ser únicos.</div>
+
+<h2>El resumen de importación</h2>
+<p>Al finalizar la importación, el sistema muestra un resumen con:</p>
+<ul>
+  <li><strong>Insertadas</strong> — registros nuevos añadidos.</li>
+  <li><strong>Actualizadas</strong> — registros existentes modificados.</li>
+  <li><strong>Omitidas</strong> — registros descartados por duplicado (con política Omitir).</li>
+  <li><strong>Errores</strong> — filas con problemas que no se pudieron procesar.</li>
+</ul>
+</body>
+</html>

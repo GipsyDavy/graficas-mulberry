@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Campos del formulario de factura</title>
+<meta name="module" content="facturas"><meta name="category" content="REF">
+<meta name="tags" content="factura,campos,formulario,número,fecha,IVA,referencia"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Facturas</p>
+<h1>Campos del formulario de factura</h1>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Número de factura</td><td>Sí (auto)</td><td>Generado automáticamente. Correlativo dentro del año en curso.</td></tr>
+    <tr><td>Cliente</td><td>Sí</td><td>Cliente al que se emite la factura. Busca por nombre o NIF.</td></tr>
+    <tr><td>Fecha de emisión</td><td>Sí</td><td>Por defecto es la fecha actual. Puede modificarse.</td></tr>
+    <tr><td>Fecha de vencimiento</td><td>No</td><td>Fecha límite de pago. Usada para filtrar facturas vencidas.</td></tr>
+    <tr><td>IVA (%)</td><td>Sí</td><td>Porcentaje de IVA aplicado a toda la factura. Por defecto 21%.</td></tr>
+    <tr><td>Estado</td><td>Sí</td><td>Pendiente / Pagada / Anulada.</td></tr>
+    <tr><td>Referencia interna</td><td>No</td><td>Campo libre para notas o número de pedido del cliente.</td></tr>
+    <tr><td>Método de pago</td><td>No</td><td>Transferencia, efectivo, cheque u otro. Solo relevante al marcar como Pagada.</td></tr>
+  </tbody>
+</table>
+</body></html>

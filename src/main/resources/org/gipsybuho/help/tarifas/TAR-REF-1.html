@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Campos de la tarifa</title>
+<meta name="module" content="tarifas"><meta name="category" content="REF">
+<meta name="tags" content="tarifa,campos,nombre,descripción,material,precio"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Tarifas</p>
+<h1>Campos de la tarifa</h1>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Nombre</td><td>Sí</td><td>Identificador de la tarifa. Debe ser único.</td></tr>
+    <tr><td>Descripción</td><td>No</td><td>Notas internas sobre el propósito o condiciones de la tarifa.</td></tr>
+    <tr><td>Material (línea)</td><td>Sí (al menos uno)</td><td>Material o servicio al que aplica el precio.</td></tr>
+    <tr><td>Precio unitario (línea)</td><td>Sí</td><td>Precio sin IVA para ese material en esta tarifa.</td></tr>
+  </tbody>
+</table>
+<div class="note">Si un material no tiene precio definido en la tarifa asignada al cliente, el sistema usa el precio base del material.</div>
+</body></html>

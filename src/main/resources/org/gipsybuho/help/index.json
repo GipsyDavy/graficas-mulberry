@@ -1,0 +1,101 @@
+[
+  {"id":"GEN-PS-1","module":"general","category":"PS","title":"Primeros pasos con Gráficas Mulberry","tags":["inicio","onboarding","primeros pasos","introducción","guía"],"path":"general/GEN-PS-1.html","priority":1},
+  {"id":"GEN-REF-1","module":"general","category":"REF","title":"Glosario de términos del sistema","tags":["glosario","términos","definiciones","presupuesto","factura","albarán"],"path":"general/GEN-REF-1.html","priority":2},
+  {"id":"GEN-FAQ-1","module":"general","category":"FAQ","title":"Preguntas frecuentes generales","tags":["FAQ","preguntas","ayuda","general"],"path":"general/GEN-FAQ-1.html","priority":3},
+  {"id":"GEN-ADV-1","module":"general","category":"ADV","title":"Acciones irreversibles: qué se puede recuperar y qué no","tags":["eliminar","borrar","irreversible","recuperar","backup"],"path":"general/GEN-ADV-1.html","priority":4},
+  {"id":"GEN-NEW-1","module":"general","category":"NEW","title":"Novedades de la versión actual","tags":["novedades","versión","cambios","importar","XLSB","campo nuevo"],"path":"general/GEN-NEW-1.html","priority":5},
+
+  {"id":"CLI-PS-1","module":"clientes","category":"PS","title":"Cómo añadir un cliente nuevo","tags":["cliente","añadir","crear","nuevo","NIF","empresa"],"path":"clientes/CLI-PS-1.html","priority":1},
+  {"id":"CLI-PS-2","module":"clientes","category":"PS","title":"Cómo editar los datos de un cliente","tags":["cliente","editar","modificar","actualizar"],"path":"clientes/CLI-PS-2.html","priority":2},
+  {"id":"CLI-REF-1","module":"clientes","category":"REF","title":"Campos del formulario de cliente","tags":["cliente","NIF","tipo","ciudad","empresa","particular","campos"],"path":"clientes/CLI-REF-1.html","priority":3},
+  {"id":"CLI-FAQ-1","module":"clientes","category":"FAQ","title":"¿Por qué no aparece el botón Guardar?","tags":["guardar","botón","deshabilitado","validación","campos"],"path":"clientes/CLI-FAQ-1.html","priority":4},
+  {"id":"CLI-ERR-1","module":"clientes","category":"ERR","title":"Error NIF duplicado","tags":["NIF","duplicado","error","cliente existente"],"path":"clientes/CLI-ERR-1.html","priority":5},
+
+  {"id":"MAT-PS-1","module":"materiales","category":"PS","title":"Cómo añadir un material nuevo","tags":["material","añadir","crear","nuevo","código","stock"],"path":"materiales/MAT-PS-1.html","priority":1},
+  {"id":"MAT-REF-1","module":"materiales","category":"REF","title":"Campos del formulario de material","tags":["material","código","categoría","unidad","stock","precio","campos"],"path":"materiales/MAT-REF-1.html","priority":2},
+  {"id":"MAT-FAQ-1","module":"materiales","category":"FAQ","title":"¿Qué es el stock y se actualiza automáticamente?","tags":["stock","inventario","actualizar","pedido","material"],"path":"materiales/MAT-FAQ-1.html","priority":3},
+  {"id":"MAT-ERR-1","module":"materiales","category":"ERR","title":"Error código de material duplicado","tags":["código","duplicado","error","material existente"],"path":"materiales/MAT-ERR-1.html","priority":4},
+
+  {"id":"EMP-PS-1","module":"empleados","category":"PS","title":"Cómo dar de alta un empleado","tags":["empleado","alta","nuevo","DNI","categoría"],"path":"empleados/EMP-PS-1.html","priority":1},
+  {"id":"EMP-REF-1","module":"empleados","category":"REF","title":"Campos del formulario de empleado","tags":["empleado","DNI","categoría","fecha alta","activo","campos"],"path":"empleados/EMP-REF-1.html","priority":2},
+  {"id":"EMP-FAQ-1","module":"empleados","category":"FAQ","title":"¿Qué significa inactivo y puedo importar nóminas de empleados dados de baja?","tags":["empleado","inactivo","baja","nómina","histórico"],"path":"empleados/EMP-FAQ-1.html","priority":3},
+  {"id":"EMP-ERR-1","module":"empleados","category":"ERR","title":"Error DNI duplicado en empleado","tags":["DNI","duplicado","error","empleado existente"],"path":"empleados/EMP-ERR-1.html","priority":4},
+
+  {"id":"PRE-PS-1","module":"presupuestos","category":"PS","title":"Cómo crear un presupuesto desde cero","tags":["presupuesto","crear","nuevo","cliente","líneas"],"path":"presupuestos/PRE-PS-1.html","priority":1},
+  {"id":"PRE-PS-2","module":"presupuestos","category":"PS","title":"Cómo convertir un presupuesto en factura","tags":["presupuesto","factura","convertir","aceptado","generar"],"path":"presupuestos/PRE-PS-2.html","priority":2},
+  {"id":"PRE-REF-1","module":"presupuestos","category":"REF","title":"Estados del presupuesto","tags":["presupuesto","estado","borrador","enviado","aceptado","rechazado"],"path":"presupuestos/PRE-REF-1.html","priority":3},
+  {"id":"PRE-REF-2","module":"presupuestos","category":"REF","title":"Líneas de presupuesto: campos y cálculo de totales","tags":["presupuesto","líneas","descripción","cantidad","precio","total","IVA"],"path":"presupuestos/PRE-REF-2.html","priority":4},
+  {"id":"PRE-FAQ-1","module":"presupuestos","category":"FAQ","title":"¿Puedo cambiar el cliente de un presupuesto ya enviado?","tags":["presupuesto","cliente","cambiar","enviado","editar"],"path":"presupuestos/PRE-FAQ-1.html","priority":5},
+  {"id":"PRE-ERR-1","module":"presupuestos","category":"ERR","title":"Error número duplicado en presupuesto","tags":["presupuesto","número","duplicado","error"],"path":"presupuestos/PRE-ERR-1.html","priority":6},
+
+  {"id":"FAC-PS-1","module":"facturas","category":"PS","title":"Cómo crear una factura desde cero","tags":["factura","crear","nueva","cliente","líneas"],"path":"facturas/FAC-PS-1.html","priority":1},
+  {"id":"FAC-PS-2","module":"facturas","category":"PS","title":"Cómo generar una factura desde un presupuesto aceptado","tags":["factura","presupuesto","generar","aceptado","convertir"],"path":"facturas/FAC-PS-2.html","priority":2},
+  {"id":"FAC-REF-1","module":"facturas","category":"REF","title":"Estados de factura","tags":["factura","estado","pendiente","pagada","anulada"],"path":"facturas/FAC-REF-1.html","priority":3},
+  {"id":"FAC-REF-2","module":"facturas","category":"REF","title":"Forma de pago: valores posibles","tags":["factura","forma pago","transferencia","contado","domiciliación"],"path":"facturas/FAC-REF-2.html","priority":4},
+  {"id":"FAC-FAQ-1","module":"facturas","category":"FAQ","title":"¿Cómo exportar la factura a PDF?","tags":["factura","PDF","exportar","imprimir"],"path":"facturas/FAC-FAQ-1.html","priority":5},
+  {"id":"FAC-ERR-1","module":"facturas","category":"ERR","title":"Error número duplicado en factura","tags":["factura","número","duplicado","error"],"path":"facturas/FAC-ERR-1.html","priority":6},
+
+  {"id":"ALB-PS-1","module":"albaranes","category":"PS","title":"Cómo crear un albarán","tags":["albarán","crear","nuevo","cliente","líneas"],"path":"albaranes/ALB-PS-1.html","priority":1},
+  {"id":"ALB-PS-2","module":"albaranes","category":"PS","title":"Cómo generar un albarán desde una factura","tags":["albarán","factura","generar","crear","desde"],"path":"albaranes/ALB-PS-2.html","priority":2},
+  {"id":"ALB-REF-1","module":"albaranes","category":"REF","title":"Estados de albarán","tags":["albarán","estado","pendiente","entregado","cancelado"],"path":"albaranes/ALB-REF-1.html","priority":3},
+  {"id":"ALB-FAQ-1","module":"albaranes","category":"FAQ","title":"¿Un albarán tiene que estar vinculado a una factura?","tags":["albarán","factura","vinculado","relación","independiente"],"path":"albaranes/ALB-FAQ-1.html","priority":4},
+  {"id":"ALB-ERR-1","module":"albaranes","category":"ERR","title":"Error factura no encontrada al crear albarán","tags":["albarán","factura","error","no encontrada","FK"],"path":"albaranes/ALB-ERR-1.html","priority":5},
+
+  {"id":"PED-PS-1","module":"pedidos","category":"PS","title":"Cómo crear un pedido de material a proveedor","tags":["pedido","proveedor","material","crear","nuevo"],"path":"pedidos/PED-PS-1.html","priority":1},
+  {"id":"PED-REF-1","module":"pedidos","category":"REF","title":"Estados del pedido y flujo de trabajo","tags":["pedido","estado","pendiente","recibido","cancelado","flujo"],"path":"pedidos/PED-REF-1.html","priority":2},
+  {"id":"PED-FAQ-1","module":"pedidos","category":"FAQ","title":"¿Cómo registro la recepción de mercancía?","tags":["pedido","recepción","mercancía","recibido","stock"],"path":"pedidos/PED-FAQ-1.html","priority":3},
+  {"id":"PED-ERR-1","module":"pedidos","category":"ERR","title":"Error número duplicado en pedido","tags":["pedido","número","duplicado","error"],"path":"pedidos/PED-ERR-1.html","priority":4},
+
+  {"id":"NOM-PS-1","module":"nominas","category":"PS","title":"Cómo registrar una nómina mensual","tags":["nómina","registrar","mensual","empleado","salario"],"path":"nominas/NOM-PS-1.html","priority":1},
+  {"id":"NOM-REF-1","module":"nominas","category":"REF","title":"Campos de nómina: bruto, retención, neto, mes, año","tags":["nómina","bruto","neto","retención","IRPF","mes","año","campos"],"path":"nominas/NOM-REF-1.html","priority":2},
+  {"id":"NOM-FAQ-1","module":"nominas","category":"FAQ","title":"¿Puedo registrar la nómina de un empleado dado de baja?","tags":["nómina","empleado","baja","inactivo","histórico"],"path":"nominas/NOM-FAQ-1.html","priority":3},
+
+  {"id":"TAR-PS-1","module":"tarifas","category":"PS","title":"Cómo asignar una tarifa a un cliente para un material","tags":["tarifa","cliente","material","asignar","precio"],"path":"tarifas/TAR-PS-1.html","priority":1},
+  {"id":"TAR-REF-1","module":"tarifas","category":"REF","title":"Qué es un tramo de tarifa y cómo funciona","tags":["tarifa","tramo","cantidad","precio","descuento"],"path":"tarifas/TAR-REF-1.html","priority":2},
+  {"id":"TAR-FAQ-1","module":"tarifas","category":"FAQ","title":"¿Cómo sé qué tarifa se aplica en un presupuesto?","tags":["tarifa","presupuesto","precio","cliente","material"],"path":"tarifas/TAR-FAQ-1.html","priority":3},
+
+  {"id":"IMP-PS-1","module":"importacion","category":"PS","title":"Cómo importar datos desde Excel o CSV","tags":["importar","Excel","CSV","datos","archivo","XLSX","XLSB"],"path":"importacion/IMP-PS-1.html","priority":1},
+  {"id":"IMP-REF-1","module":"importacion","category":"REF","title":"Formatos de archivo soportados en la importación","tags":["formato","CSV","XLS","XLSX","XLSB","XLSM","JSON","extensión"],"path":"importacion/IMP-REF-1.html","priority":2},
+  {"id":"IMP-REF-2","module":"importacion","category":"REF","title":"Diálogo de mapeo de columnas: cómo usarlo","tags":["mapeo","columnas","diálogo","campo","destino","obligatorio"],"path":"importacion/IMP-REF-2.html","priority":3},
+  {"id":"IMP-REF-3","module":"importacion","category":"REF","title":"Política de duplicados: omitir, actualizar o crear nuevo","tags":["duplicados","política","omitir","actualizar","crear","SKIP","UPDATE","CREATE"],"path":"importacion/IMP-REF-3.html","priority":4},
+  {"id":"IMP-TUT-1","module":"importacion","category":"TUT","title":"Crear un campo personalizado durante la importación","tags":["campo nuevo","personalizado","importación","columna dinámica","crear"],"path":"importacion/IMP-TUT-1.html","priority":5},
+  {"id":"IMP-ERR-1","module":"importacion","category":"ERR","title":"Error NIF o número no encontrado al importar","tags":["error","NIF","número","no encontrado","FK","importar","cliente"],"path":"importacion/IMP-ERR-1.html","priority":6},
+  {"id":"IMP-ERR-2","module":"importacion","category":"ERR","title":"Errores de formato de fecha en columnas de fecha","tags":["error","fecha","formato","ISO","columna","importar"],"path":"importacion/IMP-ERR-2.html","priority":7},
+  {"id":"IMP-FAQ-1","module":"importacion","category":"FAQ","title":"Mi Excel tiene celdas combinadas. ¿Cómo lo importo?","tags":["Excel","celdas combinadas","importar","convertir","CSV","complejo"],"path":"importacion/IMP-FAQ-1.html","priority":8},
+  {"id":"IMP-ADV-1","module":"importacion","category":"ADV","title":"Importación con política Actualizar: qué campos sobreescribe","tags":["actualizar","sobreescribir","importar","política","datos","UPDATE"],"path":"importacion/IMP-ADV-1.html","priority":9},
+
+  {"id":"EXP-PS-1","module":"exportacion","category":"PS","title":"Cómo exportar una tabla a Excel o CSV","tags":["exportar","Excel","CSV","tabla","datos"],"path":"exportacion/EXP-PS-1.html","priority":1},
+  {"id":"EXP-PS-2","module":"exportacion","category":"PS","title":"Cómo exportar un documento a PDF","tags":["exportar","PDF","factura","presupuesto","albarán","imprimir"],"path":"exportacion/EXP-PS-2.html","priority":2},
+  {"id":"EXP-FAQ-1","module":"exportacion","category":"FAQ","title":"¿Puedo elegir qué columnas exportar?","tags":["exportar","columnas","elegir","seleccionar","Excel"],"path":"exportacion/EXP-FAQ-1.html","priority":3},
+
+  {"id":"BAK-PS-1","module":"backups","category":"PS","title":"Cómo hacer una copia de seguridad","tags":["backup","copia seguridad","exportar","base de datos","guardar"],"path":"backups/BAK-PS-1.html","priority":1},
+  {"id":"BAK-PS-2","module":"backups","category":"PS","title":"Cómo restaurar desde una copia de seguridad","tags":["backup","restaurar","importar","base de datos","recuperar"],"path":"backups/BAK-PS-2.html","priority":2},
+  {"id":"BAK-FAQ-1","module":"backups","category":"FAQ","title":"¿Con qué frecuencia debo hacer backups?","tags":["backup","frecuencia","cuándo","diario","semanal"],"path":"backups/BAK-FAQ-1.html","priority":3},
+  {"id":"BAK-ADV-1","module":"backups","category":"ADV","title":"Restaurar un backup sobreescribe todos los datos actuales","tags":["backup","restaurar","sobreescribir","eliminar","irreversible"],"path":"backups/BAK-ADV-1.html","priority":4},
+  {"id":"BAK-ERR-1","module":"backups","category":"ERR","title":"Error al importar backup: formato incompatible","tags":["backup","error","formato","versión","incompatible","importar"],"path":"backups/BAK-ERR-1.html","priority":5},
+
+  {"id":"IA-PS-1","module":"ia","category":"PS","title":"Cómo instalar Ollama y activar el asistente de IA","tags":["IA","Ollama","instalar","activar","configurar","local"],"path":"ia/IA-PS-1.html","priority":1},
+  {"id":"IA-PS-2","module":"ia","category":"PS","title":"Cómo usar el asistente de IA en la aplicación","tags":["IA","asistente","preguntar","comando","chat","Ollama"],"path":"ia/IA-PS-2.html","priority":2},
+  {"id":"IA-REF-1","module":"ia","category":"REF","title":"Comandos disponibles en el asistente de IA","tags":["IA","comandos","acciones","chat","asistente","función"],"path":"ia/IA-REF-1.html","priority":3},
+  {"id":"IA-FAQ-1","module":"ia","category":"FAQ","title":"El asistente dice Ollama no disponible. ¿Qué hago?","tags":["IA","Ollama","error","no disponible","conexión","instalar"],"path":"ia/IA-FAQ-1.html","priority":4},
+  {"id":"IA-ADV-1","module":"ia","category":"ADV","title":"El asistente no envía datos fuera del equipo","tags":["IA","privacidad","datos","offline","local","Ollama","seguridad"],"path":"ia/IA-ADV-1.html","priority":5},
+
+  {"id":"AST-PS-1","module":"asistente","category":"PS","title":"Cómo activar el asistente visual y la lectura en voz","tags":["asistente","TTS","voz","visual","activar","texto a voz"],"path":"asistente/AST-PS-1.html","priority":1},
+  {"id":"AST-FAQ-1","module":"asistente","category":"FAQ","title":"¿El asistente habla aunque tenga el volumen bajo en Windows?","tags":["asistente","TTS","volumen","Windows","voz","sonido"],"path":"asistente/AST-FAQ-1.html","priority":2},
+
+  {"id":"EST-PS-1","module":"estadisticas","category":"PS","title":"Cómo ver las estadísticas de ventas y materiales","tags":["estadísticas","ventas","materiales","gráficas","informes"],"path":"estadisticas/EST-PS-1.html","priority":1},
+  {"id":"EST-REF-1","module":"estadisticas","category":"REF","title":"Cómo filtrar estadísticas por período y módulo","tags":["estadísticas","filtro","período","mes","año","módulo"],"path":"estadisticas/EST-REF-1.html","priority":2},
+
+  {"id":"CAL-PS-1","module":"calendario","category":"PS","title":"Cómo añadir una nota o evento al calendario","tags":["calendario","nota","evento","añadir","fecha"],"path":"calendario/CAL-PS-1.html","priority":1},
+  {"id":"CAL-FAQ-1","module":"calendario","category":"FAQ","title":"¿El calendario se sincroniza con otras aplicaciones?","tags":["calendario","sincronizar","Google","Outlook","externo","offline"],"path":"calendario/CAL-FAQ-1.html","priority":2},
+
+  {"id":"USR-PS-1","module":"usuarios","category":"PS","title":"Cómo crear un usuario nuevo","tags":["usuario","crear","nuevo","contraseña","rol","administrador"],"path":"usuarios/USR-PS-1.html","priority":1},
+  {"id":"USR-REF-1","module":"usuarios","category":"REF","title":"Permisos por rol: ADMINISTRADOR, COMERCIAL, PRODUCCION, CONTABILIDAD","tags":["rol","permisos","administrador","comercial","producción","contabilidad","acceso"],"path":"usuarios/USR-REF-1.html","priority":2},
+  {"id":"USR-FAQ-1","module":"usuarios","category":"FAQ","title":"¿Qué puede hacer cada rol?","tags":["rol","permisos","acceso","módulos","usuario","restricciones"],"path":"usuarios/USR-FAQ-1.html","priority":3},
+  {"id":"USR-ADV-1","module":"usuarios","category":"ADV","title":"Solo un ADMINISTRADOR puede cambiar contraseñas o eliminar usuarios","tags":["administrador","contraseña","eliminar","usuario","permisos","seguridad"],"path":"usuarios/USR-ADV-1.html","priority":4},
+  {"id":"USR-ERR-1","module":"usuarios","category":"ERR","title":"Error Sin permisos al acceder a un módulo","tags":["permisos","error","acceso","rol","módulo","denegado"],"path":"usuarios/USR-ERR-1.html","priority":5},
+
+  {"id":"CFG-PS-1","module":"configuracion","category":"PS","title":"Cómo cambiar el tema visual de la aplicación","tags":["tema","visual","configuración","color","oscuro","claro","mulberry"],"path":"configuracion/CFG-PS-1.html","priority":1},
+  {"id":"CFG-REF-1","module":"configuracion","category":"REF","title":"Temas disponibles en Gráficas Mulberry","tags":["tema","mulberry","oscuro","claro","corporativo","minimalista","color"],"path":"configuracion/CFG-REF-1.html","priority":2},
+  {"id":"CFG-FAQ-1","module":"configuracion","category":"FAQ","title":"¿La configuración se aplica a todos los usuarios o solo al mío?","tags":["configuración","usuario","personal","global","tema","ajustes"],"path":"configuracion/CFG-FAQ-1.html","priority":3}
+]

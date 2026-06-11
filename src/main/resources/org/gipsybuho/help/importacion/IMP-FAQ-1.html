@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Mi Excel tiene celdas combinadas. ¿Cómo lo importo?</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="FAQ">
+  <meta name="tags" content="Excel,celdas combinadas,importar,convertir,CSV,complejo">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Mi Excel tiene celdas combinadas. ¿Cómo lo importo?</h1>
+
+<p>El importador de Gráficas Mulberry espera un archivo plano: una fila = un registro,
+cabeceras en la primera fila, sin celdas combinadas ni bloques decorativos.
+Si tu archivo no cumple esto, necesitas convertirlo primero.</p>
+
+<h2>¿Cuándo es un problema?</h2>
+<p>Estos casos requieren conversión previa:</p>
+<ul>
+  <li>Celdas combinadas en cabeceras o en columnas de datos.</li>
+  <li>Varias mini-tablas pegadas en horizontal en la misma hoja.</li>
+  <li>Filas de título decorativas encima de la cabecera real.</li>
+  <li>Totales calculados con fórmulas mezclados con los datos.</li>
+  <li>Datos que no empiezan en la fila 1.</li>
+</ul>
+
+<h2>Cómo convertir un Excel complejo a importable</h2>
+<ol class="steps">
+  <li>Abre el archivo en Excel.</li>
+  <li>Selecciona solo el rango de datos real (sin filas de título, sin totales).</li>
+  <li>Pégalo en una hoja nueva: <em>Pegado especial → Solo valores</em> (para quitar fórmulas).</li>
+  <li>Si hay celdas combinadas en columnas de datos:
+    <ul>
+      <li>Selecciona la columna afectada.</li>
+      <li><em>Inicio → Combinar y centrar → Separar celdas</em>.</li>
+      <li>Rellena las celdas vacías resultantes con el valor correspondiente (hacia abajo).</li>
+    </ul>
+  </li>
+  <li>Asegúrate de que la fila 1 contiene solo los nombres de columna.</li>
+  <li>Guarda como <code>.xlsx</code> o <code>.csv</code>.</li>
+</ol>
+
+<h2>Truco para rellenar celdas vacías hacia abajo en Excel</h2>
+<ol class="steps">
+  <li>Selecciona la columna con valores dispersos.</li>
+  <li>Pulsa <em>Ctrl+G → Especial → Celdas en blanco</em>.</li>
+  <li>Sin desmarcar la selección, escribe <code>=</code> y la celda anterior (p. ej. <code>=A2</code>).</li>
+  <li>Pulsa <em>Ctrl+Intro</em>. Todas las celdas vacías se rellenan con el valor superior.</li>
+  <li>Copia toda la columna y pégala como <em>Solo valores</em> para eliminar las fórmulas.</li>
+</ol>
+
+<div class="note">Si el archivo tiene esta estructura con frecuencia (p. ej. exportaciones periódicas
+del software anterior), considera crear un script de conversión reutilizable.
+Consulta con el administrador del sistema.</div>
+</body>
+</html>

@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Error NIF duplicado</title>
+  <meta name="module" content="clientes">
+  <meta name="category" content="ERR">
+  <meta name="tags" content="NIF,duplicado,error,cliente existente">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Clientes</p>
+<h1>Error: NIF duplicado</h1>
+<p>Aparece cuando intentas crear un cliente con un NIF que ya existe en el sistema.</p>
+<h2>Cómo resolverlo</h2>
+<ol class="steps">
+  <li>Busca el NIF en la tabla de clientes usando el campo de búsqueda.</li>
+  <li>Si el cliente ya existe y es el mismo, no necesitas crear uno nuevo. Edita el existente si quieres actualizar datos.</li>
+  <li>Si crees que el NIF es nuevo pero el sistema lo rechaza, verifica que no tiene espacios ni guiones adicionales.</li>
+  <li>Si estás importando y aparece en el resumen como "omitido por duplicado" con política Omitir, es el comportamiento esperado: el cliente ya existía.</li>
+</ol>
+</body>
+</html>

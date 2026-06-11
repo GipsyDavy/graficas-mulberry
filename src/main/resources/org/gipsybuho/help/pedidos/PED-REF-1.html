@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Campos y estados de un pedido</title>
+<meta name="module" content="pedidos"><meta name="category" content="REF">
+<meta name="tags" content="pedido,campos,estado,pendiente,proceso,completado,cancelado"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Pedidos</p>
+<h1>Campos y estados de un pedido</h1>
+<h2>Campos principales</h2>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Número de pedido</td><td>Sí (auto)</td><td>Generado automáticamente.</td></tr>
+    <tr><td>Cliente</td><td>Sí</td><td>Cliente que realiza el pedido.</td></tr>
+    <tr><td>Fecha del pedido</td><td>Sí</td><td>Por defecto, fecha actual.</td></tr>
+    <tr><td>Fecha de entrega prevista</td><td>No</td><td>Fecha estimada de entrega.</td></tr>
+    <tr><td>Notas</td><td>No</td><td>Observaciones internas o del cliente.</td></tr>
+  </tbody>
+</table>
+<h2>Estados del pedido</h2>
+<table class="field-ref">
+  <thead><tr><th>Estado</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Pendiente</td><td>Pedido registrado, pendiente de iniciar.</td></tr>
+    <tr><td>En proceso</td><td>Pedido en curso de fabricación o preparación.</td></tr>
+    <tr><td>Completado</td><td>Pedido entregado al cliente.</td></tr>
+    <tr><td>Cancelado</td><td>Pedido cancelado. No genera factura ni albarán.</td></tr>
+  </tbody>
+</table>
+</body></html>

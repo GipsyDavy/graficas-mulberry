@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Acciones irreversibles: qué se puede recuperar y qué no</title>
+  <meta name="module" content="general">
+  <meta name="category" content="ADV">
+  <meta name="tags" content="eliminar,borrar,irreversible,recuperar,backup">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> General</p>
+<h1>Acciones irreversibles: qué se puede recuperar y qué no</h1>
+
+<div class="danger">Las acciones de esta lista no se pueden deshacer dentro de la aplicación.
+La única forma de recuperar datos eliminados es restaurar un backup anterior.</div>
+
+<h2>Acciones irreversibles</h2>
+
+<table class="field-ref">
+  <thead><tr><th>Acción</th><th>Qué se pierde</th><th>Alternativa</th></tr></thead>
+  <tbody>
+    <tr>
+      <td>Eliminar un cliente</td>
+      <td>El cliente y todos sus presupuestos, facturas y albaranes asociados.</td>
+      <td>Antes de eliminar, exporta los documentos del cliente a PDF o CSV.</td>
+    </tr>
+    <tr>
+      <td>Eliminar un empleado</td>
+      <td>El empleado y todas sus nóminas históricas.</td>
+      <td>Si ya no trabaja en la empresa, cámbialo a estado "inactivo" en lugar de eliminarlo.</td>
+    </tr>
+    <tr>
+      <td>Eliminar un presupuesto</td>
+      <td>El presupuesto y todas sus líneas. Las facturas generadas desde él <em>no</em> se eliminan.</td>
+      <td>Cambia el estado a "rechazado" en lugar de eliminar.</td>
+    </tr>
+    <tr>
+      <td>Eliminar una factura</td>
+      <td>La factura y todas sus líneas. Los albaranes generados desde ella <em>no</em> se eliminan.</td>
+      <td>Cambia el estado a "anulada" en lugar de eliminar.</td>
+    </tr>
+    <tr>
+      <td>Restaurar un backup</td>
+      <td>Todos los datos actuales. Se reemplazan por los del backup.</td>
+      <td>Haz un nuevo backup antes de restaurar uno antiguo.</td>
+    </tr>
+    <tr>
+      <td>Importar con política "Actualizar existente"</td>
+      <td>Los valores actuales de los campos importados se sobreescriben.</td>
+      <td>Usa "Omitir si existe" o haz un backup antes de importar.</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>Cómo protegerte</h2>
+<ol class="steps">
+  <li>Haz un backup antes de cualquier operación masiva (importación, borrado en lote).</li>
+  <li>Comprueba siempre el número de registros afectados antes de confirmar.</li>
+  <li>Usa los estados (inactivo, anulada, rechazado) en lugar de eliminar cuando sea posible.</li>
+</ol>
+
+<div class="tip">Consulta <a href="../backups/BAK-PS-1.html">Cómo hacer una copia de seguridad</a>
+para asegurarte de tener un punto de restauración reciente antes de cualquier operación de riesgo.</div>
+</body>
+</html>

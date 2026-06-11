@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Errores de formato de fecha en columnas de fecha</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="ERR">
+  <meta name="tags" content="error,fecha,formato,ISO,columna,importar">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Errores de formato de fecha en columnas de fecha</h1>
+
+<h2>¿Qué formatos de fecha acepta el sistema?</h2>
+<p>El sistema acepta estos formatos automáticamente:</p>
+<ul>
+  <li><code>YYYY-MM-DD</code> — formato ISO (recomendado): <code>2026-05-01</code></li>
+  <li>Número serial de Excel (p. ej. <code>46378</code>) — Excel almacena las fechas como días desde 1900.</li>
+</ul>
+
+<h2>Formatos que causan errores</h2>
+<ul>
+  <li><code>01/05/2026</code> — formato DD/MM/YYYY. Convierte a ISO: <code>2026-05-01</code></li>
+  <li><code>01-05-2026</code> — formato DD-MM-YYYY. Mismo problema.</li>
+  <li><code>May 1, 2026</code> — fecha en inglés. Convierte a ISO.</li>
+  <li><code>01/05/26</code> — año de dos dígitos. El sistema no puede adivinar el siglo correctamente.</li>
+  <li>Celdas de texto que parecen fechas pero no son fechas de Excel.</li>
+</ul>
+
+<h2>Cómo corregirlo en Excel</h2>
+<ol class="steps">
+  <li>Selecciona la columna de fechas.</li>
+  <li>Haz clic derecho → <em>Formato de celdas</em>.</li>
+  <li>Elige <em>Texto</em> y luego aplica este formato personalizado: <code>YYYY-MM-DD</code>.</li>
+  <li>O usa la función de Excel: <code>=TEXTO(A1,"YYYY-MM-DD")</code> y copia los resultados como valores.</li>
+  <li>Guarda el archivo y vuelve a importar.</li>
+</ol>
+
+<div class="note">Si tu archivo Excel tiene las fechas como fechas reales de Excel (no como texto),
+el importador las convierte automáticamente. El problema solo ocurre cuando la celda tiene
+la fecha como <em>texto</em> con formato no reconocido.</div>
+</body>
+</html>

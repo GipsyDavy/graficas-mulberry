@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Cómo añadir un cliente nuevo</title>
+  <meta name="module" content="clientes">
+  <meta name="category" content="PS">
+  <meta name="tags" content="cliente,añadir,crear,nuevo,NIF,empresa">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Clientes</p>
+<h1>Cómo añadir un cliente nuevo</h1>
+<ol class="steps">
+  <li>Abre el módulo <strong>Clientes</strong> desde la barra lateral.</li>
+  <li>Haz clic en el botón <strong>➕ Nuevo</strong> de la barra de herramientas.</li>
+  <li>Rellena el formulario. Los campos marcados con * son obligatorios:
+    <ul>
+      <li><strong>NIF *</strong> — identificador fiscal único del cliente (p. ej. <code>B12345678</code> para empresa, <code>12345678A</code> para particular).</li>
+      <li><strong>Nombre *</strong> — nombre o razón social.</li>
+      <li><strong>Tipo</strong> — <em>empresa</em> o <em>particular</em>.</li>
+      <li>Apellidos, teléfono, email, dirección y ciudad son opcionales pero recomendables.</li>
+    </ul>
+  </li>
+  <li>Haz clic en <strong>Guardar</strong>. El cliente aparece en la tabla.</li>
+</ol>
+<div class="tip">Si el NIF ya existe, el sistema te avisará. Busca el cliente en la tabla
+antes de crear uno nuevo para evitar duplicados. Ver <a href="CLI-ERR-1.html">Error NIF duplicado</a>.</div>
+</body>
+</html>

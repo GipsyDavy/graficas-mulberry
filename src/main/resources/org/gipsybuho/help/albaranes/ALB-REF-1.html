@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Campos y estados del albarán</title>
+<meta name="module" content="albaranes"><meta name="category" content="REF">
+<meta name="tags" content="albarán,campos,estado,entregado,facturado,pendiente"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Albaranes</p>
+<h1>Campos y estados del albarán</h1>
+<h2>Campos principales</h2>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Número de albarán</td><td>Sí (auto)</td><td>Generado automáticamente de forma correlativa.</td></tr>
+    <tr><td>Cliente</td><td>Sí</td><td>Cliente al que se entrega el material o servicio.</td></tr>
+    <tr><td>Fecha de entrega</td><td>Sí</td><td>Por defecto la fecha actual.</td></tr>
+    <tr><td>Notas</td><td>No</td><td>Campo libre para observaciones de entrega.</td></tr>
+  </tbody>
+</table>
+<h2>Estados del albarán</h2>
+<table class="field-ref">
+  <thead><tr><th>Estado</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Borrador</td><td>Albarán en preparación. No se ha entregado todavía.</td></tr>
+    <tr><td>Entregado</td><td>El material o servicio ha sido entregado al cliente.</td></tr>
+    <tr><td>Facturado</td><td>Ya se ha generado una factura a partir de este albarán.</td></tr>
+  </tbody>
+</table>
+</body></html>

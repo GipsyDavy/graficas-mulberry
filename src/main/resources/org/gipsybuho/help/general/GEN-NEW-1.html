@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Novedades de la versión actual</title>
+  <meta name="module" content="general">
+  <meta name="category" content="NEW">
+  <meta name="tags" content="novedades,versión,cambios,importar,XLSB,campo nuevo">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> General</p>
+<h1>Novedades de la versión actual (v13.5)</h1>
+
+<h2>Importación mejorada — XLSB, XLSM y más formatos Excel</h2>
+<p>Ahora puedes importar archivos en todos los formatos de Excel:</p>
+<ul>
+  <li><strong>XLSB</strong> — Excel Binario (formato compacto de Microsoft Excel)</li>
+  <li><strong>XLSM</strong> — Excel con macros (los datos se importan; las macros se ignoran)</li>
+  <li><strong>XLTX / XLTM</strong> — plantillas de Excel</li>
+  <li>Además de los ya soportados: XLSX, XLS, CSV, JSON</li>
+</ul>
+<p>No necesitas convertir el archivo antes de importarlo. Selecciona el archivo directamente
+y el asistente de importación lo procesa automáticamente.</p>
+
+<h2>Crear campos personalizados desde el asistente de importación</h2>
+<p>Durante la importación, ahora puedes crear un campo personalizado nuevo directamente
+en el diálogo de mapeo de columnas, sin tener que salir del flujo de importación.</p>
+<p>El botón <strong>➕ Nuevo campo…</strong> aparece en la parte inferior del diálogo de mapeo
+cuando importas clientes, materiales, empleados, pedidos, nóminas o tarifas.</p>
+<div class="note">Esta función no está disponible para presupuestos, facturas ni albaranes
+por su estructura de cabecera + líneas.</div>
+<p>Consulta <a href="../importacion/IMP-TUT-1.html">Crear un campo personalizado durante la importación</a>.</p>
+
+<h2>Indicadores de carga (skeleton + overlay)</h2>
+<p>Las tablas de Clientes, Facturas y Pedidos ahora muestran un indicador de carga mientras
+se recuperan los datos de la base de datos. Esto es especialmente útil cuando la tabla
+tiene muchos registros.</p>
+
+<h2>Mejoras visuales</h2>
+<ul>
+  <li>Asistente de IA (<em>IAView</em>) con barra de comandos estilizada.</li>
+  <li>Barra de estado mejorada con variables CSS coherentes en todos los temas.</li>
+  <li>DatePicker, ProgressBar, RadioButton y ContextMenu estilizados de forma coherente.</li>
+</ul>
+</body>
+</html>

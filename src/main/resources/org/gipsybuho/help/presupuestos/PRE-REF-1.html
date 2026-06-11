@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Estados del presupuesto</title>
+<meta name="module" content="presupuestos"><meta name="category" content="REF">
+<meta name="tags" content="presupuesto,estado,borrador,enviado,aceptado,rechazado"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Presupuestos</p>
+<h1>Estados del presupuesto</h1>
+<table class="field-ref">
+  <thead><tr><th>Estado</th><th>Significado</th><th>Acciones disponibles</th></tr></thead>
+  <tbody>
+    <tr><td>Borrador</td><td>Presupuesto en preparación. Todavía no se ha enviado al cliente.</td><td>Editar, enviar, eliminar.</td></tr>
+    <tr><td>Enviado</td><td>El presupuesto se ha enviado al cliente y espera respuesta.</td><td>Marcar como aceptado, rechazado o volver a borrador.</td></tr>
+    <tr><td>Aceptado</td><td>El cliente ha aceptado el presupuesto. Se puede convertir en factura.</td><td>Generar factura.</td></tr>
+    <tr><td>Rechazado</td><td>El cliente ha rechazado el presupuesto. No genera factura.</td><td>Visualizar. No se puede editar.</td></tr>
+  </tbody>
+</table>
+<div class="tip">Usa el estado <em>Rechazado</em> en lugar de eliminar el presupuesto para conservar el historial.</div>
+</body></html>

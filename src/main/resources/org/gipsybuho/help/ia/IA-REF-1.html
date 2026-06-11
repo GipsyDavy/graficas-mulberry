@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Modelos Ollama compatibles y requisitos</title>
+<meta name="module" content="ia"><meta name="category" content="REF">
+<meta name="tags" content="IA,Ollama,modelos,requisitos,RAM,rendimiento"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> IA</p>
+<h1>Modelos Ollama compatibles y requisitos</h1>
+<table class="field-ref">
+  <thead><tr><th>Modelo</th><th>RAM mínima</th><th>Velocidad</th><th>Calidad</th></tr></thead>
+  <tbody>
+    <tr><td>llama3:8b</td><td>8 GB</td><td>Rápida</td><td>Buena para tareas simples</td></tr>
+    <tr><td>llama3:70b</td><td>40 GB</td><td>Lenta</td><td>Muy alta</td></tr>
+    <tr><td>mistral:7b</td><td>8 GB</td><td>Rápida</td><td>Buena, especialmente en español</td></tr>
+    <tr><td>phi3:mini</td><td>4 GB</td><td>Muy rápida</td><td>Básica</td></tr>
+  </tbody>
+</table>
+<div class="note">Los modelos se descargan con <code>ollama pull &lt;nombre&gt;</code>. El primero en descargarse puede tardar varios minutos según la conexión.</div>
+<h2>Configuración de la URL</h2>
+<table class="field-ref">
+  <thead><tr><th>Parámetro</th><th>Valor por defecto</th></tr></thead>
+  <tbody>
+    <tr><td>URL de la API</td><td>http://localhost:11434</td></tr>
+    <tr><td>Timeout</td><td>60 segundos</td></tr>
+  </tbody>
+</table>
+</body></html>

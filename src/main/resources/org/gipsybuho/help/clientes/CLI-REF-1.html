@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Campos del formulario de cliente</title>
+  <meta name="module" content="clientes">
+  <meta name="category" content="REF">
+  <meta name="tags" content="cliente,NIF,tipo,ciudad,empresa,particular,campos">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Clientes</p>
+<h1>Campos del formulario de cliente</h1>
+<table class="field-ref">
+  <thead><tr><th>Campo</th><th>Obligatorio</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>NIF</td><td>Sí</td><td>Número de Identificación Fiscal. Clave única del cliente. Formato empresa: <code>B12345678</code>. Particular: <code>12345678A</code>.</td></tr>
+    <tr><td>Nombre</td><td>Sí</td><td>Nombre o razón social completa.</td></tr>
+    <tr><td>Apellidos</td><td>No</td><td>Apellidos (para clientes particulares).</td></tr>
+    <tr><td>Tipo</td><td>No</td><td><em>empresa</em> (por defecto) o <em>particular</em>.</td></tr>
+    <tr><td>Teléfono</td><td>No</td><td>Teléfono de contacto principal.</td></tr>
+    <tr><td>Email</td><td>No</td><td>Correo electrónico para envío de presupuestos o facturas.</td></tr>
+    <tr><td>Dirección</td><td>No</td><td>Calle y número de la sede o domicilio fiscal.</td></tr>
+    <tr><td>Ciudad</td><td>No</td><td>Ciudad. Por defecto: <em>Almería</em>.</td></tr>
+    <tr><td>Código postal</td><td>No</td><td>Código postal de la dirección.</td></tr>
+    <tr><td>Notas</td><td>No</td><td>Notas internas sobre el cliente. No aparecen en documentos.</td></tr>
+  </tbody>
+</table>
+</body>
+</html>

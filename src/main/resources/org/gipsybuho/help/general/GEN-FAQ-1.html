@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Preguntas frecuentes generales</title>
+  <meta name="module" content="general">
+  <meta name="category" content="FAQ">
+  <meta name="tags" content="FAQ,preguntas,ayuda,general">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> General</p>
+<h1>Preguntas frecuentes generales</h1>
+
+<h2>¿Puedo usar la aplicación en varios equipos a la vez?</h2>
+<p>No. La aplicación es monopuesto: la base de datos está en el equipo donde se instala.
+No hay servidor central ni sincronización automática entre equipos.
+Si necesitas usar los datos en otro equipo, exporta un backup e impórtalo allí.</p>
+
+<h2>¿Los datos se guardan en la nube?</h2>
+<p>No. Todos los datos se almacenan en el equipo local, en la carpeta
+<code>%LOCALAPPDATA%\GraficasMulberry\</code>.
+No se envía ningún dato a internet, ni siquiera al usar el asistente de IA (Ollama también es local).</p>
+
+<h2>¿Qué hago si la aplicación no arranca?</h2>
+<ol class="steps">
+  <li>Verifica que tienes Java 21 o superior instalado.</li>
+  <li>Cierra cualquier otra instancia de la aplicación que pudiera estar abierta.</li>
+  <li>Si el error menciona la base de datos, haz una copia de seguridad del archivo
+      <code>%LOCALAPPDATA%\GraficasMulberry\graficas_mulberry.db</code> antes de continuar.</li>
+  <li>Contacta con el administrador del sistema si el error persiste.</li>
+</ol>
+
+<h2>¿Puedo cambiar mi contraseña?</h2>
+<p>Sí. Ve a <em>Configuración → Mi cuenta</em> y elige la opción de cambiar contraseña.
+Necesitas introducir la contraseña actual para confirmar el cambio.
+Si has olvidado tu contraseña, un ADMINISTRADOR puede restablecerla desde <em>Usuarios</em>.</p>
+
+<h2>¿Puedo eliminar registros?</h2>
+<p>Sí, pero ten en cuenta que algunas eliminaciones son irreversibles si no tienes un backup reciente.
+Consulta <a href="GEN-ADV-1.html">Acciones irreversibles: qué se puede recuperar y qué no</a>.</p>
+
+<h2>¿La aplicación funciona sin internet?</h2>
+<p>Sí. La aplicación es completamente offline. Solo necesita internet si quieres descargar modelos
+de IA para Ollama, que es un proceso manual y opcional.</p>
+
+<h2>¿Cómo sé qué versión tengo instalada?</h2>
+<p>La versión aparece en la parte inferior de la barra lateral izquierda.</p>
+</body>
+</html>

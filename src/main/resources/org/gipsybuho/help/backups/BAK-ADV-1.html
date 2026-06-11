@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Restaurar un backup sobreescribe todos los datos actuales</title>
+  <meta name="module" content="backups">
+  <meta name="category" content="ADV">
+  <meta name="tags" content="backup,restaurar,sobreescribir,eliminar,irreversible">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Backups</p>
+<h1>Restaurar un backup sobreescribe todos los datos actuales</h1>
+
+<div class="danger">Restaurar un backup elimina permanentemente el estado actual de la base
+de datos y lo reemplaza por el del backup. No hay marcha atrás salvo que hayas hecho
+un backup del estado actual antes de restaurar.</div>
+
+<h2>Qué se pierde al restaurar</h2>
+<ul>
+  <li>Todos los registros creados o modificados <strong>después</strong> de la fecha del backup.</li>
+  <li>Facturas, presupuestos, clientes o cualquier dato introducido desde entonces.</li>
+  <li>La configuración de columnas personalizadas creadas después del backup.</li>
+</ul>
+
+<h2>Protocolo seguro antes de restaurar</h2>
+<ol class="steps">
+  <li>Haz un backup del estado actual (<a href="BAK-PS-1.html">Cómo hacer una copia de seguridad</a>).</li>
+  <li>Guárdalo en una ubicación diferente a los backups habituales (p. ej. el escritorio).</li>
+  <li>Ahora restaura el backup antiguo.</li>
+  <li>Si el resultado no es el esperado, puedes volver al estado que tenías restaurando el backup que acabas de crear.</li>
+</ol>
+</body>
+</html>

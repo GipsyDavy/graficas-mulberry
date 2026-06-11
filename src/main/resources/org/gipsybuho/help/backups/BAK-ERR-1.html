@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Error al importar backup: formato incompatible</title>
+  <meta name="module" content="backups">
+  <meta name="category" content="ERR">
+  <meta name="tags" content="backup,error,formato,versión,incompatible,importar">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Backups</p>
+<h1>Error al importar backup: formato incompatible</h1>
+
+<h2>¿Por qué aparece este error?</h2>
+<p>Este error aparece cuando el archivo de backup no es compatible con la versión actual de la
+aplicación. Las causas más habituales son:</p>
+<ul>
+  <li>El backup fue creado con una versión muy antigua de la aplicación.</li>
+  <li>El archivo está dañado o incompleto (descarga interrumpida, error de copia).</li>
+  <li>El archivo no es un backup de Gráficas Mulberry (se eligió el archivo equivocado).</li>
+</ul>
+
+<h2>Cómo resolverlo</h2>
+<ol class="steps">
+  <li>Verifica que el archivo seleccionado es el correcto. Debe tener extensión <code>.zip</code>
+      y nombre similar a <code>backup_graficas_mulberry_*.zip</code>.</li>
+  <li>Comprueba que el archivo no está dañado: el tamaño debe ser razonable (al menos varios KB)
+      y debe poder abrirse con un descompresor ZIP.</li>
+  <li>Si tienes varios backups, prueba con el más reciente que funcione.</li>
+  <li>Si el backup fue creado con una versión muy antigua, contacta con el administrador
+      del sistema para valorar la migración.</li>
+</ol>
+
+<div class="note">Los backups creados con versiones anteriores de la aplicación pueden restaurarse
+en la mayoría de los casos. Si el error persiste, el administrador puede intentar la migración
+manual de la base de datos SQLite.</div>
+</body>
+</html>

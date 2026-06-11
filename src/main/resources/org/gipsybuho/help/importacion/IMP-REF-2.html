@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Diálogo de mapeo de columnas: cómo usarlo</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="REF">
+  <meta name="tags" content="mapeo,columnas,diálogo,campo,destino,obligatorio">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Diálogo de mapeo de columnas: cómo usarlo</h1>
+
+<p>El diálogo de mapeo de columnas aparece cada vez que importas un archivo. Te permite
+revisar y ajustar qué columna del archivo va a qué campo del sistema antes de que
+se procesen los datos.</p>
+
+<h2>Partes del diálogo</h2>
+
+<table class="field-ref">
+  <thead><tr><th>Elemento</th><th>Descripción</th></tr></thead>
+  <tbody>
+    <tr><td>Columna del archivo</td><td>Nombre de la cabecera tal como aparece en tu Excel o CSV. No editable.</td></tr>
+    <tr><td>Muestra</td><td>Las primeras 3 filas de datos de esa columna, separadas por " │ ". Te ayuda a identificar qué contiene.</td></tr>
+    <tr><td>Campo destino</td><td>Desplegable con todos los campos del módulo. Elige el campo al que debe ir esa columna, o deja <em>(ignorar)</em> si no la necesitas.</td></tr>
+    <tr><td>Indicador ✓ / ✱</td><td>Verde ✓ = campo obligatorio ya cubierto. Rojo ✱ = campo obligatorio que estaba sugerido pero se ignoró.</td></tr>
+    <tr><td>Si el registro ya existe</td><td>Desplegable de política de duplicados (Omitir / Actualizar / Crear nuevo). Ver <a href="IMP-REF-3.html">Política de duplicados</a>.</td></tr>
+    <tr><td>Botón ➕ Nuevo campo…</td><td>Crea un campo personalizado nuevo en la tabla. Solo aparece en módulos planos (no en Presupuestos, Facturas ni Albaranes).</td></tr>
+    <tr><td>Botón Aceptar</td><td>Solo se activa cuando todos los campos obligatorios están mapeados y no hay destinos duplicados.</td></tr>
+  </tbody>
+</table>
+
+<h2>Campos obligatorios</h2>
+<p>Cada módulo tiene uno o varios campos que el sistema necesita para identificar el registro.
+El botón <em>Aceptar</em> permanece deshabilitado hasta que estén todos asignados.</p>
+
+<table class="field-ref">
+  <thead><tr><th>Módulo</th><th>Campos obligatorios</th></tr></thead>
+  <tbody>
+    <tr><td>Clientes</td><td><code>nif</code></td></tr>
+    <tr><td>Materiales</td><td><code>codigo</code></td></tr>
+    <tr><td>Empleados</td><td><code>dni</code></td></tr>
+    <tr><td>Tarifas</td><td><code>material_codigo</code>, <code>cliente_nif</code></td></tr>
+    <tr><td>Nóminas</td><td><code>empleado_dni</code>, <code>mes</code>, <code>anio</code></td></tr>
+    <tr><td>Pedidos</td><td><code>numero</code></td></tr>
+    <tr><td>Presupuestos</td><td><code>numero</code>, <code>cliente_nif</code></td></tr>
+    <tr><td>Facturas</td><td><code>numero</code>, <code>cliente_nif</code></td></tr>
+    <tr><td>Albaranes</td><td><code>numero</code></td></tr>
+  </tbody>
+</table>
+
+<h2>¿Qué hace el mapeo automático?</h2>
+<p>El sistema intenta emparejar las cabeceras del archivo con los campos del módulo
+por similitud de nombre. Por ejemplo, una cabecera <code>NIF</code> o <code>nif_cliente</code>
+se asignará automáticamente al campo <code>nif</code> de Clientes.</p>
+<p>El mapeo automático acierta en la mayoría de los casos, pero siempre revísalo antes de aceptar.</p>
+
+<div class="tip">Si una columna del archivo contiene datos que el sistema no necesita
+(p. ej. una columna de notas internas), déjala en <em>(ignorar)</em>. No afecta a la importación.</div>
+</body>
+</html>

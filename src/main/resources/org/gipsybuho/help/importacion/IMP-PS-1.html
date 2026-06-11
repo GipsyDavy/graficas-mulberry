@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Cómo importar datos desde Excel o CSV</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="PS">
+  <meta name="tags" content="importar,Excel,CSV,datos,archivo,XLSX,XLSB">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Cómo importar datos desde Excel o CSV</h1>
+
+<div class="warning">Haz una copia de seguridad antes de cualquier importación masiva.
+Si algo sale mal, podrás restaurar el estado anterior.
+Ver <a href="../backups/BAK-PS-1.html">Cómo hacer una copia de seguridad</a>.</div>
+
+<h2>Pasos básicos</h2>
+<ol class="steps">
+  <li>Abre el módulo al que quieres importar datos (p. ej. <em>Clientes</em>).</li>
+  <li>Haz clic en el botón <strong>📥 Importar</strong> de la barra de herramientas.</li>
+  <li>En el selector de archivos, elige tu archivo Excel (.xlsx, .xlsb, .xlsm, .xls) o CSV.</li>
+  <li>Se abrirá el <strong>diálogo de mapeo de columnas</strong>. El sistema detecta automáticamente
+      qué columna del archivo corresponde a qué campo.</li>
+  <li>Revisa el mapeo sugerido. Los campos con ✓ verde son obligatorios ya cubiertos.
+      Los campos con ✱ rojo son obligatorios sin cubrir: debes asignarlos manualmente.</li>
+  <li>Elige la <strong>política de duplicados</strong>: qué hacer si un registro ya existe.</li>
+  <li>Haz clic en <strong>Aceptar</strong>. Se importan los datos y se muestra un resumen.</li>
+</ol>
+
+<h2>El diálogo de mapeo de columnas</h2>
+<p>Cada fila del diálogo corresponde a una columna del archivo. Las tres columnas del diálogo son:</p>
+<ul>
+  <li><strong>Columna del archivo</strong> — nombre de la cabecera en tu Excel o CSV.</li>
+  <li><strong>Muestra</strong> — primeras filas de ese campo para ayudarte a identificarlo.</li>
+  <li><strong>Campo destino</strong> — a qué campo del sistema se asigna. Usa el desplegable para cambiarlo.</li>
+</ul>
+<p>Las columnas que no necesitas importar déjalas en <em>(ignorar)</em>.</p>
+
+<h2>Requisitos del archivo</h2>
+<ul>
+  <li>Cabeceras en la primera fila, sin filas de título encima.</li>
+  <li>Sin celdas combinadas.</li>
+  <li>Sin fórmulas: guarda primero como valores (<em>Pegado especial → Solo valores</em> en Excel).</li>
+  <li>Fechas en formato <code>YYYY-MM-DD</code> o en formato de fecha de Excel (número serial).</li>
+  <li>Precios con punto como decimal (<code>12.50</code>), sin símbolo de moneda.</li>
+  <li>Encoding UTF-8 para CSV.</li>
+</ul>
+
+<div class="tip">Si tu Excel tiene celdas combinadas, varias tablas en horizontal o bloques decorativos,
+consulta <a href="IMP-FAQ-1.html">Mi Excel tiene celdas combinadas. ¿Cómo lo importo?</a></div>
+
+<h2>Formatos soportados</h2>
+<p>Ver <a href="IMP-REF-1.html">Formatos de archivo soportados en la importación</a>.</p>
+</body>
+</html>

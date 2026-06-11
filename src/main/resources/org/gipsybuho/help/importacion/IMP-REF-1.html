@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Formatos de archivo soportados en la importación</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="REF">
+  <meta name="tags" content="formato,CSV,XLS,XLSX,XLSB,XLSM,JSON,extensión">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Formatos de archivo soportados en la importación</h1>
+
+<table class="field-ref">
+  <thead><tr><th>Extensión</th><th>Descripción</th><th>Notas</th></tr></thead>
+  <tbody>
+    <tr><td>.csv</td><td>Texto separado por comas</td><td>El separador más universal. UTF-8 recomendado. Decimal con punto.</td></tr>
+    <tr><td>.txt</td><td>Texto plano con separadores</td><td>Se trata igual que CSV.</td></tr>
+    <tr><td>.xlsx</td><td>Excel moderno (Office 2007+)</td><td>Formato estándar. Compatible con LibreOffice y Google Sheets.</td></tr>
+    <tr><td>.xls</td><td>Excel clásico (hasta Office 2003)</td><td>Soportado pero obsoleto. Convierte a .xlsx si puedes.</td></tr>
+    <tr><td>.xlsb</td><td>Excel Binario</td><td>Formato compacto de Microsoft Excel. Soportado desde v13.5.</td></tr>
+    <tr><td>.xlsm</td><td>Excel con macros</td><td>Se importan los datos. Las macros se ignoran (no se ejecutan).</td></tr>
+    <tr><td>.xltx</td><td>Plantilla Excel (sin macros)</td><td>Se importan los datos de la primera hoja.</td></tr>
+    <tr><td>.xltm</td><td>Plantilla Excel con macros</td><td>Se importan los datos. Las macros se ignoran.</td></tr>
+    <tr><td>.json</td><td>JSON plano</td><td>Array de objetos con claves compatibles con el IMPORT_SPEC.</td></tr>
+  </tbody>
+</table>
+
+<h2>¿Qué hoja se importa en archivos Excel?</h2>
+<p>Siempre la <strong>primera hoja</strong> del libro. Si tu archivo tiene los datos en otra hoja,
+muévelos a la primera hoja antes de importar o guarda solo esa hoja como nuevo archivo.</p>
+
+<h2>Formatos no soportados directamente</h2>
+<ul>
+  <li><strong>PDF</strong> — no se puede importar directamente. Necesita conversión previa a CSV.</li>
+  <li><strong>Word (.docx/.doc)</strong> — igual que PDF.</li>
+  <li><strong>ODS</strong> (LibreOffice Calc) — guarda como CSV o XLSX desde LibreOffice primero.</li>
+</ul>
+
+<div class="note">Si tu archivo Excel tiene celdas combinadas, varias tablas por hoja o fórmulas,
+consulta <a href="IMP-FAQ-1.html">Mi Excel tiene celdas combinadas. ¿Cómo lo importo?</a>
+antes de intentar importarlo directamente.</div>
+</body>
+</html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Glosario de términos del sistema</title>
+  <meta name="module" content="general">
+  <meta name="category" content="REF">
+  <meta name="tags" content="glosario,términos,definiciones,presupuesto,factura,albarán">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> General</p>
+<h1>Glosario de términos del sistema</h1>
+
+<table class="field-ref">
+  <thead><tr><th>Término</th><th>Definición</th></tr></thead>
+  <tbody>
+    <tr><td>Albarán</td><td>Documento que acredita la entrega de mercancía o prestación del servicio. Se genera normalmente desde una factura.</td></tr>
+    <tr><td>Backup</td><td>Copia de seguridad de la base de datos. Permite restaurar todos los datos en caso de pérdida o error grave.</td></tr>
+    <tr><td>Campo obligatorio</td><td>Campo que debe rellenarse para guardar el registro. Se indica con un asterisco (*) o en rojo si se deja vacío.</td></tr>
+    <tr><td>Clave primaria</td><td>Identificador único de un registro (NIF para clientes, DNI para empleados, código para materiales). No puede repetirse.</td></tr>
+    <tr><td>Columna dinámica</td><td>Campo adicional creado por el usuario (p. ej. "Sector" en clientes). Se almacena como columna extra en la tabla correspondiente.</td></tr>
+    <tr><td>DNI</td><td>Documento Nacional de Identidad del empleado. Clave única que identifica a cada empleado en el sistema.</td></tr>
+    <tr><td>Duplicado</td><td>Registro con la misma clave primaria que otro ya existente. El sistema puede omitirlo, actualizarlo o crear uno nuevo según la política elegida.</td></tr>
+    <tr><td>Estado</td><td>Fase actual de un documento: p. ej. un presupuesto puede estar en <em>borrador</em>, <em>enviado</em>, <em>aceptado</em> o <em>rechazado</em>.</td></tr>
+    <tr><td>Factura</td><td>Documento fiscal que acredita la compraventa de bienes o servicios. Se genera desde un presupuesto aceptado o directamente.</td></tr>
+    <tr><td>FK (clave foránea)</td><td>Referencia de un documento a otro (p. ej. una factura referencia al cliente por su NIF). Si el registro referenciado no existe, el sistema devuelve un error.</td></tr>
+    <tr><td>IVA</td><td>Impuesto sobre el Valor Añadido. Se aplica como porcentaje sobre la base imponible de presupuestos y facturas.</td></tr>
+    <tr><td>Línea</td><td>Fila de detalle dentro de un presupuesto, factura, albarán o pedido. Describe un concepto, cantidad y precio unitario.</td></tr>
+    <tr><td>Mapeo de columnas</td><td>Proceso de asignar cada columna del archivo importado a un campo del sistema. Se realiza en el diálogo de importación.</td></tr>
+    <tr><td>NIF</td><td>Número de Identificación Fiscal del cliente. Clave única que identifica a cada cliente en el sistema.</td></tr>
+    <tr><td>Nómina</td><td>Registro mensual del salario de un empleado: salario bruto, retenciones y neto a percibir.</td></tr>
+    <tr><td>Pedido</td><td>Solicitud de compra de materiales a un proveedor.</td></tr>
+    <tr><td>Política de duplicados</td><td>Comportamiento del sistema cuando importa un registro cuya clave ya existe: <em>Omitir</em>, <em>Actualizar</em> o <em>Crear nuevo</em>.</td></tr>
+    <tr><td>Presupuesto</td><td>Oferta económica detallada enviada al cliente. Cuando se acepta, se convierte en factura.</td></tr>
+    <tr><td>Rol</td><td>Conjunto de permisos asignados a un usuario: ADMINISTRADOR, COMERCIAL, PRODUCCION o CONTABILIDAD.</td></tr>
+    <tr><td>Stock</td><td>Cantidad disponible de un material en almacén. Se actualiza cuando se recibe un pedido.</td></tr>
+    <tr><td>Tarifa</td><td>Precio especial acordado entre la empresa y un cliente para un material concreto. Puede tener tramos por cantidad.</td></tr>
+    <tr><td>TTS</td><td>Texto a Voz (Text To Speech). Función del asistente visual que lee en voz alta el contenido de la pantalla.</td></tr>
+    <tr><td>Tramo</td><td>Rango de cantidad dentro de una tarifa. A mayor cantidad comprada, menor precio unitario.</td></tr>
+  </tbody>
+</table>
+</body>
+</html>

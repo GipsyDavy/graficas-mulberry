@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Importación con política Actualizar: qué campos sobreescribe</title>
+  <meta name="module" content="importacion">
+  <meta name="category" content="ADV">
+  <meta name="tags" content="actualizar,sobreescribir,importar,política,datos,UPDATE">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
+<h1>Importación con política Actualizar: qué campos sobreescribe</h1>
+
+<div class="danger">La política <strong>Actualizar existente</strong> sobreescribe datos reales
+de la base de datos. Haz siempre un backup antes de usarla.
+Ver <a href="../backups/BAK-PS-1.html">Cómo hacer una copia de seguridad</a>.</div>
+
+<h2>¿Qué actualiza exactamente?</h2>
+<p>Solo se actualizan los campos que hayas mapeado en el diálogo de columnas.
+Los campos que hayas dejado en <em>(ignorar)</em> no se tocan.</p>
+
+<p>Ejemplo: si importas un CSV de clientes con columnas <code>nif</code>, <code>nombre</code> y <code>ciudad</code>,
+solo se actualizarán el nombre y la ciudad del cliente. Su teléfono, email o cualquier otro campo
+que no estuviera en el CSV quedará sin cambios.</p>
+
+<h2>Campos que nunca se sobreescriben</h2>
+<ul>
+  <li>La <strong>clave primaria</strong> (NIF, DNI, código…) — el sistema la usa para identificar el registro, no la modifica.</li>
+  <li>Las <strong>relaciones con otros documentos</strong> (p. ej. los presupuestos asociados a un cliente) — la actualización afecta solo al registro principal, no a sus documentos relacionados.</li>
+</ul>
+
+<h2>Cuándo usar "Actualizar existente"</h2>
+<ul>
+  <li>Actualización masiva de precios de materiales desde un Excel del proveedor.</li>
+  <li>Corrección de datos de contacto de clientes desde una lista actualizada.</li>
+  <li>Revisión de stock de materiales.</li>
+</ul>
+
+<h2>Cuándo NO usar "Actualizar existente"</h2>
+<ul>
+  <li>Primera importación de datos históricos → usa <strong>Omitir si existe</strong>.</li>
+  <li>Cuando no estás seguro del contenido del archivo → comprueba primero con <strong>Omitir</strong> y revisa el resultado.</li>
+  <li>Para Presupuestos, Facturas y Albaranes → esta política no está disponible por su estructura compleja.</li>
+</ul>
+</body>
+</html>

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <link rel="stylesheet" href="../help.css">
+  <title>Cómo restaurar desde una copia de seguridad</title>
+  <meta name="module" content="backups">
+  <meta name="category" content="PS">
+  <meta name="tags" content="backup,restaurar,importar,base de datos,recuperar">
+</head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Backups</p>
+<h1>Cómo restaurar desde una copia de seguridad</h1>
+
+<div class="danger">Restaurar un backup reemplaza <strong>todos los datos actuales</strong>
+por los del backup. Esta acción es irreversible. Si tienes datos recientes que quieres conservar,
+haz primero un backup del estado actual antes de restaurar.</div>
+
+<ol class="steps">
+  <li>En la barra lateral, haz clic en <strong>Importar / Exportar</strong>.</li>
+  <li>Abre la pestaña <strong>Backup</strong>.</li>
+  <li>Haz clic en <strong>Importar backup</strong>.</li>
+  <li>Selecciona el archivo <code>.zip</code> del backup que quieres restaurar.</li>
+  <li>Confirma la advertencia. El sistema restaura la base de datos y reinicia la conexión.</li>
+  <li>Cierra y vuelve a abrir la aplicación para que todos los módulos se recarguen correctamente.</li>
+</ol>
+
+<h2>El backup que quiero no existe</h2>
+<p>Si no tienes un backup reciente, no es posible recuperar los datos perdidos dentro de la aplicación.
+En casos excepcionales, un técnico puede intentar recuperar el archivo de base de datos del sistema
+desde <code>%LOCALAPPDATA%\GraficasMulberry\</code>, pero esto no está garantizado.</p>
+
+<div class="tip">Establecer una rutina de backup semanal (o antes de cada importación masiva)
+elimina prácticamente cualquier riesgo de pérdida de datos.</div>
+</body>
+</html>
