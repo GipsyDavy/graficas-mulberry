@@ -568,6 +568,14 @@ public class DatabaseManager {
         }
     }
 
+    public static void dropColumn(String tabla, String columna) throws SQLException {
+        requireSqlIdentifier(tabla);
+        requireSqlIdentifier(columna);
+        try (Statement st = getConnection().createStatement()) {
+            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " DROP COLUMN " + quoteIdentifier(columna));
+        }
+    }
+
     public static String quoteIdentifier(String identifier) {
         requireSqlIdentifier(identifier);
         return "\"" + identifier + "\"";
