@@ -16,7 +16,7 @@ import java.util.Set;
 
 public class ColumnConfigDAO {
 
-    public record ColumnConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible) {}
+    public record ColumnConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible, String dataType) {}
 
     public void syncTable(String tableName, Map<String, String> baseColumns) throws SQLException {
         syncTable(tableName, baseColumns, Set.of());
@@ -46,7 +46,7 @@ public class ColumnConfigDAO {
         ensureConfigTable();
         List<ColumnConfig> configs = new ArrayList<>();
         String sql = """
-            SELECT table_name, column_name, label, base_column, visible
+            SELECT table_name, column_name, label, base_column, visible, data_type
             FROM column_configs
             WHERE table_name=?
             ORDER BY base_column DESC, created_at, column_name
@@ -78,9 +78,14 @@ public class ColumnConfigDAO {
     }
 
     public ColumnConfig addDynamicColumn(String tableName, String label, Set<String> baseColumnNames) throws SQLException {
+        return addDynamicColumn(tableName, label, "TEXTO", baseColumnNames);
+    }
+
+    public ColumnConfig addDynamicColumn(String tableName, String label, String dataType, Set<String> baseColumnNames) throws SQLException {
         DatabaseManager.requireSqlIdentifier(tableName);
         String cleanLabel = cleanLabel(label);
         if (cleanLabel.isBlank()) throw new IllegalArgumentException("El nombre de la columna no puede estar vacío.");
+        String safeType = dataType != null ? dataType : "TEXTO";
 
         Set<String> existing = new java.util.HashSet<>(physicalColumns(tableName));
         existing.addAll(baseColumnNames);
@@ -88,8 +93,8 @@ public class ColumnConfigDAO {
         String columnName = uniqueColumnName(baseName, existing);
 
         DatabaseManager.addColumn(tableName, columnName);
-        upsertConfig(tableName, columnName, cleanLabel, false, true);
-        return new ColumnConfig(tableName, columnName, cleanLabel, false, true);
+        upsertConfig(tableName, columnName, cleanLabel, false, true, safeType);
+        return new ColumnConfig(tableName, columnName, cleanLabel, false, true, safeType);
     }
 
     public void rename(String tableName, String columnName, String label) throws SQLException {
@@ -109,27 +114,39 @@ public class ColumnConfigDAO {
     }
 
     public void hideDynamic(String tableName, String columnName) throws SQLException {
+        setColumnVisible(tableName, columnName, false);
+    }
+
+    public void showDynamic(String tableName, String columnName) throws SQLException {
+        setColumnVisible(tableName, columnName, true);
+    }
+
+    public void setColumnVisible(String tableName, String columnName, boolean visible) throws SQLException {
         DatabaseManager.requireSqlIdentifier(tableName);
         DatabaseManager.requireSqlIdentifier(columnName);
         ensureConfigTable();
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
-                "UPDATE column_configs SET visible=0 WHERE table_name=? AND column_name=? AND base_column=0")) {
-            ps.setString(1, tableName);
-            ps.setString(2, columnName);
+                "UPDATE column_configs SET visible=? WHERE table_name=? AND column_name=?")) {
+            ps.setInt(1, visible ? 1 : 0);
+            ps.setString(2, tableName);
+            ps.setString(3, columnName);
             ps.executeUpdate();
         }
     }
 
-    public void showDynamic(String tableName, String columnName) throws SQLException {
+    public void deleteDynamic(String tableName, String columnName) throws SQLException {
         DatabaseManager.requireSqlIdentifier(tableName);
         DatabaseManager.requireSqlIdentifier(columnName);
         ensureConfigTable();
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
-                "UPDATE column_configs SET visible=1 WHERE table_name=? AND column_name=? AND base_column=0")) {
+                "DELETE FROM column_configs WHERE table_name=? AND column_name=? AND base_column=0")) {
             ps.setString(1, tableName);
             ps.setString(2, columnName);
-            ps.executeUpdate();
+            int deleted = ps.executeUpdate();
+            if (deleted == 0)
+                throw new IllegalStateException("Solo se pueden eliminar columnas de usuario, no columnas base.");
         }
+        DatabaseManager.dropColumn(tableName, columnName);
     }
 
     private void ensureConfigTable() throws SQLException {
@@ -141,18 +158,27 @@ public class ColumnConfigDAO {
                     label TEXT NOT NULL,
                     base_column INTEGER DEFAULT 0,
                     visible INTEGER DEFAULT 1,
+                    data_type TEXT DEFAULT 'TEXTO',
                     created_at TEXT DEFAULT (datetime('now')),
                     PRIMARY KEY (table_name, column_name)
                 )""");
+            // Migration: add data_type if table already existed without it
+            try { st.execute("ALTER TABLE column_configs ADD COLUMN data_type TEXT DEFAULT 'TEXTO'"); }
+            catch (SQLException ignored) {}
         }
     }
 
     private void upsertConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible)
             throws SQLException {
+        upsertConfig(tableName, columnName, label, baseColumn, visible, "TEXTO");
+    }
+
+    private void upsertConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible,
+                              String dataType) throws SQLException {
         DatabaseManager.requireSqlIdentifier(columnName);
         String sql = """
-            INSERT INTO column_configs (table_name, column_name, label, base_column, visible)
-            VALUES (?, ?, ?, ?, ?)
+            INSERT INTO column_configs (table_name, column_name, label, base_column, visible, data_type)
+            VALUES (?, ?, ?, ?, ?, ?)
             ON CONFLICT(table_name, column_name) DO UPDATE SET
                 base_column=excluded.base_column,
                 visible=CASE WHEN column_configs.visible=0 AND excluded.base_column=0 THEN 0 ELSE excluded.visible END
@@ -163,6 +189,7 @@ public class ColumnConfigDAO {
             ps.setString(3, label);
             ps.setInt(4, baseColumn ? 1 : 0);
             ps.setInt(5, visible ? 1 : 0);
+            ps.setString(6, dataType != null ? dataType : "TEXTO");
             ps.executeUpdate();
         }
     }
@@ -177,12 +204,14 @@ public class ColumnConfigDAO {
     }
 
     private ColumnConfig map(ResultSet rs) throws SQLException {
+        String dataType = rs.getString("data_type");
         return new ColumnConfig(
             rs.getString("table_name"),
             rs.getString("column_name"),
             rs.getString("label"),
             rs.getInt("base_column") == 1,
-            rs.getInt("visible") == 1
+            rs.getInt("visible") == 1,
+            dataType != null ? dataType : "TEXTO"
         );
     }
 
