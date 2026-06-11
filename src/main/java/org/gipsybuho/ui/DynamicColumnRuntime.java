@@ -4,6 +4,8 @@ import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.ObservableList;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.Control;
+import javafx.scene.control.DatePicker;
 import javafx.scene.control.Separator;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -32,6 +34,7 @@ public class DynamicColumnRuntime<T> {
     private final ObservableList<T> data;
     private final Function<T, Integer> idProvider;
     private Map<Integer, Map<String, String>> cache = new LinkedHashMap<>();
+    private final Map<String, Control> extraControls = new LinkedHashMap<>();
 
     public DynamicColumnRuntime(
             String tableName,
@@ -50,6 +53,7 @@ public class DynamicColumnRuntime<T> {
 
     public void apply() {
         try {
+            TableColumnSizing.enableHorizontalScroll(table);
             configDAO.syncTable(tableName, baseColumns);
             Map<String, String> labels = configDAO.visibleLabels(tableName);
             Set<String> baseIds = baseColumns.keySet();
@@ -69,6 +73,7 @@ public class DynamicColumnRuntime<T> {
             cache = valueDAO.findValues(tableName, extraNames);
             table.setEditable(true);
             for (ColumnConfig config : extras) addColumn(config);
+            TableColumnSizing.autoSizeLater(table);
         } catch (Exception ex) {
             showError(ex);
         }
@@ -85,6 +90,7 @@ public class DynamicColumnRuntime<T> {
     }
 
     public int addFormFields(GridPane grid, int row, T item, Map<String, TextField> fields) {
+        extraControls.clear();
         try {
             List<ColumnConfig> extras = configDAO.findVisibleDynamic(tableName, baseColumns.keySet());
             if (extras.isEmpty()) return row;
@@ -94,10 +100,31 @@ public class DynamicColumnRuntime<T> {
             grid.add(new Separator(), 0, row++, 4, 1);
             grid.add(new javafx.scene.control.Label("Datos adicionales"), 0, row++, 4, 1);
             for (ColumnConfig config : extras) {
-                TextField field = new TextField(values.getOrDefault(config.columnName(), ""));
-                fields.put(config.columnName(), field);
+                String colName = config.columnName();
+                String stored = values.getOrDefault(colName, "");
                 grid.add(new javafx.scene.control.Label(config.label()), 0, row);
-                grid.add(field, 1, row, 3, 1);
+
+                String tipo = config.dataType() != null ? config.dataType() : "TEXTO";
+                if ("FECHA".equals(tipo)) {
+                    DatePicker dp = new DatePicker();
+                    if (!stored.isBlank()) {
+                        try { dp.setValue(java.time.LocalDate.parse(stored)); }
+                        catch (Exception ignored) {}
+                    }
+                    extraControls.put(colName, dp);
+                    grid.add(dp, 1, row, 3, 1);
+                } else {
+                    TextField field = new TextField(stored);
+                    if ("NUMERICO".equals(tipo)) {
+                        applyNumericFilter(field, false);
+                    } else if ("PRECIO".equals(tipo)) {
+                        applyNumericFilter(field, true);
+                        field.setPromptText("0,00");
+                    }
+                    fields.put(colName, field);
+                    extraControls.put(colName, field);
+                    grid.add(field, 1, row, 3, 1);
+                }
                 row++;
             }
         } catch (Exception ex) {
@@ -109,9 +136,22 @@ public class DynamicColumnRuntime<T> {
     public void saveFormFields(T item, Map<String, TextField> fields) throws SQLException {
         Map<String, String> values = new LinkedHashMap<>();
         fields.forEach((key, field) -> values.put(key, field.getText().trim()));
+        extraControls.forEach((key, control) -> {
+            if (control instanceof DatePicker dp && !fields.containsKey(key)) {
+                values.put(key, dp.getValue() != null ? dp.getValue().toString() : "");
+            }
+        });
         int id = idProvider.apply(item);
         valueDAO.updateValues(tableName, id, values);
         cache.put(id, values);
+    }
+
+    private void applyNumericFilter(TextField field, boolean allowDecimal) {
+        field.textProperty().addListener((obs, oldVal, newVal) -> {
+            if (newVal == null) return;
+            String filtered = newVal.replaceAll(allowDecimal ? "[^0-9.,\\-]" : "[^0-9\\-]", "");
+            if (!filtered.equals(newVal)) field.setText(filtered);
+        });
     }
 
     private void addColumn(ColumnConfig config) {
@@ -135,7 +175,8 @@ public class DynamicColumnRuntime<T> {
                 apply();
             }
         });
-        column.setPrefWidth(130);
+        column.setMinWidth(90);
+        column.setPrefWidth(Math.min(420, Math.max(130, config.label().length() * 7.4 + 38)));
         table.getColumns().add(column);
     }
 
