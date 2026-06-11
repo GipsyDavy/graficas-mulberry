@@ -113,6 +113,20 @@ public class ColumnConfigDAO {
         }
     }
 
+    public void updateDataType(String tableName, String columnName, String dataType) throws SQLException {
+        DatabaseManager.requireSqlIdentifier(tableName);
+        DatabaseManager.requireSqlIdentifier(columnName);
+        String safeType = dataType != null ? dataType : "TEXTO";
+        ensureConfigTable();
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                "UPDATE column_configs SET data_type=? WHERE table_name=? AND column_name=?")) {
+            ps.setString(1, safeType);
+            ps.setString(2, tableName);
+            ps.setString(3, columnName);
+            ps.executeUpdate();
+        }
+    }
+
     public void hideDynamic(String tableName, String columnName) throws SQLException {
         setColumnVisible(tableName, columnName, false);
     }
