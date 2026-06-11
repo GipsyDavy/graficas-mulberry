@@ -635,6 +635,183 @@ public class ImportService {
         } catch (Exception e) { return false; }
     }
 
+    // ── Validation ───────────────────────────────────────────────────────────
+
+    public List<ValidationIssue> validateImportData(
+            List<Map<String, String>> rows,
+            Map<String, String> mappingActual,
+            TipoEntidad tipo) {
+        if (isOllamaDisponible()) {
+            try {
+                int n = Math.min(rows.size(), 20);
+                String rowsJson = mapper.writeValueAsString(rows.subList(0, n));
+                String mappingJson = mapper.writeValueAsString(mappingActual);
+                String prompt = buildOllamaValidationPrompt(rowsJson, mappingJson, tipo, n);
+                String resp = extractJsonArray(ollamaChat(prompt).trim());
+                List<ValidationIssue> issues = parseOllamaValidationResponse(resp);
+                if (!issues.isEmpty()) return issues;
+            } catch (Exception ex) {
+                System.err.println("AI validation error: " + ex.getMessage());
+            }
+        }
+        return performLocalValidation(rows, mappingActual, tipo);
+    }
+
+    public Optional<String> corregirValor(Map<String, String> row, String fileColumnName,
+            String issueDescription, TipoEntidad tipo, Map<String, String> mappingActual) {
+        try {
+            String rowJson = mapper.writeValueAsString(row);
+            String mappingJson = mapper.writeValueAsString(mappingActual);
+            String prompt = """
+                Eres un asistente de corrección de datos para la entidad "%s".
+                Mapeo columnas: %s
+                Problema en la columna "%s": %s
+                Fila: %s
+                Devuelve SOLO JSON: {"correctedValue": "valor_corregido"} o {"correctedValue": null}.
+                """.formatted(tipo.label, mappingJson, fileColumnName, issueDescription, rowJson);
+            String resp = extractJson(ollamaChat(prompt).trim());
+            JsonNode node = mapper.readTree(resp);
+            JsonNode val = node.get("correctedValue");
+            if (val == null || val.isNull()) return Optional.empty();
+            return Optional.of(val.asText());
+        } catch (Exception ex) {
+            System.err.println("AI correction error: " + ex.getMessage());
+            return Optional.empty();
+        }
+    }
+
+    private String buildOllamaValidationPrompt(String rowsJson, String mappingJson,
+            TipoEntidad tipo, int n) {
+        List<String> required = requiredFieldsFor(tipo);
+        return """
+            Eres un validador de datos. Analiza estos datos de importación para la entidad "%s".
+            Mapeo columna_archivo→campo_entidad: %s
+            Campos obligatorios: %s
+            Primeras %d filas: %s
+
+            Detecta: formato NIF inválido, email sin @, precio no numérico, fecha inválida, campo obligatorio vacío.
+            Responde SOLO con array JSON (sin texto extra):
+            [{"rowIndex":0,"columnName":"col","issue":"desc","suggestedFix":"sugerencia o null","severity":"ERROR o WARNING"}]
+            Sin problemas: []
+            """.formatted(tipo.label, mappingJson, required, n, rowsJson);
+    }
+
+    private String extractJsonArray(String text) {
+        int start = text.indexOf('[');
+        int end = text.lastIndexOf(']');
+        return (start >= 0 && end > start) ? text.substring(start, end + 1) : "[]";
+    }
+
+    private List<ValidationIssue> parseOllamaValidationResponse(String json) {
+        List<ValidationIssue> issues = new ArrayList<>();
+        try {
+            JsonNode arr = mapper.readTree(json);
+            if (!arr.isArray()) return issues;
+            for (JsonNode node : arr) {
+                int row = node.path("rowIndex").asInt(-1);
+                String col = node.path("columnName").asText(null);
+                String issue = node.path("issue").asText(null);
+                if (row < 0 || col == null || issue == null) continue;
+                JsonNode fixNode = node.get("suggestedFix");
+                Optional<String> fix = (fixNode == null || fixNode.isNull())
+                    ? Optional.empty() : Optional.of(fixNode.asText());
+                String sev = node.path("severity").asText("WARNING");
+                ValidationIssue.Severity severity = "ERROR".equals(sev)
+                    ? ValidationIssue.Severity.ERROR : ValidationIssue.Severity.WARNING;
+                issues.add(new ValidationIssue(row, col, issue, fix, severity));
+            }
+        } catch (Exception ex) {
+            System.err.println("Validation JSON parse error: " + ex.getMessage());
+        }
+        return issues;
+    }
+
+    private List<ValidationIssue> performLocalValidation(List<Map<String, String>> rows,
+            Map<String, String> mappingActual, TipoEntidad tipo) {
+        List<ValidationIssue> issues = new ArrayList<>();
+        List<String> required = requiredFieldsFor(tipo);
+        java.util.regex.Pattern nif = java.util.regex.Pattern.compile("(?i)^[XYZ\\d]\\d{7}[A-Z]$");
+        java.util.regex.Pattern email = java.util.regex.Pattern.compile("^\\S+@\\S+\\.\\S+$");
+        Set<String> nifsSeen = new LinkedHashSet<>();
+        Set<String> emailsSeen = new LinkedHashSet<>();
+
+        for (int i = 0; i < rows.size(); i++) {
+            Map<String, String> row = rows.get(i);
+            for (Map.Entry<String, String> e : mappingActual.entrySet()) {
+                String fileCol = e.getKey();
+                String entityField = e.getValue();
+                if (entityField == null) continue;
+                String val = row.getOrDefault(fileCol, "").trim();
+
+                if (required.contains(entityField) && val.isEmpty()) {
+                    issues.add(new ValidationIssue(i, fileCol, "Campo obligatorio vacío",
+                        Optional.empty(), ValidationIssue.Severity.ERROR));
+                    continue;
+                }
+                if (val.isEmpty()) continue;
+
+                switch (entityField) {
+                    case "nif" -> {
+                        if (!nif.matcher(val).matches())
+                            issues.add(new ValidationIssue(i, fileCol, "Formato NIF/CIF inválido",
+                                Optional.empty(), ValidationIssue.Severity.ERROR));
+                        if (!nifsSeen.add(val.toUpperCase()))
+                            issues.add(new ValidationIssue(i, fileCol, "NIF duplicado en el archivo",
+                                Optional.empty(), ValidationIssue.Severity.WARNING));
+                    }
+                    case "email" -> {
+                        if (!email.matcher(val).matches())
+                            issues.add(new ValidationIssue(i, fileCol, "Formato de email inválido",
+                                Optional.of("nombre@dominio.com"), ValidationIssue.Severity.WARNING));
+                        if (!emailsSeen.add(val.toLowerCase()))
+                            issues.add(new ValidationIssue(i, fileCol, "Email duplicado en el archivo",
+                                Optional.empty(), ValidationIssue.Severity.WARNING));
+                    }
+                    case "precio_unidad", "precio_unit", "precio_setup", "salario_base" -> {
+                        try {
+                            double d = Double.parseDouble(val.replace(",", "."));
+                            if (d < 0) issues.add(new ValidationIssue(i, fileCol, "Valor negativo",
+                                Optional.empty(), ValidationIssue.Severity.WARNING));
+                        } catch (NumberFormatException ex) {
+                            issues.add(new ValidationIssue(i, fileCol, "Se esperaba un número decimal",
+                                Optional.of("Usa dígitos con punto o coma decimal"), ValidationIssue.Severity.ERROR));
+                        }
+                    }
+                    case "stock_actual", "stock_minimo", "minimo_unidades" -> {
+                        try { Integer.parseInt(val.replaceAll("[.,].*", "")); }
+                        catch (NumberFormatException ex) {
+                            issues.add(new ValidationIssue(i, fileCol, "Se esperaba un número entero",
+                                Optional.empty(), ValidationIssue.Severity.ERROR));
+                        }
+                    }
+                    case "fecha_alta" -> {
+                        boolean valid = false;
+                        for (String fmt : List.of("dd/MM/yyyy", "yyyy-MM-dd", "dd-MM-yyyy", "d/M/yyyy")) {
+                            try {
+                                java.time.LocalDate.parse(val,
+                                    java.time.format.DateTimeFormatter.ofPattern(fmt));
+                                valid = true; break;
+                            } catch (Exception ignored) {}
+                        }
+                        if (!valid) issues.add(new ValidationIssue(i, fileCol, "Formato de fecha inválido",
+                            Optional.of("DD/MM/AAAA o AAAA-MM-DD"), ValidationIssue.Severity.ERROR));
+                    }
+                    default -> {}
+                }
+            }
+        }
+        return issues;
+    }
+
+    private List<String> requiredFieldsFor(TipoEntidad tipo) {
+        return switch (tipo) {
+            case CLIENTES   -> List.of("nombre");
+            case MATERIALES -> List.of("nombre");
+            case EMPLEADOS  -> List.of("nombre", "nif");
+            case TARIFAS    -> List.of("tecnica", "nombre");
+        };
+    }
+
     // ── Utils ─────────────────────────────────────────────────────────────────
 
     private double toDouble(String s) {
