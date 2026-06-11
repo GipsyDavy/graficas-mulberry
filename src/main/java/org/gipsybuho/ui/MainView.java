@@ -238,6 +238,11 @@ public class MainView extends BorderPane {
             }
         });
 
+        Button btnHelp = buildFooterBtn(Icons.help(), "Centro de ayuda",
+            () -> mostrarVista(new HelpView(), "Ayuda"),
+            HelpView::new);
+        footerIconos.getChildren().add(btnHelp);
+
         if (!footerIconos.getChildren().isEmpty()) {
             sidebar.getChildren().add(footerIconos);
         }

@@ -87,6 +87,13 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- WebView para el centro de ayuda integrado -->
+        <dependency>
+            <groupId>org.openjfx</groupId>
+            <artifactId>javafx-web</artifactId>
+            <version>${javafx.version}</version>
+        </dependency>
+
         <!-- Reproductor de música MP3 -->
         <dependency>
             <groupId>org.openjfx</groupId>
@@ -201,6 +208,12 @@
                 <dependency>
                     <groupId>org.openjfx</groupId>
                     <artifactId>javafx-swing</artifactId>
+                    <version>${javafx.version}</version>
+                    <classifier>win</classifier>
+                </dependency>
+                <dependency>
+                    <groupId>org.openjfx</groupId>
+                    <artifactId>javafx-web</artifactId>
                     <version>${javafx.version}</version>
                     <classifier>win</classifier>
                 </dependency>

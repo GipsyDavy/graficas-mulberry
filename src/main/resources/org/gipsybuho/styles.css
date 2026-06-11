@@ -1423,3 +1423,59 @@
     -fx-font-style: italic;
     -fx-font-size: 11px;
 }
+
+/* ── CENTRO DE AYUDA (HelpView) ──────────────────────────── */
+.help-view {
+    -fx-background-color: -c-bg;
+}
+
+.help-topbar {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-border;
+    -fx-border-width: 0 0 1 0;
+}
+
+.help-left-panel {
+    -fx-background-color: -c-card-bg;
+    -fx-border-color: -c-border;
+    -fx-border-width: 0 1 0 0;
+}
+
+.help-panel-title {
+    -fx-font-size: 12px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-text-secondary;
+    -fx-text-transform: uppercase;
+}
+
+.help-tree {
+    -fx-background-color: transparent;
+    -fx-border-color: transparent;
+}
+
+.help-tree .tree-cell {
+    -fx-background-color: transparent;
+    -fx-padding: 3 8 3 4;
+    -fx-font-size: 13px;
+    -fx-text-fill: -c-text;
+}
+
+.help-tree .tree-cell:hover {
+    -fx-background-color: -c-row-hover;
+    -fx-background-radius: 4;
+}
+
+.help-tree .tree-cell:selected {
+    -fx-background-color: -c-primary;
+    -fx-background-radius: 4;
+    -fx-text-fill: ladder(-c-primary, white 74%, -c-primary-dark 75%);
+}
+
+.help-tree-group {
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-primary;
+}
+
+.help-tree-article {
+    -fx-font-size: 12px;
+}
