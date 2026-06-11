@@ -819,10 +819,15 @@ public class ImportView extends VBox {
                                 resultadoParseo.rows.get(iss.rowIndex()),
                                 iss.columnName(), iss.issue(), tipoSeleccionado, mappingParaValidar);
                             Platform.runLater(() -> {
-                                fix.ifPresent(val ->
-                                    resultadoParseo.rows.get(iss.rowIndex()).put(iss.columnName(), val));
-                                issueList.remove(iss);
-                                updateContinuarButton(btnContinuar, issueList);
+                                if (fix.isPresent()) {
+                                    resultadoParseo.rows.get(iss.rowIndex()).put(iss.columnName(), fix.get());
+                                    issueList.remove(iss);
+                                    updateContinuarButton(btnContinuar, issueList);
+                                } else {
+                                    // IA no pudo corregir: mantener issue, rehabilitar botón
+                                    btnCorregirCell.setDisable(false);
+                                    btnCorregirCell.setText("🤖 Sin corrección — reintentar");
+                                }
                             });
                         });
                     });
