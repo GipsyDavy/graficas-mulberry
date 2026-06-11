@@ -198,11 +198,11 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-10, actualizado)
+## Estado técnico al cierre de sesión (2026-06-11, actualizado)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `4bc6c9c` — `feat: Sprint IMPORT-UPGRADE — XLSB/XLSM + campo nuevo en importación`
+- **HEAD:** `65588cf` — `feat: Sprint HELP-1 — 81 artículos HTML de ayuda offline completos`
 - **Working tree:** limpio al cierre del sprint
 
 ### Tests
@@ -242,17 +242,16 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Deuda 24** — Tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO (15 tests). **COMPLETO.** (`acc81a3`)
 - **Sprint UI-D** — `.skeleton-row` CSS + `ProgressIndicator` overlay en ClientesView, FacturasView, PedidosView (1 commit). **COMPLETO.** (`d4109c2`)
 - **Sprint IMPORT-UPGRADE** — XLSB/XLSM vía `WorkbookFactory`; `EntityImportSpec.tableName()`; `procesarFila()` devuelve `int[3]` con entityId; escritura de columnas dinámicas en import; `ColumnMappingDialog` con `ObservableList` compartida + botón "➕ Nuevo campo…" con `ColumnConfigDAO`; filtros FileChooser actualizados en 10 vistas (1 commit). **COMPLETO.** (`4bc6c9c`)
+- **Sprint HELP-0** — especificación `HELP-SPEC.md`: taxonomía 8 categorías, 19 módulos, 81 artículos ★, formato HTML, `index.json`, `HelpEntry` record, `HelpService` API, mapa F1. **COMPLETO.** (`39d060e`)
+- **Sprint HELP-1** — 81 artículos HTML offline en 19 módulos + `help.css` + `index.json`. **COMPLETO.** (`65588cf`)
 
 ### Cola de trabajo
 
-1. **Sprint MIGRACION-COMPLEJA** — retomar migración de tablas complejas reales (Excel humano, PDF/Word, celdas combinadas, varias tablas por hoja, fórmulas). Ver `MIGRACION_HISTORICO.md`.
-2. **HELP-0** — especificar arquitectura de ayuda completa, taxonomía, mapa módulo-artículo y criterios de aceptación.
-3. **HELP-1 / HELP-2** — documentación offline + vista JavaFX de ayuda buscable.
-4. **Refactor B2** — inyección de Connection en DAOs (después de HELP-2).
+1. **Sprint HELP-2** ← **SIGUIENTE INMEDIATO** — `HelpService.java` (carga `index.json`, búsqueda) + `HelpView.java` (BorderPane: WebView centro, TreeView módulos izq., barra búsqueda arriba). Ver `HELP-SPEC.md` secciones 6-7.
+2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. Bloqueado hasta que el usuario aporte archivos.
+3. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos (después de HELP-2).
+4. **Refactor B2** — inyección de Connection en DAOs (después de HELP-2, amplio y de mayor riesgo).
 5. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
-4. **HELP-1** — crear documentación offline versionada.
-5. **HELP-2** — implementar centro de ayuda JavaFX.
-6. **Refactor B2** — Inyectar Connection en DAOs via constructor/parámetro (amplio, largo plazo; después de HELP-2).
 
 ---
 
@@ -264,7 +263,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 | 20-bis | Defaults DDL numéricos primitivos (`double`→`Double`) | Baja |
 | 20-ter | **CERRADA** — ClienteDAO.setBase completado en `d19a342` | — |
 | 24 | **CERRADA** — 15 tests JDBC en `acc81a3` | — |
-| 26 | Capa completa de ayuda integrada dentro de la aplicación | Media |
+| 26 | Capa completa de ayuda integrada (**PARCIAL** — HELP-0+1 cerrados, pendiente HELP-2+3) | Media |
 | 27 | Migración de tablas complejas históricas desde Excel/PDF/Word humanos | Alta |
 | 3, 5, 6, 7... | Otras deudas menores | Baja |
 
@@ -274,13 +273,11 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales, clasificar vía A1/A2/B/C, convertir al menos un archivo complejo a CSV limpio y documentar el procedimiento.
-2. **Sprint DOC-SYNC** — corregir estado documental real.
-3. **HELP-0** — especificar arquitectura de ayuda, taxonomía, mapa módulo-artículo y criterios de aceptación.
-4. **HELP-1** — crear documentación offline versionada.
-5. **HELP-2** — implementar centro de ayuda JavaFX.
-6. **Refactor B2** — dejarlo para después, porque es amplio y de mayor riesgo.
-7. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
+1. **Sprint HELP-2** ← **INMEDIATO** — `HelpService.java` + `HelpView.java` (JavaFX WebView). Ver `HELP-SPEC.md`.
+2. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales, clasificar y documentar procedimiento. Bloqueado hasta que el usuario aporte archivos.
+3. **HELP-3** — ayuda contextual F1 + enlaces desde errores (después de HELP-2).
+4. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo, después de HELP-2).
+5. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
 
 ---
 
@@ -297,7 +294,7 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    .\mvnw.cmd test
    ```
    Esperado: 89/89 verdes.
-4. Continuar con el sprint pendiente o preguntar qué arrancar.
+4. Declarar: HEAD `65588cf`, Sprint HELP-2 es el siguiente inmediato.
 
 ---
 
@@ -311,4 +308,4 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ---
 
-*continuar.md — Gráficas Mulberry — 2026-06-03*
+*continuar.md — Gráficas Mulberry — 2026-06-11*

@@ -55,8 +55,8 @@ Base de datos local SQLite vía JDBC directo.
 
 ## Estado actual
 **Proyecto existente y funcional.** No es un proyecto nuevo.
-Versión actual de la app: v3.3 (instalador Windows disponible).
-Handoff técnico en `Resumen.md` (actualmente v4.2).
+Versión actual de la app: v13.5.0. HEAD: `65588cf`.
+Handoff técnico en `Resumen.md` (actualmente v4.5).
 
 ## Raíz del proyecto
 `C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`
@@ -78,11 +78,11 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 # CONTEXTO DE ESTADO ACTUAL
 
-## Estado técnico verificado (2026-06-10)
+## Estado técnico verificado (2026-06-11)
 
 | Componente | Estado | Notas |
 |---|---|---|
-| HEAD documental | `4bc6c9c` | Sprint IMPORT-UPGRADE + Sprint DOC-SYNC |
+| HEAD documental | `65588cf` | Sprint HELP-1 cerrado |
 | Build Maven | Funcional | `.\mvnw.cmd test` — 89/89 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
@@ -91,6 +91,9 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint D-ter | COMPLETADO | 4/4 sub-bloques cerrados (incluye ClienteDAO 1d) |
 | Sprint SEC | COMPLETADO | 5 fixes seguridad P0/P1 |
 | Sprint IMPORT-UPGRADE | COMPLETADO | XLSB/XLSM + campo nuevo en importación (`4bc6c9c`) |
+| Sprint HELP-0 | COMPLETADO | HELP-SPEC.md — spec completa del sistema de ayuda (`39d060e`) |
+| Sprint HELP-1 | COMPLETADO | 81 artículos HTML offline en 19 módulos (`65588cf`) |
+| Sprint HELP-2 | **PENDIENTE — SIGUIENTE** | HelpService.java + HelpView.java (JavaFX WebView) |
 | Sprint COD | COMPLETADO | Dead code eliminado |
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |

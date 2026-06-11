@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprint IMPORT-UPGRADE CERRADO (+ D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24)
-# Versión: 4.4 · Fecha revisión documentación: 10/06/2026 · HEAD: 4bc6c9c · Tests: 89/89 verdes. Cola activa prioritaria: Sprint MIGRACION-COMPLEJA.
+# HANDOFF — Graficas Mulberry · Sprint HELP-1 CERRADO (+ HELP-0, IMPORT-UPGRADE, D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24)
+# Versión: 4.5 · Fecha revisión documentación: 11/06/2026 · HEAD: 65588cf · Tests: 89/89 verdes. Cola activa prioritaria: Sprint HELP-2.
 
 ---
 
@@ -254,8 +254,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `4bc6c9c` — `feat: Sprint IMPORT-UPGRADE — XLSB/XLSM + campo nuevo en importación`.
-- **Working tree:** limpio al cierre del sprint (10/06/2026).
+- **HEAD actual:** `65588cf` — `feat: Sprint HELP-1 — 81 artículos HTML de ayuda offline completos`.
+- **Working tree:** limpio al cierre del sprint (11/06/2026).
 
 ### Commits de sprints relevantes
 | Sprint | Commits | Descripción |
@@ -272,6 +272,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | Docs estado real | `ccb8e35`, `90413e4` | Actualización documental post UI-D y protocolo obligatorio de inicio |
 | Docs Selene / migración compleja | `67ae150` | Consolidación documental y eliminación de manuales antiguos en `installer/` |
 | **Sprint IMPORT-UPGRADE** | **`4bc6c9c`** | **XLSB/XLSM via WorkbookFactory; entityId en procesarFila(); escritura columnas dinámicas; ColumnMappingDialog + "➕ Nuevo campo…"; filtros 10 vistas** |
+| **Sprint HELP-0** | **`39d060e`** | **HELP-SPEC.md: taxonomía 8 cat., 19 módulos, 81 artículos ★, formato HTML, index.json schema, HelpEntry record, HelpService API, mapa F1** |
+| **Sprint HELP-1** | **`65588cf`** | **81 artículos HTML offline + help.css + index.json en 19 módulos (General×5, Importación×9, Backups×5, Clientes×5, Materiales×4, Empleados×4, Presupuestos×6, Facturas×6, Albaranes×5, Pedidos×4, Nóminas×3, Tarifas×3, Exportación×3, IA×5, Asistente×2, Estadísticas×2, Calendario×2, Usuarios×5, Configuración×3)** |
 
 ### Tests
 - **89/89 verdes.** Reparto:
@@ -350,7 +352,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **20-ter** | Defaults DDL TEXT en DAOs fuera Sprint D | **CERRADA en Sprint D-ter.** EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO corregidos. PedidoDAO y PagoPedidoDAO ya estaban limpios. NominaDAO fuera scope (no tiene DEFAULT TEXT no-trivial). |
 | **24** | Ausencia de tests JDBC en EmpleadoDAO, PagoMaterialDAO, NominaDAO, PedidoDAO, PagoPedidoDAO | **CERRADA en `acc81a3`.** 15 tests JDBC añadidos. |
 | **25** | Asimetría `forma_pago` vs `estado` en `PagoMaterialDAO.bind` | **NACIÓ Y MURIÓ en Sprint D-ter 1c.** Cerrada en el mismo commit. |
-| **26** | Capa completa de ayuda integrada dentro de la aplicación | **NUEVA, ABIERTA.** Debe cubrir centro de ayuda, ayuda contextual, manual integrado, guías paso a paso, onboarding, tooltips avanzados, ejemplos, FAQ, glosario, advertencias, documentación offline, buscador, enlaces desde errores a soluciones y modo principiante/avanzado. |
+| **26** | Capa completa de ayuda integrada dentro de la aplicación | **PARCIALMENTE CERRADA.** HELP-0 (spec) y HELP-1 (81 artículos HTML) completados. Pendiente HELP-2 (HelpView JavaFX) y HELP-3 (F1 contextual). |
 | **27** | Migración de tablas complejas desde archivos humanos (Excel con celdas combinadas, varias tablas por hoja, fórmulas, PDF/Word) | **ABIERTA, PRIORITARIA.** Ver `MIGRACION_HISTORICO.md`. No confundir con importación CSV/Excel limpio ya cerrada. |
 | 21 | Mapeo automático no reconoce `numero` ni `nif` en spec Albarán | ABIERTA. Riesgo bajo, UX. |
 | 22 | Mensaje de error `cliente_nif` dice "para el pedido" en albarán/factura/presupuesto | ABIERTA. Trivial. |
@@ -533,7 +535,7 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 89/89 verdes.
 
 4. **Declarar situación:**
-   > HEAD `4bc6c9c`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A, UI-B, UI-C, UI-D, Sprint C, Deuda 24, Sprint IMPORT-UPGRADE, Sprint DOC-SYNC. Cola activa prioritaria: Sprint MIGRACION-COMPLEJA (tablas complejas históricas). No arrancar Refactor B2 ni DOC/HELP antes de cerrar el plan de migración. ¿Arrancamos?
+   > HEAD `65588cf`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0, HELP-1. Cola activa prioritaria: **Sprint HELP-2** (`HelpService.java` + `HelpView.java`). Ver `HELP-SPEC.md` secciones 6-7. ¿Arrancamos?
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 

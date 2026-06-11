@@ -307,19 +307,19 @@ adecuado y sin bloquear el trabajo de usuarios expertos.
 
 | Componente | Objetivo | Estado |
 |---|---|---|
-| Centro de ayuda | Punto único para buscar y navegar documentación dentro de la app | Pendiente |
-| Ayuda contextual por pantalla | Explicar acciones, campos, estados y flujos desde cada módulo | Pendiente |
-| Manual de usuario integrado | Manual offline mantenido con el comportamiento real de la aplicación | Pendiente |
-| Guías paso a paso | Acompañar tareas principales: crear cliente, factura, pedido, importar CSV, exportar PDF | Pendiente |
-| Primer arranque / onboarding | Orientar a usuarios nuevos en la primera ejecución o primer acceso a módulos clave | Pendiente |
+| Centro de ayuda | Punto único para buscar y navegar documentación dentro de la app | **HELP-2 — SIGUIENTE** |
+| Ayuda contextual por pantalla | Explicar acciones, campos, estados y flujos desde cada módulo | HELP-3 |
+| Manual de usuario integrado | Manual offline mantenido con el comportamiento real de la aplicación | **✅ HELP-1 cerrado** (`65588cf`) |
+| Guías paso a paso | Acompañar tareas principales: crear cliente, factura, pedido, importar CSV, exportar PDF | **✅ HELP-1 cerrado** |
+| Primer arranque / onboarding | Orientar a usuarios nuevos en la primera ejecución o primer acceso a módulos clave | **✅ HELP-1 cerrado** (GEN-PS-1, AST-PS-1) |
 | Tooltips avanzados | Sustituir tooltips pobres por ayuda breve, específica y accionable | Pendiente |
-| Ejemplos de uso | Mostrar casos reales o plantillas de ejemplo para reducir ambigüedad | Pendiente |
-| FAQ | Resolver dudas frecuentes sin soporte externo | Pendiente |
-| Glosario de formatos | Explicar CSV, PDF, Excel, NIF, IVA, estados, roles, importes y columnas esperadas | Pendiente |
-| Riesgos y advertencias | Explicar consecuencias antes de importaciones, borrados, cambios de rol o datos sensibles | Pendiente |
-| Documentación offline | Empaquetar la ayuda con la aplicación, sin depender de internet | Pendiente |
-| Buscador de ayuda | Buscar por módulo, palabra clave, acción, error o formato | Pendiente |
-| Enlaces desde errores | Conectar mensajes de error con soluciones o guías relacionadas | Pendiente |
+| Ejemplos de uso | Mostrar casos reales o plantillas de ejemplo para reducir ambigüedad | **✅ HELP-1 cerrado** |
+| FAQ | Resolver dudas frecuentes sin soporte externo | **✅ HELP-1 cerrado** (FAQ en todos los módulos) |
+| Glosario de formatos | Explicar CSV, PDF, Excel, NIF, IVA, estados, roles, importes y columnas esperadas | **✅ HELP-1 cerrado** (GEN-REF-1) |
+| Riesgos y advertencias | Explicar consecuencias antes de importaciones, borrados, cambios de rol o datos sensibles | **✅ HELP-1 cerrado** (artículos ADV) |
+| Documentación offline | Empaquetar la ayuda con la aplicación, sin depender de internet | **✅ HELP-1 cerrado** (recursos en `src/main/resources`) |
+| Buscador de ayuda | Buscar por módulo, palabra clave, acción, error o formato | **HELP-2 — SIGUIENTE** (index.json listo) |
+| Enlaces desde errores | Conectar mensajes de error con soluciones o guías relacionadas | HELP-3 |
 | Modo principiante / avanzado | Ajustar densidad de ayuda según experiencia del usuario | Pendiente |
 
 ### 5.3 Reglas de diseño
