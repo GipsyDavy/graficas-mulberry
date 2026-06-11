@@ -66,6 +66,31 @@ public class ImportService {
         }
     }
 
+    // ── Import config ─────────────────────────────────────────────────────────
+
+    public static class ImportConfig {
+        public final Map<String, String> mapping;
+        public final List<String> pivotColumns;
+        public final String pivotLabelField;
+        public final String pivotValueField;
+
+        public ImportConfig(Map<String, String> mapping) {
+            this(mapping, List.of(), null, null);
+        }
+
+        public ImportConfig(Map<String, String> mapping, List<String> pivotColumns,
+                            String pivotLabelField, String pivotValueField) {
+            this.mapping = Collections.unmodifiableMap(new LinkedHashMap<>(mapping));
+            this.pivotColumns = List.copyOf(pivotColumns);
+            this.pivotLabelField = pivotLabelField;
+            this.pivotValueField = pivotValueField;
+        }
+
+        public boolean hasPivot() {
+            return !pivotColumns.isEmpty() && pivotLabelField != null && pivotValueField != null;
+        }
+    }
+
     // ── File parsing ──────────────────────────────────────────────────────────
 
     public ImportResult parseFile(File file) throws Exception {
@@ -168,12 +193,29 @@ public class ImportService {
             FormulaEvaluator ev = wb.getCreationHelper().createFormulaEvaluator();
 
             int firstRow = sheet.getFirstRowNum();
-            Row hRow = sheet.getRow(firstRow);
+            int headerRowIdx = detectHeaderRow(sheet, firstRow);
+            Row hRow = sheet.getRow(headerRowIdx);
             if (hRow == null) return new ImportResult(headers, rows, ext);
 
-            for (Cell c : hRow) headers.add(cellStr(c, ev));
+            // Loop explícito: incluye celdas ausentes como "" para conservar alineación
+            int lastCol = hRow.getLastCellNum();
+            List<String> allHeaders = new ArrayList<>();
+            for (int ci = 0; ci < lastCol; ci++) {
+                Cell c = hRow.getCell(ci, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                allHeaders.add(c != null ? cellStr(c, ev) : "");
+            }
 
-            for (int r = firstRow + 1; r <= sheet.getLastRowNum(); r++) {
+            // Tomar solo la primera tabla: si hay ≥3 cols a cada lado de un bloque
+            // de columnas vacías, quedarse con las columnas hasta ese separador
+            int blockEnd = firstTableBlockEnd(allHeaders);
+            headers.addAll(allHeaders.subList(0, blockEnd));
+            // Nombrar columnas sin cabecera para evitar claves "" duplicadas en el map
+            for (int i = 0; i < headers.size(); i++) {
+                if (headers.get(i).isBlank()) headers.set(i, "Columna_" + (i + 1));
+            }
+
+            // Índices de columna de origen (alineados con la hoja real)
+            for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
                 Row row = sheet.getRow(r);
                 if (row == null) continue;
                 Map<String, String> map = new LinkedHashMap<>();
@@ -188,6 +230,55 @@ public class ImportService {
             }
         }
         return new ImportResult(headers, rows, ext);
+    }
+
+    /**
+     * Devuelve el índice de fin (exclusivo) de la primera tabla en la fila de cabecera.
+     * Si detecta un separador válido (columnas vacías con ≥3 cols no-vacías a cada lado),
+     * corta ahí. Si no, devuelve el tamaño total (sin corte).
+     */
+    private int firstTableBlockEnd(List<String> headers) {
+        int n = headers.size();
+        for (int i = 0; i < n; i++) {
+            if (!headers.get(i).isBlank()) continue;
+            // Contar cols no-vacías a la izquierda
+            int leftNonBlank = 0;
+            for (int j = 0; j < i; j++) {
+                if (!headers.get(j).isBlank()) leftNonBlank++;
+            }
+            if (leftNonBlank < 3) continue;
+            // Encontrar fin del bloque de cols vacías
+            int gapEnd = i;
+            while (gapEnd < n && headers.get(gapEnd).isBlank()) gapEnd++;
+            // Contar cols no-vacías a la derecha
+            int rightNonBlank = 0;
+            for (int j = gapEnd; j < n; j++) {
+                if (!headers.get(j).isBlank()) rightNonBlank++;
+            }
+            if (rightNonBlank >= 3) return i; // separador válido encontrado
+        }
+        return n; // sin separador: usar todas las columnas
+    }
+
+    /** Elige la fila con más celdas STRING no-vacías entre las primeras 5. */
+    private int detectHeaderRow(Sheet sheet, int firstRow) {
+        int bestRow = firstRow;
+        int bestScore = 0;
+        int limit = Math.min(firstRow + 5, sheet.getLastRowNum() + 1);
+        for (int r = firstRow; r < limit; r++) {
+            Row row = sheet.getRow(r);
+            if (row == null) continue;
+            int score = 0;
+            for (Cell c : row) {
+                if (c.getCellType() == CellType.STRING && !c.getStringCellValue().isBlank())
+                    score++;
+            }
+            if (score > bestScore) {
+                bestScore = score;
+                bestRow = r;
+            }
+        }
+        return bestRow;
     }
 
     private String cellStr(Cell cell, FormulaEvaluator ev) {
@@ -344,6 +435,33 @@ public class ImportService {
     }
 
     // ── Import to database ────────────────────────────────────────────────────
+
+    public int importar(TipoEntidad tipo, List<Map<String, String>> rows,
+                        ImportConfig config) throws Exception {
+        if (config.hasPivot()) {
+            List<Map<String, String>> expanded = expandPivot(rows, config);
+            Map<String, String> expandedMapping = new LinkedHashMap<>(config.mapping);
+            expandedMapping.put("__pivot_label__", config.pivotLabelField);
+            expandedMapping.put("__pivot_value__", config.pivotValueField);
+            return importar(tipo, expanded, expandedMapping);
+        }
+        return importar(tipo, rows, config.mapping);
+    }
+
+    private List<Map<String, String>> expandPivot(List<Map<String, String>> rows, ImportConfig config) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Map<String, String> row : rows) {
+            for (String pivotCol : config.pivotColumns) {
+                String value = row.getOrDefault(pivotCol, "");
+                if (value.isBlank()) continue;
+                Map<String, String> newRow = new LinkedHashMap<>(row);
+                newRow.put("__pivot_label__", pivotCol);
+                newRow.put("__pivot_value__", value);
+                result.add(newRow);
+            }
+        }
+        return result;
+    }
 
     public int importar(TipoEntidad tipo, List<Map<String, String>> rows,
                         Map<String, String> mapping) throws Exception {
