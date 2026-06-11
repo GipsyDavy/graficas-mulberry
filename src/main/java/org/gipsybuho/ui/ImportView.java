@@ -9,10 +9,19 @@ import javafx.scene.control.*;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
+import org.gipsybuho.dao.ColumnConfigDAO;
+import org.gipsybuho.model.Cliente;
+import org.gipsybuho.model.Empleado;
+import org.gipsybuho.model.Material;
+import org.gipsybuho.model.Tarifa;
+import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.ImportService.ImportResult;
 import org.gipsybuho.service.ImportService.TipoEntidad;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ValidationIssue;
+import org.gipsybuho.service.importer.EntityImportSpec;
+import org.gipsybuho.service.importer.FieldSpec;
 
 import java.io.File;
 import java.util.*;
@@ -20,6 +29,7 @@ import java.util.*;
 public class ImportView extends VBox {
 
     private final ImportService svc = new ImportService();
+    private final TipoEntidad tipoInicial;
 
     // State
     private File archivoSeleccionado;
@@ -27,15 +37,30 @@ public class ImportView extends VBox {
     private TipoEntidad tipoSeleccionado;
     private Map<String, String> mappingActual = new LinkedHashMap<>();
     private ImportService.ImportConfig importConfig = null;
+    private final Runnable onImportComplete;
 
     // UI panels (one per step)
     private final VBox panelPasos = new VBox(0);
+    private final ScrollPane panelScroll = new ScrollPane(panelPasos);
     private final TextArea logArea = new TextArea();
+    private GroupingConfig groupingConfig = null;
 
     // Step indicators
     private final Label[] stepLabels = new Label[4];
 
+    private record GroupingConfig(String field, String fixedValue) {}
+
     public ImportView() {
+        this(null, null);
+    }
+
+    public ImportView(Runnable onImportComplete) {
+        this(null, onImportComplete);
+    }
+
+    public ImportView(TipoEntidad tipoInicial, Runnable onImportComplete) {
+        this.tipoInicial = tipoInicial;
+        this.onImportComplete = onImportComplete;
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(14);
@@ -49,8 +74,13 @@ public class ImportView extends VBox {
         subtitulo.setWrapText(true);
         subtitulo.setStyle("-fx-text-fill:-c-text-muted;-fx-font-size:13px;");
 
-        getChildren().addAll(titulo, subtitulo, buildIndicadorPasos(), new Separator(), panelPasos, buildLog());
-        VBox.setVgrow(panelPasos, Priority.ALWAYS);
+        panelScroll.setFitToWidth(true);
+        panelScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
+        panelScroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
+        panelScroll.setStyle("-fx-background-color:transparent;-fx-background:transparent;");
+
+        getChildren().addAll(titulo, subtitulo, buildIndicadorPasos(), new Separator(), panelScroll, buildLog());
+        VBox.setVgrow(panelScroll, Priority.ALWAYS);
 
         mostrarPaso1();
     }
@@ -135,7 +165,7 @@ public class ImportView extends VBox {
         box.setPadding(new Insets(16, 0, 0, 0));
 
         Label titulo = new Label("Selecciona el archivo a importar");
-        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
 
         Label info = new Label("Formatos admitidos: CSV (.csv, .txt), Excel (.xlsx, .xls), JSON (.json)");
         info.setStyle("-fx-text-fill:-c-text-muted;");
@@ -212,7 +242,7 @@ public class ImportView extends VBox {
         box.setPadding(new Insets(16, 0, 0, 0));
 
         Label titulo = new Label("Detectar tipo de datos");
-        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
 
         // Columns detected
         Label lblCols = new Label("Columnas encontradas: " + String.join(", ", resultadoParseo.headers));
@@ -222,6 +252,10 @@ public class ImportView extends VBox {
         ComboBox<TipoEntidad> cbTipo = new ComboBox<>(
             FXCollections.observableArrayList(TipoEntidad.values()));
         cbTipo.setPrefWidth(200);
+        if (tipoInicial != null) {
+            cbTipo.setValue(tipoInicial);
+            cbTipo.setDisable(true);
+        }
 
         Label lblIAEstado = new Label("");
         lblIAEstado.setStyle("-fx-text-fill:-c-text-muted;");
@@ -233,6 +267,7 @@ public class ImportView extends VBox {
         statusRow.setAlignment(Pos.CENTER_LEFT);
 
         Button btnIA = btnColor("🤖  Preguntar a la IA", "#9B59B6");
+        btnIA.setDisable(tipoInicial != null);
         btnIA.setOnAction(e -> {
             if (!svc.isOllamaDisponible()) {
                 lblIAEstado.setText("❌ Ollama no está disponible. Selecciona el tipo manualmente.");
@@ -280,8 +315,11 @@ public class ImportView extends VBox {
 
         box.getChildren().addAll(titulo, lblCols, new Separator(), hint, tipoRow, statusRow, new Separator(), botonesRow);
 
-        // Auto-trigger IA if Ollama is available
-        if (svc.isOllamaDisponible()) {
+        // Auto-trigger IA if Ollama is available and the module did not fix the entity type.
+        if (tipoInicial != null) {
+            lblIAEstado.setText("Tipo fijado desde el módulo: " + tipoInicial.label + ".");
+            lblIAEstado.setStyle("-fx-text-fill:-c-text-muted;");
+        } else if (svc.isOllamaDisponible()) {
             btnIA.fire();
         } else {
             lblIAEstado.setText("⚠ Ollama no detectado. Selecciona el tipo manualmente.");
@@ -328,7 +366,7 @@ public class ImportView extends VBox {
         box.setPadding(new Insets(16, 0, 0, 0));
 
         Label titulo = new Label("Revisión y ajuste del mapeo de campos");
-        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
 
         Label desc = new Label(
             "Revisa cómo la IA ha mapeado las columnas del archivo a los campos de " + tipoSeleccionado.label +
@@ -338,13 +376,13 @@ public class ImportView extends VBox {
 
         // Mapping table
         TableView<MappingRow> tablaMappeo = buildTablaMappeo(mapping);
-        VBox.setVgrow(tablaMappeo, Priority.ALWAYS);
 
         // ── Pivot section ─────────────────────────────────────────────────────
         List<CheckBox> pivotChecks = new ArrayList<>();
         VBox colsBox = new VBox(4);
         for (MappingRow mr : tablaMappeo.getItems()) {
             CheckBox cb = new CheckBox(mr.columna);
+            cb.setStyle("-fx-text-fill:-c-text;");
             cb.setUserData(mr.columna);
             cb.setSelected(mr.getCampoDestino() == null); // pre-select unmapped columns
             pivotChecks.add(cb);
@@ -373,15 +411,16 @@ public class ImportView extends VBox {
         HBox rowValorPivot = new HBox(12, labelMin("El valor de la celda va al campo:", 230), cbPivotValor);
         rowValorPivot.setAlignment(Pos.CENTER_LEFT);
 
-        VBox pivotContent = new VBox(8,
-            new Label("Columnas que generarán un registro cada una (marca las de precio/valor):"),
-            scrollCols, rowLabelPivot, rowValorPivot);
+        Label pivotHelp = new Label("Columnas que generarán un registro cada una (marca las de precio/valor):");
+        pivotHelp.setStyle("-fx-text-fill:-c-text;");
+        VBox pivotContent = new VBox(8, pivotHelp, scrollCols, rowLabelPivot, rowValorPivot);
+        pivotContent.setStyle("-fx-text-fill:-c-text;");
         pivotContent.setPadding(new Insets(6, 0, 0, 18));
         pivotContent.setVisible(false);
         pivotContent.setManaged(false);
 
         CheckBox cbExpandido = new CheckBox("Modo expandido: generar múltiples registros por fila (ej: columnas de precio)");
-        cbExpandido.setStyle("-fx-font-weight:bold;");
+        cbExpandido.setStyle("-fx-font-weight:bold;-fx-text-fill:-c-text;");
         cbExpandido.setOnAction(e -> {
             pivotContent.setVisible(cbExpandido.isSelected());
             pivotContent.setManaged(cbExpandido.isSelected());
@@ -391,11 +430,26 @@ public class ImportView extends VBox {
         sectionPivot.setPadding(new Insets(4, 0, 0, 0));
         // ── End pivot section ─────────────────────────────────────────────────
 
+        CheckBox cbGrupoFijo = new CheckBox();
+        TextField tfGrupoFijo = new TextField();
+        VBox sectionGrouping = buildGroupingSection(cbGrupoFijo, tfGrupoFijo);
+
         // Summary
         long mapeados = mapping.values().stream().filter(Objects::nonNull).count();
         Label resumen = new Label("✅ " + mapeados + " campos mapeados de " + mapping.size() + " columnas. " +
             "Las columnas sin mapeo se ignorarán.");
         resumen.setStyle("-fx-text-fill:-c-text-muted;-fx-font-size:12px;");
+
+        Button btnNuevoCampo = btnColor("Nuevo campo…", "#27AE60");
+        String tableName = specFor(tipoSeleccionado).tableName();
+        btnNuevoCampo.setVisible(tableName != null);
+        btnNuevoCampo.setManaged(tableName != null);
+        btnNuevoCampo.setOnAction(e -> {
+            for (MappingRow row : tablaMappeo.getItems()) {
+                mappingActual.put(row.columna, row.getCampoDestino());
+            }
+            crearCampoDinamico(tableName);
+        });
 
         Button btnVolver = btnColor("← Volver", "#95A5A6");
         btnVolver.setOnAction(e -> mostrarPaso2());
@@ -404,6 +458,20 @@ public class ImportView extends VBox {
         btnSiguiente.setOnAction(e -> {
             for (MappingRow row : tablaMappeo.getItems()) {
                 mappingActual.put(row.columna, row.getCampoDestino());
+            }
+            groupingConfig = null;
+            if (cbGrupoFijo.isSelected()) {
+                String groupField = groupingField(tipoSeleccionado);
+                String groupValue = tfGrupoFijo.getText() == null ? "" : tfGrupoFijo.getText().trim();
+                if (groupField == null) {
+                    alerta("La agrupación fija solo está disponible para Materiales y Tarifas.");
+                    return;
+                }
+                if (groupValue.isBlank()) {
+                    alerta("Introduce el nombre del grupo para aplicarlo a la importación.");
+                    return;
+                }
+                groupingConfig = new GroupingConfig(groupField, groupValue);
             }
             if (cbExpandido.isSelected()) {
                 List<String> pivotCols = pivotChecks.stream()
@@ -420,26 +488,75 @@ public class ImportView extends VBox {
                     alerta("El campo para el nombre y el campo para el valor no pueden ser el mismo.");
                     return;
                 }
+                List<String> mappedPivotCols = tablaMappeo.getItems().stream()
+                    .filter(row -> pivotCols.contains(row.columna) && row.getCampoDestino() != null)
+                    .map(row -> row.columna)
+                    .toList();
+                if (!mappedPivotCols.isEmpty()) {
+                    alerta("Estas columnas ya están mapeadas como campos fijos y no pueden usarse como columnas de valor: "
+                        + String.join(", ", mappedPivotCols)
+                        + ". Déjalas sin seleccionar en el modo expandido o cambia su campo destino a '(ignorar)'.");
+                    return;
+                }
+                if (groupingConfig != null &&
+                        (groupingConfig.field().equals(labelField) || groupingConfig.field().equals(valorField))) {
+                    alerta("El grupo fijo no puede usar el mismo campo que el modo expandido.");
+                    return;
+                }
                 Map<String, String> fixedMapping = new LinkedHashMap<>(mappingActual);
                 pivotCols.forEach(fixedMapping::remove);
+                fixedMapping.entrySet().removeIf(entry -> entry.getValue() == null);
                 importConfig = new ImportService.ImportConfig(fixedMapping, pivotCols, labelField, valorField);
             } else {
                 importConfig = new ImportService.ImportConfig(mappingActual);
             }
-            mostrarPaso4();
+            mostrarPaso35();
         });
 
-        HBox botonesRow = new HBox(12, btnVolver, btnSiguiente);
+        HBox botonesRow = new HBox(12, btnVolver, btnNuevoCampo, btnSiguiente);
         botonesRow.setAlignment(Pos.CENTER_LEFT);
 
-        box.getChildren().addAll(titulo, desc, tablaMappeo, sectionPivot, resumen, new Separator(), botonesRow);
+        box.getChildren().addAll(titulo, desc, tablaMappeo, sectionPivot, sectionGrouping, resumen, new Separator(), botonesRow);
         return box;
+    }
+
+    private VBox buildGroupingSection(CheckBox cbGrupoFijo, TextField tfGrupoFijo) {
+        String field = groupingField(tipoSeleccionado);
+        VBox section = new VBox(8);
+        section.setPadding(new Insets(4, 0, 0, 0));
+        if (field == null) {
+            section.setVisible(false);
+            section.setManaged(false);
+            return section;
+        }
+
+        String label = tipoSeleccionado == TipoEntidad.MATERIALES ? "categoría" : "técnica";
+        Label title = new Label("Agrupación");
+        title.setStyle("-fx-font-weight:bold;-fx-text-fill:-c-text;");
+        Label help = new Label(
+            "Puedes mapear una columna del archivo al campo '" + field + "' o aplicar una " +
+            label + " fija a todos los registros de esta importación.");
+        help.setWrapText(true);
+        help.setStyle("-fx-text-fill:-c-text-muted;-fx-font-size:12px;");
+
+        cbGrupoFijo.setText("Aplicar " + label + " fija a toda la importación");
+        cbGrupoFijo.setStyle("-fx-text-fill:-c-text;");
+        tfGrupoFijo.setPromptText(tipoSeleccionado == TipoEntidad.MATERIALES ? "Ej: Papeles" : "Ej: Tarjetas de visita");
+        tfGrupoFijo.setPrefWidth(260);
+        tfGrupoFijo.setDisable(true);
+        cbGrupoFijo.setOnAction(e -> tfGrupoFijo.setDisable(!cbGrupoFijo.isSelected()));
+
+        HBox fixedRow = new HBox(10, cbGrupoFijo, tfGrupoFijo);
+        fixedRow.setAlignment(Pos.CENTER_LEFT);
+        section.getChildren().addAll(new Separator(), title, help, fixedRow);
+        return section;
     }
 
     private TableView<MappingRow> buildTablaMappeo(Map<String, String> mapping) {
         List<String> opcionesDestino = new ArrayList<>();
         opcionesDestino.add("(ignorar)");
         opcionesDestino.addAll(tipoSeleccionado.campos);
+        opcionesDestino.addAll(dynamicFieldKeys(specFor(tipoSeleccionado)));
 
         ObservableList<MappingRow> items = FXCollections.observableArrayList();
         for (var entry : mapping.entrySet()) {
@@ -448,20 +565,25 @@ public class ImportView extends VBox {
 
         TableView<MappingRow> tabla = new TableView<>(items);
         tabla.setPrefHeight(280);
+        tabla.setMinHeight(220);
+        tabla.setMaxHeight(320);
         tabla.setEditable(true);
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.getStyleClass().add("data-table");
+        TableColumnSizing.enableHorizontalScroll(tabla);
 
         // Column: file column name
         TableColumn<MappingRow, String> colArchivo = new TableColumn<>("Columna del archivo");
         colArchivo.setCellValueFactory(new PropertyValueFactory<>("columna"));
         colArchivo.setEditable(false);
         colArchivo.setStyle("-fx-font-weight:bold;");
+        colArchivo.setPrefWidth(220);
 
         // Column: destination field (editable ComboBox)
         TableColumn<MappingRow, String> colDestino = new TableColumn<>("Campo destino (editable)");
         colDestino.setCellValueFactory(new PropertyValueFactory<>("campoDestino"));
         colDestino.setCellFactory(tc -> new ComboBoxTableCell(opcionesDestino));
         colDestino.setOnEditCommit(event -> event.getRowValue().setCampoDestino(event.getNewValue()));
+        colDestino.setPrefWidth(240);
 
         // Column: preview value
         TableColumn<MappingRow, String> colEjemplo = new TableColumn<>("Valor de ejemplo");
@@ -471,7 +593,7 @@ public class ImportView extends VBox {
                 resultadoParseo.rows.get(0).getOrDefault(col, "");
             return new javafx.beans.property.SimpleStringProperty(ejemplo);
         });
-        colEjemplo.setStyle("-fx-text-fill:-c-text-muted;");
+        colEjemplo.setPrefWidth(240);
 
         // Status column
         TableColumn<MappingRow, String> colEstado = new TableColumn<>("Estado");
@@ -483,7 +605,47 @@ public class ImportView extends VBox {
         colEstado.setPrefWidth(90);
 
         tabla.getColumns().addAll(colArchivo, colDestino, colEjemplo, colEstado);
+        TableColumnSizing.autoSizeLater(tabla, 90, 520, 60);
         return tabla;
+    }
+
+    private List<String> dynamicFieldKeys(EntityImportSpec spec) {
+        if (spec.tableName() == null) return List.of();
+        try {
+            Set<String> baseKeys = spec.campos().stream()
+                .map(FieldSpec::clave)
+                .collect(java.util.stream.Collectors.toSet());
+            return new ColumnConfigDAO().findVisibleDynamic(spec.tableName(), baseKeys).stream()
+                .map(ColumnConfigDAO.ColumnConfig::columnName)
+                .toList();
+        } catch (Exception ex) {
+            log("⚠ No se pudieron cargar campos dinámicos: " + ex.getMessage());
+            return List.of();
+        }
+    }
+
+    private void crearCampoDinamico(String tableName) {
+        TextInputDialog dialog = new TextInputDialog();
+        dialog.setTitle("Crear campo nuevo");
+        dialog.setHeaderText("Nombre visible del nuevo campo");
+        dialog.setContentText("Etiqueta:");
+        if (getScene() != null) {
+            dialog.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        }
+        dialog.showAndWait().ifPresent(label -> {
+            if (label == null || label.isBlank()) return;
+            try {
+                Set<String> baseKeys = specFor(tipoSeleccionado).campos().stream()
+                    .map(FieldSpec::clave)
+                    .collect(java.util.stream.Collectors.toSet());
+                ColumnConfigDAO.ColumnConfig config =
+                    new ColumnConfigDAO().addDynamicColumn(tableName, label, baseKeys);
+                log("✅ Campo dinámico creado: " + config.label() + " (" + config.columnName() + ")");
+                panelPasos.getChildren().setAll(buildPaso3(new LinkedHashMap<>(mappingActual)));
+            } catch (Exception ex) {
+                alerta("No se pudo crear el campo:\n" + ex.getMessage());
+            }
+        });
     }
 
     // MappingRow model for the mapping table
@@ -540,6 +702,169 @@ public class ImportView extends VBox {
         }
     }
 
+    // ── PASO 3.5: AI validation ───────────────────────────────────────────────
+
+    private void mostrarPaso35() {
+        activarPaso(2);
+        panelPasos.getChildren().setAll(buildPaso35Cargando());
+
+        Map<String, String> mappingParaValidar = importConfig != null
+            ? importConfig.mapping
+            : new LinkedHashMap<>(mappingActual);
+
+        Thread.ofVirtual().start(() -> {
+            List<ValidationIssue> issues;
+            try {
+                issues = svc.validateImportData(resultadoParseo.rows, mappingParaValidar, tipoSeleccionado);
+            } catch (Exception ex) {
+                issues = List.of();
+                System.err.println("Validation step failed: " + ex.getMessage());
+            }
+            final List<ValidationIssue> finalIssues = issues;
+            Platform.runLater(() -> panelPasos.getChildren().setAll(buildPaso35(finalIssues)));
+        });
+    }
+
+    private VBox buildPaso35Cargando() {
+        VBox box = new VBox(16);
+        box.setPadding(new Insets(32, 0, 0, 0));
+        box.setAlignment(Pos.CENTER);
+
+        Label titulo = new Label("Validación de datos con IA");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
+
+        ProgressIndicator spinner = new ProgressIndicator();
+        spinner.setPrefSize(48, 48);
+
+        Label msg = new Label("Analizando los datos con IA local…");
+        msg.setStyle("-fx-text-fill:-c-text-muted;");
+
+        box.getChildren().addAll(titulo, spinner, msg);
+        return box;
+    }
+
+    private VBox buildPaso35(List<ValidationIssue> issues) {
+        VBox box = new VBox(12);
+        box.setPadding(new Insets(16, 0, 0, 0));
+
+        Label titulo = new Label("Validación de datos con IA");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
+
+        ObservableList<ValidationIssue> issueList = FXCollections.observableArrayList(issues);
+
+        Map<String, String> mappingParaValidar = importConfig != null
+            ? importConfig.mapping
+            : new LinkedHashMap<>(mappingActual);
+
+        // Declare buttons here so cell factory can reference btnContinuar
+        Button btnVolver = btnColor("← Volver", "#95A5A6");
+        btnVolver.setOnAction(e -> mostrarPaso3());
+
+        Button btnContinuar = btnColor("Continuar →", "#27AE60");
+        btnContinuar.setDefaultButton(true);
+        updateContinuarButton(btnContinuar, issueList);
+        btnContinuar.setOnAction(e -> mostrarPaso4());
+
+        if (issues.isEmpty()) {
+            Label ok = new Label("✅  No se detectaron problemas en los datos.");
+            ok.setStyle("-fx-text-fill:#27AE60;-fx-font-size:13px;");
+            box.getChildren().addAll(titulo, ok);
+        } else {
+            long errors = issues.stream().filter(i -> i.severity() == ValidationIssue.Severity.ERROR).count();
+            Label resumen = new Label(
+                errors + " error(es) · " + (issues.size() - errors) + " advertencia(s) detectadas");
+            resumen.setStyle("-fx-font-size:13px;-fx-text-fill:" + (errors > 0 ? "#E74C3C" : "#E67E22") + ";");
+
+            TableView<ValidationIssue> tabla = new TableView<>(issueList);
+            tabla.getStyleClass().add("data-table");
+            tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+            tabla.setPrefHeight(220);
+
+            TableColumn<ValidationIssue, String> colFila = new TableColumn<>("Fila");
+            colFila.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
+                String.valueOf(d.getValue().rowIndex() + 1)));
+            colFila.setPrefWidth(50);
+
+            TableColumn<ValidationIssue, String> colCampo = new TableColumn<>("Campo");
+            colCampo.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().columnName()));
+            colCampo.setPrefWidth(130);
+
+            TableColumn<ValidationIssue, String> colProblema = new TableColumn<>("Problema");
+            colProblema.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(d.getValue().issue()));
+
+            TableColumn<ValidationIssue, String> colSeveridad = new TableColumn<>("Nivel");
+            colSeveridad.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
+                d.getValue().severity() == ValidationIssue.Severity.ERROR ? "ERROR" : "Aviso"));
+            colSeveridad.setPrefWidth(65);
+
+            TableColumn<ValidationIssue, String> colSugerencia = new TableColumn<>("Sugerencia IA");
+            colSugerencia.setCellValueFactory(d -> new javafx.beans.property.SimpleStringProperty(
+                d.getValue().suggestedFix().orElse("—")));
+            colSugerencia.setPrefWidth(160);
+
+            TableColumn<ValidationIssue, Void> colAcciones = new TableColumn<>("Acciones");
+            colAcciones.setPrefWidth(180);
+            colAcciones.setCellFactory(col -> new TableCell<>() {
+                private final Button btnCorregirCell = btnColor("🤖 Corregir con IA", "#6C63FF");
+                private final Button btnIgnorarCell  = btnColor("Ignorar", "#95A5A6");
+                private final HBox pane = new HBox(6, btnCorregirCell, btnIgnorarCell);
+                {
+                    btnCorregirCell.setOnAction(e -> {
+                        ValidationIssue iss = getTableRow().getItem();
+                        if (iss == null) return;
+                        if (iss.rowIndex() < 0 || iss.rowIndex() >= resultadoParseo.rows.size()) return;
+                        btnCorregirCell.setDisable(true);
+                        Thread.ofVirtual().start(() -> {
+                            Optional<String> fix = svc.corregirValor(
+                                resultadoParseo.rows.get(iss.rowIndex()),
+                                iss.columnName(), iss.issue(), tipoSeleccionado, mappingParaValidar);
+                            Platform.runLater(() -> {
+                                fix.ifPresent(val ->
+                                    resultadoParseo.rows.get(iss.rowIndex()).put(iss.columnName(), val));
+                                issueList.remove(iss);
+                                updateContinuarButton(btnContinuar, issueList);
+                            });
+                        });
+                    });
+                    btnIgnorarCell.setOnAction(e -> {
+                        ValidationIssue iss = getTableRow().getItem();
+                        if (iss != null) {
+                            issueList.remove(iss);
+                            updateContinuarButton(btnContinuar, issueList);
+                        }
+                    });
+                }
+
+                @Override
+                protected void updateItem(Void item, boolean empty) {
+                    super.updateItem(item, empty);
+                    if (empty || getTableRow().getItem() == null) { setGraphic(null); return; }
+                    ValidationIssue iss = getTableRow().getItem();
+                    btnCorregirCell.setVisible(iss.suggestedFix().isPresent() || svc.isOllamaDisponible());
+                    btnCorregirCell.setDisable(false);
+                    setGraphic(pane);
+                }
+            });
+
+            tabla.getColumns().addAll(colFila, colCampo, colProblema, colSeveridad, colSugerencia, colAcciones);
+            box.getChildren().addAll(titulo, resumen, tabla);
+        }
+
+        HBox botones = new HBox(12, btnVolver, btnContinuar);
+        botones.setAlignment(Pos.CENTER_LEFT);
+        box.getChildren().addAll(new Separator(), botones);
+        return box;
+    }
+
+    private void updateContinuarButton(Button btn, ObservableList<ValidationIssue> issues) {
+        long errors = issues.stream()
+            .filter(i -> i.severity() == ValidationIssue.Severity.ERROR).count();
+        btn.setDisable(errors > 0);
+        btn.setText(errors > 0
+            ? "Continuar → (" + errors + " error(es) pendientes)"
+            : "Continuar →");
+    }
+
     // ── PASO 4: Preview and import ────────────────────────────────────────────
 
     private void mostrarPaso4() {
@@ -551,30 +876,31 @@ public class ImportView extends VBox {
         ImportService.ImportConfig config = importConfig != null
             ? importConfig
             : new ImportService.ImportConfig(mappingActual);
-        int estimatedRecords = config.hasPivot()
-            ? calcularRegistrosPivot(resultadoParseo.rows, config)
-            : resultadoParseo.rows.size();
+        PreparedImport prepared = prepareImport(config);
+        int estimatedRecords = prepared.rows().size();
 
         VBox box = new VBox(12);
         box.setPadding(new Insets(16, 0, 0, 0));
 
         Label titulo = new Label("Vista previa e importar");
-        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;");
+        titulo.setStyle("-fx-font-weight:bold;-fx-font-size:14px;-fx-text-fill:-c-text;");
 
         long camposMapeados = config.mapping.values().stream().filter(Objects::nonNull).count()
             + (config.hasPivot() ? 2L : 0L);
         String pivotInfo = config.hasPivot()
             ? " · modo expandido: " + config.pivotColumns.size() + " columnas × " + resultadoParseo.rows.size() + " filas"
             : "";
+        String groupInfo = groupingConfig != null
+            ? " · grupo fijo: " + groupingConfig.fixedValue()
+            : "";
         Label resumen = new Label(
             "📋 ~" + estimatedRecords + " registros listos · " +
-            camposMapeados + " campos mapeados → " + tipoSeleccionado.label + pivotInfo);
+            camposMapeados + " campos mapeados → " + tipoSeleccionado.label + pivotInfo + groupInfo);
         resumen.setStyle("-fx-font-size:13px;");
         resumen.setWrapText(true);
 
         // Preview table (first 8 rows)
-        TableView<Map<String, String>> preview = buildTablaPreview(config);
-        VBox.setVgrow(preview, Priority.ALWAYS);
+        TableView<Map<String, String>> preview = buildTablaPreview(prepared, config);
 
         // Warn if required field is not mapped
         List<String> warnings = buildWarnings(config);
@@ -609,20 +935,30 @@ public class ImportView extends VBox {
 
             Thread.ofVirtual().start(() -> {
                 try {
-                    int n = svc.importar(tipoSeleccionado, resultadoParseo.rows, config);
+                    org.gipsybuho.service.importer.ImportResult result =
+                        new EntityImportService().importar(
+                            specFor(tipoSeleccionado),
+                            prepared.rows(),
+                            prepared.mapping(),
+                            specFor(tipoSeleccionado).politicaDefecto()
+                        );
                     Platform.runLater(() -> {
                         SoundService.play(SoundService.Sound.COMPLETE);
                         progressBar.setProgress(1.0);
                         lblProgreso.setText("✅ Importación completada");
-                        log("✅ " + n + " registros importados correctamente en " + tipoSeleccionado.label + ".");
+                        log("✅ " + result.filasImportadas() + " registros importados y " +
+                            result.filasActualizadas() + " actualizados en " + tipoSeleccionado.label + ".");
                         btnImportar.setDisable(false);
                         btnVolver.setDisable(false);
 
                         Alert ok = new Alert(Alert.AlertType.INFORMATION);
                         ok.setTitle("Importación completada");
                         ok.setHeaderText(null);
-                        ok.setContentText("✅  Se han importado " + n + " registros en " + tipoSeleccionado.label + ".\n\nPuedes verlos en la sección correspondiente.");
+                        ok.setContentText(importResultText(result));
                         ok.showAndWait();
+                        if (onImportComplete != null) {
+                            onImportComplete.run();
+                        }
                         mostrarPaso1();  // Reset to start
                     });
                 } catch (Exception ex) {
@@ -648,17 +984,63 @@ public class ImportView extends VBox {
         return box;
     }
 
+    private record PreparedImport(List<Map<String, String>> rows, Map<String, String> mapping) {}
+
+    private PreparedImport prepareImport(ImportService.ImportConfig config) {
+        List<Map<String, String>> rows = config.hasPivot()
+            ? expandPivotRows(resultadoParseo.rows, config)
+            : copyRows(resultadoParseo.rows);
+        Map<String, String> mapping = new LinkedHashMap<>(config.mapping);
+        mapping.entrySet().removeIf(entry -> entry.getValue() == null);
+        if (false && config.hasPivot()) {
+            mapping.put("__pivot_label__", config.pivotLabelField);
+            mapping.put("__pivot_value__", config.pivotValueField);
+        }
+        if (groupingConfig != null) {
+            mapping.entrySet().removeIf(entry -> groupingConfig.field().equals(entry.getValue()));
+            for (Map<String, String> row : rows) {
+                row.put("__fixed_group__", groupingConfig.fixedValue());
+            }
+            mapping.put("__fixed_group__", groupingConfig.field());
+        }
+        return new PreparedImport(rows, mapping);
+    }
+
+    private List<Map<String, String>> copyRows(List<Map<String, String>> rows) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Map<String, String> row : rows) result.add(new LinkedHashMap<>(row));
+        return result;
+    }
+
+    private List<Map<String, String>> expandPivotRows(List<Map<String, String>> rows, ImportService.ImportConfig config) {
+        List<Map<String, String>> result = new ArrayList<>();
+        for (Map<String, String> row : rows) {
+            for (String pivotCol : config.pivotColumns) {
+                String value = row.getOrDefault(pivotCol, "");
+                if (value.isBlank()) continue;
+                Map<String, String> newRow = new LinkedHashMap<>(row);
+                newRow.put("__pivot_label__", pivotCol);
+                newRow.put("__pivot_value__", value);
+                result.add(newRow);
+            }
+        }
+        return result;
+    }
+
     @SuppressWarnings("unchecked")
-    private TableView<Map<String, String>> buildTablaPreview(ImportService.ImportConfig config) {
+    private TableView<Map<String, String>> buildTablaPreview(PreparedImport prepared, ImportService.ImportConfig config) {
         ObservableList<Map<String, String>> items = FXCollections.observableArrayList();
-        int limit = Math.min(8, resultadoParseo.rows.size());
-        for (int i = 0; i < limit; i++) items.add(resultadoParseo.rows.get(i));
+        int limit = Math.min(8, prepared.rows().size());
+        for (int i = 0; i < limit; i++) items.add(prepared.rows().get(i));
 
         TableView<Map<String, String>> tabla = new TableView<>(items);
-        tabla.setPrefHeight(220);
-        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        tabla.setPrefHeight(300);
+        tabla.setMinHeight(240);
+        tabla.setMaxHeight(360);
+        tabla.getStyleClass().add("data-table");
+        TableColumnSizing.enableHorizontalScroll(tabla);
 
-        for (var entry : config.mapping.entrySet()) {
+        for (var entry : prepared.mapping().entrySet()) {
             if (entry.getValue() == null) continue;
             String col = entry.getKey();
             String dest = entry.getValue();
@@ -669,32 +1051,11 @@ public class ImportView extends VBox {
             tabla.getColumns().add(tc);
         }
 
-        if (config.hasPivot()) {
-            int shown = 0;
-            for (String pivotCol : config.pivotColumns) {
-                if (shown++ >= 3) break;
-                String shortName = pivotCol.length() > 18 ? pivotCol.substring(0, 18) + "…" : pivotCol;
-                TableColumn<Map<String, String>, String> tc =
-                    new TableColumn<>(config.pivotValueField + "\n← " + shortName);
-                final String pc = pivotCol;
-                tc.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty(
-                    cd.getValue().getOrDefault(pc, "")));
-                tc.setPrefWidth(120);
-                tabla.getColumns().add(tc);
-            }
-            if (config.pivotColumns.size() > 3) {
-                TableColumn<Map<String, String>, String> tcMore =
-                    new TableColumn<>("+" + (config.pivotColumns.size() - 3) + " más");
-                tcMore.setCellValueFactory(cd -> new javafx.beans.property.SimpleStringProperty("…"));
-                tcMore.setPrefWidth(55);
-                tabla.getColumns().add(tcMore);
-            }
+        if (prepared.rows().size() > 8) {
+            tabla.setPlaceholder(new Label("… y " + (prepared.rows().size() - 8) + " registros más"));
         }
 
-        if (resultadoParseo.rows.size() > 8) {
-            tabla.setPlaceholder(new Label("… y " + (resultadoParseo.rows.size() - 8) + " registros más"));
-        }
-
+        TableColumnSizing.autoSizeLater(tabla, 90, 520, 80);
         return tabla;
     }
 
@@ -727,9 +1088,45 @@ public class ImportView extends VBox {
         return count;
     }
 
+    private EntityImportSpec specFor(TipoEntidad tipo) {
+        return switch (tipo) {
+            case CLIENTES   -> Cliente.IMPORT_SPEC;
+            case MATERIALES -> Material.IMPORT_SPEC;
+            case EMPLEADOS  -> Empleado.IMPORT_SPEC;
+            case TARIFAS    -> Tarifa.IMPORT_SPEC;
+        };
+    }
+
+    private String groupingField(TipoEntidad tipo) {
+        return switch (tipo) {
+            case MATERIALES -> "categoria";
+            case TARIFAS    -> "tecnica";
+            default         -> null;
+        };
+    }
+
+    private String importResultText(org.gipsybuho.service.importer.ImportResult result) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Importación completada en %.1f s.%n%n",
+            result.duracion().toMillis() / 1000.0));
+        sb.append(String.format("✓ %d filas importadas%n", result.filasImportadas()));
+        sb.append(String.format("✓ %d filas actualizadas%n", result.filasActualizadas()));
+        sb.append(String.format("✗ %d filas descartadas", result.filasDescartadas()));
+        if (!result.errores().isEmpty()) {
+            sb.append("\n\nErrores (primeros 10):");
+            result.errores().stream().limit(10).forEach(error ->
+                sb.append(String.format("%n  Fila %d — %s: %s",
+                    error.numeroFila(),
+                    error.campo() != null ? error.campo() : "—",
+                    error.mensaje())));
+        }
+        return sb.toString();
+    }
+
     private Label labelMin(String text, double minWidth) {
         Label lbl = new Label(text);
         lbl.setMinWidth(minWidth);
+        lbl.setStyle("-fx-text-fill:-c-text;");
         return lbl;
     }
 
