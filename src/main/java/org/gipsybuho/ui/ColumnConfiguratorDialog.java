@@ -6,11 +6,14 @@ import javafx.geometry.Insets;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Dialog;
 import javafx.scene.control.Label;
 import javafx.scene.control.ListCell;
 import javafx.scene.control.ListView;
+import javafx.scene.control.TextField;
 import javafx.scene.control.TextInputDialog;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
@@ -72,7 +75,8 @@ public class ColumnConfiguratorDialog {
                     setText(null);
                     return;
                 }
-                String tipo = item.baseColumn() ? "base" : "usuario";
+                String tipo = item.baseColumn() ? "base"
+                    : (item.dataType() != null ? item.dataType().toLowerCase() : "texto");
                 String estado = item.visible() ? "" : " (oculta)";
                 setText(item.label() + "  [" + tipo + "]" + estado);
             }
@@ -82,22 +86,28 @@ public class ColumnConfiguratorDialog {
         Button rename = new Button("Renombrar");
         Button show = new Button("Mostrar");
         Button hide = new Button("Ocultar");
+        Button delete = new Button("Eliminar");
         add.setMaxWidth(Double.MAX_VALUE);
         rename.setMaxWidth(Double.MAX_VALUE);
         show.setMaxWidth(Double.MAX_VALUE);
         hide.setMaxWidth(Double.MAX_VALUE);
+        delete.setMaxWidth(Double.MAX_VALUE);
+        delete.setStyle("-fx-text-fill:#E74C3C;");
 
         add.setOnAction(e -> addColumn());
         rename.setOnAction(e -> renameColumn(listView.getSelectionModel().getSelectedItem()));
         show.setOnAction(e -> showColumn(listView.getSelectionModel().getSelectedItem()));
         hide.setOnAction(e -> hideColumn(listView.getSelectionModel().getSelectedItem()));
+        delete.setOnAction(e -> deleteColumn(listView.getSelectionModel().getSelectedItem()));
 
-        VBox actions = new VBox(8, add, rename, show, hide);
+        VBox actions = new VBox(8, add, rename, show, hide, delete);
         HBox.setHgrow(listView, Priority.ALWAYS);
         HBox content = new HBox(12, listView, actions);
         content.setPadding(new Insets(12));
 
-        Label note = new Label("Las columnas base solo se renombran. Las columnas de usuario se ocultan para no perder datos.");
+        Label note = new Label(
+            "Columnas base: renombrar, ocultar/mostrar. " +
+            "Columnas de usuario: renombrar, ocultar/mostrar, eliminar (borra los datos).");
         note.setWrapText(true);
         VBox root = new VBox(8, content, note);
         root.setPadding(new Insets(8));
@@ -115,15 +125,43 @@ public class ColumnConfiguratorDialog {
     }
 
     private void addColumn() {
-        TextInputDialog input = new TextInputDialog();
-        input.setTitle("Nueva columna");
-        input.setHeaderText(null);
-        input.setContentText("Nombre de la columna:");
-        input.showAndWait().ifPresent(label -> {
+        Dialog<ButtonType> dialog = new Dialog<>();
+        dialog.setTitle("Nueva columna");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+        dialog.getDialogPane().getStylesheets().addAll(stylesheets);
+
+        TextField tfLabel = new TextField();
+        tfLabel.setPromptText("Nombre visible de la columna");
+        tfLabel.setPrefWidth(220);
+
+        ComboBox<String> cbTipo = new ComboBox<>(FXCollections.observableArrayList(
+            "TEXTO", "NUMÉRICO", "PRECIO", "FECHA"));
+        cbTipo.setValue("TEXTO");
+        cbTipo.setPrefWidth(220);
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(12));
+        grid.add(new Label("Nombre:"), 0, 0);
+        grid.add(tfLabel, 1, 0);
+        grid.add(new Label("Tipo de dato:"), 0, 1);
+        grid.add(cbTipo, 1, 1);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.showAndWait().filter(ButtonType.OK::equals).ifPresent(bt -> {
+            String label = tfLabel.getText().trim();
+            if (label.isBlank()) return;
+            String dataType = switch (cbTipo.getValue()) {
+                case "NUMÉRICO" -> "NUMERICO";
+                case "PRECIO"   -> "PRECIO";
+                case "FECHA"    -> "FECHA";
+                default         -> "TEXTO";
+            };
             try {
                 Set<String> reserved = new java.util.HashSet<>(baseColumns.keySet());
                 reserved.addAll(ignoredColumns);
-                dao.addDynamicColumn(tableName, label, reserved);
+                dao.addDynamicColumn(tableName, label, dataType, reserved);
                 changed = true;
                 load();
             } catch (Exception ex) {
@@ -151,21 +189,15 @@ public class ColumnConfiguratorDialog {
 
     private void hideColumn(ColumnConfig selected) {
         if (selected == null) return;
-        if (selected.baseColumn()) {
-            new Alert(Alert.AlertType.INFORMATION, "Las columnas base no se pueden eliminar ni ocultar.", ButtonType.OK).showAndWait();
-            return;
-        }
-        Alert confirm = new Alert(
-            Alert.AlertType.CONFIRMATION,
-            "La columna se ocultará, pero sus datos permanecerán en SQLite.\n\n¿Continuar?",
-            ButtonType.YES,
-            ButtonType.NO
-        );
+        String msg = selected.baseColumn()
+            ? "La columna se ocultará en pantalla. Sus datos siguen disponibles internamente.\n\n¿Continuar?"
+            : "La columna se ocultará, pero sus datos permanecerán en SQLite.\n\n¿Continuar?";
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
         confirm.setTitle("Ocultar columna");
         confirm.setHeaderText(null);
         confirm.showAndWait().filter(ButtonType.YES::equals).ifPresent(button -> {
             try {
-                dao.hideDynamic(tableName, selected.columnName());
+                dao.setColumnVisible(tableName, selected.columnName(), false);
                 changed = true;
                 load();
             } catch (Exception ex) {
@@ -181,12 +213,38 @@ public class ColumnConfiguratorDialog {
             return;
         }
         try {
-            dao.showDynamic(tableName, selected.columnName());
+            dao.setColumnVisible(tableName, selected.columnName(), true);
             changed = true;
             load();
         } catch (Exception ex) {
             showError(ex);
         }
+    }
+
+    private void deleteColumn(ColumnConfig selected) {
+        if (selected == null) return;
+        if (selected.baseColumn()) {
+            new Alert(Alert.AlertType.INFORMATION,
+                "Las columnas base no se pueden eliminar.\nPuedes ocultarlas para que no aparezcan en pantalla.",
+                ButtonType.OK).showAndWait();
+            return;
+        }
+        Alert confirm = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "Se eliminarán la columna '" + selected.label() + "' y todos sus datos de forma permanente.\n\nEsta acción no se puede deshacer.\n\n¿Confirmar eliminación?",
+            ButtonType.YES, ButtonType.NO
+        );
+        confirm.setTitle("Eliminar columna");
+        confirm.setHeaderText(null);
+        confirm.showAndWait().filter(ButtonType.YES::equals).ifPresent(button -> {
+            try {
+                dao.deleteDynamic(tableName, selected.columnName());
+                changed = true;
+                load();
+            } catch (Exception ex) {
+                showError(ex);
+            }
+        });
     }
 
     private void showError(Exception ex) {
