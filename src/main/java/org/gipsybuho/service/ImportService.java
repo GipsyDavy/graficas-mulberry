@@ -9,6 +9,7 @@ import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.extractor.XSSFBEventBasedExcelExtractor;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.*;
+import org.gipsybuho.util.AppConstants;
 import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.*;
@@ -25,7 +26,7 @@ import java.util.*;
 
 public class ImportService {
 
-    private static final String OLLAMA_URL = "http://localhost:11434";
+    private static final String OLLAMA_URL = AppConstants.OLLAMA_BASE_URL;
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ISO_LOCAL_DATE;
     private final ObjectMapper mapper = new ObjectMapper();
 
