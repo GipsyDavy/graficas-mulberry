@@ -102,31 +102,6 @@ public class ImportService {
         }
     }
 
-    // ── Import config ─────────────────────────────────────────────────────────
-
-    public static class ImportConfig {
-        public final Map<String, String> mapping;
-        public final List<String> pivotColumns;
-        public final String pivotLabelField;
-        public final String pivotValueField;
-
-        public ImportConfig(Map<String, String> mapping) {
-            this(mapping, List.of(), null, null);
-        }
-
-        public ImportConfig(Map<String, String> mapping, List<String> pivotColumns,
-                            String pivotLabelField, String pivotValueField) {
-            this.mapping = Collections.unmodifiableMap(new LinkedHashMap<>(mapping));
-            this.pivotColumns = List.copyOf(pivotColumns);
-            this.pivotLabelField = pivotLabelField;
-            this.pivotValueField = pivotValueField;
-        }
-
-        public boolean hasPivot() {
-            return !pivotColumns.isEmpty() && pivotLabelField != null && pivotValueField != null;
-        }
-    }
-
     public record DynamicFieldSuggestion(String sourceColumn, String label, String dataType) {}
     public record RowValueFix(int rowIndex, String columnName, String value) {}
     public record ImportRepairPlan(
@@ -1157,33 +1132,6 @@ public class ImportService {
     }
 
     // ── Import to database ────────────────────────────────────────────────────
-
-    public int importar(TipoEntidad tipo, List<Map<String, String>> rows,
-                        ImportConfig config) throws Exception {
-        if (config.hasPivot()) {
-            List<Map<String, String>> expanded = expandPivot(rows, config);
-            Map<String, String> expandedMapping = new LinkedHashMap<>(config.mapping);
-            expandedMapping.put("__pivot_label__", config.pivotLabelField);
-            expandedMapping.put("__pivot_value__", config.pivotValueField);
-            return importar(tipo, expanded, expandedMapping);
-        }
-        return importar(tipo, rows, config.mapping);
-    }
-
-    private List<Map<String, String>> expandPivot(List<Map<String, String>> rows, ImportConfig config) {
-        List<Map<String, String>> result = new ArrayList<>();
-        for (Map<String, String> row : rows) {
-            for (String pivotCol : config.pivotColumns) {
-                String value = row.getOrDefault(pivotCol, "");
-                if (value.isBlank()) continue;
-                Map<String, String> newRow = new LinkedHashMap<>(row);
-                newRow.put("__pivot_label__", pivotCol);
-                newRow.put("__pivot_value__", value);
-                result.add(newRow);
-            }
-        }
-        return result;
-    }
 
     public int importar(TipoEntidad tipo, List<Map<String, String>> rows,
                         Map<String, String> mapping) throws Exception {
