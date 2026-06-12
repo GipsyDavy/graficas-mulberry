@@ -1,5 +1,49 @@
-# HANDOFF — Graficas Mulberry · Bug PARSER-NOMBRE identificado · Documentación de cierre
-# Versión: 5.1 · Fecha revisión documentación: 12/06/2026 · Último commit funcional: 23df80a · Tests: 121/121 verdes. Cola activa: fix BUG PARSER-NOMBRE + validación manual + Sprint MIGRACION-COMPLEJA.
+# HANDOFF — Graficas Mulberry · CLIENTE-GATE en curso/casi cerrado
+# Versión: 5.2 · Fecha revisión documentación: 12/06/2026 · Último commit funcional: c144f06 · Tests: 127/127 verdes. Cola activa: prueba manual UI import + Gemini gate + Sprint MIGRACION-COMPLEJA.
+
+---
+
+## ESTADO VIVO 2026-06-12 — CLIENTE-GATE
+
+Decisión técnica actual: **apto para valoración controlada del cliente final**,
+pero **no entrega final cerrada** hasta completar prueba manual UI de importación
+y registrar segunda opinión Gemini o dejarla marcada como pendiente aceptada.
+
+Validación hecha:
+```powershell
+$env:MAVEN_OPTS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'
+.\mvnw.cmd test
+# 127/127 verdes
+
+.\mvnw.cmd clean package -DskipTests
+# BUILD SUCCESS
+# target\GraficasMulberry-13.5.0.jar
+```
+
+Commit nuevo de seguridad:
+- `c144f06` — `security(auth): unificar minimo password`
+
+Qué hizo:
+- `AuthService.MIN_PASSWORD_LENGTH = 8`.
+- `AuthService.isPasswordValid(...)`.
+- Defensa en servicio para `registerUser`, `changePassword`,
+  `resetPasswordAdmin`, `resetPasswordWithAnswer`.
+- UI usa la misma constante en alta admin, login/reset y gestión usuarios.
+- `AuthServiceTest` añade 3 tests contra contraseñas cortas.
+
+Security review local:
+- VibeSec aplicado a auth, import/export, SQL dinámico, datos sensibles, roles y Ollama.
+- Sin P0/P1 nuevo detectado.
+- Abiertos no bloqueantes: `SEC-NEW-4`, `SEC-NEW-5`, `COD-NEW-2`.
+
+Documentación nueva:
+- `CLIENTE_GATE.md` registra checklist, resultado, bloque Gemini y decisión.
+- `continuar.md` actualizado con handoff vivo.
+
+Siguiente paso:
+1. Ejecutar `.\mvnw.cmd javafx:run`.
+2. Probar manualmente importación con los Excel reales.
+3. Pegar bloque Gemini de `CLIENTE_GATE.md` y registrar respuesta.
 
 ---
 

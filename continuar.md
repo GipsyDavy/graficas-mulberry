@@ -45,6 +45,48 @@ Este documento resume el estado real del proyecto para continuar en una nueva se
 
 ---
 
+## Estado vivo — CLIENTE-GATE (2026-06-12 23:40)
+
+**Último commit funcional:** `c144f06` — `security(auth): unificar minimo password`.
+
+**Estado de producto:** apto para **valoración controlada del cliente final** si se
+hace prueba manual UI de importación y se registra respuesta Gemini o se deja
+marcada como pendiente. No declarar entrega final cerrada todavía.
+
+Validación reciente:
+```powershell
+$env:MAVEN_OPTS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'
+.\mvnw.cmd test
+# 127/127 verdes
+
+.\mvnw.cmd clean package -DskipTests
+# BUILD SUCCESS
+# target\GraficasMulberry-13.5.0.jar
+```
+
+Security review VibeSec local:
+- Corregido `SEC-GATE-1`: contraseña mínima inconsistente. Ahora `AuthService`
+  centraliza mínimo 8 y valida registro, cambio, reset admin y reset con pregunta.
+- Test nuevo `AuthServiceTest`: 3 tests verdes.
+- Sin P0/P1 nuevo en import/export/SQL/roles revisados.
+- Abiertos no bloqueantes: `SEC-NEW-4`, `SEC-NEW-5`, `COD-NEW-2`.
+
+Documentos vivos:
+- `CLIENTE_GATE.md` contiene decisión, bloque Gemini y checklist cliente.
+- `MIGRACION_HISTORICO.md` contiene clasificación de 288 archivos y piloto.
+
+Working tree esperado tras cierre:
+- Puede quedar `.claude/settings.local.json`, `.agents/`, `skills-lock.json`
+  fuera de alcance si existen.
+- No tocar esos archivos salvo petición explícita.
+
+Siguiente paso operativo:
+1. Ejecutar app con `.\mvnw.cmd javafx:run`.
+2. Probar importación manual desde módulos con archivos de `C:\Users\Gipsy Dávy\Desktop\excel`.
+3. Pegar bloque Gemini de `CLIENTE_GATE.md` para segunda opinión.
+
+---
+
 ## Raíz correcta del proyecto
 
 Abrir siempre:

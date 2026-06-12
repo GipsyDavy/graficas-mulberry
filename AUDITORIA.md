@@ -1,6 +1,12 @@
 # AUDITORIA.md — Gráficas Mulberry
 ## Auditoría técnica completa: código, arquitectura, seguridad y calidad
 
+> **Nota de vigencia 2026-06-12 (CLIENTE-GATE):** HEAD funcional `c144f06`.
+> Security review local VibeSec sin P0/P1 nuevo. Corregido `SEC-GATE-1`:
+> contraseña mínima centralizada en `AuthService` con mínimo 8 y tests.
+> Estado validado: **127/127 tests verdes** y `clean package -DskipTests`
+> con `BUILD SUCCESS`. Ver `CLIENTE_GATE.md` para checklist cliente.
+
 > **Nota de vigencia 2026-06-12 (actualizada):** HEAD `0b3cd3d`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Auditoría 2026-06-12 añade hallazgos SEC-NEW-1 a SEC-NEW-5, ARCH-NEW-1, COD-NEW-1/2 al final de este documento. **110/110 tests verdes.**
 
 **Fecha:** 2026-06-02  
