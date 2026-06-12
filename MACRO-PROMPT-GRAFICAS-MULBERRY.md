@@ -1,6 +1,6 @@
 # MACRO-PROMPT — GRAFICAS MULBERRY
 
-> **Estado vigente 2026-06-12:** antes de actuar leer también `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Handoff actual: HEAD `979cd06`, working tree no limpio, sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree, `.\mvnw.cmd test` esperado 110/110. El fallo reciente corregido fue importación de Tarifas con `0/20 columnas` mapeadas por IA; no confiar en IA sin fallback local y bloqueo de obligatorios.
+> **Estado vigente 2026-06-12:** antes de actuar leer también `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Handoff actual: último commit funcional `63c6592`, working tree solo con `.claude/settings.local.json` fuera de alcance y documentación de cierre si aún no se ha commiteado, `.\mvnw.cmd test` esperado 121/121. Se cerraron los sprints de importación adaptativa: normalización de tablas laterales, expansión segura de matrices de precios, mapeo parent-child y cabeceras comunes en documentos. Regla vigente: no confiar en IA sin fallback local y bloqueo de obligatorios.
 
 Activa TODAS las skills relevantes al máximo nivel:
 
@@ -84,8 +84,8 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 | Componente | Estado | Notas |
 |---|---|---|
-| HEAD documental | `979cd06` | Último commit: fix validación IA paso 3.5; sprints posteriores cerrados en working tree |
-| Build Maven | Funcional | `.\mvnw.cmd test` — 110/110 verdes |
+| HEAD funcional | `63c6592` | Último commit funcional: `fix(import): reconocer cabeceras comunes en documentos` |
+| Build Maven | Funcional | `.\mvnw.cmd test` — 121/121 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
 | Sistema de temas | Funcional | 5 temas CSS + modo oscuro, `TemaManager` |
@@ -103,7 +103,7 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
 | Deuda 24 | COMPLETADO | 15 tests JDBC nuevos (5 DAOs sin cobertura) |
-| Tests JDBC / servicio | 110/110 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación |
+| Tests JDBC / servicio | 121/121 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación |
 | Instalador Windows | v3.3 disponible | NSIS + jpackage pipeline |
 | Integración Ollama | Funcional | IA local opcional vía `OllamaService` |
 | TTS / Asistente visual | Funcional | `TextToSpeechService`, `VisualAssistantView` |

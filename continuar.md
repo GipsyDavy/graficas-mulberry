@@ -132,7 +132,7 @@ Claude Code opera **siempre y simultáneamente** con los cuatro perfiles experto
 ```powershell
 .\mvnw.cmd compile            # compilar
 .\mvnw.cmd clean compile      # compilar desde cero (forzar tras ediciones)
-.\mvnw.cmd test               # ejecutar tests (110/110 verdes tras última validación documentada)
+.\mvnw.cmd test               # ejecutar tests (121/121 verdes tras última validación documentada)
 .\mvnw.cmd javafx:run         # arrancar la aplicación
 .\mvnw.cmd package            # generar JAR
 .\mvnw.cmd package -Ppackage-windows  # generar instalador Windows
@@ -198,15 +198,16 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-12, actualizado post-auditoría SEC-NEW-1..5)
+## Estado técnico al cierre de sesión (2026-06-12, cierre Codex IMPORT-ADAPTIVE)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `a352225` — `fix: añadir timeout de request a enviarConsulta en OllamaService (VULN-SR-001)`
-- **Working tree:** no limpio. Pendientes: `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTML de ayuda importación, `styles.css`, `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
+- **Último commit funcional:** `63c6592` — `fix(import): reconocer cabeceras comunes en documentos`
+- **Commits de la sesión:** `322ff50`, `bca51b2`, `83d2018`, `e5f30d1`, `c871a3b`, `63c6592`.
+- **Working tree al cierre funcional:** solo `.claude/settings.local.json` modificado fuera de alcance. Después de documentar cierre quedarán cambios `.md` hasta el commit `docs`.
 
 ### Tests
-- **110/110 verdes** confirmados tras Sprint IMPORT-PARSER + MAPPING-GUARD con `.\mvnw.cmd test`.
+- **121/121 verdes** confirmados con `.\mvnw.cmd test -q` tras IMPORT-ADAPTIVE + mapeo parent-child + cabeceras comunes en documentos.
 
 | Suite | Tests |
 |---|---|
@@ -229,7 +230,9 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 | `EntityImportServicePedidoTest` | 10 |
 | `EntityImportServicePresupuestoTest` | 7 |
 | `TypedValueFormatterTest` | 5 |
-| `ImportServiceParsingTest` | 6 |
+| `ImportServiceParsingTest` | 12 |
+| `ColumnMappingDialogTest` | 1 |
+| `DocumentImportSpecTest` | 2 |
 
 ### Sprints completados (histórico)
 - **Sprint B** — Transacciones explícitas en DAOs (5 commits, 12 tests nuevos).
@@ -245,12 +248,22 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint WIZARD-VALIDATION** — paso 3.5 de validación IA entre mapeo e importación; `ValidationIssue` record; `ImportService.validateImportData()` + `corregirValor()` + validación local (NIF, email, precios, fechas, duplicados); `TableColumnSizing`; fix corrección condicional (no borrar issue si la IA no corrijo). **COMPLETO.** (`988a8fb`→`979cd06`)
 - **Sprint COLUMN-FORMAT + IMPORT-REPAIR** — formato real de columnas dinámicas tipadas (`PRECIO` con €, `FECHA` con DatePicker/ISO, `NUMERICO` normalizado), conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción, rechazo de edición inválida en celdas tipadas, botón "🤖 Reparar importación" para plan IA con campos dinámicos tipados/valores fijos/correcciones de celda, normalización determinista previa a importar. **COMPLETO en working tree. Revisión Gemini incorporada.**
 - **Sprint IMPORT-PARSER + MAPPING-GUARD** — parser real probado contra carpetas del usuario (`CSV`, `excel`, `EXCEL_SEPARADO`, `files`, `TARIFAS_SEPARADAS`, `TARIFAS_SEPARADAS 1`, `todas_las_tarifas`): 288/288 archivos abren (110 CSV, 177 XLSX, 1 XLSB). `ImportService` detecta cabecera real, soporta XLSB vía extractor tabulado, evita CSV vacío con excepción, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta cabeceras repetidas/separadores. `mapearCampos()` ejecuta fallback local siempre, aunque Ollama devuelva 0 columnas; `Tarifa.IMPORT_SPEC` reconoce `UNIDADES`, `CONCEPTO`, `DESCRIPCIÓN`; `Material.IMPORT_SPEC` reconoce `tipo_papel`, `modelo`, `producto`, `familia`. `ImportView` activa técnica/categoría fija por defecto cuando falta y bloquea `Siguiente` si faltan obligatorios. **COMPLETO en working tree.**
+- **Sprint IMPORT-ADAPTIVE-1/2** — normalización adaptativa de importación real. Commits:
+  - `bca51b2` `fix(import): normalizar tablas laterales` — detecta regiones, separa tablas laterales, añade `GRUPO`, ajusta duplicados de Tarifa.
+  - `83d2018` `feat(import): expandir matrices de precios` — convierte matrices de precios de Tarifas a filas normalizadas (`TECNICA`, `NOMBRE`, `MINIMO_UNIDADES`, `PRECIO_UNIT`).
+  - `e5f30d1` `fix(import): acotar pivot a matrices de tarifas` — el pivot solo se activa para matriz real de tarifas; protege Materiales y otros módulos.
+  - `c871a3b` `fix(import): permitir mapear lineas parent-child` — `ColumnMappingDialog` expone campos de línea para Presupuestos/Facturas/Albaranes.
+  - `63c6592` `fix(import): reconocer cabeceras comunes en documentos` — reconoce `nif/cif/dni` como `cliente_nif` en documentos y `numero` en Albaranes.
+  Validación real: `01_TARJETAS_DE_VISITA.csv` -> 56 filas normalizadas; `02_FOLIOS.xlsx` -> 18; `20_CALENDARIOS.xlsx` -> 259; `07_MATERIAL.xlsx` queda plano regional; `smoke_albaran.csv` -> `ALBARANES=7/7 requiredMissing=[]`.
 - **Auditoría 2026-06-12 (SEC-NEW + COD-NEW + ARCH-NEW + Security Review)** — 9 hallazgos. Corregidos: SEC-NEW-1 (importar*SQL sin validación SQL — clasificación revisada: métodos son código muerto en UI, fix correcto como defensa en profundidad), SEC-NEW-2 (OllamaService getModelosConDetalles sin request timeout), SEC-NEW-3 (NPE getModelosConDetalles), ARCH-NEW-1 (OLLAMA_URL duplicada), COD-NEW-1 (6 dead constants JSON_*), VULN-SR-001 (enviarConsulta sin request timeout). Abiertos: SEC-NEW-4 (concurrencia OllamaService), SEC-NEW-5 (historial sin límite), COD-NEW-2 (STYLE_BURBUJA inline). Commits: `3d7f765`→`a352225`. **110/110 tests verdes.**
 
 ### Cola de trabajo
 
-1. **Validar en producción** ← **SIGUIENTE INMEDIATO** — repetir manualmente el flujo que falló en la captura: `Tarifas > Importar > 01_TARJETAS_DE_VISITA.csv/xlsx`. En paso 3 debe verse mapeo local (`UNIDADES -> minimo_unidades`, `DESCRIPCIÓN -> nombre`, `PRECIO... -> precio_unit`) y la técnica fija debe salir prellenada desde el nombre del archivo si no se usa modo expandido. No debe volver a ocurrir `IA mapeó 0/20 columnas` + importación con `184 filas descartadas`.
-2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. El usuario ya aportó carpetas reales; siguiente paso es clasificar archivos con secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`) y decidir limpieza A1/A2/B.
+1. **Validación manual final** ← **SIGUIENTE INMEDIATO** — probar en la app:
+   - `Tarifas > Importar > 01_TARJETAS_DE_VISITA.csv/xlsx`, `02_FOLIOS.xlsx`, `20_CALENDARIOS.xlsx`.
+   - `Materiales > Importar > 07_MATERIAL.xlsx` y CSV de `Desktop\files`.
+   - `Albaranes > Importar > smoke_albaran.csv`.
+2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. Siguiente paso: clasificar archivos con secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`) y decidir limpieza A1/A2/B.
 3. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos.
 4. **Refactor B2** — inyección de Connection en DAOs (amplio y de mayor riesgo).
 5. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
@@ -273,7 +286,7 @@ Estado corregido:
 Comandos de validación usados:
 ```powershell
 .\mvnw.cmd test
-# Esperado vigente: 110/110 verdes
+# Esperado vigente: 121/121 verdes
 ```
 
 Dry-run con BD temporal (`graficas.mulberry.db.url=jdbc:sqlite:C:\tmp\gm-import-dryrun.db`) confirmó:
@@ -343,7 +356,7 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Commit atómico de importación** — si el usuario valida manualmente el flujo corregido, preparar commit que agrupe parser/mapping guard/tests/documentación o separar en dos commits (`fix(import): parser/mapping guard`, `docs: handoff import real`).
+1. **Validación manual final de importación** — probar en la app los flujos documentados arriba: Tarifas, Materiales y `smoke_albaran.csv`.
 2. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales restantes y decidir limpieza específica para libros con muchas secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`).
 3. **HELP-3** — ayuda contextual F1 + enlaces desde errores.
 4. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo).
@@ -363,8 +376,8 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    ```powershell
    .\mvnw.cmd test
    ```
-   Esperado: 110/110 verdes.
-4. Declarar: HEAD `a352225`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Auditoría 2026-06-12 completa (SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2, VULN-SR-001 — 6 corregidos, 3 abiertos). Cola activa: commit atómico de sprints en working tree + validación manual del flujo `Tarifas > Importar`.
+   Esperado: 121/121 verdes.
+4. Declarar: último commit funcional `63c6592` más commit de documentación de cierre si existe. Sprints IMPORT-ADAPTIVE cerrados y commiteados. Auditoría 2026-06-12 sigue con abiertos: SEC-NEW-4, SEC-NEW-5, COD-NEW-2. Cola activa: validación manual final de importación en app + Sprint MIGRACION-COMPLEJA.
 
 ---
 

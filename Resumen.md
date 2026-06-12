@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Auditoría 2026-06-12 aplicada · Sprints importación pendientes de commit
-# Versión: 5.0 · Fecha revisión documentación: 12/06/2026 · HEAD: 5c1a7f7 · Tests: 110/110 verdes. Auditoría SEC-NEW-1..5 aplicada. Cola activa: commit atómico sprints working tree + validación manual wizard Tarifas.
+# HANDOFF — Graficas Mulberry · IMPORT-ADAPTIVE cerrado · Documentación de cierre
+# Versión: 5.1 · Fecha revisión documentación: 12/06/2026 · Último commit funcional: 63c6592 · Tests: 121/121 verdes. Cola activa: validación manual final de importación + Sprint MIGRACION-COMPLEJA.
 
 ---
 
@@ -41,6 +41,53 @@
 - **NUEVA (Sprint B planning):** Si un sub-bloque encadena dependencias con otros, reordenar para que cada commit deje el código sin bug latente. Sprint B: MaterialDAO debía ir antes que los `crearDesde*` que lo invocan porque hasta el refactor de `ajustarStock`, un `crearDesde*` envuelto en tx lo habría roto. El orden del handoff original no respetaba esto y se ajustó.
 - **NUEVA (Sprint D pre-bloque 1a):** Caso flagrante de "decisión cerrada por análisis sin verificar la física del motor". Cerré opción A (`setNull`) tras 6 decisiones de diseño antes de redactar el primer bloque, sin comprobar la semántica real de SQLite con DEFAULT. Codex me lo detectó al leer el INSERT. **Regla derivada:** antes de cerrar una decisión de patrón sobre un comportamiento del motor de BD, verificar el comportamiento real (doc o test aislado), no asumirlo por intuición o por analogía con otros motores. La opción A funcionaría en PostgreSQL/MySQL en strict mode; no en SQLite.
 - **NUEVA (Sprint D pre-bloque 1a):** Cuando un DEFAULT DDL es una cadena larga (`"Presupuesto válido por 30 días. Precios sin IVA."`), extraer constante `private static final` en el DAO con comentario referenciando `DatabaseManager.createTables()`. Para cadenas cortas (`"borrador"`, `"pendiente"`, `"Transferencia bancaria"`), literal inline es aceptable. Criterio aplicado en Sprint D.
+
+---
+
+## CIERRE DE SESIÓN 2026-06-12 — IMPORT-ADAPTIVE
+
+### Estado Git
+- Rama: `master`.
+- Último commit funcional antes de documentación: `63c6592` — `fix(import): reconocer cabeceras comunes en documentos`.
+- Working tree funcional al cierre: solo `.claude/settings.local.json` modificado fuera de alcance.
+- Commits de la sesión:
+  - `322ff50` — `docs: eliminar regla de inicio obsoleta`.
+  - `bca51b2` — `fix(import): normalizar tablas laterales`.
+  - `83d2018` — `feat(import): expandir matrices de precios`.
+  - `e5f30d1` — `fix(import): acotar pivot a matrices de tarifas`.
+  - `c871a3b` — `fix(import): permitir mapear lineas parent-child`.
+  - `63c6592` — `fix(import): reconocer cabeceras comunes en documentos`.
+
+### Validación
+- `.\mvnw.cmd test -q` — 121/121 verdes.
+- Probe temporal de solo lectura retirado antes de cerrar.
+- Validación real de parser/mapeo:
+  - `01_TARJETAS_DE_VISITA.csv` -> 56 filas normalizadas.
+  - `02_FOLIOS.xlsx` -> 18 filas normalizadas.
+  - `20_CALENDARIOS.xlsx` -> 259 filas normalizadas.
+  - `07_MATERIAL.xlsx` -> tabla plana regional, sin pivot indebido.
+  - `smoke_albaran.csv` -> `ALBARANES=7/7 requiredMissing=[]`.
+
+### Cambios funcionales cerrados
+- `ImportService` detecta regiones y normaliza tablas laterales.
+- Matrices de precios de Tarifas se expanden a filas normalizadas: `TECNICA`, `NOMBRE`, `MINIMO_UNIDADES`, `PRECIO_UNIT`.
+- El pivot queda acotado a matriz real de Tarifas para no romper Materiales u otros módulos.
+- `ColumnMappingDialog` expone campos de líneas en specs parent-child (`Presupuestos`, `Facturas`, `Albaranes`).
+- Los documentos reconocen cabeceras comunes: `nif/cif/dni` como `cliente_nif`; `Albaran` reconoce `numero`.
+
+### Security review
+- No se añadió SQL.
+- No se toca import backup.
+- No se ejecuta contenido de CSV/XLSX/XLSB.
+- Ollama no es autoridad final; Java mantiene validación local y bloqueo de obligatorios.
+- Los cambios amplían mapeos hacia campos existentes y siguen pasando por `EntityImportService`.
+
+### Próximo paso recomendado
+1. Validación manual final en la app:
+   - `Tarifas > Importar`: `01_TARJETAS_DE_VISITA`, `02_FOLIOS`, `20_CALENDARIOS`.
+   - `Materiales > Importar`: `07_MATERIAL.xlsx` y CSV de `Desktop\files`.
+   - `Albaranes > Importar`: `smoke_albaran.csv`.
+2. Después, retomar `Sprint MIGRACION-COMPLEJA` para libros humanos con secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`).
 
 ---
 
@@ -176,7 +223,7 @@ Auditoría de 8 fases realizada con Claude Code + Gemini + Codex. Resultado: `IN
 - **P2 (medios):** ARCH-1, COD-2 dead code SQL incorrecto, UI-4 colores hardcodeados en Dashboard, UI-5 IAView sin CommandBar.
 - **P3 (backlog):** COD-1/3/4, UI-1/2/3, AP-1, ARCH-2/4. Ver `INFORME-FINAL.md`.
 
-**Tests en esa auditoría:** 72/72 ✅ · **Estado histórico:** superado por sprints posteriores. Estado vigente: 99/99 verdes.
+**Tests en esa auditoría:** 72/72 ✅ · **Estado histórico:** superado por sprints posteriores. Estado vigente: 121/121 verdes.
 **Archivos nuevos:** `AUDITORIA.md`, `INFORME-FINAL.md`, `FASES.md`, `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `interfaz.md`, `continuar.md`, `_cajon-desastre/` (20 archivos movidos).
 
 ---
@@ -253,8 +300,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `5c1a7f7` — `docs: añadir hallazgos SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2 en AUDITORIA.md`.
-- **Working tree:** no limpio. Pendientes: `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTMLs de ayuda de importación, `styles.css`, `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
+- **Último commit funcional:** `63c6592` — `fix(import): reconocer cabeceras comunes en documentos`.
+- **Working tree funcional:** solo `.claude/settings.local.json` modificado fuera de alcance. Documentación de cierre pendiente hasta commit `docs`.
 
 ### Commits de sprints relevantes
 | Sprint | Commits | Descripción |
@@ -275,12 +322,13 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **Sprint HELP-1** | **`65588cf`** | **81 artículos HTML offline + help.css + index.json en 19 módulos (General×5, Importación×9, Backups×5, Clientes×5, Materiales×4, Empleados×4, Presupuestos×6, Facturas×6, Albaranes×5, Pedidos×4, Nóminas×3, Tarifas×3, Exportación×3, IA×5, Asistente×2, Estadísticas×2, Calendario×2, Usuarios×5, Configuración×3)** |
 | **Sprint COLUMN-TYPES** | **`e12a687`→`d4db11b`** | **Tipos de dato (TEXTO/NUMÉRICO/PRECIO/FECHA) en columnas dinámicas. Hard delete columnas usuario. Ocultar/mostrar columnas base. Botón "Tipo…" para editar tipo en columnas existentes. DatePicker y TextField filtrado en formularios.** |
 | **Sprint WIZARD-VALIDATION** | **`988a8fb`→`979cd06`** | **Paso 3.5 en wizard: validación IA (Ollama) + local de primeras 20 filas. ValidationIssue record. Tabla de incidencias con "🤖 Corregir con IA" / "Ignorar". Bloqueo de Continuar mientras haya ERRORs. Fix: issue no se descarta si IA no pudo corregir. CSS data-table + texto en wizard.** |
-| **Sprint COLUMN-FORMAT + IMPORT-REPAIR** | **working tree** | **Formato real de columnas dinámicas tipadas: PRECIO con €, FECHA con DatePicker/ISO, NUMERICO normalizado; conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción; rechazo de edición inválida en celdas tipadas; `TypedValueFormatter`; botón "🤖 Reparar importación" con plan IA para mapeo/campos dinámicos tipados/valores fijos/correcciones; normalización determinista antes de importar. Revisión Gemini incorporada.** |
-| **Sprint IMPORT-PARSER + MAPPING-GUARD** | **working tree** | **Parser real probado contra 288 archivos del usuario (110 CSV, 177 XLSX, 1 XLSB): 288/288 abren. `ImportService` detecta cabecera real, soporta XLSB por extractor tabulado, maneja CSV vacío, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta separadores/cabeceras repetidas. `mapearCampos()` siempre completa con fallback local aunque Ollama devuelva 0 columnas. `ImportView` activa técnica/categoría fija por defecto y bloquea avanzar si faltan obligatorios.** |
-| **Auditoría 2026-06-12** | **`3d7f765`→`5c1a7f7`** | **SEC-NEW-1 (CRÍTICO: importar*SQL sin validación SQL — corregido con esStatementSeguro()), SEC-NEW-2/3 (timeout + NPE en OllamaService), ARCH-NEW-1 (OLLAMA_URL unificada), COD-NEW-1 (6 dead constants), CLAUDE.md actualizado (eliminadas referencias CLI Codex/Gemini). Abiertos: SEC-NEW-4/5, COD-NEW-2.** |
+| **Sprint COLUMN-FORMAT + IMPORT-REPAIR** | **commiteado antes de esta sesión** | **Formato real de columnas dinámicas tipadas; reparación IA; normalización determinista antes de importar. Revisión Gemini incorporada.** |
+| **Sprint IMPORT-PARSER + MAPPING-GUARD** | **commiteado antes de esta sesión** | **Parser real contra archivos del usuario; fallback local aunque Ollama devuelva 0 columnas; bloqueo de obligatorios.** |
+| **Auditoría 2026-06-12** | **`3d7f765`→`a352225` + docs posteriores** | **Corregidos SEC-NEW-1/2/3, ARCH-NEW-1, COD-NEW-1 y VULN-SR-001. Abiertos: SEC-NEW-4/5, COD-NEW-2. SEC-NEW-1 reclasificado como defensa en profundidad por código muerto desde UI.** |
+| **IMPORT-ADAPTIVE** | **`bca51b2`→`63c6592`** | **Regiones/tablas laterales, pivot seguro de matrices de Tarifas, protección de Materiales, mapeo parent-child y cabeceras comunes en documentos.** |
 
 ### Tests
-- **110/110 verdes** con `.\mvnw.cmd test`. Incluye `TypedValueFormatterTest` (5 tests) e `ImportServiceParsingTest` (6 tests).
+- **121/121 verdes** con `.\mvnw.cmd test -q`. Incluye `ImportServiceParsingTest` (12 tests), `ColumnMappingDialogTest` (1) y `DocumentImportSpecTest` (2).
   - `ClienteDAOTest`: 3
   - `EmpleadoDAOTest`: 3 (+3 Deuda 24)
   - `NominaDAOTest`: 3 (+3 Deuda 24)
@@ -551,7 +599,7 @@ Añadir un paso de validación con IA entre el mapeo de campos (paso 3) y la vis
 
 ---
 
-## SPRINT COLUMN-FORMAT + IMPORT-REPAIR — CERRADO EN WORKING TREE (2026-06-11)
+## SPRINT COLUMN-FORMAT + IMPORT-REPAIR — CERRADO Y COMMITEADO (2026-06-11)
 
 ### Objetivo
 Hacer que los tipos de columna tengan efecto real sobre valores existentes y edición diaria, y ampliar el wizard para que la IA proponga una reparación estructurada de importación antes de descartar filas.
@@ -573,11 +621,11 @@ Hacer que los tipos de columna tengan efecto real sobre valores existentes y edi
 - La IA no puede crear nombres de columna físicos directamente; solo propone etiquetas, y `ColumnConfigDAO` genera el identificador seguro.
 - La IA no debe inventar NIF, emails, clientes, proveedores ni relaciones; esos casos quedan para decisión del usuario.
 - `rowFixes` se ignora si la fila o columna no existe.
-- Validado en ese sprint con `.\mvnw.cmd test`: 104/104 verdes. Estado vigente tras sprint posterior: 110/110 verdes.
+- Validado en ese sprint con `.\mvnw.cmd test`: 104/104 verdes. Estado vigente tras sprint posterior: 121/121 verdes.
 
 ---
 
-## SPRINT IMPORT-PARSER + MAPPING-GUARD — CERRADO EN WORKING TREE (2026-06-12)
+## SPRINT IMPORT-PARSER + MAPPING-GUARD — CERRADO Y COMMITEADO (2026-06-12)
 
 ### Objetivo
 Corregir el fallo real reportado por el usuario en captura: el wizard de Tarifas permitía importar con `IA mapeó 0/20 columnas`, llegaba al paso 4 y descartaba todas las filas porque `técnica` y `nombre` estaban vacíos.
@@ -647,8 +695,8 @@ En el wizard:
 - La IA no es autoridad final: fallback local y bloqueo de obligatorios protegen el flujo.
 
 ### Validación
-- `.\mvnw.cmd test` — **110/110 verdes**.
-- `git diff --check` — sin errores; solo avisos CRLF habituales del working tree.
+- `.\mvnw.cmd test` — **121/121 verdes** como estado vigente tras IMPORT-ADAPTIVE.
+- `git diff --check` — sin errores en esa validación; avisos CRLF habituales en Windows.
 
 ---
 
@@ -762,13 +810,13 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD `979cd06` o documentar cualquier commit posterior.
-   - `git status --short` — declarar que el working tree está no limpio y separar cambios previos de cambios funcionales recientes.
+   - `git log --oneline -5` — confirmar commit de documentación de cierre posterior a `63c6592` o documentar divergencia.
+   - `git status --short` — esperado: solo `.claude/settings.local.json` modificado, salvo cambios del usuario.
 
-3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 110/110 verdes o documentar divergencia.
+3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 121/121 verdes o documentar divergencia.
 
 4. **Declarar situación:**
-   > HEAD `5c1a7f7`, tests 110/110 verdes. Sprints completados en commits: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0/1/2, COLUMN-TYPES y WIZARD-VALIDATION. Cerrados en working tree: COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD. Auditoría 2026-06-12 aplicada: SEC-NEW-1 CRÍTICO corregido (importar*SQL + esStatementSeguro), SEC-NEW-2/3, ARCH-NEW-1, COD-NEW-1 corregidos. Abiertos: SEC-NEW-4/5, COD-NEW-2. Cola activa: commit atómico de sprints en working tree + validación manual wizard Tarifas.
+   > Tests esperados 121/121 verdes. IMPORT-ADAPTIVE cerrado y commiteado hasta `63c6592` más documentación de cierre posterior. Abiertos de auditoría: SEC-NEW-4, SEC-NEW-5, COD-NEW-2. Cola activa: validación manual final de importación en app y Sprint MIGRACION-COMPLEJA.
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 
