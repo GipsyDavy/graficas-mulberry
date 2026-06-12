@@ -107,6 +107,17 @@ $env:MAVEN_OPTS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'
 
 `git diff --check` sin errores; solo avisos CRLF normales de Windows.
 
+### Prueba manual UI
+
+2026-06-12 23:42: app lanzada para prueba manual con:
+
+```powershell
+.\mvnw.cmd javafx:run
+```
+
+Proceso inicial: `cmd` PID `2992`; JavaFX levantó procesos `java`.
+Resultado funcional de la prueba manual: pendiente de validar por usuario en la ventana.
+
 ---
 
 ## Bloque Gemini — segunda opinión obligatoria
