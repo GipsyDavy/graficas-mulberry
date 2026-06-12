@@ -1211,7 +1211,7 @@ public class ImportView extends VBox {
             : copyRows(resultadoParseo.rows);
         Map<String, String> mapping = new LinkedHashMap<>(config.mapping);
         mapping.entrySet().removeIf(entry -> entry.getValue() == null);
-        if (false && config.hasPivot()) {
+        if (config.hasPivot()) {
             mapping.put("__pivot_label__", config.pivotLabelField);
             mapping.put("__pivot_value__", config.pivotValueField);
         }
