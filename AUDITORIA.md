@@ -1,7 +1,7 @@
 # AUDITORIA.md — Gráficas Mulberry
 ## Auditoría técnica completa: código, arquitectura, seguridad y calidad
 
-> **Nota de vigencia 2026-06-12:** este documento es histórico. Para continuar un sprint, leer primero `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Estado vigente: HEAD `979cd06`, working tree no limpio, sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree, `.\mvnw.cmd test` esperado 110/110.
+> **Nota de vigencia 2026-06-12 (actualizada):** HEAD `0b3cd3d`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Auditoría 2026-06-12 añade hallazgos SEC-NEW-1 a SEC-NEW-5, ARCH-NEW-1, COD-NEW-1/2 al final de este documento. **110/110 tests verdes.**
 
 **Fecha:** 2026-06-02  
 **Auditor:** Claude Code (Fase 4 del plan de auditoría — ver FASES.md)  
@@ -729,3 +729,114 @@ Solo lectura y verificación. NO modificar ningún archivo. Responde a cada punt
 ```
 
 📋 **Pega este bloque en el chat de Codex**
+
+---
+
+## AUDITORÍA 2026-06-12 — HALLAZGOS NUEVOS
+
+**Fecha:** 2026-06-12  
+**Auditor líder:** Claude Code  
+**Agentes de apoyo:** Gemini (riesgo + recomendación), Codex (líneas exactas + tests)  
+**HEAD al cierre de esta auditoría:** `0b3cd3d`  
+**Tests:** 110/110 verdes
+
+---
+
+### SEC-NEW-1 — importar*SQL ejecutaban SQL sin validación de seguridad 🔴 CRÍTICO — **CORREGIDO**
+
+**Archivo:** `ImportBackupService.java`  
+**Métodos afectados (9):** `importarAlbaranesSQL`, `importarFacturasSQL`, `importarPresupuestosSQL`, `importarNominasSQL`, `importarEmpleadosSQL`, `importarMaterialesSQL`, `importarTarifasSQL`, `importarClientesSQL`, `importarPedidosSQL`
+
+**Problema:** Cada método construía un `stmt` con `"INSERT OR REPLACE INTO " + ...` y lo pasaba directamente a `st.execute(stmt)` sin ninguna validación. El archivo de importación podía contener subconsultas dentro de los VALUES `((SELECT ... FROM ...))`, `ATTACH DATABASE`, u otras sentencias arbitrarias concatenadas.
+
+**Riesgo (confirmado CRÍTICO por Gemini):** exfiltración de datos, manipulación de la BD de otro usuario si el archivo de backup es malicioso o ha sido manipulado.
+
+**Ironía:** `restaurarSQL()` en el mismo archivo ya tenía correctamente `esStatementSeguro()` desde auditoría anterior. Los 9 métodos de importación no se beneficiaban de ella.
+
+**Corrección aplicada (commit `3d7f765`):** aplicar `esStatementSeguro()` antes de `st.execute(stmt)` en los 9 métodos. Si la sentencia no pasa el filtro, se loguea a stderr y se descarta — el mismo patrón de `restaurarSQL()`.
+
+---
+
+### SEC-NEW-2 — OllamaService sin timeout de request 🟡 BAJO — **CORREGIDO**
+
+**Archivo:** `OllamaService.java`  
+**Problema:** `HttpClient.newBuilder().connectTimeout(10s)` solo protege la conexión TCP. Sin `.timeout()` en el `HttpRequest`, si Ollama acepta la conexión pero tarda indefinidamente en responder el body, el hilo se bloquea para siempre. `ImportService.ollamaChat()` ya tenía `.timeout(Duration.ofSeconds(90))` correctamente.
+
+**Corrección aplicada (commit `8b2331c`):** añadir `.timeout(Duration.ofSeconds(15))` en el `HttpRequest.Builder` de `getModelosConDetalles()`.
+
+---
+
+### SEC-NEW-3 — NPE en OllamaService.getModelosConDetalles() 🟡 BAJO — **CORREGIDO**
+
+**Archivo:** `OllamaService.java:76`  
+**Problema:** `m.get("name").asText()` lanza `NullPointerException` si el nodo JSON no tiene campo `"name"`. Jackson devuelve `null` para campos ausentes con `.get()`, no un nodo vacío.
+
+**Corrección aplicada (commit `8b2331c`):** `m.path("name").asText("")` — devuelve cadena vacía en lugar de NPE si el campo está ausente.
+
+---
+
+### SEC-NEW-4 — Concurrencia inconsistente en OllamaService 🟡 BAJO — ABIERTO
+
+**Archivo:** `OllamaService.java`  
+**Problema:** `historial` está protegido con `synchronized(historial)` en los accesos, pero `contextoERP` solo es `volatile`. Si un hilo escribe `contextoERP` mientras `enviarConsulta` lo está leyendo para construir el prompt, la lectura es atómica (por `volatile`) pero no hay garantía de visibilidad del contenido completo del String en el momento exacto del prompt.
+
+**Riesgo:** bajo en la práctica (solo un usuario activo típico), pero es un anti-patrón de concurrencia.
+
+**Estado:** abierto. Corrección: usar `synchronized` también para `contextoERP`, o un `AtomicReference<String>`.
+
+---
+
+### SEC-NEW-5 — Historial de OllamaService sin límite de tamaño de contenido 🟡 BAJO — ABIERTO
+
+**Archivo:** `OllamaService.java`  
+**Problema:** `MAX_HISTORIAL = 10` limita el número de pares pregunta/respuesta, pero no la longitud de cada respuesta. Una sesión larga con respuestas muy extensas puede acumular decenas de KB en `historial`, pasados todos al prompt en cada consulta.
+
+**Riesgo:** memoria; y enviar un contexto enorme a Ollama puede causar timeout o respuestas degradadas.
+
+**Estado:** abierto. Corrección: truncar respuestas largas al añadir al historial (`s.length() > 2000 ? s.substring(0, 2000) : s`).
+
+---
+
+### ARCH-NEW-1 — URL de Ollama duplicada en ImportService 🟡 BAJO — **CORREGIDO**
+
+**Archivos:** `ImportService.java`, `AppConstants.java`  
+**Problema:** `ImportService` declaraba `private static final String OLLAMA_URL = "http://localhost:11434"` duplicando `AppConstants.OLLAMA_BASE_URL`. Si la URL cambia (p.ej. puerto configurable), hay que editarla en dos sitios.
+
+**Corrección aplicada (commit `0b3cd3d`):** `ImportService.OLLAMA_URL` apunta a `AppConstants.OLLAMA_BASE_URL`.
+
+---
+
+### COD-NEW-1 — 6 constantes JSON_* muertas en AppConstants 🟢 BAJO — **CORREGIDO**
+
+**Archivo:** `AppConstants.java` (líneas 30-35 del estado original)  
+**Problema:** `JSON_MODEL`, `JSON_PROMPT`, `JSON_STREAM`, `JSON_RESPONSE`, `JSON_DONE`, `JSON_CONTEXT` no tienen referencias externas. `OllamaService` construye los payloads JSON con `ObjectNode.put()` usando strings literales directamente. El comentario `// Sin estas, OllamaService no lee la respuesta` era incorrecto.
+
+**Verificado por Codex:** ninguna referencia externa en todo el proyecto.
+
+**Corrección aplicada (commit `6bc9953`):** 6 constantes eliminadas.
+
+---
+
+### COD-NEW-2 — STYLE_BURBUJA_* sigue usando inline styles 🟢 BAJO — ABIERTO
+
+**Archivo:** `AppConstants.java` + `IAView.java`  
+**Problema:** `STYLE_BURBUJA_USUARIO` y `STYLE_BURBUJA_IA` son strings de inline style que bypasan el sistema de temas CSS. En dark mode, `#F1F1F1` (casi blanco) sobre fondo oscuro será invisible.
+
+**Estado:** abierto. Corrección: mover a clases CSS `.chat-bubble-user` y `.chat-bubble-ia` con variables `-c-*`.
+
+---
+
+### RESUMEN DE ESTADO (2026-06-12)
+
+| ID | Descripción | Severidad | Estado |
+|----|-------------|-----------|--------|
+| SEC-NEW-1 | importar*SQL sin validación SQL | CRÍTICO | ✅ CORREGIDO (`3d7f765`) |
+| SEC-NEW-2 | OllamaService sin request timeout | BAJO | ✅ CORREGIDO (`8b2331c`) |
+| SEC-NEW-3 | NPE en getModelosConDetalles | BAJO | ✅ CORREGIDO (`8b2331c`) |
+| SEC-NEW-4 | Concurrencia inconsistente OllamaService | BAJO | ABIERTO |
+| SEC-NEW-5 | Historial sin límite de contenido | BAJO | ABIERTO |
+| ARCH-NEW-1 | OLLAMA_URL duplicada | BAJO | ✅ CORREGIDO (`0b3cd3d`) |
+| COD-NEW-1 | 6 dead constants JSON_* | BAJO | ✅ CORREGIDO (`6bc9953`) |
+| COD-NEW-2 | STYLE_BURBUJA_* inline styles | BAJO | ABIERTO |
+
+*Auditoría 2026-06-12 — Multi-IA: Gemini (análisis riesgo SEC-NEW-1) + Codex (verificación líneas exactas)*
