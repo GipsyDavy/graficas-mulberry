@@ -544,7 +544,11 @@ public class ImportService {
     private boolean shouldParseByRegions(List<List<String>> grid, FileStructureAnalysis analysis) {
         if (analysis.tableRegions().size() > 1) return true;
         return analysis.tableRegions().stream()
-            .anyMatch(region -> priceColumnsInRegion(grid, region).size() > 1);
+            .anyMatch(region -> {
+                int headerRow = regionHeaderRow(grid, region);
+                List<Integer> priceColumns = priceColumnsInRegion(grid, region, headerRow);
+                return isPriceMatrixRegion(grid, region, headerRow, priceColumns);
+            });
     }
 
     private ImportResult buildImportResultFromTableRegions(List<List<String>> grid, String formato,
@@ -554,9 +558,10 @@ public class ImportService {
         List<Map<String, String>> rows = new ArrayList<>();
 
         for (DetectedRegion region : tableRegions) {
-            List<String> regionHeaders = regionHeaders(grid, region);
-            List<Integer> priceColumns = priceColumnsInRegion(grid, region);
-            boolean pivotPrices = priceColumns.size() > 1;
+            int headerRow = regionHeaderRow(grid, region);
+            List<String> regionHeaders = regionHeaders(grid, region, headerRow);
+            List<Integer> priceColumns = priceColumnsInRegion(grid, region, headerRow);
+            boolean pivotPrices = isPriceMatrixRegion(grid, region, headerRow, priceColumns);
             if (pivotPrices) {
                 headers.addAll(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"));
             } else {
@@ -566,12 +571,12 @@ public class ImportService {
             }
 
             String context = regionContext(grid, region);
-            for (int r = region.startRow() + 1; r <= region.endRow() && r < grid.size(); r++) {
+            for (int r = headerRow + 1; r <= region.endRow() && r < grid.size(); r++) {
                 List<String> sourceRow = grid.get(r);
                 if (isLikelyNonDataRow(sourceRow, columnsForRegion(region), regionHeaders)) continue;
 
                 if (pivotPrices) {
-                    rows.addAll(expandPriceColumns(grid, region, sourceRow, context, priceColumns));
+                    rows.addAll(expandPriceColumns(grid, region, headerRow, sourceRow, context, priceColumns));
                     continue;
                 }
 
@@ -579,7 +584,7 @@ public class ImportService {
                 if (!context.isBlank()) row.put("GRUPO", context);
                 boolean hasData = false;
                 for (int c = region.startCol(); c <= region.endCol(); c++) {
-                    String header = getCell(grid.get(region.startRow()), c);
+                    String header = getCell(grid.get(headerRow), c);
                     if (header.isBlank()) continue;
                     String value = getCell(sourceRow, c);
                     row.put(header, value);
@@ -593,28 +598,32 @@ public class ImportService {
     }
 
     private List<Integer> priceColumnsInRegion(List<List<String>> grid, DetectedRegion region) {
+        return priceColumnsInRegion(grid, region, region.startRow());
+    }
+
+    private List<Integer> priceColumnsInRegion(List<List<String>> grid, DetectedRegion region, int headerRowIndex) {
         List<Integer> columns = new ArrayList<>();
-        List<String> headerRow = grid.get(region.startRow());
+        List<String> headerRow = grid.get(headerRowIndex);
         for (int c = region.startCol(); c <= region.endCol(); c++) {
             String header = getCell(headerRow, c);
-            if (normalize(header).contains("precio")) columns.add(c);
+            if (isPriceHeader(header)) columns.add(c);
         }
         return columns;
     }
 
     private List<Map<String, String>> expandPriceColumns(List<List<String>> grid, DetectedRegion region,
-                                                         List<String> sourceRow, String context,
+                                                         int headerRowIndex, List<String> sourceRow, String context,
                                                          List<Integer> priceColumns) {
         List<Map<String, String>> expanded = new ArrayList<>();
-        String units = firstValueForHeader(grid, region, sourceRow, "unidad");
-        String name = firstValueForHeader(grid, region, sourceRow, "descripcion");
+        String units = firstValueForHeader(grid, region, headerRowIndex, sourceRow, "unidad", "cantidad");
+        String name = firstValueForHeader(grid, region, headerRowIndex, sourceRow, "descripcion", "concepto", "nombre");
         if (units.isBlank() || name.isBlank()) return expanded;
 
         for (int priceCol : priceColumns) {
             String price = getCell(sourceRow, priceCol);
             if (price.isBlank()) continue;
             Map<String, String> row = new LinkedHashMap<>();
-            String priceHeader = getCell(grid.get(region.startRow()), priceCol);
+            String priceHeader = getCell(grid.get(headerRowIndex), priceCol);
             row.put("TECNICA", buildTechniqueFromContext(context, priceHeader));
             row.put("NOMBRE", name);
             row.put("MINIMO_UNIDADES", units);
@@ -625,10 +634,12 @@ public class ImportService {
     }
 
     private String firstValueForHeader(List<List<String>> grid, DetectedRegion region,
-                                       List<String> sourceRow, String headerNeedle) {
+                                       int headerRowIndex, List<String> sourceRow, String... headerNeedles) {
         for (int c = region.startCol(); c <= region.endCol(); c++) {
-            String header = normalize(getCell(grid.get(region.startRow()), c));
-            if (header.contains(headerNeedle)) return getCell(sourceRow, c);
+            String header = normalize(getCell(grid.get(headerRowIndex), c));
+            for (String headerNeedle : headerNeedles) {
+                if (header.contains(headerNeedle)) return getCell(sourceRow, c);
+            }
         }
         return "";
     }
@@ -640,8 +651,12 @@ public class ImportService {
     }
 
     private List<String> regionHeaders(List<List<String>> grid, DetectedRegion region) {
+        return regionHeaders(grid, region, region.startRow());
+    }
+
+    private List<String> regionHeaders(List<List<String>> grid, DetectedRegion region, int headerRowIndex) {
         List<String> headers = new ArrayList<>();
-        List<String> row = grid.get(region.startRow());
+        List<String> row = grid.get(headerRowIndex);
         for (int c = region.startCol(); c <= region.endCol(); c++) {
             String header = getCell(row, c);
             if (!header.isBlank() && !headers.contains(header)) headers.add(header);
@@ -658,6 +673,20 @@ public class ImportService {
     private String regionContext(List<List<String>> grid, DetectedRegion region) {
         String context = contextHeader(grid, region.startRow(), region.startCol());
         return context != null ? context.trim() : "";
+    }
+
+    private int regionHeaderRow(List<List<String>> grid, DetectedRegion region) {
+        int bestRow = region.startRow();
+        int bestScore = Integer.MIN_VALUE;
+        int limit = Math.min(region.endRow(), region.startRow() + 4);
+        for (int r = region.startRow(); r <= limit && r < grid.size(); r++) {
+            int score = headerScore(grid.get(r), region.startCol(), region.endCol());
+            if (score > bestScore) {
+                bestScore = score;
+                bestRow = r;
+            }
+        }
+        return bestRow;
     }
 
     /** Elige la fila que parece cabecera real, no una fila título encima de la tabla. */
@@ -677,10 +706,15 @@ public class ImportService {
     }
 
     private int headerScore(List<String> row) {
+        return headerScore(row, 0, row.size() - 1);
+    }
+
+    private int headerScore(List<String> row, int startCol, int endCol) {
         int nonBlank = 0;
         int keywords = 0;
         int numericLike = 0;
-        for (String value : row) {
+        for (int c = startCol; c <= endCol; c++) {
+            String value = getCell(row, c);
             String v = value != null ? value.trim() : "";
             if (v.isBlank()) continue;
             nonBlank++;
@@ -694,11 +728,30 @@ public class ImportService {
         return score;
     }
 
+    private boolean isPriceMatrixRegion(List<List<String>> grid, DetectedRegion region,
+                                        int headerRowIndex, List<Integer> priceColumns) {
+        if (priceColumns.size() <= 1) return false;
+        boolean hasUnits = false;
+        boolean hasName = false;
+        for (int c = region.startCol(); c <= region.endCol(); c++) {
+            String header = normalize(getCell(grid.get(headerRowIndex), c));
+            hasUnits |= header.contains("unidad") || header.contains("cantidad");
+            hasName |= header.contains("descripcion") || header.contains("concepto") || header.contains("nombre");
+        }
+        return hasUnits && hasName;
+    }
+
+    private boolean isPriceHeader(String header) {
+        String n = normalize(header);
+        return n.contains("precio") || n.startsWith("preci") || n.contains("importe") || n.contains("eur");
+    }
+
     private boolean isHeaderKeyword(String normalized) {
         return normalized.contains("unidad")
             || normalized.contains("descripcion")
             || normalized.contains("concepto")
             || normalized.contains("precio")
+            || normalized.startsWith("preci")
             || normalized.contains("importe")
             || normalized.contains("cantidad")
             || normalized.contains("nombre")

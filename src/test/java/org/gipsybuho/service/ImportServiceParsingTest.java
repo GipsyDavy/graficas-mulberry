@@ -80,6 +80,45 @@ class ImportServiceParsingTest {
     }
 
     @Test
+    void parseCsvExpandsAbbreviatedPriceHeadersInTarifaMatrices() throws Exception {
+        Path file = tempDir.resolve("folios.csv");
+        Files.writeString(file, String.join("\n",
+            "FOLIOS;;;;",
+            "UNIDADES;DESCRIPCIÓN;PRECI S/D;PRECIO C/D",
+            "500;FOLIOS CON MEMBRETE UNA TINTA 90GRS.;46,90;46,90"
+        ), StandardCharsets.UTF_8);
+
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile());
+
+        assertEquals(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"), result.headers);
+        assertEquals(2, result.rows.size());
+        assertEquals("FOLIOS - PRECI S/D", result.rows.get(0).get("TECNICA"));
+        assertEquals("FOLIOS - PRECIO C/D", result.rows.get(1).get("TECNICA"));
+        assertEquals("46,90", result.rows.get(1).get("PRECIO_UNIT"));
+    }
+
+    @Test
+    void parseCsvKeepsMaterialSideBySideTablesFlatInsteadOfTarifaPivot() throws Exception {
+        Path file = tempDir.resolve("material_lateral.csv");
+        Files.writeString(file, String.join("\n",
+            "TINTAS;;;;;PLÁSTICO;;;;",
+            "MODELO;PRECIO;PRECIO UD;REDONDEO;PROVEEDOR;;MODELO;LONGITUD;PRECIO;PRECIO UD",
+            "CYAN GAMA;12;1,2;;Proveedor A;;PLÁSTICO BRILLO;35;0,14;0,35"
+        ), StandardCharsets.UTF_8);
+
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile());
+
+        assertTrue(result.structureAnalysis.complex());
+        assertTrue(result.headers.contains("MODELO"));
+        assertTrue(result.headers.contains("LONGITUD"));
+        assertFalse(result.headers.contains("TECNICA"));
+        assertEquals(2, result.rows.size());
+        assertEquals("CYAN GAMA", result.rows.get(0).get("MODELO"));
+        assertEquals("PLÁSTICO BRILLO", result.rows.get(1).get("MODELO"));
+        assertEquals("35", result.rows.get(1).get("LONGITUD"));
+    }
+
+    @Test
     void parseCsvSkipsRepeatedHeadersAndSectionTitlesInsideData() throws Exception {
         Path file = tempDir.resolve("tarifas_repeated.csv");
         Files.writeString(file, String.join("\n",
