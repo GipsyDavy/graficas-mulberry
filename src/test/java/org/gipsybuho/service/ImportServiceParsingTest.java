@@ -66,7 +66,7 @@ class ImportServiceParsingTest {
             "200;Tarjetas color 300g;15;"
         ), StandardCharsets.UTF_8);
 
-        ImportService.ImportResult result = new ImportService().parseFile(file.toFile());
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile(), true);
 
         assertEquals(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"), result.headers);
         assertEquals(3, result.rows.size());
@@ -88,7 +88,7 @@ class ImportServiceParsingTest {
             "500;FOLIOS CON MEMBRETE UNA TINTA 90GRS.;46,90;46,90"
         ), StandardCharsets.UTF_8);
 
-        ImportService.ImportResult result = new ImportService().parseFile(file.toFile());
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile(), true);
 
         assertEquals(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"), result.headers);
         assertEquals(2, result.rows.size());

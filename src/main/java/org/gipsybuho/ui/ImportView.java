@@ -219,7 +219,8 @@ public class ImportView extends VBox {
             if (archivoSeleccionado == null) { alerta("Selecciona un archivo primero."); return; }
             try {
                 log("📂 Leyendo " + archivoSeleccionado.getName() + "…");
-                resultadoParseo = svc.parseFile(archivoSeleccionado);
+                resultadoParseo = svc.parseFile(archivoSeleccionado,
+                    tipoInicial == ImportService.TipoEntidad.TARIFAS);
                 log("✅ " + resultadoParseo.rows.size() + " filas, " + resultadoParseo.headers.size() +
                     " columnas detectadas. Formato: " + resultadoParseo.formato);
                 if (resultadoParseo.structureAnalysis.complex()) {

@@ -149,17 +149,27 @@ public class ImportService {
     // ── File parsing ──────────────────────────────────────────────────────────
 
     public ImportResult parseFile(File file) throws Exception {
+        return parseFile(file, false);
+    }
+
+    /**
+     * Parsea el archivo. Con {@code expandPriceMatrix} activo, las matrices de precios
+     * detectadas se expanden a filas normalizadas TECNICA/NOMBRE/MINIMO_UNIDADES/PRECIO_UNIT.
+     * Solo tiene sentido al importar Tarifas; para el resto de módulos debe ir desactivado
+     * para no destruir la estructura original del archivo.
+     */
+    public ImportResult parseFile(File file, boolean expandPriceMatrix) throws Exception {
         String name = file.getName().toLowerCase();
         if (name.endsWith(".json"))
             return parseJSON(file);
         if (name.endsWith(".csv") || name.endsWith(".txt"))
-            return parseCSV(file);
+            return parseCSV(file, expandPriceMatrix);
         // Todos los formatos Excel: xlsx, xls, xlsb, xlsm, xltx, xltm…
         if (name.endsWith(".xlsx") || name.endsWith(".xls")
                 || name.endsWith(".xlsb") || name.endsWith(".xlsm")
                 || name.endsWith(".xltx") || name.endsWith(".xltm"))
-            return parseExcel(file);
-        return parseCSV(file);  // desconocido → intentar CSV
+            return parseExcel(file, expandPriceMatrix);
+        return parseCSV(file, expandPriceMatrix);  // desconocido → intentar CSV
     }
 
     public FileStructureAnalysis analyzeFileStructure(File file) throws Exception {
@@ -389,7 +399,7 @@ public class ImportService {
         }
     }
 
-    private ImportResult parseCSV(File file) throws Exception {
+    private ImportResult parseCSV(File file, boolean expandPriceMatrix) throws Exception {
         byte[] raw;
         try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
         String content;
@@ -414,7 +424,7 @@ public class ImportService {
             if (line.isBlank()) continue;
             grid.add(parseCsvRow(line, sep));
         }
-        return buildImportResultFromGrid(grid, "CSV");
+        return buildImportResultFromGrid(grid, "CSV", expandPriceMatrix);
     }
 
     private char detectSeparator(String content) {
@@ -461,21 +471,21 @@ public class ImportService {
             .toString();
     }
 
-    private ImportResult parseExcel(File file) throws Exception {
+    private ImportResult parseExcel(File file, boolean expandPriceMatrix) throws Exception {
         String ext = file.getName().toLowerCase().replaceAll(".*\\.", "").toUpperCase();
 
         if ("XLSB".equals(ext)) {
-            return parseXlsb(file);
+            return parseXlsb(file, expandPriceMatrix);
         }
 
         try (Workbook wb = WorkbookFactory.create(file, null, true)) {
             Sheet sheet = wb.getSheetAt(0);
             FormulaEvaluator ev = wb.getCreationHelper().createFormulaEvaluator();
-            return buildImportResultFromGrid(sheetToGrid(sheet, ev), ext);
+            return buildImportResultFromGrid(sheetToGrid(sheet, ev), ext, expandPriceMatrix);
         }
     }
 
-    private ImportResult parseXlsb(File file) throws Exception {
+    private ImportResult parseXlsb(File file, boolean expandPriceMatrix) throws Exception {
         try (OPCPackage pkg = OPCPackage.open(file, PackageAccess.READ)) {
             XSSFBEventBasedExcelExtractor extractor = new XSSFBEventBasedExcelExtractor(pkg);
             String text = extractor.getText();
@@ -484,7 +494,7 @@ public class ImportService {
                 if (line.isBlank()) continue;
                 grid.add(Arrays.asList(line.split("\\t", -1)));
             }
-            return buildImportResultFromGrid(grid, "XLSB");
+            return buildImportResultFromGrid(grid, "XLSB", expandPriceMatrix);
         }
     }
 
@@ -506,15 +516,16 @@ public class ImportService {
         return grid;
     }
 
-    private ImportResult buildImportResultFromGrid(List<List<String>> grid, String formato) {
+    private ImportResult buildImportResultFromGrid(List<List<String>> grid, String formato,
+                                                   boolean expandPriceMatrix) {
         List<String> headers = new ArrayList<>();
         List<Map<String, String>> rows = new ArrayList<>();
         FileStructureAnalysis analysis = analyzeGridStructure(grid);
         if (grid == null || grid.isEmpty() || grid.stream().allMatch(this::isBlankRow)) {
             return new ImportResult(headers, rows, formato, analysis);
         }
-        if (shouldParseByRegions(grid, analysis)) {
-            ImportResult regional = buildImportResultFromTableRegions(grid, formato, analysis);
+        if (shouldParseByRegions(grid, analysis, expandPriceMatrix)) {
+            ImportResult regional = buildImportResultFromTableRegions(grid, formato, analysis, expandPriceMatrix);
             if (!regional.rows.isEmpty()) return regional;
         }
 
@@ -541,9 +552,10 @@ public class ImportService {
         return new ImportResult(headers, rows, formato, analysis);
     }
 
-    private boolean shouldParseByRegions(List<List<String>> grid, FileStructureAnalysis analysis) {
+    private boolean shouldParseByRegions(List<List<String>> grid, FileStructureAnalysis analysis,
+                                         boolean expandPriceMatrix) {
         if (analysis.tableRegions().size() > 1) return true;
-        return analysis.tableRegions().stream()
+        return expandPriceMatrix && analysis.tableRegions().stream()
             .anyMatch(region -> {
                 int headerRow = regionHeaderRow(grid, region);
                 List<Integer> priceColumns = priceColumnsInRegion(grid, region, headerRow);
@@ -552,7 +564,8 @@ public class ImportService {
     }
 
     private ImportResult buildImportResultFromTableRegions(List<List<String>> grid, String formato,
-                                                           FileStructureAnalysis analysis) {
+                                                           FileStructureAnalysis analysis,
+                                                           boolean expandPriceMatrix) {
         List<DetectedRegion> tableRegions = analysis.tableRegions();
         LinkedHashSet<String> headers = new LinkedHashSet<>();
         List<Map<String, String>> rows = new ArrayList<>();
@@ -561,7 +574,7 @@ public class ImportService {
             int headerRow = regionHeaderRow(grid, region);
             List<String> regionHeaders = regionHeaders(grid, region, headerRow);
             List<Integer> priceColumns = priceColumnsInRegion(grid, region, headerRow);
-            boolean pivotPrices = isPriceMatrixRegion(grid, region, headerRow, priceColumns);
+            boolean pivotPrices = expandPriceMatrix && isPriceMatrixRegion(grid, region, headerRow, priceColumns);
             if (pivotPrices) {
                 headers.addAll(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"));
             } else {
