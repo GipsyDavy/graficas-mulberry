@@ -74,6 +74,50 @@ No repetir como trabajo pendiente:
 - “Mapeo básico de tarifas/materiales”: ya está mejorado.
 - “Soporte XLSB”: ya existe para extracción tabulada; lo pendiente es limpiar libros con secciones internas.
 
+### Inicio Sprint MIGRACION-COMPLEJA — inventario compacto 2026-06-12
+
+Recuento de archivos soportados en las rutas aportadas:
+
+| Carpeta | CSV | XLSX | XLSB | Total |
+|---|---:|---:|---:|---:|
+| `CSV` | 1 | 0 | 0 | 1 |
+| `excel` | 56 | 78 | 1 | 135 |
+| `EXCEL_SEPARADO` | 0 | 9 | 0 | 9 |
+| `files` | 8 | 0 | 0 | 8 |
+| `TARIFAS_SEPARADAS` | 0 | 45 | 0 | 45 |
+| `TARIFAS_SEPARADAS 1` | 0 | 45 | 0 | 45 |
+| `todas_las_tarifas` | 45 | 0 | 0 | 45 |
+| **Total** | **110** | **177** | **1** | **288** |
+
+No se han encontrado `.pdf`, `.doc` ni `.docx` en estas rutas durante este inventario.
+
+Clasificación inicial por vía:
+
+| Vía | Archivos detectados | Decisión |
+|---|---|---|
+| A1 — CSV limpio/importación directa | `Desktop\files\*.csv`, `Desktop\todas_las_tarifas\*.csv`, CSV normalizados de `Desktop\excel` | Usar wizard actual; no crear código nuevo. |
+| A2 — script específico | `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`; hojas proveedor (`01_UNIÓN_PAPELERA.xlsx`, `02_MRPAPEL.xlsx`, `03_FEDRIGONI.xlsx`, `04_CODIAL.xlsx`) si se decide rehacer origen | Crear script/plantilla solo si se quiere regenerar CSVs desde Excel fuente. |
+| B — importador nativo específico | `NUEVAS TARIFAS (2) (version 1).xlsb` solo si se requiere importar todo el libro monolítico repetidamente | No construir aún; primero limpiar/separar secciones a CSV. |
+| C — OCR/manual asistido | Ningún PDF/Word detectado en rutas actuales | Sin acción por ahora. |
+
+Diagnóstico técnico de los dos candidatos complejos:
+
+| Archivo | Observación | Vía recomendada |
+|---|---|---|
+| `PRECIOS PAPEL PROVEEDORES Formulas.xlsx` | 7 hojas. `UNIÓN PAPELERA`, `MRPAPEL`, `FEDRIGONI`: 33 merges por hoja y 466-496 fórmulas. `CODIAL`: 3 mini-tablas horizontales. `MATERIAL`: 2 bloques laterales. | A2: script específico a CSVs de Materiales. |
+| `NUEVAS TARIFAS (2) (version 1).xlsb` | Parser recupera 1993 filas y detecta 89 tablas + 10 bloques de notas. Primeras filas ya mezclan precios correctos con ruido (`PRECIO_UNIT` puede contener texto). | B solo tras prototipo; de momento A2 por secciones. |
+
+Primer piloto recomendado: `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`.
+
+Motivo: estructura compleja pero estable, destino claro (`Materiales`), y ya existen CSVs limpios derivados
+en `Desktop\files`. Permite validar el procedimiento completo comparando Excel fuente → CSV limpio → wizard.
+
+Salida esperada del piloto:
+- `proveedor`, `referencia` opcional, `nombre`, `categoria`, `unidad`, `precio_unidad`;
+- un CSV por familia si el libro mezcla papel, tamaños, horas y material;
+- importación en base temporal o app de prueba;
+- documentación exacta de columnas descartadas y reglas de normalización.
+
 ### Paso 1 — Inventario de archivos reales
 
 La muestra inicial ya existe en las rutas anteriores. El siguiente agente debe convertir el inventario en una tabla de clasificación por archivo:
