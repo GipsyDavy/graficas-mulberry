@@ -513,7 +513,7 @@ public class ImportService {
         if (grid == null || grid.isEmpty() || grid.stream().allMatch(this::isBlankRow)) {
             return new ImportResult(headers, rows, formato, analysis);
         }
-        if (analysis.tableRegions().size() > 1) {
+        if (shouldParseByRegions(grid, analysis)) {
             ImportResult regional = buildImportResultFromTableRegions(grid, formato, analysis);
             if (!regional.rows.isEmpty()) return regional;
         }
@@ -541,28 +541,42 @@ public class ImportService {
         return new ImportResult(headers, rows, formato, analysis);
     }
 
+    private boolean shouldParseByRegions(List<List<String>> grid, FileStructureAnalysis analysis) {
+        if (analysis.tableRegions().size() > 1) return true;
+        return analysis.tableRegions().stream()
+            .anyMatch(region -> priceColumnsInRegion(grid, region).size() > 1);
+    }
+
     private ImportResult buildImportResultFromTableRegions(List<List<String>> grid, String formato,
                                                            FileStructureAnalysis analysis) {
         List<DetectedRegion> tableRegions = analysis.tableRegions();
         LinkedHashSet<String> headers = new LinkedHashSet<>();
         List<Map<String, String>> rows = new ArrayList<>();
 
-        boolean hasContext = tableRegions.stream()
-            .map(region -> regionContext(grid, region))
-            .anyMatch(context -> !context.isBlank());
-        if (hasContext) headers.add("GRUPO");
-
         for (DetectedRegion region : tableRegions) {
             List<String> regionHeaders = regionHeaders(grid, region);
-            headers.addAll(regionHeaders);
+            List<Integer> priceColumns = priceColumnsInRegion(grid, region);
+            boolean pivotPrices = priceColumns.size() > 1;
+            if (pivotPrices) {
+                headers.addAll(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"));
+            } else {
+                String context = regionContext(grid, region);
+                if (!context.isBlank()) headers.add("GRUPO");
+                headers.addAll(regionHeaders);
+            }
 
             String context = regionContext(grid, region);
             for (int r = region.startRow() + 1; r <= region.endRow() && r < grid.size(); r++) {
                 List<String> sourceRow = grid.get(r);
                 if (isLikelyNonDataRow(sourceRow, columnsForRegion(region), regionHeaders)) continue;
 
+                if (pivotPrices) {
+                    rows.addAll(expandPriceColumns(grid, region, sourceRow, context, priceColumns));
+                    continue;
+                }
+
                 Map<String, String> row = new LinkedHashMap<>();
-                if (hasContext) row.put("GRUPO", context);
+                if (!context.isBlank()) row.put("GRUPO", context);
                 boolean hasData = false;
                 for (int c = region.startCol(); c <= region.endCol(); c++) {
                     String header = getCell(grid.get(region.startRow()), c);
@@ -576,6 +590,53 @@ public class ImportService {
         }
 
         return new ImportResult(new ArrayList<>(headers), rows, formato, analysis);
+    }
+
+    private List<Integer> priceColumnsInRegion(List<List<String>> grid, DetectedRegion region) {
+        List<Integer> columns = new ArrayList<>();
+        List<String> headerRow = grid.get(region.startRow());
+        for (int c = region.startCol(); c <= region.endCol(); c++) {
+            String header = getCell(headerRow, c);
+            if (normalize(header).contains("precio")) columns.add(c);
+        }
+        return columns;
+    }
+
+    private List<Map<String, String>> expandPriceColumns(List<List<String>> grid, DetectedRegion region,
+                                                         List<String> sourceRow, String context,
+                                                         List<Integer> priceColumns) {
+        List<Map<String, String>> expanded = new ArrayList<>();
+        String units = firstValueForHeader(grid, region, sourceRow, "unidad");
+        String name = firstValueForHeader(grid, region, sourceRow, "descripcion");
+        if (units.isBlank() || name.isBlank()) return expanded;
+
+        for (int priceCol : priceColumns) {
+            String price = getCell(sourceRow, priceCol);
+            if (price.isBlank()) continue;
+            Map<String, String> row = new LinkedHashMap<>();
+            String priceHeader = getCell(grid.get(region.startRow()), priceCol);
+            row.put("TECNICA", buildTechniqueFromContext(context, priceHeader));
+            row.put("NOMBRE", name);
+            row.put("MINIMO_UNIDADES", units);
+            row.put("PRECIO_UNIT", price);
+            expanded.add(row);
+        }
+        return expanded;
+    }
+
+    private String firstValueForHeader(List<List<String>> grid, DetectedRegion region,
+                                       List<String> sourceRow, String headerNeedle) {
+        for (int c = region.startCol(); c <= region.endCol(); c++) {
+            String header = normalize(getCell(grid.get(region.startRow()), c));
+            if (header.contains(headerNeedle)) return getCell(sourceRow, c);
+        }
+        return "";
+    }
+
+    private String buildTechniqueFromContext(String context, String priceHeader) {
+        if (context == null || context.isBlank()) return priceHeader;
+        if (priceHeader == null || priceHeader.isBlank() || normalize(priceHeader).equals("precio")) return context;
+        return context + " - " + priceHeader;
     }
 
     private List<String> regionHeaders(List<List<String>> grid, DetectedRegion region) {

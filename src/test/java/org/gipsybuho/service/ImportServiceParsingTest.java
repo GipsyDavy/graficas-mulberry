@@ -57,6 +57,29 @@ class ImportServiceParsingTest {
     }
 
     @Test
+    void parseCsvExpandsMultiplePriceColumnsInDetectedRegions() throws Exception {
+        Path file = tempDir.resolve("tarifas_pivot.csv");
+        Files.writeString(file, String.join("\n",
+            "TARJETAS COLOR;;;",
+            "UNIDADES;DESCRIPCIÓN;PRECIO NORMAL;PRECIO PLASTIFICADO",
+            "100;Tarjetas color 300g;12;17,75",
+            "200;Tarjetas color 300g;15;"
+        ), StandardCharsets.UTF_8);
+
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile());
+
+        assertEquals(List.of("TECNICA", "NOMBRE", "MINIMO_UNIDADES", "PRECIO_UNIT"), result.headers);
+        assertEquals(3, result.rows.size());
+        assertEquals("TARJETAS COLOR - PRECIO NORMAL", result.rows.get(0).get("TECNICA"));
+        assertEquals("100", result.rows.get(0).get("MINIMO_UNIDADES"));
+        assertEquals("12", result.rows.get(0).get("PRECIO_UNIT"));
+        assertEquals("TARJETAS COLOR - PRECIO PLASTIFICADO", result.rows.get(1).get("TECNICA"));
+        assertEquals("17,75", result.rows.get(1).get("PRECIO_UNIT"));
+        assertEquals("200", result.rows.get(2).get("MINIMO_UNIDADES"));
+        assertEquals("15", result.rows.get(2).get("PRECIO_UNIT"));
+    }
+
+    @Test
     void parseCsvSkipsRepeatedHeadersAndSectionTitlesInsideData() throws Exception {
         Path file = tempDir.resolve("tarifas_repeated.csv");
         Files.writeString(file, String.join("\n",
