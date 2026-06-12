@@ -34,7 +34,7 @@ public class Pedido {
         // no existen en Pedido, se usan para resolver clienteId antes de guardar.
         // Si viene cliente_nif y no existe, la importación falla sin fallback por nombre.
         var syn = Map.ofEntries(
-            Map.entry("cliente_nif", List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "tax id")),
+            Map.entry("cliente_nif", List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "nif", "cif", "dni", "tax id")),
             Map.entry("cliente_nombre", List.of("cliente nombre", "nombre cliente", "cliente", "razon social", "empresa")),
             Map.entry("cliente_apellidos", List.of("cliente apellidos", "apellidos cliente", "apellido cliente", "surname", "lastname")),
             Map.entry("numero", List.of("numero", "nº pedido", "num pedido", "pedido", "numero pedido", "referencia pedido")),

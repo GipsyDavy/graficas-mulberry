@@ -31,7 +31,7 @@ public class Factura {
 
     private static EntityImportSpec buildSpec() {
         var syn = Map.ofEntries(
-            Map.entry("cliente_nif",        List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "tax id")),
+            Map.entry("cliente_nif",        List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "nif", "cif", "dni", "tax id")),
             Map.entry("cliente_nombre",     List.of("cliente nombre", "nombre cliente", "cliente", "razon social", "empresa")),
             Map.entry("cliente_apellidos",  List.of("cliente apellidos", "apellidos cliente", "apellido cliente", "surname", "lastname")),
             Map.entry("numero",             List.of("numero", "nº factura", "num factura", "factura", "numero factura", "referencia factura")),

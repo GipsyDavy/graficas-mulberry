@@ -57,10 +57,10 @@ public class Albaran {
 
     private static EntityImportSpec buildSpec() {
         var syn = Map.ofEntries(
-            Map.entry("cliente_nif",       List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "tax id")),
+            Map.entry("cliente_nif",       List.of("cliente nif", "nif cliente", "cif cliente", "dni cliente", "cliente cif", "nif", "cif", "dni", "tax id")),
             Map.entry("cliente_nombre",    List.of("cliente nombre", "nombre cliente", "cliente", "razon social", "empresa")),
             Map.entry("cliente_apellidos", List.of("cliente apellidos", "apellidos cliente", "apellido cliente", "surname", "lastname")),
-            Map.entry("numero",            List.of("numero albaran", "num albaran", "albaran", "referencia albaran", "nº albaran")),
+            Map.entry("numero",            List.of("numero", "numero albaran", "num albaran", "albaran", "referencia albaran", "nº albaran")),
             Map.entry("factura_numero",    List.of("factura numero", "numero factura", "num factura", "factura", "ref factura", "nº factura")),
             Map.entry("pedido_numero",     List.of("pedido numero", "numero pedido", "num pedido", "pedido", "ref pedido", "nº pedido")),
             Map.entry("fecha",             List.of("fecha", "fecha albaran", "fecha emision", "date")),
