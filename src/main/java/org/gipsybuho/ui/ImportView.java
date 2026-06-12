@@ -16,17 +16,37 @@ import org.gipsybuho.model.Material;
 import org.gipsybuho.model.Tarifa;
 import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ImportService;
+import org.gipsybuho.service.ImportService.DynamicFieldSuggestion;
 import org.gipsybuho.service.ImportService.ImportResult;
+import org.gipsybuho.service.ImportService.ImportRepairPlan;
 import org.gipsybuho.service.ImportService.TipoEntidad;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.ValidationIssue;
 import org.gipsybuho.service.importer.EntityImportSpec;
 import org.gipsybuho.service.importer.FieldSpec;
+import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.File;
 import java.util.*;
 
 public class ImportView extends VBox {
+
+    private static final Set<String> IMPORT_PRICE_FIELDS = Set.of(
+        "precio_unidad", "precio_unit", "precio_setup", "salario_base",
+        "precio_hora_extra", "precio_hora_festiva", "complementos",
+        "percepciones_no_salariales", "total_bruto", "irpf_importe",
+        "ss_trabajador", "total_deducciones", "neto", "ss_empresa",
+        "coste_total_empresa", "importe_total"
+    );
+    private static final Set<String> IMPORT_NUMERIC_FIELDS = Set.of(
+        "stock_actual", "stock_minimo", "minimo_unidades", "mes", "anio",
+        "horas_extra_normales", "horas_extra_festivas", "irpf",
+        "irpf_porcentaje", "iva_porcentaje"
+    );
+    private static final Set<String> IMPORT_DATE_FIELDS = Set.of(
+        "fecha", "fecha_alta", "fecha_validez", "fecha_vencimiento",
+        "fecha_entrega_prevista", "fecha_entrega_real"
+    );
 
     private final ImportService svc = new ImportService();
     private final TipoEntidad tipoInicial;
@@ -433,6 +453,12 @@ public class ImportView extends VBox {
         CheckBox cbGrupoFijo = new CheckBox();
         TextField tfGrupoFijo = new TextField();
         VBox sectionGrouping = buildGroupingSection(cbGrupoFijo, tfGrupoFijo);
+        String defaultGroupField = groupingField(tipoSeleccionado);
+        if (defaultGroupField != null && !mapping.values().contains(defaultGroupField)) {
+            cbGrupoFijo.setSelected(true);
+            tfGrupoFijo.setDisable(false);
+            tfGrupoFijo.setText(defaultGroupingValue());
+        }
 
         // Summary
         long mapeados = mapping.values().stream().filter(Objects::nonNull).count();
@@ -449,6 +475,32 @@ public class ImportView extends VBox {
                 mappingActual.put(row.columna, row.getCampoDestino());
             }
             crearCampoDinamico(tableName);
+        });
+
+        Button btnRepararIA = btnColor("🤖 Reparar importación", "#6C63FF");
+        btnRepararIA.setOnAction(e -> {
+            if (!svc.isOllamaDisponible()) {
+                alerta("Ollama no está disponible. Puedes ajustar el mapeo manualmente o crear campos nuevos.");
+                return;
+            }
+            for (MappingRow row : tablaMappeo.getItems()) {
+                mappingActual.put(row.columna, row.getCampoDestino());
+            }
+            btnRepararIA.setDisable(true);
+            log("🤖 Solicitando plan de reparación de importación…");
+            Thread.ofVirtual().start(() -> {
+                ImportRepairPlan plan = svc.proponerReparacionImportacion(
+                    tipoSeleccionado,
+                    resultadoParseo.rows,
+                    resultadoParseo.headers,
+                    new LinkedHashMap<>(mappingActual),
+                    dynamicFieldKeys(specFor(tipoSeleccionado))
+                );
+                Platform.runLater(() -> {
+                    btnRepararIA.setDisable(false);
+                    aplicarPlanReparacion(plan, tableName);
+                });
+            });
         });
 
         Button btnVolver = btnColor("← Volver", "#95A5A6");
@@ -508,12 +560,22 @@ public class ImportView extends VBox {
                 fixedMapping.entrySet().removeIf(entry -> entry.getValue() == null);
                 importConfig = new ImportService.ImportConfig(fixedMapping, pivotCols, labelField, valorField);
             } else {
-                importConfig = new ImportService.ImportConfig(mappingActual);
+                Map<String, String> fixedMapping = new LinkedHashMap<>(mappingActual);
+                fixedMapping.entrySet().removeIf(entry -> entry.getValue() == null);
+                importConfig = new ImportService.ImportConfig(fixedMapping);
             }
+            List<String> missingRequired = missingRequiredFields(importConfig);
+            if (!missingRequired.isEmpty()) {
+                alerta("No se puede continuar: faltan campos obligatorios sin mapear ni valor fijo:\n"
+                    + String.join(", ", missingRequired)
+                    + "\n\nCorrige el mapeo, activa la agrupación fija o usa el modo expandido.");
+                return;
+            }
+            normalizeMappedValues(mappingActual);
             mostrarPaso35();
         });
 
-        HBox botonesRow = new HBox(12, btnVolver, btnNuevoCampo, btnSiguiente);
+        HBox botonesRow = new HBox(12, btnVolver, btnNuevoCampo, btnRepararIA, btnSiguiente);
         botonesRow.setAlignment(Pos.CENTER_LEFT);
 
         box.getChildren().addAll(titulo, desc, tablaMappeo, sectionPivot, sectionGrouping, resumen, new Separator(), botonesRow);
@@ -560,6 +622,7 @@ public class ImportView extends VBox {
 
         ObservableList<MappingRow> items = FXCollections.observableArrayList();
         for (var entry : mapping.entrySet()) {
+            if (entry.getKey().startsWith("__fixed_")) continue;
             items.add(new MappingRow(entry.getKey(), entry.getValue(), opcionesDestino));
         }
 
@@ -625,27 +688,174 @@ public class ImportView extends VBox {
     }
 
     private void crearCampoDinamico(String tableName) {
-        TextInputDialog dialog = new TextInputDialog();
+        Dialog<ButtonType> dialog = new Dialog<>();
         dialog.setTitle("Crear campo nuevo");
-        dialog.setHeaderText("Nombre visible del nuevo campo");
-        dialog.setContentText("Etiqueta:");
+        dialog.setHeaderText("Nombre visible y tipo del nuevo campo");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) {
             dialog.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         }
-        dialog.showAndWait().ifPresent(label -> {
+
+        TextField tfLabel = new TextField();
+        tfLabel.setPromptText("Etiqueta");
+        ComboBox<String> cbTipo = new ComboBox<>(FXCollections.observableArrayList(
+            "TEXTO", "NUMÉRICO", "PRECIO", "FECHA"));
+        cbTipo.setValue("TEXTO");
+
+        GridPane grid = new GridPane();
+        grid.setHgap(10);
+        grid.setVgap(10);
+        grid.setPadding(new Insets(12));
+        grid.add(new Label("Etiqueta:"), 0, 0);
+        grid.add(tfLabel, 1, 0);
+        grid.add(new Label("Tipo:"), 0, 1);
+        grid.add(cbTipo, 1, 1);
+        dialog.getDialogPane().setContent(grid);
+
+        dialog.showAndWait().filter(ButtonType.OK::equals).ifPresent(bt -> {
+            String label = tfLabel.getText();
             if (label == null || label.isBlank()) return;
             try {
                 Set<String> baseKeys = specFor(tipoSeleccionado).campos().stream()
                     .map(FieldSpec::clave)
                     .collect(java.util.stream.Collectors.toSet());
+                String dataType = displayTypeToInternal(cbTipo.getValue());
                 ColumnConfigDAO.ColumnConfig config =
-                    new ColumnConfigDAO().addDynamicColumn(tableName, label, baseKeys);
+                    new ColumnConfigDAO().addDynamicColumn(tableName, label, dataType, baseKeys);
                 log("✅ Campo dinámico creado: " + config.label() + " (" + config.columnName() + ")");
                 panelPasos.getChildren().setAll(buildPaso3(new LinkedHashMap<>(mappingActual)));
             } catch (Exception ex) {
                 alerta("No se pudo crear el campo:\n" + ex.getMessage());
             }
         });
+    }
+
+    private void aplicarPlanReparacion(ImportRepairPlan plan, String tableName) {
+        if (plan == null || !plan.hasChanges()) {
+            alerta("La IA no ha propuesto cambios aplicables. Revisa el mapeo manualmente.");
+            return;
+        }
+
+        String msg = repairSummary(plan);
+        Alert confirm = new Alert(Alert.AlertType.CONFIRMATION, msg, ButtonType.YES, ButtonType.NO);
+        confirm.setTitle("Aplicar reparación IA");
+        confirm.setHeaderText(plan.summary() == null || plan.summary().isBlank()
+            ? "La IA propone ajustar la importación"
+            : plan.summary());
+        if (getScene() != null) confirm.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
+        confirm.showAndWait().filter(ButtonType.YES::equals).ifPresent(button -> {
+            try {
+                for (var entry : plan.mapping().entrySet()) {
+                    if (mappingActual.containsKey(entry.getKey())) {
+                        mappingActual.put(entry.getKey(), entry.getValue());
+                    }
+                }
+                if (tableName != null) {
+                    for (DynamicFieldSuggestion suggestion : plan.dynamicFields()) {
+                        createDynamicFieldFromSuggestion(tableName, suggestion);
+                    }
+                }
+                for (var entry : plan.fixedValues().entrySet()) {
+                    applyFixedValue(entry.getKey(), entry.getValue());
+                }
+                for (ImportService.RowValueFix fix : plan.rowFixes()) {
+                    if (fix.rowIndex() >= 0 && fix.rowIndex() < resultadoParseo.rows.size()) {
+                        resultadoParseo.rows.get(fix.rowIndex()).put(fix.columnName(), fix.value());
+                    }
+                }
+                normalizeMappedValues(mappingActual);
+                log("✅ Plan IA aplicado. Revisa el mapeo antes de continuar.");
+                panelPasos.getChildren().setAll(buildPaso3(new LinkedHashMap<>(mappingActual)));
+            } catch (Exception ex) {
+                alerta("No se pudo aplicar el plan IA:\n" + ex.getMessage());
+            }
+        });
+    }
+
+    private void createDynamicFieldFromSuggestion(String tableName, DynamicFieldSuggestion suggestion) throws Exception {
+        if (suggestion.sourceColumn() == null || !mappingActual.containsKey(suggestion.sourceColumn())) return;
+        if (mappingActual.get(suggestion.sourceColumn()) != null
+                && !"(ignorar)".equals(mappingActual.get(suggestion.sourceColumn()))) return;
+        Set<String> baseKeys = specFor(tipoSeleccionado).campos().stream()
+            .map(FieldSpec::clave)
+            .collect(java.util.stream.Collectors.toSet());
+        ColumnConfigDAO.ColumnConfig config = new ColumnConfigDAO().addDynamicColumn(
+            tableName,
+            suggestion.label(),
+            suggestion.dataType(),
+            baseKeys
+        );
+        mappingActual.put(suggestion.sourceColumn(), config.columnName());
+        log("✅ Campo dinámico IA creado: " + config.label() + " [" + config.dataType() + "]");
+    }
+
+    private void applyFixedValue(String field, String value) {
+        if (field == null || field.isBlank()) return;
+        String syntheticColumn = "__fixed_" + field;
+        mappingActual.put(syntheticColumn, field);
+        for (Map<String, String> row : resultadoParseo.rows) {
+            row.put(syntheticColumn, value != null ? value : "");
+        }
+    }
+
+    private String repairSummary(ImportRepairPlan plan) {
+        return "Se aplicarán estos cambios si aceptas:\n\n"
+            + "• " + plan.mapping().size() + " ajuste(s) de mapeo\n"
+            + "• " + plan.dynamicFields().size() + " campo(s) dinámico(s) nuevo(s)\n"
+            + "• " + plan.fixedValues().size() + " valor(es) fijo(s)\n"
+            + "• " + plan.rowFixes().size() + " corrección(es) de celda\n\n"
+            + "No se inventarán NIF, emails ni relaciones con otros registros.";
+    }
+
+    private String displayTypeToInternal(String display) {
+        return switch (display) {
+            case "NUMÉRICO" -> "NUMERICO";
+            case "PRECIO" -> "PRECIO";
+            case "FECHA" -> "FECHA";
+            default -> "TEXTO";
+        };
+    }
+
+    private void normalizeMappedValues(Map<String, String> mapping) {
+        Map<String, String> dynamicTypes = dynamicFieldTypes(specFor(tipoSeleccionado));
+        for (var entry : mapping.entrySet()) {
+            String fileCol = entry.getKey();
+            String dest = entry.getValue();
+            if (dest == null) continue;
+            String type = importTypeForField(dest, dynamicTypes);
+            if ("TEXTO".equals(type)) continue;
+            for (Map<String, String> row : resultadoParseo.rows) {
+                if (row.containsKey(fileCol)) {
+                    row.put(fileCol, TypedValueFormatter.normalizeForStorage(type, row.get(fileCol)));
+                }
+            }
+        }
+    }
+
+    private Map<String, String> dynamicFieldTypes(EntityImportSpec spec) {
+        if (spec.tableName() == null) return Map.of();
+        try {
+            Set<String> baseKeys = spec.campos().stream()
+                .map(FieldSpec::clave)
+                .collect(java.util.stream.Collectors.toSet());
+            Map<String, String> types = new LinkedHashMap<>();
+            for (ColumnConfigDAO.ColumnConfig config :
+                    new ColumnConfigDAO().findVisibleDynamic(spec.tableName(), baseKeys)) {
+                types.put(config.columnName(), config.dataType() != null ? config.dataType() : "TEXTO");
+            }
+            return types;
+        } catch (Exception ex) {
+            log("⚠ No se pudieron cargar tipos dinámicos: " + ex.getMessage());
+            return Map.of();
+        }
+    }
+
+    private String importTypeForField(String field, Map<String, String> dynamicTypes) {
+        if (dynamicTypes.containsKey(field)) return dynamicTypes.get(field);
+        if (IMPORT_PRICE_FIELDS.contains(field)) return "PRECIO";
+        if (IMPORT_NUMERIC_FIELDS.contains(field)) return "NUMERICO";
+        if (IMPORT_DATE_FIELDS.contains(field)) return "FECHA";
+        return "TEXTO";
     }
 
     // MappingRow model for the mapping table
@@ -1108,6 +1318,28 @@ public class ImportView extends VBox {
             case TARIFAS    -> "tecnica";
             default         -> null;
         };
+    }
+
+    private String defaultGroupingValue() {
+        if (archivoSeleccionado == null) return "";
+        String name = archivoSeleccionado.getName();
+        int dot = name.lastIndexOf('.');
+        if (dot > 0) name = name.substring(0, dot);
+        return name.replace('_', ' ').replace('-', ' ').replaceAll("\\s+", " ").trim();
+    }
+
+    private List<String> missingRequiredFields(ImportService.ImportConfig config) {
+        List<String> missing = new ArrayList<>();
+        Set<String> mapped = new HashSet<>(config.mapping.values());
+        for (FieldSpec field : specFor(tipoSeleccionado).camposObligatorios()) {
+            String key = field.clave();
+            boolean covered = mapped.contains(key);
+            if (!covered && groupingConfig != null && groupingConfig.field().equals(key)) covered = true;
+            if (!covered && config.hasPivot()
+                    && (key.equals(config.pivotLabelField) || key.equals(config.pivotValueField))) covered = true;
+            if (!covered) missing.add(field.etiqueta() + " (" + key + ")");
+        }
+        return missing;
     }
 
     private String importResultText(org.gipsybuho.service.importer.ImportResult result) {

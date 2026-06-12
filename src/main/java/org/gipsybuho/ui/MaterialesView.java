@@ -77,6 +77,8 @@ public class MaterialesView extends VBox {
         new DynamicColumnRuntime<>("materiales", "Materiales", COLUMNAS_BASE, tabla, datos, Material::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkSoloAlerta;
+    private ComboBox<String> cbCategoriaFiltro;
+    private boolean updatingCategoriaFiltro;
 
     // ── Consumo tab ───────────────────────────────────────────────────────────
     private final ObservableList<ConsumoMaterial> datosConsumo = FXCollections.observableArrayList();
@@ -131,6 +133,12 @@ public class MaterialesView extends VBox {
     private HBox buildToolbarStock() {
         chkSoloAlerta = new CheckBox("Solo materiales con stock bajo");
         chkSoloAlerta.setOnAction(e -> cargar());
+        cbCategoriaFiltro = new ComboBox<>();
+        cbCategoriaFiltro.setPrefWidth(150);
+        cbCategoriaFiltro.setTooltip(new Tooltip("Filtrar materiales por categoría"));
+        cbCategoriaFiltro.setOnAction(e -> {
+            if (!updatingCategoriaFiltro) cargar();
+        });
 
         Button btnNuevo    = btn("+ Nuevo",         this::nuevo);
         Button btnEditar   = btn("✏ Editar",         this::editar);
@@ -153,7 +161,7 @@ public class MaterialesView extends VBox {
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, chkSoloAlerta, cbCategoriaFiltro, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -162,7 +170,7 @@ public class MaterialesView extends VBox {
     private TableView<Material> buildTablaStock() {
         tabla.getStyleClass().add("data-table");
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Material, String> colEstado = new TableColumn<>("");
         colEstado.setPrefWidth(30);
@@ -221,10 +229,35 @@ public class MaterialesView extends VBox {
 
     private void cargar() {
         try {
-            datos.setAll(chkSoloAlerta != null && chkSoloAlerta.isSelected()
-                ? dao.findBajoStock() : dao.findAll());
+            List<Material> lista = chkSoloAlerta != null && chkSoloAlerta.isSelected()
+                ? dao.findBajoStock() : dao.findAll();
+            actualizarFiltroCategorias(lista);
+            if (cbCategoriaFiltro != null && cbCategoriaFiltro.getValue() != null
+                    && !"Todos".equals(cbCategoriaFiltro.getValue())) {
+                String categoria = cbCategoriaFiltro.getValue();
+                lista = lista.stream()
+                    .filter(m -> categoria.equals(m.getCategoria()))
+                    .toList();
+            }
+            datos.setAll(lista);
             dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void actualizarFiltroCategorias(List<Material> materiales) {
+        if (cbCategoriaFiltro == null) return;
+        String selected = cbCategoriaFiltro.getValue();
+        List<String> categorias = new java.util.ArrayList<>(materiales.stream()
+            .map(Material::getCategoria)
+            .filter(c -> c != null && !c.isBlank())
+            .distinct()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .toList());
+        categorias.add(0, "Todos");
+        updatingCategoriaFiltro = true;
+        cbCategoriaFiltro.setItems(FXCollections.observableArrayList(categorias));
+        cbCategoriaFiltro.setValue(categorias.contains(selected) ? selected : "Todos");
+        updatingCategoriaFiltro = false;
     }
 
     private void nuevo()   { dialogo(new Material()).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } }); }
@@ -824,52 +857,18 @@ public class MaterialesView extends VBox {
     // ═════════════════════════════════════════════════════════════════════════
 
     private void importar() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Importar materiales");
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        SoundService.play(SoundService.Sound.START);
-        final File f = archivo;
-        Thread.ofVirtual().start(() -> {
-            try {
-                var parsed = new ImportService().parseFile(f);
-                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
-                Platform.runLater(() -> {
-                    var dlg = new ColumnMappingDialog(
-                        getScene() != null ? getScene().getWindow() : null,
-                        Material.IMPORT_SPEC, parsed.headers, preview);
-                    if (getScene() != null)
-                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    dlg.showAndWait().ifPresent(mr ->
-                        Thread.ofVirtual().start(() -> {
-                            try {
-                                var result = new EntityImportService().importar(
-                                    Material.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
-                                Platform.runLater(() -> {
-                                    cargar(); cargarConsumo(); cargarPagos();
-                                    SoundService.play(SoundService.Sound.COMPLETE);
-                                    mostrarResultadoImportacion(result);
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    SoundService.play(SoundService.Sound.ERROR);
-                                    mostrarError(ex);
-                                });
-                            }
-                        })
-                    );
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    mostrarError(e);
-                });
-            }
-        });
+        List<String> css = getScene() != null
+            ? new java.util.ArrayList<>(getScene().getStylesheets())
+            : List.of();
+        ModuloWindowManager.abrirEnVentana(
+            "Importación de materiales",
+            () -> new ImportView(ImportService.TipoEntidad.MATERIALES, () -> {
+                cargar();
+                cargarConsumo();
+                cargarPagos();
+            }),
+            css
+        );
     }
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {

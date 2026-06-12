@@ -5,6 +5,7 @@ import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.dao.DynamicColumnValueDAO;
 import org.gipsybuho.service.importer.*;
+import org.gipsybuho.util.TypedValueFormatter;
 import java.time.format.DateTimeParseException;
 
 import java.sql.*;
@@ -244,12 +245,7 @@ public class EntityImportService {
     }
 
     private boolean esNumerico(String s) {
-        try {
-            Double.parseDouble(s.replace(",", ".").replaceAll("[^0-9.\\-]", ""));
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return TypedValueFormatter.parseDecimal(s).isPresent();
     }
 
     private boolean esIsoFechaValida(String s) {
@@ -1075,11 +1071,7 @@ public class EntityImportService {
     }
 
     private double toDouble(String s) {
-        try {
-            return Double.parseDouble(s.replace(",", ".").replaceAll("[^0-9.\\-]", ""));
-        } catch (NumberFormatException e) {
-            return 0.0;
-        }
+        return TypedValueFormatter.parseDecimal(s).map(java.math.BigDecimal::doubleValue).orElse(0.0);
     }
 
     private int toInt(String s) {

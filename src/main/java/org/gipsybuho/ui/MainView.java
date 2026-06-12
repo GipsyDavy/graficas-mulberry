@@ -394,6 +394,7 @@ public class MainView extends BorderPane {
             case "Nóminas"      -> "Nóminas mensuales del personal";
             case "Estadísticas" -> "Gráficos e informes de actividad";
             case "Calendario"   -> "Agenda y recordatorios";
+            case "Importación"  -> "Importación asistida de datos con mapeo y modo expandido";
             case "Asistente"    -> "Asistente IA (requiere Ollama)";
             default             -> texto;
         };

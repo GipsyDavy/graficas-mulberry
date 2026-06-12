@@ -15,6 +15,7 @@ import javafx.scene.layout.GridPane;
 import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
 import org.gipsybuho.dao.DynamicColumnValueDAO;
+import org.gipsybuho.util.TypedValueFormatter;
 
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
@@ -35,6 +36,7 @@ public class DynamicColumnRuntime<T> {
     private final Function<T, Integer> idProvider;
     private Map<Integer, Map<String, String>> cache = new LinkedHashMap<>();
     private final Map<String, Control> extraControls = new LinkedHashMap<>();
+    private final Map<String, String> extraTypes = new LinkedHashMap<>();
 
     public DynamicColumnRuntime(
             String tableName,
@@ -91,6 +93,7 @@ public class DynamicColumnRuntime<T> {
 
     public int addFormFields(GridPane grid, int row, T item, Map<String, TextField> fields) {
         extraControls.clear();
+        extraTypes.clear();
         try {
             List<ColumnConfig> extras = configDAO.findVisibleDynamic(tableName, baseColumns.keySet());
             if (extras.isEmpty()) return row;
@@ -102,19 +105,19 @@ public class DynamicColumnRuntime<T> {
             for (ColumnConfig config : extras) {
                 String colName = config.columnName();
                 String stored = values.getOrDefault(colName, "");
+                String tipo = config.dataType() != null ? config.dataType() : "TEXTO";
+                extraTypes.put(colName, tipo);
                 grid.add(new javafx.scene.control.Label(config.label()), 0, row);
 
-                String tipo = config.dataType() != null ? config.dataType() : "TEXTO";
                 if ("FECHA".equals(tipo)) {
                     DatePicker dp = new DatePicker();
                     if (!stored.isBlank()) {
-                        try { dp.setValue(java.time.LocalDate.parse(stored)); }
-                        catch (Exception ignored) {}
+                        TypedValueFormatter.parseDate(stored).ifPresent(dp::setValue);
                     }
                     extraControls.put(colName, dp);
                     grid.add(dp, 1, row, 3, 1);
                 } else {
-                    TextField field = new TextField(stored);
+                    TextField field = new TextField(TypedValueFormatter.normalizeForStorage(tipo, stored));
                     if ("NUMERICO".equals(tipo)) {
                         applyNumericFilter(field, false);
                     } else if ("PRECIO".equals(tipo)) {
@@ -135,7 +138,12 @@ public class DynamicColumnRuntime<T> {
 
     public void saveFormFields(T item, Map<String, TextField> fields) throws SQLException {
         Map<String, String> values = new LinkedHashMap<>();
-        fields.forEach((key, field) -> values.put(key, field.getText().trim()));
+        fields.forEach((key, field) -> values.put(
+            key,
+            TypedValueFormatter.tryNormalizeForStorage(extraTypes.get(key), field.getText())
+                .orElseThrow(() -> new IllegalArgumentException(
+                    "Valor no válido para '" + key + "': " + field.getText()))
+        ));
         extraControls.forEach((key, control) -> {
             if (control instanceof DatePicker dp && !fields.containsKey(key)) {
                 values.put(key, dp.getValue() != null ? dp.getValue().toString() : "");
@@ -161,15 +169,19 @@ public class DynamicColumnRuntime<T> {
         column.setCellValueFactory(data -> {
             int id = idProvider.apply(data.getValue());
             String value = cache.getOrDefault(id, Map.of()).get(columnName);
-            return new SimpleStringProperty(value != null ? value : "");
+            return new SimpleStringProperty(TypedValueFormatter.formatForDisplay(config.dataType(), value));
         });
         column.setCellFactory(TextFieldTableCell.forTableColumn());
         column.setOnEditCommit(event -> {
             T item = event.getRowValue();
             int id = idProvider.apply(item);
             try {
-                valueDAO.updateValue(tableName, id, columnName, event.getNewValue());
-                cache.computeIfAbsent(id, ignored -> new LinkedHashMap<>()).put(columnName, event.getNewValue());
+                String normalized = TypedValueFormatter.tryNormalizeForStorage(config.dataType(), event.getNewValue())
+                    .orElseThrow(() -> new IllegalArgumentException(
+                        "Valor no válido para " + config.label() + ": " + event.getNewValue()));
+                valueDAO.updateValue(tableName, id, columnName, normalized);
+                cache.computeIfAbsent(id, ignored -> new LinkedHashMap<>()).put(columnName, normalized);
+                table.refresh();
             } catch (Exception ex) {
                 showError(ex);
                 apply();

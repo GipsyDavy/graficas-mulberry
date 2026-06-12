@@ -24,13 +24,15 @@ public class Material {
 
     private static EntityImportSpec buildSpec() {
         var syn = Map.of(
-            "nombre",        List.of("nombre", "material", "articulo", "name", "item"),
+            "nombre",        List.of("nombre", "material", "articulo", "name", "item", "producto", "modelo", "tipo de papel",
+                                      "tipo papel", "familia", "concepto"),
             "referencia",    List.of("referencia", "ref", "codigo", "sku", "code"),
             "categoria",     List.of("categoria", "tipo", "grupo", "category"),
             "stock_actual",  List.of("stock actual", "existencias", "cantidad", "quantity"),
             "stock_minimo",  List.of("stock minimo", "stock min", "minimo stock", "stock", "minimo", "reorder"),
             "unidad",        List.of("unidad", "ud", "und", "medida", "unit", "um"),
-            "precio_unidad", List.of("precio unidad", "precio ud", "precio", "coste", "price", "pvp"),
+            "precio_unidad", List.of("precio unidad", "precio ud", "precio resma", "precio pliego", "precio millar",
+                                      "eur resma", "eur pliego", "precio", "coste", "price", "pvp"),
             "proveedor",     List.of("proveedor", "supplier", "vendor", "fabricante")
         );
         return new EntityImportSpec("Materiales", List.of(

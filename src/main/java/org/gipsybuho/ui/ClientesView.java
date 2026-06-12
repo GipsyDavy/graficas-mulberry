@@ -23,6 +23,7 @@ import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -121,7 +122,7 @@ public class ClientesView extends VBox {
         tabla.getStyleClass().add("data-table");
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setEditable(true);
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY_FLEX_LAST_COLUMN);
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         tabla.getColumns().addAll(
             col("Nombre",    "nombre",    160),
             col("Apellidos", "apellidos", 160),
@@ -160,13 +161,18 @@ public class ClientesView extends VBox {
                 TableColumn<Cliente, String> tc = new TableColumn<>(config.label());
                 tc.setUserData(colKey);
                 tc.setCellValueFactory(data ->
-                    new SimpleStringProperty(nvl(data.getValue().getExtra(colKey))));
+                    new SimpleStringProperty(TypedValueFormatter.formatForDisplay(
+                        config.dataType(), data.getValue().getExtra(colKey))));
                 tc.setCellFactory(TextFieldTableCell.forTableColumn());
                 tc.setOnEditCommit(event -> {
                     Cliente cliente = event.getRowValue();
-                    cliente.setExtra(colKey, event.getNewValue());
                     try {
+                        String normalized = TypedValueFormatter.tryNormalizeForStorage(config.dataType(), event.getNewValue())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                "Valor no válido para " + config.label() + ": " + event.getNewValue()));
+                        cliente.setExtra(colKey, normalized);
                         dao.save(cliente);
+                        tabla.refresh();
                     } catch (Exception e) {
                         mostrarError(e);
                         cargar();
@@ -263,6 +269,8 @@ public class ClientesView extends VBox {
         TextArea  fNotas     = new TextArea(nvl(c.getNotas()));
         fNotas.setPrefRowCount(3);
         Map<String, TextField> extraFields = new LinkedHashMap<>();
+        Map<String, Control> extraControls = new LinkedHashMap<>();
+        Map<String, String> extraTypes = new LinkedHashMap<>();
 
         int r = 0;
         grid.addRow(r++, lbl("Nombre *"), fNombre, lbl("Apellidos"), fApellido);
@@ -280,10 +288,21 @@ public class ClientesView extends VBox {
                 grid.add(separator, 0, r++, 4, 1);
                 grid.add(lbl("Datos adicionales"), 0, r++, 4, 1);
                 for (ColumnConfig config : extras) {
-                    TextField field = tf(c.getExtra(config.columnName()));
-                    extraFields.put(config.columnName(), field);
+                    String colName = config.columnName();
+                    String type = config.dataType() != null ? config.dataType() : "TEXTO";
+                    extraTypes.put(colName, type);
                     grid.add(lbl(config.label()), 0, r);
-                    grid.add(field, 1, r, 3, 1);
+                    if ("FECHA".equals(type)) {
+                        DatePicker dp = new DatePicker();
+                        TypedValueFormatter.parseDate(c.getExtra(colName)).ifPresent(dp::setValue);
+                        extraControls.put(colName, dp);
+                        grid.add(dp, 1, r, 3, 1);
+                    } else {
+                        TextField field = tf(TypedValueFormatter.normalizeForStorage(type, c.getExtra(colName)));
+                        extraFields.put(colName, field);
+                        extraControls.put(colName, field);
+                        grid.add(field, 1, r, 3, 1);
+                    }
                     r++;
                 }
             }
@@ -310,7 +329,16 @@ public class ClientesView extends VBox {
                 c.setTelefono(fTelefono.getText().trim());
                 c.setEmail(fEmail.getText().trim());
                 c.setNotas(fNotas.getText().trim());
-                extraFields.forEach((key, field) -> c.setExtra(key, field.getText().trim()));
+                extraFields.forEach((key, field) -> c.setExtra(
+                    key,
+                    TypedValueFormatter.tryNormalizeForStorage(extraTypes.get(key), field.getText())
+                        .orElse(field.getText().trim())
+                ));
+                extraControls.forEach((key, control) -> {
+                    if (control instanceof DatePicker dp && !extraFields.containsKey(key)) {
+                        c.setExtra(key, dp.getValue() != null ? dp.getValue().toString() : "");
+                    }
+                });
                 return c;
             }
             return null;
@@ -321,53 +349,17 @@ public class ClientesView extends VBox {
     // ── Importar ──────────────────────────────────────────────────────────────
 
     private void importar() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Importar clientes");
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        SoundService.play(SoundService.Sound.START);
-        final File f = archivo;
-        Thread.ofVirtual().start(() -> {
-            try {
-                var parsed = new ImportService().parseFile(f);
-                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
-                Platform.runLater(() -> {
-                    var dlg = new ColumnMappingDialog(
-                        getScene() != null ? getScene().getWindow() : null,
-                        Cliente.IMPORT_SPEC, parsed.headers, preview);
-                    if (getScene() != null)
-                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    dlg.showAndWait().ifPresent(mr ->
-                        Thread.ofVirtual().start(() -> {
-                            try {
-                                var result = new EntityImportService().importar(
-                                    Cliente.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
-                                Platform.runLater(() -> {
-                                    cargar();
-                                    actualizarColumnasDinamicas();
-                                    SoundService.play(SoundService.Sound.COMPLETE);
-                                    mostrarResultadoImportacion(result);
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    SoundService.play(SoundService.Sound.ERROR);
-                                    mostrarError(ex);
-                                });
-                            }
-                        })
-                    );
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    mostrarError(e);
-                });
-            }
-        });
+        List<String> css = getScene() != null
+            ? new java.util.ArrayList<>(getScene().getStylesheets())
+            : List.of();
+        ModuloWindowManager.abrirEnVentana(
+            "Importación de clientes",
+            () -> new ImportView(ImportService.TipoEntidad.CLIENTES, () -> {
+                cargar();
+                actualizarColumnasDinamicas();
+            }),
+            css
+        );
     }
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {

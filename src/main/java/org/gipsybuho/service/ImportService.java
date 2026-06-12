@@ -2,10 +2,14 @@ package org.gipsybuho.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.poi.openxml4j.opc.OPCPackage;
+import org.apache.poi.openxml4j.opc.PackageAccess;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
+import org.apache.poi.xssf.extractor.XSSFBEventBasedExcelExtractor;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.*;
+import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.*;
 import java.net.URI;
@@ -91,6 +95,25 @@ public class ImportService {
         }
     }
 
+    public record DynamicFieldSuggestion(String sourceColumn, String label, String dataType) {}
+    public record RowValueFix(int rowIndex, String columnName, String value) {}
+    public record ImportRepairPlan(
+        String summary,
+        Map<String, String> mapping,
+        List<DynamicFieldSuggestion> dynamicFields,
+        Map<String, String> fixedValues,
+        List<RowValueFix> rowFixes
+    ) {
+        public static ImportRepairPlan empty() {
+            return new ImportRepairPlan("", Map.of(), List.of(), Map.of(), List.of());
+        }
+
+        public boolean hasChanges() {
+            return !mapping.isEmpty() || !dynamicFields.isEmpty()
+                || !fixedValues.isEmpty() || !rowFixes.isEmpty();
+        }
+    }
+
     // ── File parsing ──────────────────────────────────────────────────────────
 
     public ImportResult parseFile(File file) throws Exception {
@@ -108,9 +131,6 @@ public class ImportService {
     }
 
     private ImportResult parseCSV(File file) throws Exception {
-        List<String> headers = new ArrayList<>();
-        List<Map<String, String>> rows = new ArrayList<>();
-
         byte[] raw;
         try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
         String content;
@@ -124,26 +144,25 @@ public class ImportService {
             }
         }
 
-        char sep = detectSeparator(content);
-        String[] lines = content.split("\\r?\\n");
-        if (lines.length == 0) return new ImportResult(headers, rows, "CSV");
-
-        headers.addAll(parseCsvRow(lines[0], sep));
-
-        for (int i = 1; i < lines.length; i++) {
-            String line = lines[i].trim();
-            if (line.isEmpty()) continue;
-            List<String> vals = parseCsvRow(line, sep);
-            Map<String, String> row = new LinkedHashMap<>();
-            for (int j = 0; j < headers.size(); j++)
-                row.put(headers.get(j), j < vals.size() ? vals.get(j) : "");
-            rows.add(row);
+        if (content.isBlank()) {
+            return new ImportResult(new ArrayList<>(), new ArrayList<>(), "CSV");
         }
-        return new ImportResult(headers, rows, "CSV");
+
+        char sep = detectSeparator(content);
+        List<List<String>> grid = new ArrayList<>();
+        String[] lines = content.split("\\R", -1);
+        for (String line : lines) {
+            if (line.isBlank()) continue;
+            grid.add(parseCsvRow(line, sep));
+        }
+        return buildImportResultFromGrid(grid, "CSV");
     }
 
     private char detectSeparator(String content) {
-        String first = content.split("\\r?\\n")[0];
+        String first = Arrays.stream(content.split("\\R", -1))
+            .filter(s -> !s.isBlank())
+            .findFirst()
+            .orElse("");
         long tabs = first.chars().filter(c -> c == '\t').count();
         long semis = first.chars().filter(c -> c == ';').count();
         long commas = first.chars().filter(c -> c == ',').count();
@@ -184,101 +203,316 @@ public class ImportService {
     }
 
     private ImportResult parseExcel(File file) throws Exception {
-        List<String> headers = new ArrayList<>();
-        List<Map<String, String>> rows = new ArrayList<>();
         String ext = file.getName().toLowerCase().replaceAll(".*\\.", "").toUpperCase();
+
+        if ("XLSB".equals(ext)) {
+            return parseXlsb(file);
+        }
 
         try (Workbook wb = WorkbookFactory.create(file, null, true)) {
             Sheet sheet = wb.getSheetAt(0);
             FormulaEvaluator ev = wb.getCreationHelper().createFormulaEvaluator();
-
-            int firstRow = sheet.getFirstRowNum();
-            int headerRowIdx = detectHeaderRow(sheet, firstRow);
-            Row hRow = sheet.getRow(headerRowIdx);
-            if (hRow == null) return new ImportResult(headers, rows, ext);
-
-            // Loop explícito: incluye celdas ausentes como "" para conservar alineación
-            int lastCol = hRow.getLastCellNum();
-            List<String> allHeaders = new ArrayList<>();
-            for (int ci = 0; ci < lastCol; ci++) {
-                Cell c = hRow.getCell(ci, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                allHeaders.add(c != null ? cellStr(c, ev) : "");
-            }
-
-            // Tomar solo la primera tabla: si hay ≥3 cols a cada lado de un bloque
-            // de columnas vacías, quedarse con las columnas hasta ese separador
-            int blockEnd = firstTableBlockEnd(allHeaders);
-            headers.addAll(allHeaders.subList(0, blockEnd));
-            // Nombrar columnas sin cabecera para evitar claves "" duplicadas en el map
-            for (int i = 0; i < headers.size(); i++) {
-                if (headers.get(i).isBlank()) headers.set(i, "Columna_" + (i + 1));
-            }
-
-            // Índices de columna de origen (alineados con la hoja real)
-            for (int r = headerRowIdx + 1; r <= sheet.getLastRowNum(); r++) {
-                Row row = sheet.getRow(r);
-                if (row == null) continue;
-                Map<String, String> map = new LinkedHashMap<>();
-                boolean hasData = false;
-                for (int c = 0; c < headers.size(); c++) {
-                    Cell cell = row.getCell(c, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
-                    String val = cell != null ? cellStr(cell, ev) : "";
-                    map.put(headers.get(c), val);
-                    if (!val.isBlank()) hasData = true;
-                }
-                if (hasData) rows.add(map);
-            }
+            return buildImportResultFromGrid(sheetToGrid(sheet, ev), ext);
         }
-        return new ImportResult(headers, rows, ext);
     }
 
-    /**
-     * Devuelve el índice de fin (exclusivo) de la primera tabla en la fila de cabecera.
-     * Si detecta un separador válido (columnas vacías con ≥3 cols no-vacías a cada lado),
-     * corta ahí. Si no, devuelve el tamaño total (sin corte).
-     */
-    private int firstTableBlockEnd(List<String> headers) {
-        int n = headers.size();
-        for (int i = 0; i < n; i++) {
-            if (!headers.get(i).isBlank()) continue;
-            // Contar cols no-vacías a la izquierda
-            int leftNonBlank = 0;
-            for (int j = 0; j < i; j++) {
-                if (!headers.get(j).isBlank()) leftNonBlank++;
+    private ImportResult parseXlsb(File file) throws Exception {
+        try (OPCPackage pkg = OPCPackage.open(file, PackageAccess.READ)) {
+            XSSFBEventBasedExcelExtractor extractor = new XSSFBEventBasedExcelExtractor(pkg);
+            String text = extractor.getText();
+            List<List<String>> grid = new ArrayList<>();
+            for (String line : text.split("\\R", -1)) {
+                if (line.isBlank()) continue;
+                grid.add(Arrays.asList(line.split("\\t", -1)));
             }
-            if (leftNonBlank < 3) continue;
-            // Encontrar fin del bloque de cols vacías
-            int gapEnd = i;
-            while (gapEnd < n && headers.get(gapEnd).isBlank()) gapEnd++;
-            // Contar cols no-vacías a la derecha
-            int rightNonBlank = 0;
-            for (int j = gapEnd; j < n; j++) {
-                if (!headers.get(j).isBlank()) rightNonBlank++;
-            }
-            if (rightNonBlank >= 3) return i; // separador válido encontrado
+            return buildImportResultFromGrid(grid, "XLSB");
         }
-        return n; // sin separador: usar todas las columnas
     }
 
-    /** Elige la fila con más celdas STRING no-vacías entre las primeras 5. */
-    private int detectHeaderRow(Sheet sheet, int firstRow) {
-        int bestRow = firstRow;
-        int bestScore = 0;
-        int limit = Math.min(firstRow + 5, sheet.getLastRowNum() + 1);
-        for (int r = firstRow; r < limit; r++) {
+    private List<List<String>> sheetToGrid(Sheet sheet, FormulaEvaluator ev) {
+        List<List<String>> grid = new ArrayList<>();
+        if (sheet.getFirstRowNum() < 0 || sheet.getLastRowNum() < 0) return grid;
+
+        for (int r = sheet.getFirstRowNum(); r <= sheet.getLastRowNum(); r++) {
             Row row = sheet.getRow(r);
-            if (row == null) continue;
-            int score = 0;
-            for (Cell c : row) {
-                if (c.getCellType() == CellType.STRING && !c.getStringCellValue().isBlank())
-                    score++;
+            List<String> values = new ArrayList<>();
+            if (row != null && row.getLastCellNum() > 0) {
+                for (int c = 0; c < row.getLastCellNum(); c++) {
+                    Cell cell = row.getCell(c, Row.MissingCellPolicy.RETURN_BLANK_AS_NULL);
+                    values.add(cell != null ? cellStr(cell, ev) : "");
+                }
             }
+            grid.add(values);
+        }
+        return grid;
+    }
+
+    private ImportResult buildImportResultFromGrid(List<List<String>> grid, String formato) {
+        List<String> headers = new ArrayList<>();
+        List<Map<String, String>> rows = new ArrayList<>();
+        if (grid == null || grid.isEmpty() || grid.stream().allMatch(this::isBlankRow)) {
+            return new ImportResult(headers, rows, formato);
+        }
+
+        int headerRowIdx = detectHeaderRow(grid);
+        int maxCol = maxColumns(grid);
+        List<Integer> includedColumns = includedColumns(grid, headerRowIdx, maxCol);
+        if (includedColumns.isEmpty()) {
+            return new ImportResult(headers, rows, formato);
+        }
+
+        headers.addAll(buildUniqueHeaders(grid, headerRowIdx, includedColumns));
+        for (int r = headerRowIdx + 1; r < grid.size(); r++) {
+            List<String> sourceRow = grid.get(r);
+            if (isLikelyNonDataRow(sourceRow, includedColumns, headers)) continue;
+            Map<String, String> map = new LinkedHashMap<>();
+            boolean hasData = false;
+            for (int i = 0; i < includedColumns.size(); i++) {
+                String val = getCell(sourceRow, includedColumns.get(i));
+                map.put(headers.get(i), val);
+                if (!val.isBlank()) hasData = true;
+            }
+            if (hasData) rows.add(map);
+        }
+        return new ImportResult(headers, rows, formato);
+    }
+
+    /** Elige la fila que parece cabecera real, no una fila título encima de la tabla. */
+    private int detectHeaderRow(List<List<String>> grid) {
+        int bestRow = 0;
+        int bestScore = Integer.MIN_VALUE;
+        int limit = Math.min(30, grid.size());
+        for (int r = 0; r < limit; r++) {
+            List<String> row = grid.get(r);
+            int score = headerScore(row);
             if (score > bestScore) {
                 bestScore = score;
                 bestRow = r;
             }
         }
         return bestRow;
+    }
+
+    private int headerScore(List<String> row) {
+        int nonBlank = 0;
+        int keywords = 0;
+        int numericLike = 0;
+        for (String value : row) {
+            String v = value != null ? value.trim() : "";
+            if (v.isBlank()) continue;
+            nonBlank++;
+            String n = normalize(v);
+            if (isHeaderKeyword(n)) keywords++;
+            if (v.matches("[+-]?\\d+(?:[.,]\\d+)?")) numericLike++;
+        }
+        if (nonBlank == 0) return Integer.MIN_VALUE / 2;
+        int score = nonBlank + (keywords * 8) - numericLike;
+        if (nonBlank == 1) score -= 6;
+        return score;
+    }
+
+    private boolean isHeaderKeyword(String normalized) {
+        return normalized.contains("unidad")
+            || normalized.contains("descripcion")
+            || normalized.contains("concepto")
+            || normalized.contains("precio")
+            || normalized.contains("importe")
+            || normalized.contains("cantidad")
+            || normalized.contains("nombre")
+            || normalized.contains("referencia")
+            || normalized.contains("proveedor")
+            || normalized.contains("categoria")
+            || normalized.contains("tecnica")
+            || normalized.contains("stock")
+            || normalized.contains("fecha")
+            || normalized.contains("email")
+            || normalized.contains("telefono")
+            || normalized.contains("direccion")
+            || normalized.contains("salario")
+            || normalized.contains("modelo")
+            || normalized.contains("producto")
+            || normalized.contains("gramaje")
+            || normalized.contains("tamano")
+            || normalized.equals("nif")
+            || normalized.equals("cp")
+            || normalized.equals("iban")
+            || normalized.equals("irpf");
+    }
+
+    private List<Integer> includedColumns(List<List<String>> grid, int headerRowIdx, int maxCol) {
+        List<Integer> included = new ArrayList<>();
+        for (int c = 0; c < maxCol; c++) {
+            boolean hasData = false;
+            for (int r = headerRowIdx; r < grid.size(); r++) {
+                if (!getCell(grid.get(r), c).isBlank()) {
+                    hasData = true;
+                    break;
+                }
+            }
+            if (hasData) included.add(c);
+        }
+        return included;
+    }
+
+    private List<String> buildUniqueHeaders(List<List<String>> grid, int headerRowIdx, List<Integer> columns) {
+        List<String> raw = new ArrayList<>();
+        Map<String, Integer> rawCounts = new HashMap<>();
+        for (int col : columns) {
+            String header = getCell(grid.get(headerRowIdx), col);
+            raw.add(header);
+            if (!header.isBlank()) rawCounts.merge(normalize(header), 1, Integer::sum);
+        }
+
+        List<String> result = new ArrayList<>();
+        Map<String, Integer> usedRaw = new HashMap<>();
+        Map<String, Integer> usedFinal = new HashMap<>();
+        for (int i = 0; i < columns.size(); i++) {
+            int sourceCol = columns.get(i);
+            String header = raw.get(i);
+            String normalized = normalize(header);
+            int occurrence = normalized.isBlank() ? 1 : usedRaw.merge(normalized, 1, Integer::sum);
+
+            String name;
+            if (header.isBlank()) {
+                String inferred = inferBlankHeader(grid, headerRowIdx, sourceCol);
+                String context = contextHeader(grid, headerRowIdx, sourceCol);
+                name = !inferred.isBlank()
+                    ? inferred
+                    : (!context.isBlank() ? context : "Columna_" + (sourceCol + 1));
+            } else if (rawCounts.getOrDefault(normalized, 0) > 1 && occurrence > 1) {
+                String context = contextHeader(grid, headerRowIdx, sourceCol);
+                name = !context.isBlank() && !normalize(context).equals(normalized)
+                    ? context + " - " + header
+                    : header;
+            } else {
+                name = header;
+            }
+
+            String finalName = name.trim();
+            String finalKey = normalize(finalName);
+            int finalOccurrence = usedFinal.merge(finalKey, 1, Integer::sum);
+            if (finalOccurrence > 1) {
+                finalName = finalName + " (" + finalOccurrence + ")";
+            }
+            result.add(finalName);
+        }
+        return result;
+    }
+
+    private String inferBlankHeader(List<List<String>> grid, int headerRowIdx, int col) {
+        int nonBlank = 0;
+        int numeric = 0;
+        int price = 0;
+        int text = 0;
+        int limit = Math.min(grid.size(), headerRowIdx + 31);
+        for (int r = headerRowIdx + 1; r < limit; r++) {
+            String value = getCell(grid.get(r), col);
+            if (value.isBlank()) continue;
+            nonBlank++;
+            if (looksLikePrice(value)) price++;
+            if (looksLikeNumber(value)) numeric++;
+            if (!looksLikeNumber(value) && value.length() > 2) text++;
+        }
+        if (nonBlank < 2) return "";
+        if (price >= Math.max(2, nonBlank / 2)) return "PRECIO";
+        if (numeric >= Math.max(2, (int) Math.ceil(nonBlank * 0.7))) return "UNIDADES";
+        if (text >= Math.max(2, (int) Math.ceil(nonBlank * 0.5))) return "DESCRIPCIÓN";
+        return "";
+    }
+
+    private boolean looksLikePrice(String value) {
+        String v = value.toLowerCase(Locale.ROOT);
+        return v.contains("€") || v.contains("eur") || v.matches(".*\\d+[,.]\\d{2}.*");
+    }
+
+    private boolean looksLikeNumber(String value) {
+        String v = value.trim()
+            .replace("€", "")
+            .replace("EUR", "")
+            .replace("eur", "")
+            .replace(".", "")
+            .replace(',', '.')
+            .trim();
+        return v.matches("[+-]?\\d+(?:\\.\\d+)?");
+    }
+
+    private boolean isLikelyNonDataRow(List<String> row, List<Integer> columns, List<String> headers) {
+        int nonBlank = 0;
+        int samePositionHeaders = 0;
+        int headerLikeValues = 0;
+        Set<String> normalizedHeaders = headers.stream()
+            .map(this::normalize)
+            .collect(java.util.stream.Collectors.toSet());
+
+        for (int i = 0; i < columns.size(); i++) {
+            String value = getCell(row, columns.get(i));
+            if (value.isBlank()) continue;
+            nonBlank++;
+            String n = normalize(value);
+            if (i < headers.size() && n.equals(normalize(headers.get(i)))) samePositionHeaders++;
+            if (normalizedHeaders.contains(n) || isHeaderKeyword(n)) headerLikeValues++;
+        }
+
+        if (nonBlank == 0) return true;
+        if (columns.size() > 1 && nonBlank == 1) {
+            for (int i = 0; i < columns.size(); i++) {
+                String value = getCell(row, columns.get(i));
+                if (!value.isBlank()) return i < headers.size() && isNumericTableHeader(headers.get(i));
+            }
+        }
+        return samePositionHeaders >= 2 || (headerLikeValues >= 2 && headerLikeValues >= nonBlank - 1);
+    }
+
+    private boolean isNumericTableHeader(String header) {
+        String n = normalize(header);
+        return n.contains("precio")
+            || n.contains("importe")
+            || n.contains("cantidad")
+            || n.contains("unidades")
+            || n.contains("stock")
+            || n.contains("minimo")
+            || n.contains("gramaje")
+            || n.contains("eur");
+    }
+
+    private String contextHeader(List<List<String>> grid, int headerRowIdx, int col) {
+        for (int r = 0; r < headerRowIdx; r++) {
+            String value = filledContextValue(grid.get(r), col);
+            if (isUsefulContext(value)) return value;
+        }
+        return "";
+    }
+
+    private String filledContextValue(List<String> row, int col) {
+        String current = "";
+        int limit = Math.min(col, Math.max(0, row.size() - 1));
+        for (int c = 0; c <= limit; c++) {
+            String value = getCell(row, c);
+            if (!value.isBlank()) current = value;
+        }
+        return current;
+    }
+
+    private boolean isUsefulContext(String value) {
+        if (value == null || value.isBlank()) return false;
+        String n = normalize(value);
+        return !n.startsWith("tarifa") && !isHeaderKeyword(n);
+    }
+
+    private int maxColumns(List<List<String>> grid) {
+        int max = 0;
+        for (List<String> row : grid) max = Math.max(max, row.size());
+        return max;
+    }
+
+    private boolean isBlankRow(List<String> row) {
+        return row == null || row.stream().allMatch(v -> v == null || v.isBlank());
+    }
+
+    private String getCell(List<String> row, int col) {
+        if (row == null || col < 0 || col >= row.size()) return "";
+        String value = row.get(col);
+        return value != null ? value.trim() : "";
     }
 
     private String cellStr(Cell cell, FormulaEvaluator ev) {
@@ -404,8 +638,8 @@ public class ImportService {
             });
         } catch (Exception e) {
             System.err.println("AI mapping error: " + e.getMessage());
-            fallbackMapping(mapping, tipo.campos);
         }
+        fallbackMapping(mapping, tipo);
         return mapping;
     }
 
@@ -415,17 +649,37 @@ public class ImportService {
         return (start >= 0 && end > start) ? text.substring(start, end + 1) : text;
     }
 
-    private void fallbackMapping(Map<String, String> mapping, List<String> campos) {
+    private void fallbackMapping(Map<String, String> mapping, TipoEntidad tipo) {
+        Set<String> usedDestinations = new HashSet<>();
+        mapping.values().stream()
+            .filter(Objects::nonNull)
+            .forEach(usedDestinations::add);
+
         for (String col : new ArrayList<>(mapping.keySet())) {
             if (mapping.get(col) != null) continue;
+            String matched = specFor(tipo).matcher().sugerirCampo(col);
+            if (matched != null && tipo.campos.contains(matched) && usedDestinations.add(matched)) {
+                mapping.put(col, matched);
+                continue;
+            }
+
             String colN = normalize(col);
-            for (String campo : campos) {
+            for (String campo : tipo.campos) {
                 if (normalize(campo).equals(colN) || colN.contains(normalize(campo))) {
-                    mapping.put(col, campo);
+                    if (usedDestinations.add(campo)) mapping.put(col, campo);
                     break;
                 }
             }
         }
+    }
+
+    private org.gipsybuho.service.importer.EntityImportSpec specFor(TipoEntidad tipo) {
+        return switch (tipo) {
+            case CLIENTES   -> Cliente.IMPORT_SPEC;
+            case MATERIALES -> Material.IMPORT_SPEC;
+            case EMPLEADOS  -> Empleado.IMPORT_SPEC;
+            case TARIFAS    -> Tarifa.IMPORT_SPEC;
+        };
     }
 
     private String normalize(String s) {
@@ -680,6 +934,132 @@ public class ImportService {
         }
     }
 
+    public ImportRepairPlan proponerReparacionImportacion(
+            TipoEntidad tipo,
+            List<Map<String, String>> rows,
+            List<String> headers,
+            Map<String, String> mappingActual,
+            List<String> dynamicFields) {
+        if (!isOllamaDisponible()) return ImportRepairPlan.empty();
+        try {
+            int n = Math.min(rows.size(), 30);
+            String rowsJson = mapper.writeValueAsString(rows.subList(0, n));
+            String mappingJson = mapper.writeValueAsString(mappingActual);
+            String prompt = """
+                Eres un asistente de migración de datos para la entidad "%s".
+
+                Columnas del archivo: %s
+                Campos base disponibles: %s
+                Campos dinámicos existentes: %s
+                Mapeo actual columna_archivo→campo_destino: %s
+                Primeras %d filas: %s
+
+                Objetivo:
+                - Propón un mapeo mejor si hay columnas ignoradas que sí representan datos útiles.
+                - Si hace falta conservar una columna que no encaja en campos base, propón crear un campo dinámico.
+                - Para campos dinámicos usa dataType solo entre TEXTO, NUMERICO, PRECIO, FECHA.
+                - Propón fixedValues solo para valores genéricos seguros, por ejemplo tecnica o categoria si el archivo completo pertenece a una técnica/categoría clara.
+                - No inventes NIF, emails, clientes, proveedores ni relaciones con otros registros.
+                - Propón rowFixes solo para normalizar formatos evidentes: fechas, precios, números o símbolos de moneda.
+
+                Responde SOLO JSON válido, sin markdown:
+                {
+                  "summary": "resumen breve",
+                  "mapping": {"Columna archivo": "campo_destino_o_null"},
+                  "dynamicFields": [{"sourceColumn":"Columna archivo","label":"Etiqueta","dataType":"TEXTO|NUMERICO|PRECIO|FECHA"}],
+                  "fixedValues": {"campo_destino":"valor"},
+                  "rowFixes": [{"rowIndex":0,"columnName":"Columna archivo","value":"valor normalizado"}]
+                }
+                """.formatted(tipo.label, headers, tipo.campos, dynamicFields, mappingJson, n, rowsJson);
+            String resp = extractJson(ollamaChat(prompt).trim());
+            return parseRepairPlan(resp, headers, tipo, dynamicFields);
+        } catch (Exception ex) {
+            System.err.println("AI repair plan error: " + ex.getMessage());
+            return ImportRepairPlan.empty();
+        }
+    }
+
+    private ImportRepairPlan parseRepairPlan(
+            String json,
+            List<String> headers,
+            TipoEntidad tipo,
+            List<String> dynamicFields) {
+        try {
+            JsonNode root = mapper.readTree(json);
+            Set<String> headerSet = new LinkedHashSet<>(headers);
+            Set<String> allowedDestinations = new LinkedHashSet<>(tipo.campos);
+            allowedDestinations.addAll(dynamicFields);
+
+            Map<String, String> mapping = new LinkedHashMap<>();
+            JsonNode mappingNode = root.get("mapping");
+            if (mappingNode != null && mappingNode.isObject()) {
+                mappingNode.fields().forEachRemaining(e -> {
+                    String col = e.getKey();
+                    if (!headerSet.contains(col)) return;
+                    String dest = e.getValue().isNull() ? null : e.getValue().asText(null);
+                    if (dest == null || allowedDestinations.contains(dest)) mapping.put(col, dest);
+                });
+            }
+
+            List<DynamicFieldSuggestion> dynamic = new ArrayList<>();
+            JsonNode dynamicNode = root.get("dynamicFields");
+            if (dynamicNode != null && dynamicNode.isArray()) {
+                for (JsonNode node : dynamicNode) {
+                    String source = node.path("sourceColumn").asText(null);
+                    String label = node.path("label").asText(null);
+                    String type = normalizeRepairType(node.path("dataType").asText("TEXTO"));
+                    if (source != null && headerSet.contains(source) && label != null && !label.isBlank()) {
+                        dynamic.add(new DynamicFieldSuggestion(source, label.trim(), type));
+                    }
+                }
+            }
+
+            Map<String, String> fixed = new LinkedHashMap<>();
+            JsonNode fixedNode = root.get("fixedValues");
+            if (fixedNode != null && fixedNode.isObject()) {
+                fixedNode.fields().forEachRemaining(e -> {
+                    String field = e.getKey();
+                    if (tipo.campos.contains(field) && !e.getValue().isNull()) {
+                        fixed.put(field, e.getValue().asText(""));
+                    }
+                });
+            }
+
+            List<RowValueFix> fixes = new ArrayList<>();
+            JsonNode fixesNode = root.get("rowFixes");
+            if (fixesNode != null && fixesNode.isArray()) {
+                for (JsonNode node : fixesNode) {
+                    int row = node.path("rowIndex").asInt(-1);
+                    String col = node.path("columnName").asText(null);
+                    JsonNode value = node.get("value");
+                    if (row >= 0 && col != null && headerSet.contains(col) && value != null && !value.isNull()) {
+                        fixes.add(new RowValueFix(row, col, value.asText("")));
+                    }
+                }
+            }
+
+            return new ImportRepairPlan(
+                root.path("summary").asText(""),
+                Collections.unmodifiableMap(mapping),
+                Collections.unmodifiableList(dynamic),
+                Collections.unmodifiableMap(fixed),
+                Collections.unmodifiableList(fixes)
+            );
+        } catch (Exception ex) {
+            System.err.println("Repair JSON parse error: " + ex.getMessage());
+            return ImportRepairPlan.empty();
+        }
+    }
+
+    private String normalizeRepairType(String dataType) {
+        return switch (dataType != null ? dataType.trim().toUpperCase(Locale.ROOT) : "TEXTO") {
+            case "NUMERICO", "NUMÉRICO" -> "NUMERICO";
+            case "PRECIO" -> "PRECIO";
+            case "FECHA" -> "FECHA";
+            default -> "TEXTO";
+        };
+    }
+
     private String buildOllamaValidationPrompt(String rowsJson, String mappingJson,
             TipoEntidad tipo, int n) {
         List<String> required = requiredFieldsFor(tipo);
@@ -769,7 +1149,9 @@ public class ImportService {
                     }
                     case "precio_unidad", "precio_unit", "precio_setup", "salario_base" -> {
                         try {
-                            double d = Double.parseDouble(val.replace(",", "."));
+                            double d = TypedValueFormatter.parseDecimal(val)
+                                .orElseThrow(NumberFormatException::new)
+                                .doubleValue();
                             if (d < 0) issues.add(new ValidationIssue(i, fileCol, "Valor negativo",
                                 Optional.empty(), ValidationIssue.Severity.WARNING));
                         } catch (NumberFormatException ex) {
@@ -785,15 +1167,8 @@ public class ImportService {
                         }
                     }
                     case "fecha_alta" -> {
-                        boolean valid = false;
-                        for (String fmt : List.of("dd/MM/yyyy", "yyyy-MM-dd", "dd-MM-yyyy", "d/M/yyyy")) {
-                            try {
-                                java.time.LocalDate.parse(val,
-                                    java.time.format.DateTimeFormatter.ofPattern(fmt));
-                                valid = true; break;
-                            } catch (Exception ignored) {}
-                        }
-                        if (!valid) issues.add(new ValidationIssue(i, fileCol, "Formato de fecha inválido",
+                        if (TypedValueFormatter.parseDate(val).isEmpty())
+                            issues.add(new ValidationIssue(i, fileCol, "Formato de fecha inválido",
                             Optional.of("DD/MM/AAAA o AAAA-MM-DD"), ValidationIssue.Severity.ERROR));
                     }
                     default -> {}
@@ -815,8 +1190,7 @@ public class ImportService {
     // ── Utils ─────────────────────────────────────────────────────────────────
 
     private double toDouble(String s) {
-        try { return Double.parseDouble(s.replace(",",".").replaceAll("[^0-9.\\-]","")); }
-        catch (Exception e) { return 0; }
+        return TypedValueFormatter.parseDecimal(s).map(java.math.BigDecimal::doubleValue).orElse(0.0);
     }
 
     private int toInt(String s) {

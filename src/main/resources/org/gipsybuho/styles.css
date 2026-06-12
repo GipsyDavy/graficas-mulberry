@@ -779,6 +779,7 @@
 }
 
 .check-box .text {
+    -fx-fill: -c-text;
     -fx-text-fill: -c-text;
 }
 

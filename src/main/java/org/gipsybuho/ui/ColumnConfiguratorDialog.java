@@ -19,6 +19,8 @@ import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
+import org.gipsybuho.dao.DynamicColumnValueDAO;
+import org.gipsybuho.util.TypedValueFormatter;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -290,12 +292,77 @@ public class ColumnConfiguratorDialog {
             if (newType.equals(currentInternal)) return;
             try {
                 dao.updateDataType(tableName, selected.columnName(), newType);
+                normalizeExistingValuesIfRequested(selected, newType);
                 changed = true;
                 load();
             } catch (Exception ex) {
                 showError(ex);
             }
         });
+    }
+
+    private void normalizeExistingValuesIfRequested(ColumnConfig selected, String newType) throws SQLException {
+        if (selected.baseColumn() || "TEXTO".equals(newType)) return;
+
+        Alert confirm = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            "¿Quieres adaptar los valores existentes de '" + selected.label() + "' al tipo " + displayType(newType) + "?\n\n" +
+            "Se normalizarán los valores que se puedan convertir. Los valores no reconocidos se conservarán para revisión manual.",
+            ButtonType.YES, ButtonType.NO
+        );
+        confirm.setTitle("Adaptar valores existentes");
+        confirm.setHeaderText(null);
+        Optional<ButtonType> result = confirm.showAndWait();
+        if (result.isEmpty() || result.get() != ButtonType.YES) return;
+
+        DynamicColumnValueDAO valueDAO = new DynamicColumnValueDAO();
+        Map<Integer, String> invalid = valueDAO.findUnconvertibleValues(
+            tableName,
+            selected.columnName(),
+            value -> TypedValueFormatter.tryNormalizeForStorage(newType, value)
+        );
+        if (!invalid.isEmpty() && !confirmNormalizeWithInvalidValues(selected, newType, invalid)) return;
+
+        int updated = valueDAO.normalizeColumnValues(
+            tableName,
+            selected.columnName(),
+            value -> TypedValueFormatter.normalizeForStorage(newType, value)
+        );
+        new Alert(
+            Alert.AlertType.INFORMATION,
+            updated + " valor(es) adaptado(s).",
+            ButtonType.OK
+        ).showAndWait();
+    }
+
+    private boolean confirmNormalizeWithInvalidValues(
+            ColumnConfig selected,
+            String newType,
+            Map<Integer, String> invalid) {
+        String sample = invalid.entrySet().stream()
+            .limit(8)
+            .map(entry -> "ID " + entry.getKey() + ": " + entry.getValue())
+            .reduce("", (acc, line) -> acc + (acc.isBlank() ? "" : "\n") + line);
+        String extra = invalid.size() > 8 ? "\n…" : "";
+        Alert confirm = new Alert(
+            Alert.AlertType.CONFIRMATION,
+            invalid.size() + " valor(es) de '" + selected.label() + "' no se pueden convertir a " + displayType(newType) + ".\n\n" +
+            sample + extra + "\n\n" +
+            "Si continúas, esos valores se conservarán sin cambios y solo se adaptarán los convertibles.",
+            ButtonType.YES, ButtonType.NO
+        );
+        confirm.setTitle("Valores no convertibles");
+        confirm.setHeaderText(null);
+        return confirm.showAndWait().filter(ButtonType.YES::equals).isPresent();
+    }
+
+    private String displayType(String internalType) {
+        return switch (internalType) {
+            case "NUMERICO" -> "NUMÉRICO";
+            case "PRECIO" -> "PRECIO";
+            case "FECHA" -> "FECHA";
+            default -> "TEXTO";
+        };
     }
 
     private void showError(Exception ex) {

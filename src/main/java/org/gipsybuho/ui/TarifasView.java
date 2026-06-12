@@ -54,6 +54,8 @@ public class TarifasView extends VBox {
     private final DynamicColumnRuntime<Tarifa> dynamicColumns =
         new DynamicColumnRuntime<>("tarifas", "Tarifas", COLUMNAS_BASE, tabla, datos, Tarifa::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
+    private ComboBox<String> cbTecnicaFiltro;
+    private boolean updatingTecnicaFiltro;
 
     public TarifasView() {
         getStyleClass().add("content-view");
@@ -80,6 +82,12 @@ public class TarifasView extends VBox {
         Button btnExportar   = btn("📤 Exportar", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
+        cbTecnicaFiltro = new ComboBox<>();
+        cbTecnicaFiltro.setPrefWidth(150);
+        cbTecnicaFiltro.setTooltip(new Tooltip("Filtrar tarifas por técnica"));
+        cbTecnicaFiltro.setOnAction(e -> {
+            if (!updatingTecnicaFiltro) cargar();
+        });
         btnNuevo.setTooltip(new Tooltip("Crear una nueva tarifa de impresión"));
         btnEditar.setTooltip(new Tooltip("Editar la tarifa seleccionada"));
         btnBorrar.setTooltip(new Tooltip("Eliminar la tarifa seleccionada"));
@@ -89,7 +97,7 @@ public class TarifasView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar la tarifa en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, cbTecnicaFiltro, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -98,7 +106,7 @@ public class TarifasView extends VBox {
     private TableView<Tarifa> buildTabla() {
         tabla.getStyleClass().add("data-table");
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
         TableColumn<Tarifa, String> colTecnica = new TableColumn<>("Técnica");
         colTecnica.setCellValueFactory(new PropertyValueFactory<>("tecnica"));
@@ -146,7 +154,35 @@ public class TarifasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
+        try {
+            List<Tarifa> lista = dao.findAll();
+            actualizarFiltroTecnicas(lista);
+            if (cbTecnicaFiltro != null && cbTecnicaFiltro.getValue() != null
+                    && !"Todas".equals(cbTecnicaFiltro.getValue())) {
+                String tecnica = cbTecnicaFiltro.getValue();
+                lista = lista.stream()
+                    .filter(t -> tecnica.equals(t.getTecnica()))
+                    .toList();
+            }
+            datos.setAll(lista);
+            dynamicColumns.apply();
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void actualizarFiltroTecnicas(List<Tarifa> tarifas) {
+        if (cbTecnicaFiltro == null) return;
+        String selected = cbTecnicaFiltro.getValue();
+        List<String> tecnicas = new ArrayList<>(tarifas.stream()
+            .map(Tarifa::getTecnica)
+            .filter(t -> t != null && !t.isBlank())
+            .distinct()
+            .sorted(String.CASE_INSENSITIVE_ORDER)
+            .toList());
+        tecnicas.add(0, "Todas");
+        updatingTecnicaFiltro = true;
+        cbTecnicaFiltro.setItems(FXCollections.observableArrayList(tecnicas));
+        cbTecnicaFiltro.setValue(tecnicas.contains(selected) ? selected : "Todas");
+        updatingTecnicaFiltro = false;
     }
 
     private void nueva() {
@@ -338,52 +374,14 @@ public class TarifasView extends VBox {
     }
 
     private void importar() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Importar tarifas");
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        SoundService.play(SoundService.Sound.START);
-        final File f = archivo;
-        Thread.ofVirtual().start(() -> {
-            try {
-                var parsed = new ImportService().parseFile(f);
-                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
-                Platform.runLater(() -> {
-                    var dlg = new ColumnMappingDialog(
-                        getScene() != null ? getScene().getWindow() : null,
-                        Tarifa.IMPORT_SPEC, parsed.headers, preview);
-                    if (getScene() != null)
-                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    dlg.showAndWait().ifPresent(mr ->
-                        Thread.ofVirtual().start(() -> {
-                            try {
-                                var result = new EntityImportService().importar(
-                                    Tarifa.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
-                                Platform.runLater(() -> {
-                                    cargar();
-                                    SoundService.play(SoundService.Sound.COMPLETE);
-                                    mostrarResultadoImportacion(result);
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    SoundService.play(SoundService.Sound.ERROR);
-                                    mostrarError(ex);
-                                });
-                            }
-                        })
-                    );
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    mostrarError(e);
-                });
-            }
-        });
+        List<String> css = getScene() != null
+            ? new ArrayList<>(getScene().getStylesheets())
+            : List.of();
+        ModuloWindowManager.abrirEnVentana(
+            "Importación de tarifas",
+            () -> new ImportView(ImportService.TipoEntidad.TARIFAS, this::cargar),
+            css
+        );
     }
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {

@@ -25,11 +25,12 @@ public class Tarifa {
     private static EntityImportSpec buildSpec() {
         var syn = Map.of(
             "tecnica",         List.of("tecnica", "proceso", "technique", "tipo", "type"),
-            "nombre",          List.of("nombre", "name", "servicio", "tarifa"),
-            "descripcion",     List.of("descripcion", "detalle", "description"),
+            "nombre",          List.of("nombre", "name", "servicio", "tarifa", "concepto", "descripcion", "description"),
+            "descripcion",     List.of("detalle", "observaciones", "notas"),
             "precio_unit",     List.of("precio unitario", "precio unidad", "precio unit", "precio", "price", "rate", "pvp"),
             "precio_setup",    List.of("precio setup", "setup", "configuracion", "arranque", "preparacion"),
-            "minimo_unidades", List.of("minimo unidades", "cantidad minima", "minimo", "min qty", "minimum")
+            "minimo_unidades", List.of("minimo unidades", "cantidad minima", "unidades", "cantidad",
+                                        "minimo", "min qty", "minimum")
         );
         return new EntityImportSpec("Tarifas", List.of(
             new FieldSpec("tecnica",         "Técnica",            true),

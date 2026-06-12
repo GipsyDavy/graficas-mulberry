@@ -5,10 +5,13 @@ import org.gipsybuho.db.DatabaseManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Savepoint;
 import java.sql.Statement;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
 
 public class DynamicColumnValueDAO {
 
@@ -72,5 +75,74 @@ public class DynamicColumnValueDAO {
         for (Map.Entry<String, String> entry : values.entrySet()) {
             updateValue(tableName, id, entry.getKey(), entry.getValue());
         }
+    }
+
+    public Map<Integer, String> findUnconvertibleValues(
+            String tableName,
+            String columnName,
+            Function<String, Optional<String>> normalizer) throws SQLException {
+        DatabaseManager.requireSqlIdentifier(tableName);
+        DatabaseManager.requireSqlIdentifier(columnName);
+
+        Map<Integer, String> invalid = new LinkedHashMap<>();
+        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+            + " FROM " + DatabaseManager.quoteIdentifier(tableName);
+        try (Statement st = DatabaseManager.getConnection().createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                String current = rs.getString(columnName);
+                if (current != null && !current.isBlank() && normalizer.apply(current).isEmpty()) {
+                    invalid.put(rs.getInt("id"), current);
+                }
+            }
+        }
+        return invalid;
+    }
+
+    public int normalizeColumnValues(String tableName, String columnName, Function<String, String> normalizer)
+            throws SQLException {
+        DatabaseManager.requireSqlIdentifier(tableName);
+        DatabaseManager.requireSqlIdentifier(columnName);
+
+        Map<Integer, String> updates = new LinkedHashMap<>();
+        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+            + " FROM " + DatabaseManager.quoteIdentifier(tableName);
+        try (Statement st = DatabaseManager.getConnection().createStatement();
+             ResultSet rs = st.executeQuery(sql)) {
+            while (rs.next()) {
+                String current = rs.getString(columnName);
+                String normalized = normalizer.apply(current);
+                if (normalized == null) normalized = "";
+                String currentSafe = current != null ? current : "";
+                if (!currentSafe.equals(normalized)) {
+                    updates.put(rs.getInt("id"), normalized);
+                }
+            }
+        }
+
+        var conn = DatabaseManager.getConnection();
+        boolean previousAutoCommit = conn.getAutoCommit();
+        Savepoint savepoint = null;
+        if (previousAutoCommit) {
+            conn.setAutoCommit(false);
+        } else {
+            savepoint = conn.setSavepoint();
+        }
+        try {
+            for (Map.Entry<Integer, String> entry : updates.entrySet()) {
+                updateValue(tableName, entry.getKey(), columnName, entry.getValue());
+            }
+            if (previousAutoCommit) conn.commit();
+        } catch (SQLException ex) {
+            if (savepoint != null) conn.rollback(savepoint);
+            else conn.rollback();
+            throw ex;
+        } finally {
+            if (savepoint != null) {
+                try { conn.releaseSavepoint(savepoint); } catch (SQLException ignored) {}
+            }
+            if (previousAutoCommit) conn.setAutoCommit(true);
+        }
+        return updates.size();
     }
 }

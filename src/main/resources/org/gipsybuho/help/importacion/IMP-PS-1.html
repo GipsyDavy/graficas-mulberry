@@ -20,13 +20,15 @@ Ver <a href="../backups/BAK-PS-1.html">Cómo hacer una copia de seguridad</a>.</
 <ol class="steps">
   <li>Abre el módulo al que quieres importar datos (p. ej. <em>Clientes</em>).</li>
   <li>Haz clic en el botón <strong>📥 Importar</strong> de la barra de herramientas.</li>
-  <li>En el selector de archivos, elige tu archivo Excel (.xlsx, .xlsb, .xlsm, .xls) o CSV.</li>
-  <li>Se abrirá el <strong>diálogo de mapeo de columnas</strong>. El sistema detecta automáticamente
-      qué columna del archivo corresponde a qué campo.</li>
-  <li>Revisa el mapeo sugerido. Los campos con ✓ verde son obligatorios ya cubiertos.
-      Los campos con ✱ rojo son obligatorios sin cubrir: debes asignarlos manualmente.</li>
-  <li>Elige la <strong>política de duplicados</strong>: qué hacer si un registro ya existe.</li>
-  <li>Haz clic en <strong>Aceptar</strong>. Se importan los datos y se muestra un resumen.</li>
+  <li>Se abrirá el <strong>wizard de importación</strong>. El tipo de dato queda fijado por el módulo
+      desde el que has entrado.</li>
+  <li>Elige tu archivo Excel (.xlsx, .xlsb, .xlsm, .xls), CSV o JSON.</li>
+  <li>Revisa el mapeo sugerido en el paso 3. Puedes cambiar cualquier destino o dejar columnas en
+      <em>(ignorar)</em>.</li>
+  <li>Si importas Materiales o Tarifas, puedes aplicar una categoría o técnica fija a toda la importación.</li>
+  <li>Si importas un archivo ancho de precios, activa <strong>Modo expandido</strong> para que varias
+      columnas de precio generen registros independientes.</li>
+  <li>En el último paso revisa la vista previa y pulsa <strong>Importar</strong>. Se mostrará un resumen.</li>
 </ol>
 
 <h2>El diálogo de mapeo de columnas</h2>
@@ -37,6 +39,27 @@ Ver <a href="../backups/BAK-PS-1.html">Cómo hacer una copia de seguridad</a>.</
   <li><strong>Campo destino</strong> — a qué campo del sistema se asigna. Usa el desplegable para cambiarlo.</li>
 </ul>
 <p>Las columnas que no necesitas importar déjalas en <em>(ignorar)</em>.</p>
+
+<h2>Modo expandido para ficheros de precios</h2>
+<p>El modo expandido sirve para archivos donde una fila contiene varias columnas de precio.
+En lugar de importar una sola fila, el sistema genera un registro por cada columna marcada.</p>
+<p>Ejemplo: si una hoja de tarifas tiene una columna de unidades y ocho columnas de acabados,
+puedes mapear la cantidad como campo fijo y marcar las ocho columnas de precio como columnas
+de valor. El nombre de cada columna puede ir a <code>tecnica</code> y el valor de la celda a
+<code>precio_unit</code>.</p>
+
+<h2>Agrupación básica</h2>
+<p>En Materiales y Tarifas puedes evitar una lista plana enorme usando los campos existentes:</p>
+<ul>
+  <li><strong>Materiales:</strong> agrupar por <code>categoria</code>.</li>
+  <li><strong>Tarifas:</strong> agrupar por <code>tecnica</code>.</li>
+</ul>
+<p>Si el archivo no trae una columna de grupo, puedes aplicar una categoría o técnica fija a todos
+los registros de esa importación.</p>
+
+<h2>Tablas con muchas columnas</h2>
+<p>Cuando haya muchas columnas, usa la barra horizontal inferior de la tabla para desplazarte
+de izquierda a derecha. Esto es normal en importaciones con columnas dinámicas o archivos anchos.</p>
 
 <h2>Requisitos del archivo</h2>
 <ul>

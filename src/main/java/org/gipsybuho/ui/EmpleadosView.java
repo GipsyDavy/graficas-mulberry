@@ -109,7 +109,7 @@ public class EmpleadosView extends VBox {
     private TableView<Empleado> buildTabla() {
         tabla.getStyleClass().add("data-table");
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
-        tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
         // Estado (activo / baja)
         TableColumn<Empleado, Boolean> colEstado = new TableColumn<>("Estado");
@@ -316,52 +316,14 @@ public class EmpleadosView extends VBox {
     }
 
     private void importar() {
-        FileChooser fc = new FileChooser();
-        fc.setTitle("Importar empleados");
-        fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
-        File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
-        if (archivo == null) return;
-
-        SoundService.play(SoundService.Sound.START);
-        final File f = archivo;
-        Thread.ofVirtual().start(() -> {
-            try {
-                var parsed = new ImportService().parseFile(f);
-                var preview = parsed.rows.subList(0, Math.min(3, parsed.rows.size()));
-                Platform.runLater(() -> {
-                    var dlg = new ColumnMappingDialog(
-                        getScene() != null ? getScene().getWindow() : null,
-                        Empleado.IMPORT_SPEC, parsed.headers, preview);
-                    if (getScene() != null)
-                        dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-                    dlg.showAndWait().ifPresent(mr ->
-                        Thread.ofVirtual().start(() -> {
-                            try {
-                                var result = new EntityImportService().importar(
-                                    Empleado.IMPORT_SPEC, parsed.rows, mr.mapping(), mr.policy());
-                                Platform.runLater(() -> {
-                                    cargar();
-                                    SoundService.play(SoundService.Sound.COMPLETE);
-                                    mostrarResultadoImportacion(result);
-                                });
-                            } catch (Exception ex) {
-                                Platform.runLater(() -> {
-                                    SoundService.play(SoundService.Sound.ERROR);
-                                    mostrarError(ex);
-                                });
-                            }
-                        })
-                    );
-                });
-            } catch (Exception e) {
-                Platform.runLater(() -> {
-                    SoundService.play(SoundService.Sound.ERROR);
-                    mostrarError(e);
-                });
-            }
-        });
+        List<String> css = getScene() != null
+            ? new ArrayList<>(getScene().getStylesheets())
+            : List.of();
+        ModuloWindowManager.abrirEnVentana(
+            "Importación de empleados",
+            () -> new ImportView(ImportService.TipoEntidad.EMPLEADOS, this::cargar),
+            css
+        );
     }
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {

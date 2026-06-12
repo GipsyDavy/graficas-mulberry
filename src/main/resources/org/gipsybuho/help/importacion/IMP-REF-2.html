@@ -12,9 +12,8 @@
 <p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> <a href="#">Importación</a></p>
 <h1>Diálogo de mapeo de columnas: cómo usarlo</h1>
 
-<p>El diálogo de mapeo de columnas aparece cada vez que importas un archivo. Te permite
-revisar y ajustar qué columna del archivo va a qué campo del sistema antes de que
-se procesen los datos.</p>
+<p>El mapeo de columnas aparece dentro del wizard de importación. Te permite revisar y ajustar
+qué columna del archivo va a qué campo del sistema antes de que se procesen los datos.</p>
 
 <h2>Partes del diálogo</h2>
 
@@ -22,18 +21,18 @@ se procesen los datos.</p>
   <thead><tr><th>Elemento</th><th>Descripción</th></tr></thead>
   <tbody>
     <tr><td>Columna del archivo</td><td>Nombre de la cabecera tal como aparece en tu Excel o CSV. No editable.</td></tr>
-    <tr><td>Muestra</td><td>Las primeras 3 filas de datos de esa columna, separadas por " │ ". Te ayuda a identificar qué contiene.</td></tr>
+    <tr><td>Valor de ejemplo</td><td>Primera muestra detectada para ayudarte a identificar qué contiene la columna.</td></tr>
     <tr><td>Campo destino</td><td>Desplegable con todos los campos del módulo. Elige el campo al que debe ir esa columna, o deja <em>(ignorar)</em> si no la necesitas.</td></tr>
-    <tr><td>Indicador ✓ / ✱</td><td>Verde ✓ = campo obligatorio ya cubierto. Rojo ✱ = campo obligatorio que estaba sugerido pero se ignoró.</td></tr>
-    <tr><td>Si el registro ya existe</td><td>Desplegable de política de duplicados (Omitir / Actualizar / Crear nuevo). Ver <a href="IMP-REF-3.html">Política de duplicados</a>.</td></tr>
-    <tr><td>Botón ➕ Nuevo campo…</td><td>Crea un campo personalizado nuevo en la tabla. Solo aparece en módulos planos (no en Presupuestos, Facturas ni Albaranes).</td></tr>
-    <tr><td>Botón Aceptar</td><td>Solo se activa cuando todos los campos obligatorios están mapeados y no hay destinos duplicados.</td></tr>
+    <tr><td>Estado</td><td>Indica si la columna se importará o quedará ignorada.</td></tr>
+    <tr><td>Botón Nuevo campo…</td><td>Crea un campo personalizado nuevo en la tabla. Solo aparece en módulos planos con columnas dinámicas.</td></tr>
+    <tr><td>Modo expandido</td><td>Convierte varias columnas de valor en varios registros por fila. Es útil para tarifas y precios.</td></tr>
+    <tr><td>Agrupación</td><td>Permite aplicar una categoría fija en Materiales o una técnica fija en Tarifas.</td></tr>
   </tbody>
 </table>
 
 <h2>Campos obligatorios</h2>
-<p>Cada módulo tiene uno o varios campos que el sistema necesita para identificar el registro.
-El botón <em>Aceptar</em> permanece deshabilitado hasta que estén todos asignados.</p>
+<p>Cada módulo tiene campos mínimos para crear registros útiles. Si falta un campo clave,
+el resumen de importación indicará filas descartadas y errores.</p>
 
 <table class="field-ref">
   <thead><tr><th>Módulo</th><th>Campos obligatorios</th></tr></thead>
@@ -58,5 +57,8 @@ se asignará automáticamente al campo <code>nif</code> de Clientes.</p>
 
 <div class="tip">Si una columna del archivo contiene datos que el sistema no necesita
 (p. ej. una columna de notas internas), déjala en <em>(ignorar)</em>. No afecta a la importación.</div>
+
+<div class="note">En tablas con muchas columnas aparece scroll horizontal. Desplázate de izquierda
+a derecha para revisar todos los campos antes de importar.</div>
 </body>
 </html>
