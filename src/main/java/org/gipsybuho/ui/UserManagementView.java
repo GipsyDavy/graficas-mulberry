@@ -276,8 +276,8 @@ public class UserManagementView extends VBox {
             showError("Las contraseñas no coinciden.");
             return;
         }
-        if (password.length() < 6) {
-            showError("La contraseña debe tener al menos 6 caracteres.");
+        if (!AuthService.isPasswordValid(password)) {
+            showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
             return;
         }
         if (!authService.registerUser(username, password, role, selectedPermissions())) {
@@ -346,8 +346,8 @@ public class UserManagementView extends VBox {
             } else if (!password.equals(confirm)) {
                 showError("Las contraseñas no coinciden.");
                 event.consume();
-            } else if (password.length() < 8) {
-                showError("La contraseña debe tener al menos 8 caracteres.");
+            } else if (!AuthService.isPasswordValid(password)) {
+                showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
                 event.consume();
             }
         });

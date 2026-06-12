@@ -43,7 +43,7 @@ public class AdminSetupView extends VBox {
 
         usernameField.setPromptText("Nombre de usuario");
         usernameField.setMaxWidth(260);
-        passwordField.setPromptText("Contraseña (mín. 8 caracteres)");
+        passwordField.setPromptText("Contraseña (mín. " + AuthService.MIN_PASSWORD_LENGTH + " caracteres)");
         passwordField.setMaxWidth(260);
         confirmField.setPromptText("Confirmar contraseña");
         confirmField.setMaxWidth(260);
@@ -119,8 +119,8 @@ public class AdminSetupView extends VBox {
             msgLabel.setText("Las contraseñas no coinciden.");
             return;
         }
-        if (password.length() < 8) {
-            msgLabel.setText("La contraseña debe tener al menos 8 caracteres.");
+        if (!AuthService.isPasswordValid(password)) {
+            msgLabel.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
             return;
         }
         if (question == null || answer.isEmpty()) {

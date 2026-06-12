@@ -10,6 +10,8 @@ import java.util.Optional;
 
 public class AuthService {
 
+    public static final int MIN_PASSWORD_LENGTH = 8;
+
     public static final List<String> SECURITY_QUESTIONS = List.of(
         "¿Nombre de tu primera mascota?",
         "¿Ciudad donde naciste?",
@@ -24,6 +26,10 @@ public class AuthService {
         this.userDAO = userDAO;
     }
 
+    public static boolean isPasswordValid(String password) {
+        return password != null && password.length() >= MIN_PASSWORD_LENGTH;
+    }
+
     public Optional<User> login(String username, String password) {
         return userDAO.findByUsername(username)
             .filter(u -> BCrypt.checkpw(password, u.getPasswordHash()))
@@ -34,6 +40,7 @@ public class AuthService {
     }
 
     public boolean registerUser(String username, String password, UserRole role, String permissions) {
+        if (!isPasswordValid(password)) return false;
         if (userDAO.findByUsername(username).isPresent()) return false;
         User user = new User();
         user.setUsername(username);
@@ -44,6 +51,7 @@ public class AuthService {
     }
 
     public boolean changePassword(int userId, String oldPassword, String newPassword) {
+        if (!isPasswordValid(newPassword)) return false;
         return userDAO.findById(userId)
             .filter(u -> BCrypt.checkpw(oldPassword, u.getPasswordHash()))
             .map(u -> {
@@ -54,6 +62,7 @@ public class AuthService {
 
     // Reset forzado por ADMINISTRADOR — no requiere contraseña actual. Solo llamar desde flujos autorizados de admin.
     public boolean resetPasswordAdmin(int userId, String newPassword) {
+        if (!isPasswordValid(newPassword)) return false;
         return userDAO.findById(userId).map(u -> {
             u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
             return userDAO.updateUser(u);
@@ -98,6 +107,7 @@ public class AuthService {
     }
 
     public boolean resetPasswordWithAnswer(String username, String answer, String newPassword) {
+        if (!isPasswordValid(newPassword)) return false;
         return userDAO.findByUsername(username)
             .filter(u -> u.getSecurityAnswerHash() != null
                 && BCrypt.checkpw(answer.trim().toLowerCase(), u.getSecurityAnswerHash()))
