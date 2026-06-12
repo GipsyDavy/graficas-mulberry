@@ -12,9 +12,11 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ImportServiceParsingTest {
@@ -249,5 +251,21 @@ class ImportServiceParsingTest {
         assertEquals("minimo_unidades", Tarifa.IMPORT_SPEC.matcher().sugerirCampo("UNIDADES"));
         assertEquals("nombre", Material.IMPORT_SPEC.matcher().sugerirCampo("tipo_papel"));
         assertEquals("precio_unidad", Material.IMPORT_SPEC.matcher().sugerirCampo("precio_pliego_o_unidad"));
+    }
+
+    @Test
+    void localMappingKeepsMaterialPrecioUnidadExactAndDoesNotMapNumericUnitColumns() {
+        Map<String, String> mapping = new ImportService().mapearCamposLocal(
+            ImportService.TipoEntidad.MATERIALES,
+            List.of("proveedor", "referencia", "nombre", "precio_resma",
+                "precio_unidad", "incremento", "longitud"));
+
+        assertEquals("proveedor", mapping.get("proveedor"));
+        assertEquals("referencia", mapping.get("referencia"));
+        assertEquals("nombre", mapping.get("nombre"));
+        assertEquals("precio_unidad", mapping.get("precio_unidad"));
+        assertNull(mapping.get("precio_resma"));
+        assertNull(mapping.get("incremento"));
+        assertNull(mapping.get("longitud"));
     }
 }

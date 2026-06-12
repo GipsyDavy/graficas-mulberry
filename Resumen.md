@@ -45,6 +45,29 @@ Siguiente paso:
 2. Probar manualmente importación con los Excel reales.
 3. Pegar bloque Gemini de `CLIENTE_GATE.md` y registrar respuesta.
 
+## ESTADO VIVO 2026-06-12 23:56 — FIX IMANES/STOCK
+
+Bug manual confirmado:
+- `40_IMANES.xlsx` fallaba en paso 3.5 por `GRUPO` obligatorio vacío.
+- Materiales/stock mostraban unidades numéricas (`0.08`, `100.0`) por mapeo
+  incorrecto de columnas como `precio_unidad` o `longitud`.
+
+Fix:
+- `ImportView` valida con filas preparadas (`prepareImport`) para aplicar grupo
+  fijo/fallback antes de la validación.
+- `ImportService` sanea mapeo IA/fallback en Materiales: exactos primero y
+  plausibilidad para `unidad`, `stock_actual`, `stock_minimo`, `precio_unidad`.
+- `EntityImportService` no guarda unidad de material si es puramente numérica.
+
+Tests:
+```powershell
+.\mvnw.cmd test
+# 129/129 verdes
+```
+
+Pendiente operativo: cerrar app vieja, relanzar con código nuevo, limpiar datos
+malos ya importados y reimportar Materiales/IMANES.
+
 ---
 
 ## CÓMO TRATARME

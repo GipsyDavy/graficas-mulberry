@@ -429,11 +429,20 @@ public class EntityImportService {
                 case "categoria"     -> m.setCategoria(v);
                 case "stock_actual"  -> m.setStockActual(toDouble(v));
                 case "stock_minimo"  -> m.setStockMinimo(toDouble(v));
-                case "unidad"        -> m.setUnidad(v);
+                case "unidad"        -> { if (esUnidadMaterialValida(v)) m.setUnidad(v); }
                 case "precio_unidad" -> m.setPrecioUnidad(toDouble(v));
                 case "proveedor"     -> m.setProveedor(v);
             }
         });
+    }
+
+    private boolean esUnidadMaterialValida(String value) {
+        String v = value == null ? "" : value.trim();
+        if (v.isBlank() || v.length() > 20) return false;
+        if (v.matches("[+-]?\\d+(?:[.,]\\d+)?")) return false;
+        String lower = v.toLowerCase(Locale.ROOT);
+        return lower.matches("[a-záéíóúüñ0-9./²³ -]+")
+            && lower.matches(".*[a-záéíóúüñ].*");
     }
 
     // ── Empleado ──────────────────────────────────────────────────────────────

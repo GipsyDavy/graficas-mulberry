@@ -87,6 +87,38 @@ Siguiente paso operativo:
 
 ---
 
+## Estado vivo — Fix manual IMANES/STOCK (2026-06-12 23:56)
+
+La prueba manual del usuario encontró dos bugs:
+- `40_IMANES.xlsx` bloqueaba en validación por `GRUPO` vacío.
+- Materiales importados mostraban unidades numéricas en stock (`0.08`, `100.0`)
+  por mapeo erróneo de `precio_unidad`/`longitud` hacia `unidad`.
+
+Fix en working tree:
+- `ImportView.mostrarPaso35()` valida con `prepareImport(...)`, no con filas crudas.
+- `ImportService.fallbackMapping()` sanea mapeos IA, prioriza nombres exactos y
+  aplica plausibilidad especial para Materiales.
+- `EntityImportService` ignora unidad de material puramente numérica y deja `ud`.
+- Tests añadidos:
+  - `ImportServiceParsingTest.localMappingKeepsMaterialPrecioUnidadExactAndDoesNotMapNumericUnitColumns`
+  - `EntityImportServiceMaterialTest.ignoraUnidadNumericaImportadaYConservaUdPorDefecto`
+
+Validado:
+```powershell
+.\mvnw.cmd test "-Dtest=ImportServiceParsingTest,EntityImportServiceMaterialTest"
+# 17/17 verdes
+
+.\mvnw.cmd test
+# 129/129 verdes
+```
+
+Pendiente tras commit:
+- relanzar app;
+- reimportar `40_IMANES.xlsx`;
+- limpiar datos malos ya importados en Materiales antes de reimportar.
+
+---
+
 ## Raíz correcta del proyecto
 
 Abrir siempre:

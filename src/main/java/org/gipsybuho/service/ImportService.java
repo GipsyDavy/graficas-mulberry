@@ -1039,8 +1039,7 @@ public class ImportService {
     // ── AI: map columns to fields ─────────────────────────────────────────────
 
     public Map<String, String> mapearCampos(TipoEntidad tipo, List<String> columnas) {
-        Map<String, String> mapping = new LinkedHashMap<>();
-        for (String col : columnas) mapping.put(col, null);
+        Map<String, String> mapping = emptyMapping(columnas);
 
         try {
             StringBuilder camposDesc = new StringBuilder();
@@ -1086,6 +1085,18 @@ public class ImportService {
         return mapping;
     }
 
+    Map<String, String> mapearCamposLocal(TipoEntidad tipo, List<String> columnas) {
+        Map<String, String> mapping = emptyMapping(columnas);
+        fallbackMapping(mapping, tipo);
+        return mapping;
+    }
+
+    private Map<String, String> emptyMapping(List<String> columnas) {
+        Map<String, String> mapping = new LinkedHashMap<>();
+        for (String col : columnas) mapping.put(col, null);
+        return mapping;
+    }
+
     private String extractJson(String text) {
         int start = text.indexOf('{');
         int end = text.lastIndexOf('}');
@@ -1093,6 +1104,9 @@ public class ImportService {
     }
 
     private void fallbackMapping(Map<String, String> mapping, TipoEntidad tipo) {
+        sanitizeMapping(mapping, tipo);
+        applyExactDestinationMappings(mapping, tipo);
+
         Set<String> usedDestinations = new HashSet<>();
         mapping.values().stream()
             .filter(Objects::nonNull)
@@ -1101,7 +1115,9 @@ public class ImportService {
         for (String col : new ArrayList<>(mapping.keySet())) {
             if (mapping.get(col) != null) continue;
             String matched = specFor(tipo).matcher().sugerirCampo(col);
-            if (matched != null && tipo.campos.contains(matched) && usedDestinations.add(matched)) {
+            if (matched != null && tipo.campos.contains(matched)
+                    && isPlausibleMapping(tipo, col, matched)
+                    && usedDestinations.add(matched)) {
                 mapping.put(col, matched);
                 continue;
             }
@@ -1109,11 +1125,83 @@ public class ImportService {
             String colN = normalize(col);
             for (String campo : tipo.campos) {
                 if (normalize(campo).equals(colN) || colN.contains(normalize(campo))) {
-                    if (usedDestinations.add(campo)) mapping.put(col, campo);
+                    if (isPlausibleMapping(tipo, col, campo) && usedDestinations.add(campo)) {
+                        mapping.put(col, campo);
+                    }
                     break;
                 }
             }
         }
+    }
+
+    private void sanitizeMapping(Map<String, String> mapping, TipoEntidad tipo) {
+        for (var entry : new ArrayList<>(mapping.entrySet())) {
+            String destino = entry.getValue();
+            if (destino == null) continue;
+            if (!tipo.campos.contains(destino) || !isPlausibleMapping(tipo, entry.getKey(), destino)) {
+                mapping.put(entry.getKey(), null);
+            }
+        }
+    }
+
+    private void applyExactDestinationMappings(Map<String, String> mapping, TipoEntidad tipo) {
+        for (String col : new ArrayList<>(mapping.keySet())) {
+            String exact = exactDestination(tipo, col);
+            if (exact == null || !isPlausibleMapping(tipo, col, exact)) continue;
+            for (String other : new ArrayList<>(mapping.keySet())) {
+                if (!other.equals(col) && exact.equals(mapping.get(other))) {
+                    mapping.put(other, null);
+                }
+            }
+            mapping.put(col, exact);
+        }
+    }
+
+    private String exactDestination(TipoEntidad tipo, String sourceColumn) {
+        String source = normalize(sourceColumn);
+        for (String campo : tipo.campos) {
+            if (normalize(campo).equals(source)) return campo;
+        }
+        return null;
+    }
+
+    private boolean isPlausibleMapping(TipoEntidad tipo, String sourceColumn, String destino) {
+        if (tipo != TipoEntidad.MATERIALES) return true;
+
+        String source = normalize(sourceColumn);
+        if ("unidad".equals(destino)) {
+            return isUnitHeader(source);
+        }
+        if ("stock_actual".equals(destino) || "stock_minimo".equals(destino)) {
+            return isStockHeader(source);
+        }
+        if ("precio_unidad".equals(destino)) {
+            return isPriceHeaderForMapping(source);
+        }
+        return true;
+    }
+
+    private boolean isUnitHeader(String normalizedHeader) {
+        return Set.of("unidad", "ud", "uds", "und", "unit", "um", "medida")
+            .contains(normalizedHeader);
+    }
+
+    private boolean isStockHeader(String normalizedHeader) {
+        return normalizedHeader.contains("stock")
+            || normalizedHeader.contains("existencia")
+            || normalizedHeader.equals("cantidad")
+            || normalizedHeader.equals("quantity")
+            || normalizedHeader.equals("unidades")
+            || normalizedHeader.equals("uds");
+    }
+
+    private boolean isPriceHeaderForMapping(String normalizedHeader) {
+        return normalizedHeader.contains("precio")
+            || normalizedHeader.contains("coste")
+            || normalizedHeader.contains("price")
+            || normalizedHeader.contains("pvp")
+            || normalizedHeader.contains("eur")
+            || normalizedHeader.contains("importe");
     }
 
     private org.gipsybuho.service.importer.EntityImportSpec specFor(TipoEntidad tipo) {

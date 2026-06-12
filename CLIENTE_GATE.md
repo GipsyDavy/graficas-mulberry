@@ -118,6 +118,33 @@ $env:MAVEN_OPTS='-Djavax.net.ssl.trustStoreType=Windows-ROOT'
 Proceso inicial: `cmd` PID `2992`; JavaFX levantó procesos `java`.
 Resultado funcional de la prueba manual: pendiente de validar por usuario en la ventana.
 
+2026-06-12 23:55: prueba manual detecta dos bugs reales:
+- `40_IMANES.xlsx`: paso 3.5 bloquea por `GRUPO` obligatorio vacío. Causa:
+  los grupos parciales se rellenaban en paso 4, demasiado tarde para validación.
+- Materiales/stock: archivos con `precio_unidad`/`longitud` podían acabar con
+  `unidad` numérica (`0.08`, `100.0`) si la IA o el fallback elegían mal.
+
+Fix aplicado:
+- La validación del paso 3.5 usa `prepareImport(...)`, igual que la importación
+  final. Así `GRUPO`/técnica fija o fallback existen antes de validar.
+- El mapeo de Materiales ahora prioriza nombres exactos (`precio_unidad` gana a
+  `precio_resma`) y descarta asignaciones no plausibles a `unidad`, `stock_actual`
+  o `stock_minimo`.
+- `EntityImportService` rechaza unidad de material puramente numérica y conserva
+  `ud` por defecto.
+
+Validación post-fix:
+```powershell
+.\mvnw.cmd test "-Dtest=ImportServiceParsingTest,EntityImportServiceMaterialTest"
+# 17/17 verdes
+
+.\mvnw.cmd test
+# 129/129 verdes
+```
+
+Queda pendiente: limpiar o borrar de la BD real los materiales ya importados con
+unidad incorrecta antes de reimportar.
+
 ---
 
 ## Bloque Gemini — segunda opinión obligatoria

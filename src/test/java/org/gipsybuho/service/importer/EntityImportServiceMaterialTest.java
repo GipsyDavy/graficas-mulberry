@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 class EntityImportServiceMaterialTest {
 
@@ -69,6 +70,24 @@ class EntityImportServiceMaterialTest {
 
         assertEquals(1, result.filasImportadas());
         assertEquals(inicial + 2, new MaterialDAO().findAll().size());
+    }
+
+    @Test
+    void ignoraUnidadNumericaImportadaYConservaUdPorDefecto() throws Exception {
+        Map<String, String> mapping = Map.of("nombre", "nombre", "unidad", "unidad");
+
+        ImportResult result = new EntityImportService().importar(
+            Material.IMPORT_SPEC,
+            List.of(Map.of("nombre", "Papel con unidad numerica", "unidad", "0.08")),
+            mapping,
+            DuplicatePolicy.SKIP_IF_EXISTS);
+
+        assertEquals(1, result.filasImportadas());
+        Material guardado = new MaterialDAO().findAll().stream()
+            .filter(m -> "Papel con unidad numerica".equals(m.getNombre()))
+            .findFirst().orElse(null);
+        assertNotNull(guardado);
+        assertEquals("ud", guardado.getUnidad());
     }
 
     private ImportResult importar(List<Map<String, String>> filas) throws Exception {

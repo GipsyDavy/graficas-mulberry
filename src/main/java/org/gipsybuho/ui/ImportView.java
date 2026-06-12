@@ -838,11 +838,12 @@ public class ImportView extends VBox {
         Map<String, String> mappingParaValidar = mappingEfectivo != null
             ? mappingEfectivo
             : new LinkedHashMap<>(mappingActual);
+        PreparedImport prepared = prepareImport(mappingParaValidar);
 
         Thread.ofVirtual().start(() -> {
             List<ValidationIssue> issues;
             try {
-                issues = svc.validateImportData(resultadoParseo.rows, mappingParaValidar, tipoSeleccionado);
+                issues = svc.validateImportData(prepared.rows(), prepared.mapping(), tipoSeleccionado);
             } catch (Exception ex) {
                 issues = List.of();
                 System.err.println("Validation step failed: " + ex.getMessage());
