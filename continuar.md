@@ -198,13 +198,13 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-12, cierre Codex IMPORT-ADAPTIVE)
+## Estado técnico al cierre de sesión (2026-06-12, sesión validación manual)
 
 ### Git
 - **Rama:** `master`
-- **Último commit funcional:** `63c6592` — `fix(import): reconocer cabeceras comunes en documentos`
-- **Commits de la sesión:** `322ff50`, `bca51b2`, `83d2018`, `e5f30d1`, `c871a3b`, `63c6592`.
-- **Working tree al cierre funcional:** solo `.claude/settings.local.json` modificado fuera de alcance. Después de documentar cierre quedarán cambios `.md` hasta el commit `docs`.
+- **Último commit funcional:** `23df80a` — `fix(import): reactivar rama pivot en paso de importación`
+- **Commits de la sesión:** `23df80a` (reactivar pivot en ImportView, quitado `false &&`).
+- **Working tree al cierre:** `settings.local.json` con permisos adicionales — sin commit intencionado.
 
 ### Tests
 - **121/121 verdes** confirmados con `.\mvnw.cmd test -q` tras IMPORT-ADAPTIVE + mapeo parent-child + cabeceras comunes en documentos.
@@ -259,14 +259,12 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ### Cola de trabajo
 
-1. **Validación manual final** ← **SIGUIENTE INMEDIATO** — probar en la app:
-   - `Tarifas > Importar > 01_TARJETAS_DE_VISITA.csv/xlsx`, `02_FOLIOS.xlsx`, `20_CALENDARIOS.xlsx`.
-   - `Materiales > Importar > 07_MATERIAL.xlsx` y CSV de `Desktop\files`.
-   - `Albaranes > Importar > smoke_albaran.csv`.
-2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. Siguiente paso: clasificar archivos con secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`) y decidir limpieza A1/A2/B.
-3. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos.
-4. **Refactor B2** — inyección de Connection en DAOs (amplio y de mayor riesgo).
-5. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
+1. **BUG PARSER-NOMBRE** ← **SIGUIENTE INMEDIATO** — `expandPriceColumns` descarta filas con `name.isBlank()`. `firstValueForHeader` busca solo "descripcion"/"concepto"/"nombre"; si el archivo usa otro header (ej. "ARTÍCULO", "MEDIDA", "TIPO") → todas las filas descartadas. Fix: ampliar sinónimos en `firstValueForHeader` y/o hacer el campo `NOMBRE` opcional (rellenar con técnica+unidades si vacío). Ver diagnóstico en sección "Bug PARSER-NOMBRE" más abajo.
+2. **Validación manual** — pendiente tras fix del bug. Mismos archivos: `01_TARJETAS_DE_VISITA.xlsx`, `02_FOLIOS.xlsx`, `20_CALENDARIOS.xlsx`, `07_MATERIAL.xlsx`, `smoke_albaran.csv`.
+3. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word).
+4. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos.
+5. **Refactor B2** — inyección de Connection en DAOs.
+6. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
 
 ---
 
@@ -356,11 +354,12 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Validación manual final de importación** — probar en la app los flujos documentados arriba: Tarifas, Materiales y `smoke_albaran.csv`.
-2. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales restantes y decidir limpieza específica para libros con muchas secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`).
-3. **HELP-3** — ayuda contextual F1 + enlaces desde errores.
-4. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo).
-5. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
+1. **BUG PARSER-NOMBRE** ← prioritario. Fix en `ImportService.expandPriceColumns` / `firstValueForHeader`.
+2. **Validación manual** — tras fix del bug: Tarifas, Materiales, Albaranes.
+3. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`).
+4. **HELP-3** — ayuda contextual F1 + enlaces desde errores.
+5. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo).
+6. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
 
 ---
 
@@ -388,6 +387,43 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 - **SQLite no aplica DEFAULT con NULL explícito** (`setString(n, null)` pisa el DEFAULT). Solo si la columna se omite del INSERT.
 - **`Nothing to compile` no prueba compilación.** Usar `.\mvnw.cmd clean compile`.
 - **`findstr /N "X \"Y\""` no escapa bien en PowerShell.** Usar `Select-String -Path 'archivo' -Pattern 'patron'`.
+
+---
+
+---
+
+## Bug PARSER-NOMBRE (detectado 2026-06-12, validación manual)
+
+### Síntoma
+`Tarifas > Importar > 01_TARJETAS_DE_VISITA.xlsx` → 56 descartados, 0 importados.
+
+### Causa raíz
+`ImportService.expandPriceColumns` línea 620:
+```java
+String name = firstValueForHeader(grid, region, headerRowIndex, sourceRow, "descripcion", "concepto", "nombre");
+if (units.isBlank() || name.isBlank()) return expanded;
+```
+`firstValueForHeader` busca columnas cuyo header normalizado contenga "descripcion", "concepto" o "nombre". Si el archivo usa otro header (p.ej. "ARTÍCULO", "MEDIDA", "TIPO", "TAMAÑO") → `name` = "" → fila descartada.
+
+### Archivo afectado
+`src/main/java/org/gipsybuho/service/ImportService.java` — método `expandPriceColumns` (~línea 614) y `firstValueForHeader` (~línea 636).
+
+### Fix propuesto
+Ampliar sinónimos en la llamada de `name`:
+```java
+String name = firstValueForHeader(grid, region, headerRowIndex, sourceRow,
+    "descripcion", "concepto", "nombre", "articulo", "producto", "medida",
+    "tamano", "tama", "tipo", "servicio", "item", "referencia");
+```
+Y para `units`:
+```java
+String units = firstValueForHeader(grid, region, headerRowIndex, sourceRow,
+    "unidad", "cantidad", "ud", "uds", "min", "minimo", "cant");
+```
+Si `name` sigue vacío tras buscar todos los sinónimos, usar la primera columna no-precio no-unidad del header como fallback (en vez de descartar la fila).
+
+### Verificación pendiente
+Necesario ver los headers reales del archivo `01_TARJETAS_DE_VISITA.xlsx` antes de codificar el fix. Añadir test en `ImportServiceParsingTest` con fixture representativa.
 
 ---
 

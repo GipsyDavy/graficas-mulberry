@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · IMPORT-ADAPTIVE cerrado · Documentación de cierre
-# Versión: 5.1 · Fecha revisión documentación: 12/06/2026 · Último commit funcional: 63c6592 · Tests: 121/121 verdes. Cola activa: validación manual final de importación + Sprint MIGRACION-COMPLEJA.
+# HANDOFF — Graficas Mulberry · Bug PARSER-NOMBRE identificado · Documentación de cierre
+# Versión: 5.1 · Fecha revisión documentación: 12/06/2026 · Último commit funcional: 23df80a · Tests: 121/121 verdes. Cola activa: fix BUG PARSER-NOMBRE + validación manual + Sprint MIGRACION-COMPLEJA.
 
 ---
 
