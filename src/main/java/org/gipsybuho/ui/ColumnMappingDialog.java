@@ -43,12 +43,9 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         getDialogPane().setPrefSize(760, 560);
 
         // clave → etiqueta legible para el converter del ComboBox (mutable — se añaden campos nuevos)
-        Map<String, String> claveToEtiqueta = spec.campos().stream()
-            .collect(Collectors.toMap(FieldSpec::clave, FieldSpec::etiqueta,
-                (a, b) -> a, LinkedHashMap::new));
+        Map<String, String> claveToEtiqueta = fieldLabelsForMapping(spec);
 
-        Set<String> obligClaves = spec.camposObligatorios().stream()
-            .map(FieldSpec::clave).collect(Collectors.toSet());
+        Set<String> obligClaves = requiredFieldsForMapping(spec);
 
         // Un ColumnRow por cada header del archivo
         ObservableList<ColumnRow> items = FXCollections.observableArrayList();
@@ -62,7 +59,7 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
         // ObservableList compartida entre todas las CampoCelda: al añadir aquí se actualiza todo
         ObservableList<String> opciones = FXCollections.observableArrayList();
         opciones.add(IGNORAR);
-        spec.campos().forEach(f -> opciones.add(f.clave()));
+        opciones.addAll(claveToEtiqueta.keySet());
 
         // Tabla
         TableView<ColumnRow> tabla = buildTable(items, opciones, claveToEtiqueta, obligClaves);
@@ -153,6 +150,25 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
             }
             return new MappingResult(Collections.unmodifiableMap(mapping), cbPolicy.getValue());
         });
+    }
+
+    static Map<String, String> fieldLabelsForMapping(EntityImportSpec spec) {
+        LinkedHashMap<String, String> labels = new LinkedHashMap<>();
+        spec.campos().forEach(f -> labels.putIfAbsent(f.clave(), f.etiqueta()));
+        if (spec.esParentChild()) {
+            spec.specLinea().campos().forEach(f ->
+                labels.putIfAbsent(f.clave(), "Línea: " + f.etiqueta()));
+        }
+        return Collections.unmodifiableMap(labels);
+    }
+
+    static Set<String> requiredFieldsForMapping(EntityImportSpec spec) {
+        LinkedHashSet<String> required = new LinkedHashSet<>();
+        spec.camposObligatorios().forEach(f -> required.add(f.clave()));
+        if (spec.esParentChild()) {
+            spec.specLinea().camposObligatorios().forEach(f -> required.add(f.clave()));
+        }
+        return Collections.unmodifiableSet(required);
     }
 
     private String buildPreview(String header, List<Map<String, String>> rows) {
