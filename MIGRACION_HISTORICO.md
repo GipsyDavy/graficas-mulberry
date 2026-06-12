@@ -2,8 +2,8 @@
 
 README técnico sobre cómo procesar archivos históricos de la empresa cliente cuando lleguen.
 
-**Última revisión:** 10/06/2026 (actualizado Sprint IMPORT-UPGRADE)
-**Estado:** Vía A activa y documentada. Sprint 2 (Importación CSV) cerrado. Sprint IMPORT-UPGRADE (`4bc6c9c`) cerrado: soporte nativo XLSB/XLSM via `WorkbookFactory`, creación de campos nuevos desde el diálogo. El problema pendiente NO es importar CSV plano, sino migrar **tablas complejas en formato humano** (Excel con celdas combinadas, bloques laterales, varias mini-tablas por hoja, fórmulas, PDFs o Word). La siguiente línea de trabajo debe centrarse en esa migración compleja antes de abrir otros sprints funcionales.
+**Última revisión:** 12/06/2026 (actualizado Sprint IMPORT-PARSER + MAPPING-GUARD)
+**Estado:** Vía A activa y documentada. Sprint 2 (Importación CSV) cerrado. Sprint IMPORT-UPGRADE (`4bc6c9c`) cerrado. Sprint IMPORT-PARSER + MAPPING-GUARD cerrado en working tree: 288/288 archivos reales aportados por el usuario abren con `ImportService.parseFile()` (110 CSV, 177 XLSX, 1 XLSB). El problema pendiente NO es abrir archivos ni importar CSV/Excel plano, sino migrar **tablas complejas en formato humano** con secciones internas, bloques laterales, varias mini-tablas por hoja y filas decorativas. La siguiente línea de trabajo debe centrarse en limpiar/clasificar esos casos complejos.
 
 ---
 
@@ -41,11 +41,42 @@ Para cada archivo que llegue:
 
 ## Próximos pasos obligatorios — Sprint MIGRACION-COMPLEJA
 
-Objetivo: resolver la migración de tablas complejas reales, no reabrir el importador CSV ya cerrado.
+Objetivo: resolver la migración de tablas complejas reales, no reabrir el importador CSV/Excel plano ya cerrado.
+
+### Inventario real recibido el 2026-06-12
+
+Rutas aportadas y probadas:
+- `C:\Users\Gipsy Dávy\Desktop\CSV`
+- `C:\Users\Gipsy Dávy\Desktop\excel`
+- `C:\Users\Gipsy Dávy\Desktop\EXCEL_SEPARADO`
+- `C:\Users\Gipsy Dávy\Desktop\files`
+- `C:\Users\Gipsy Dávy\Desktop\TARIFAS_SEPARADAS`
+- `C:\Users\Gipsy Dávy\Desktop\TARIFAS_SEPARADAS 1`
+- `C:\Users\Gipsy Dávy\Desktop\todas_las_tarifas`
+
+Resultado técnico:
+- `ImportService.parseFile()` abre 288/288 archivos soportados.
+- Recuento: 110 CSV, 177 XLSX, 1 XLSB.
+- 34 archivos están vacíos o sin columnas reales; abrirlos no debe considerarse fallo.
+- CSV de `Desktop\files` son los más limpios para Materiales y se importan bien en dry-run.
+- `01_TARJETAS_DE_VISITA.csv/xlsx`, `17_DISEÑOS.xlsx`, `19_OVALOS.xlsx`, `40_IMANES.xlsx` son buenos casos de Tarifas para smoke test.
+- `NUEVAS TARIFAS (2) (version 1).xlsb` abre y recupera 1020 filas, pero contiene múltiples secciones internas; requiere limpieza o estrategia específica.
+- `PRECIOS PAPEL PROVEEDORES Formulas.xlsx` abre pero contiene filas separadoras/bloques humanos; dry-run simple importó 39/76 filas.
+
+Correcciones ya aplicadas en código:
+- XLSB se lee con `XSSFBEventBasedExcelExtractor`.
+- Parser detecta cabecera real, conserva tablas laterales, infiere cabeceras vacías y salta cabeceras repetidas/separadores.
+- `mapearCampos()` siempre ejecuta fallback local aunque Ollama falle o devuelva todo `null`.
+- Wizard bloquea avance si faltan campos obligatorios.
+
+No repetir como trabajo pendiente:
+- “Hacer que los archivos abran”: ya está validado.
+- “Mapeo básico de tarifas/materiales”: ya está mejorado.
+- “Soporte XLSB”: ya existe para extracción tabulada; lo pendiente es limpiar libros con secciones internas.
 
 ### Paso 1 — Inventario de archivos reales
 
-Recopilar una muestra representativa de archivos del cliente:
+La muestra inicial ya existe en las rutas anteriores. El siguiente agente debe convertir el inventario en una tabla de clasificación por archivo:
 - Excel `.xlsx/.xls/.xlsm/.xlsb` con tablas humanas.
 - PDFs con tablas seleccionables o escaneadas.
 - Word `.docx/.doc` con tablas.
@@ -332,9 +363,9 @@ Antes de importar, abrir el CSV resultante en un editor de texto plano (no Excel
 
 ## Otros formatos (xlsb, pdf, docx)
 
-Pendiente de ver archivos reales para decidir herramienta. Cuando lleguen:
+Estado 2026-06-12:
 
-- **xlsb:** evaluar si convertir a xlsx con LibreOffice antes de procesar (lo más simple) o usar `pyxlsb` directamente. `pyxlsb` no resuelve fórmulas, así que si el archivo las tiene, convertir primero.
+- **xlsb:** ya hay soporte Java parcial/útil vía `XSSFBEventBasedExcelExtractor`. Para `NUEVAS TARIFAS (2) (version 1).xlsb` se recupera texto tabulado y cabeceras reales, pero el libro contiene muchas secciones internas. Si se requiere importación perfecta, clasificar secciones y decidir si limpiar a CSV por script o crear plantilla específica.
 - **pdf con tablas seleccionables:** probar `pdfplumber` o `tabula-py`. Aceptar que la extracción nunca es perfecta, siempre habrá filas malformadas que corregir.
 - **pdf escaneado:** requiere OCR (Tesseract). Caso a evaluar si aparece.
 - **docx con tablas:** `python-docx` puede leerlas.

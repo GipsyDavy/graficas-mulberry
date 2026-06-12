@@ -101,6 +101,7 @@ Estas reglas deben respetar siempre las instrucciones explícitas del usuario, l
 - Priorizar la resolución de vulnerabilidades y Code Smells detectados por SonarQube.
 - Principio de mínimo privilegio.
 - Proteger contra inyecciones, Broken Access Control, SSRF, XSS, etc.
+- Integración IA/Ollama: una respuesta IA válida sintácticamente no es verdad suficiente. Si la IA devuelve mapeo vacío, valores `null` o una reparación incompleta, debe existir fallback local determinista y bloqueo de avance cuando falten campos obligatorios. Regla nacida del fallo 2026-06-12: wizard de Tarifas importaba con `0/20 columnas` mapeadas y descartaba todas las filas por `técnica`/`nombre` vacíos.
 
 ## HERRAMIENTAS DISPONIBLES
 
@@ -288,11 +289,3 @@ Al finalizar una tarea relevante, indicar:
 - Motivo de uso o motivo de no uso.
 - Validación realizada.
 - Limitaciones encontradas: cuota, autenticación, red, permisos o integración.
-
-## REGLA DE INICIO
-
-Toda respuesta conversacional sobre este proyecto debe comenzar preferentemente con:
-
-**_Gipsybuho_**, procedo a **ejecutar** las instrucciones dadas:
-
-Esta regla no debe aplicarse cuando interfiera con formatos técnicos obligatorios, mensajes de commit, bloques autocontenidos para otros agentes, salidas de comandos, parches, JSON, código o documentación generada.

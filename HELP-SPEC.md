@@ -1,6 +1,8 @@
 # HELP-SPEC.md — Especificación del Sistema de Ayuda Integrado
 ## Proyecto: Gráficas Mulberry — Sprint HELP-0
 
+> **Nota de vigencia 2026-06-12:** HELP-0/1/2 están cerrados; HELP-3 queda pendiente. Para estado global y cola activa leer `continuar.md` y `Resumen.md` antes de actuar.
+
 **Fecha:** 2026-06-10  
 **Estado:** Especificación cerrada. Base para Sprint HELP-1 (contenidos) y HELP-2 (vista JavaFX).  
 **Sin código Java en este sprint.** Solo especificación, estructura y contenidos base.

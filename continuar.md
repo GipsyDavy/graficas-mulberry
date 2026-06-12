@@ -132,7 +132,7 @@ Claude Code opera **siempre y simultáneamente** con los cuatro perfiles experto
 ```powershell
 .\mvnw.cmd compile            # compilar
 .\mvnw.cmd clean compile      # compilar desde cero (forzar tras ediciones)
-.\mvnw.cmd test               # ejecutar tests (89/89 verdes en HEAD documentado)
+.\mvnw.cmd test               # ejecutar tests (110/110 verdes tras última validación documentada)
 .\mvnw.cmd javafx:run         # arrancar la aplicación
 .\mvnw.cmd package            # generar JAR
 .\mvnw.cmd package -Ppackage-windows  # generar instalador Windows
@@ -198,15 +198,15 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ---
 
-## Estado técnico al cierre de sesión (2026-06-11, actualizado)
+## Estado técnico al cierre de sesión (2026-06-12, actualizado post-sprint IMPORT-PARSER + MAPPING-GUARD)
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `65588cf` — `feat: Sprint HELP-1 — 81 artículos HTML de ayuda offline completos`
-- **Working tree:** limpio al cierre del sprint
+- **HEAD:** `979cd06` — `fix: corrección IA en paso 3.5 solo descarta issue si el valor fue corregido`
+- **Working tree:** no limpio. Pendientes anteriores: `.claude/settings.local.json`, `CLAUDE.md`, `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTML de ayuda importación, `styles.css`. Pendientes funcionales recientes: `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportService`, `Material.java`, `Tarifa.java`, `ColumnConfiguratorDialog`, `DynamicColumnRuntime`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
 
 ### Tests
-- **89/89 verdes**
+- **110/110 verdes** confirmados tras Sprint IMPORT-PARSER + MAPPING-GUARD con `.\mvnw.cmd test`.
 
 | Suite | Tests |
 |---|---|
@@ -221,37 +221,106 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 | `MaterialDAOTest` | 3 |
 | `AlbaranDAOTest` | 4 |
 | `TxAnidadaTest` | 3 |
+| `HelpServiceTest` | 10 |
 | `ImportBackupServiceTest` | 12 |
 | `EntityImportServiceAlbaranTest` | 11 |
 | `EntityImportServiceFacturaTest` | 9 |
 | `EntityImportServiceNominaTest` | 6 |
 | `EntityImportServicePedidoTest` | 10 |
 | `EntityImportServicePresupuestoTest` | 7 |
+| `TypedValueFormatterTest` | 5 |
+| `ImportServiceParsingTest` | 6 |
 
 ### Sprints completados (histórico)
 - **Sprint B** — Transacciones explícitas en DAOs (5 commits, 12 tests nuevos).
-- **Sprint D** — Defaults DDL TEXT en Presupuesto/Factura/Albarán (3 commits, 3 tests nuevos).
-- **Sprint D-ter** — Defaults DDL en EmpleadoDAO, MaterialDAO, PagoMaterialDAO, ClienteDAO (4 commits, 2 tests nuevos). **COMPLETO.**
-- **Sprint UI/UX Bloques 1-10** — Modernización visual completa (14 commits).
-- **Sprint SEC** — 5 fixes de seguridad P0/P1 (4 commits). **COMPLETO.** (`8060734`→`7cd651d`)
-- **Sprint COD** — Dead code eliminado en AppConstants (1 commit). **COMPLETO.** (`2dd1f11`)
-- **Sprint UI-A** — CSS: variables para tooltip, badges, DatePicker, ProgressBar, RadioButton, ContextMenu, btn-toolbar-active, input-success; sanear theme-mulberry (5 commits). **COMPLETO.** (`467a2b5`→`5718971`)
-- **Sprint UI-B** — FadeTransition 150→220ms, param color muerto en btn() eliminado en 9 vistas, versión desde AppConstants, FadeTransition en nav groups (2 commits). **COMPLETO.** (`632e355`→`ef7ec17`)
-- **Sprint UI-C** — IAView command-bar + 10 clases CSS IA; audit EstadisticasView y UserManagementView; eliminar setStyle() hardcodeados (1 commit). **COMPLETO.** (`34bca4c`)
-- **Sprint C** — Fix `resolverEmpleadoId` filtro `activo=1` (Deuda 2), test empleado inactivo. **COMPLETO.** (`1851216`)
-- **Deuda 24** — Tests JDBC: EmpleadoDAO, NominaDAO, PagoMaterialDAO, PedidoDAO, PagoPedidoDAO (15 tests). **COMPLETO.** (`acc81a3`)
-- **Sprint UI-D** — `.skeleton-row` CSS + `ProgressIndicator` overlay en ClientesView, FacturasView, PedidosView (1 commit). **COMPLETO.** (`d4109c2`)
-- **Sprint IMPORT-UPGRADE** — XLSB/XLSM vía `WorkbookFactory`; `EntityImportSpec.tableName()`; `procesarFila()` devuelve `int[3]` con entityId; escritura de columnas dinámicas en import; `ColumnMappingDialog` con `ObservableList` compartida + botón "➕ Nuevo campo…" con `ColumnConfigDAO`; filtros FileChooser actualizados en 10 vistas (1 commit). **COMPLETO.** (`4bc6c9c`)
-- **Sprint HELP-0** — especificación `HELP-SPEC.md`: taxonomía 8 categorías, 19 módulos, 81 artículos ★, formato HTML, `index.json`, `HelpEntry` record, `HelpService` API, mapa F1. **COMPLETO.** (`39d060e`)
-- **Sprint HELP-1** — 81 artículos HTML offline en 19 módulos + `help.css` + `index.json`. **COMPLETO.** (`65588cf`)
+- **Sprint D / D-ter** — Defaults DDL TEXT en todos los DAOs afectados (7 commits, 5 tests nuevos).
+- **Sprint UI/UX Bloques 1-10** + **UI-A/B/C/D** — Modernización visual completa (18 commits).
+- **Sprint SEC** — 5 fixes de seguridad P0/P1. **COMPLETO.** (`8060734`→`7cd651d`)
+- **Sprint COD / Sprint C** — Dead code + fix resolverEmpleadoId. **COMPLETO.**
+- **Deuda 24** — 15 tests JDBC. **COMPLETO.** (`acc81a3`)
+- **Sprint IMPORT-UPGRADE** — XLSB/XLSM, columnas dinámicas en import, ColumnMappingDialog "➕ Nuevo campo…". **COMPLETO.** (`4bc6c9c`)
+- **Sprint HELP-0/1/2** — Sistema de ayuda offline 81 artículos + HelpView JavaFX. **COMPLETO.** (`39d060e`→`47e46dc`)
+- **Sprint Import Wizard/Pivot UI** — wizard en módulos planos, modo expandido Tarifas, TableColumnSizing. **COMPLETO** en working tree (commits previos a `47e46dc` / `c57d793`).
+- **Sprint COLUMN-TYPES** — tipos de dato en columnas dinámicas, hard delete, edición de tipo en columnas existentes (botón "Tipo…"), controles tipados en formularios (DatePicker/TextField numérico). **COMPLETO.** (`e12a687`→`d4db11b`)
+- **Sprint WIZARD-VALIDATION** — paso 3.5 de validación IA entre mapeo e importación; `ValidationIssue` record; `ImportService.validateImportData()` + `corregirValor()` + validación local (NIF, email, precios, fechas, duplicados); `TableColumnSizing`; fix corrección condicional (no borrar issue si la IA no corrijo). **COMPLETO.** (`988a8fb`→`979cd06`)
+- **Sprint COLUMN-FORMAT + IMPORT-REPAIR** — formato real de columnas dinámicas tipadas (`PRECIO` con €, `FECHA` con DatePicker/ISO, `NUMERICO` normalizado), conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción, rechazo de edición inválida en celdas tipadas, botón "🤖 Reparar importación" para plan IA con campos dinámicos tipados/valores fijos/correcciones de celda, normalización determinista previa a importar. **COMPLETO en working tree. Revisión Gemini incorporada.**
+- **Sprint IMPORT-PARSER + MAPPING-GUARD** — parser real probado contra carpetas del usuario (`CSV`, `excel`, `EXCEL_SEPARADO`, `files`, `TARIFAS_SEPARADAS`, `TARIFAS_SEPARADAS 1`, `todas_las_tarifas`): 288/288 archivos abren (110 CSV, 177 XLSX, 1 XLSB). `ImportService` detecta cabecera real, soporta XLSB vía extractor tabulado, evita CSV vacío con excepción, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta cabeceras repetidas/separadores. `mapearCampos()` ejecuta fallback local siempre, aunque Ollama devuelva 0 columnas; `Tarifa.IMPORT_SPEC` reconoce `UNIDADES`, `CONCEPTO`, `DESCRIPCIÓN`; `Material.IMPORT_SPEC` reconoce `tipo_papel`, `modelo`, `producto`, `familia`. `ImportView` activa técnica/categoría fija por defecto cuando falta y bloquea `Siguiente` si faltan obligatorios. **COMPLETO en working tree.**
 
 ### Cola de trabajo
 
-1. **Sprint HELP-2** ← **SIGUIENTE INMEDIATO** — `HelpService.java` (carga `index.json`, búsqueda) + `HelpView.java` (BorderPane: WebView centro, TreeView módulos izq., barra búsqueda arriba). Ver `HELP-SPEC.md` secciones 6-7.
-2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. Bloqueado hasta que el usuario aporte archivos.
-3. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos (después de HELP-2).
-4. **Refactor B2** — inyección de Connection en DAOs (después de HELP-2, amplio y de mayor riesgo).
+1. **Validar en producción** ← **SIGUIENTE INMEDIATO** — repetir manualmente el flujo que falló en la captura: `Tarifas > Importar > 01_TARJETAS_DE_VISITA.csv/xlsx`. En paso 3 debe verse mapeo local (`UNIDADES -> minimo_unidades`, `DESCRIPCIÓN -> nombre`, `PRECIO... -> precio_unit`) y la técnica fija debe salir prellenada desde el nombre del archivo si no se usa modo expandido. No debe volver a ocurrir `IA mapeó 0/20 columnas` + importación con `184 filas descartadas`.
+2. **Sprint MIGRACION-COMPLEJA** — tablas complejas reales (Excel humano, PDF/Word). Ver `MIGRACION_HISTORICO.md`. El usuario ya aportó carpetas reales; siguiente paso es clasificar archivos con secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`) y decidir limpieza A1/A2/B.
+3. **HELP-3** — ayuda contextual F1 + enlaces desde errores a artículos.
+4. **Refactor B2** — inyección de Connection en DAOs (amplio y de mayor riesgo).
 5. **Sprint D-bis** — Defaults DDL numéricos primitivos `double`→`Double` (Deuda 20-bis, baja urgencia).
+
+---
+
+## Estado actual de importación nueva
+
+### Estado validado el 2026-06-12
+
+Se reprodujo el fallo reportado por captura: paso 4 importaba con `0/20 columnas` mapeadas y descartaba todas las filas por `técnica`/`nombre` obligatorios vacíos. La causa no era el parser sino que una respuesta mala/vacía de Ollama se aceptaba como mapeo válido.
+
+Estado corregido:
+- `ImportService.mapearCampos()` ejecuta fallback local siempre, incluso si Ollama responde JSON válido pero todo `null`.
+- Para tarifas reales: `UNIDADES -> minimo_unidades`, `DESCRIPCIÓN/CONCEPTO -> nombre`, primera columna `PRECIO... -> precio_unit`.
+- `ImportView` preactiva `Aplicar técnica/categoría fija` cuando el campo de agrupación no viene mapeado desde una columna.
+- `ImportView` bloquea `Siguiente` si faltan campos obligatorios sin mapear, sin modo expandido que los cubra y sin valor fijo.
+- Parser probado contra las rutas reales del usuario: 288/288 archivos soportados abren; 34 están vacíos/sin columnas reales.
+
+Comandos de validación usados:
+```powershell
+.\mvnw.cmd test
+# Esperado vigente: 110/110 verdes
+```
+
+Dry-run con BD temporal (`graficas.mulberry.db.url=jdbc:sqlite:C:\tmp\gm-import-dryrun.db`) confirmó:
+- `17_DISEÑOS.xlsx`: 18/18 importables.
+- `19_OVALOS.xlsx`: 12/12 importables tras inferir `UNIDADES`/`DESCRIPCIÓN`.
+- `40_IMANES.xlsx`: 31/31 importables.
+- CSV de `Desktop\files`: importables limpios en muestras probadas.
+- `NUEVAS TARIFAS (2) (version 1).xlsb`: abre y recupera 1020 filas, pero contiene muchas secciones internas; requiere limpieza o modo/criterio específico si se quiere 100% de aprovechamiento.
+
+### Módulos con wizard nuevo
+
+El wizard nuevo está conectado desde:
+- `ClientesView`
+- `MaterialesView`
+- `EmpleadosView`
+- `TarifasView`
+
+El grupo `DATOS` del sidebar y la importación global se eliminaron porque duplicaban entrada y confundían. Las importaciones deben iniciarse desde el módulo destino.
+
+### Modo expandido para Tarifas
+
+Usar para hojas donde una fila contiene una cantidad/descripción y varias columnas de precio.
+
+Flujo correcto para `01_TARJETAS_DE_VISITA.xlsx`:
+1. Abrir `Tarifas > Importar`.
+2. Verificar que fallback local mapea `UNIDADES -> minimo_unidades`; `DESCRIPCIÓN -> nombre`; alguna columna `PRECIO... -> precio_unit`.
+3. Para importación simple de una sola columna de precio: dejar técnica fija activada con el nombre del archivo.
+4. Para matriz de precios: dejar las columnas de precio como `(ignorar)`, activar `Modo expandido`, marcar solo las columnas de precio, poner `nombre de columna -> tecnica` y `valor de celda -> precio_unit`.
+5. En modo expandido, desactivar técnica fija si entra en conflicto con `tecnica` como campo pivot.
+
+Resultado esperado: cada fila del Excel se multiplica por cada columna de precio marcada.
+
+### Agrupación
+
+Primera fase sin cambiar esquema:
+- Materiales se agrupan con el campo existente `categoria`.
+- Tarifas se agrupan con el campo existente `tecnica`.
+
+Si el usuario necesita grupos visuales independientes del campo de negocio, diseñar fase posterior con modelo explícito de grupos. No improvisar columnas nuevas sin diseño de datos.
+
+### Scroll y columnas
+
+Se añadió helper `TableColumnSizing`:
+- fuerza `TableView.UNCONSTRAINED_RESIZE_POLICY`;
+- calcula ancho inicial por cabecera y muestra de celdas;
+- permite scroll horizontal real cuando hay muchas columnas.
+
+Pendiente visual: verificar en ventana maximizada y con ficheros reales que las tablas no comprimen columnas ni solapan controles.
 
 ---
 
@@ -273,10 +342,10 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ## Próximos sprints candidatos
 
-1. **Sprint HELP-2** ← **INMEDIATO** — `HelpService.java` + `HelpView.java` (JavaFX WebView). Ver `HELP-SPEC.md`.
-2. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales, clasificar y documentar procedimiento. Bloqueado hasta que el usuario aporte archivos.
-3. **HELP-3** — ayuda contextual F1 + enlaces desde errores (después de HELP-2).
-4. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo, después de HELP-2).
+1. **Commit atómico de importación** — si el usuario valida manualmente el flujo corregido, preparar commit que agrupe parser/mapping guard/tests/documentación o separar en dos commits (`fix(import): parser/mapping guard`, `docs: handoff import real`).
+2. **Sprint MIGRACION-COMPLEJA** — inventariar archivos reales restantes y decidir limpieza específica para libros con muchas secciones internas (`NUEVAS TARIFAS...xlsb`, `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`).
+3. **HELP-3** — ayuda contextual F1 + enlaces desde errores.
+4. **Refactor B2** — inyección de Connection en DAOs (amplio, de mayor riesgo).
 5. **Sprint D-bis** — Defaults DDL numéricos primitivos (`double`→`Double`), bajo impacto operativo pero blast radius alto.
 
 ---
@@ -293,8 +362,8 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    ```powershell
    .\mvnw.cmd test
    ```
-   Esperado: 89/89 verdes.
-4. Declarar: HEAD `65588cf`, Sprint HELP-2 es el siguiente inmediato.
+   Esperado: 110/110 verdes.
+4. Declarar: HEAD `979cd06`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Cola activa: validación manual del flujo `Tarifas > Importar` y commit atómico si el usuario lo aprueba.
 
 ---
 
@@ -308,4 +377,4 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
 
 ---
 
-*continuar.md — Gráficas Mulberry — 2026-06-11*
+*continuar.md — Gráficas Mulberry — 2026-06-12*

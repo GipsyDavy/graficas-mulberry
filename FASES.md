@@ -1,5 +1,7 @@
 # FASES.md — Plan de Trabajo: Auditoría y Adaptación Graficas Mulberry
 
+> **Nota de vigencia 2026-06-12:** este documento es histórico de auditoría. Para continuar trabajo real usar `continuar.md` y `Resumen.md`; estado vigente: sprint IMPORT-PARSER + MAPPING-GUARD cerrado en working tree, 110/110 tests verdes esperados.
+
 Fecha de creación: 2026-06-02  
 Proyecto: Graficas Mulberry (`C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`)  
 Agente líder: Claude Code  

@@ -1,6 +1,8 @@
 # AUDITORIA.md — Gráficas Mulberry
 ## Auditoría técnica completa: código, arquitectura, seguridad y calidad
 
+> **Nota de vigencia 2026-06-12:** este documento es histórico. Para continuar un sprint, leer primero `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Estado vigente: HEAD `979cd06`, working tree no limpio, sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree, `.\mvnw.cmd test` esperado 110/110.
+
 **Fecha:** 2026-06-02  
 **Auditor:** Claude Code (Fase 4 del plan de auditoría — ver FASES.md)  
 **Archivos auditados:** `AuthService.java`, `UserDAO.java`, `DatabaseManager.java`, `App.java`,

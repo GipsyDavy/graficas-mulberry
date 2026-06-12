@@ -1,5 +1,7 @@
 # MACRO-PROMPT — GRAFICAS MULBERRY
 
+> **Estado vigente 2026-06-12:** antes de actuar leer también `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Handoff actual: HEAD `979cd06`, working tree no limpio, sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree, `.\mvnw.cmd test` esperado 110/110. El fallo reciente corregido fue importación de Tarifas con `0/20 columnas` mapeadas por IA; no confiar en IA sin fallback local y bloqueo de obligatorios.
+
 Activa TODAS las skills relevantes al máximo nivel:
 
 - security-review (PRIORIDAD ALTA — invocar en auth, permisos, acceso a datos, imports/exports)
@@ -78,12 +80,12 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 # CONTEXTO DE ESTADO ACTUAL
 
-## Estado técnico verificado (2026-06-11)
+## Estado técnico verificado (2026-06-12)
 
 | Componente | Estado | Notas |
 |---|---|---|
-| HEAD documental | `65588cf` | Sprint HELP-1 cerrado |
-| Build Maven | Funcional | `.\mvnw.cmd test` — 89/89 verdes |
+| HEAD documental | `979cd06` | Último commit: fix validación IA paso 3.5; sprints posteriores cerrados en working tree |
+| Build Maven | Funcional | `.\mvnw.cmd test` — 110/110 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
 | Sistema de temas | Funcional | 5 temas CSS + modo oscuro, `TemaManager` |
@@ -93,12 +95,15 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint IMPORT-UPGRADE | COMPLETADO | XLSB/XLSM + campo nuevo en importación (`4bc6c9c`) |
 | Sprint HELP-0 | COMPLETADO | HELP-SPEC.md — spec completa del sistema de ayuda (`39d060e`) |
 | Sprint HELP-1 | COMPLETADO | 81 artículos HTML offline en 19 módulos (`65588cf`) |
-| Sprint HELP-2 | **PENDIENTE — SIGUIENTE** | HelpService.java + HelpView.java (JavaFX WebView) |
+| Sprint HELP-2 | COMPLETADO | HelpService + HelpView JavaFX (`47e46dc`) |
+| Sprint COLUMN-TYPES | COMPLETADO | Tipos de columnas dinámicas + edición "Tipo…" |
+| Sprint COLUMN-FORMAT + IMPORT-REPAIR | COMPLETADO EN WORKING TREE | Formato real PRECIO/FECHA/NUMERICO + reparación IA |
+| Sprint IMPORT-PARSER + MAPPING-GUARD | COMPLETADO EN WORKING TREE | 288/288 archivos reales abren; fallback local de mapeo; bloqueo de obligatorios |
 | Sprint COD | COMPLETADO | Dead code eliminado |
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
 | Deuda 24 | COMPLETADO | 15 tests JDBC nuevos (5 DAOs sin cobertura) |
-| Tests JDBC | 89/89 verdes | Harness con BD efímera `@TempDir` |
+| Tests JDBC / servicio | 110/110 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación |
 | Instalador Windows | v3.3 disponible | NSIS + jpackage pipeline |
 | Integración Ollama | Funcional | IA local opcional vía `OllamaService` |
 | TTS / Asistente visual | Funcional | `TextToSpeechService`, `VisualAssistantView` |

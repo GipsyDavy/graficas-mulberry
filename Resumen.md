@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprint HELP-1 CERRADO (+ HELP-0, IMPORT-UPGRADE, D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24)
-# Versión: 4.5 · Fecha revisión documentación: 11/06/2026 · HEAD: 65588cf · Tests: 89/89 verdes. Cola activa prioritaria: Sprint HELP-2.
+# HANDOFF — Graficas Mulberry · Sprint IMPORT-PARSER + MAPPING-GUARD CERRADO EN WORKING TREE
+# Versión: 4.9 · Fecha revisión documentación: 12/06/2026 · HEAD: 979cd06 · Tests: 110/110 verdes. Cola activa: validación manual final del wizard de tarifas y commit atómico.
 
 ---
 
@@ -177,7 +177,7 @@ Auditoría de 8 fases realizada con Claude Code + Gemini + Codex. Resultado: `IN
 - **P2 (medios):** ARCH-1, COD-2 dead code SQL incorrecto, UI-4 colores hardcodeados en Dashboard, UI-5 IAView sin CommandBar.
 - **P3 (backlog):** COD-1/3/4, UI-1/2/3, AP-1, ARCH-2/4. Ver `INFORME-FINAL.md`.
 
-**Tests en esa auditoría:** 72/72 ✅ · **Estado histórico:** superado por sprints posteriores. Estado vigente: 89/89 verdes.
+**Tests en esa auditoría:** 72/72 ✅ · **Estado histórico:** superado por sprints posteriores. Estado vigente: 99/99 verdes.
 **Archivos nuevos:** `AUDITORIA.md`, `INFORME-FINAL.md`, `FASES.md`, `MACRO-PROMPT-GRAFICAS-MULBERRY.md`, `interfaz.md`, `continuar.md`, `_cajon-desastre/` (20 archivos movidos).
 
 ---
@@ -254,8 +254,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `65588cf` — `feat: Sprint HELP-1 — 81 artículos HTML de ayuda offline completos`.
-- **Working tree:** limpio al cierre del sprint (11/06/2026).
+- **HEAD actual:** `979cd06` — `fix: corrección IA en paso 3.5 solo descarta issue si el valor fue corregido`.
+- **Working tree:** no limpio. Pendientes anteriores: `.claude/settings.local.json`, `CLAUDE.md`, `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTMLs de ayuda de importación, `styles.css`. Pendientes funcionales recientes: `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportService`, `Material.java`, `Tarifa.java`, `ColumnConfiguratorDialog`, `DynamicColumnRuntime`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
 
 ### Commits de sprints relevantes
 | Sprint | Commits | Descripción |
@@ -274,9 +274,13 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **Sprint IMPORT-UPGRADE** | **`4bc6c9c`** | **XLSB/XLSM via WorkbookFactory; entityId en procesarFila(); escritura columnas dinámicas; ColumnMappingDialog + "➕ Nuevo campo…"; filtros 10 vistas** |
 | **Sprint HELP-0** | **`39d060e`** | **HELP-SPEC.md: taxonomía 8 cat., 19 módulos, 81 artículos ★, formato HTML, index.json schema, HelpEntry record, HelpService API, mapa F1** |
 | **Sprint HELP-1** | **`65588cf`** | **81 artículos HTML offline + help.css + index.json en 19 módulos (General×5, Importación×9, Backups×5, Clientes×5, Materiales×4, Empleados×4, Presupuestos×6, Facturas×6, Albaranes×5, Pedidos×4, Nóminas×3, Tarifas×3, Exportación×3, IA×5, Asistente×2, Estadísticas×2, Calendario×2, Usuarios×5, Configuración×3)** |
+| **Sprint COLUMN-TYPES** | **`e12a687`→`d4db11b`** | **Tipos de dato (TEXTO/NUMÉRICO/PRECIO/FECHA) en columnas dinámicas. Hard delete columnas usuario. Ocultar/mostrar columnas base. Botón "Tipo…" para editar tipo en columnas existentes. DatePicker y TextField filtrado en formularios.** |
+| **Sprint WIZARD-VALIDATION** | **`988a8fb`→`979cd06`** | **Paso 3.5 en wizard: validación IA (Ollama) + local de primeras 20 filas. ValidationIssue record. Tabla de incidencias con "🤖 Corregir con IA" / "Ignorar". Bloqueo de Continuar mientras haya ERRORs. Fix: issue no se descarta si IA no pudo corregir. CSS data-table + texto en wizard.** |
+| **Sprint COLUMN-FORMAT + IMPORT-REPAIR** | **working tree** | **Formato real de columnas dinámicas tipadas: PRECIO con €, FECHA con DatePicker/ISO, NUMERICO normalizado; conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción; rechazo de edición inválida en celdas tipadas; `TypedValueFormatter`; botón "🤖 Reparar importación" con plan IA para mapeo/campos dinámicos tipados/valores fijos/correcciones; normalización determinista antes de importar. Revisión Gemini incorporada.** |
+| **Sprint IMPORT-PARSER + MAPPING-GUARD** | **working tree** | **Parser real probado contra 288 archivos del usuario (110 CSV, 177 XLSX, 1 XLSB): 288/288 abren. `ImportService` detecta cabecera real, soporta XLSB por extractor tabulado, maneja CSV vacío, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta separadores/cabeceras repetidas. `mapearCampos()` siempre completa con fallback local aunque Ollama devuelva 0 columnas. `ImportView` activa técnica/categoría fija por defecto y bloquea avanzar si faltan obligatorios.** |
 
 ### Tests
-- **89/89 verdes.** Reparto:
+- **110/110 verdes** con `.\mvnw.cmd test`. Incluye `TypedValueFormatterTest` (5 tests) e `ImportServiceParsingTest` (6 tests).
   - `ClienteDAOTest`: 3
   - `EmpleadoDAOTest`: 3 (+3 Deuda 24)
   - `NominaDAOTest`: 3 (+3 Deuda 24)
@@ -294,6 +298,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
   - `EntityImportServiceNominaTest`: 6 (+1 Sprint C)
   - `EntityImportServicePedidoTest`: 10
   - `EntityImportServicePresupuestoTest`: 7
+  - `TypedValueFormatterTest`: 5
+  - `ImportServiceParsingTest`: 6
 
 ### Estado de los archivos clave
 
@@ -313,7 +319,20 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 - `IAView.java` — `command-bar`, `btn-toolbar`, clases CSS IA, sin `setStyle()` hardcodeados. *(Sprint UI-C)*
 - `ClientesView.java` / `FacturasView.java` / `PedidosView.java` — `ProgressIndicator` overlay sobre `StackPane` wrapping `TableView`; visible durante carga JDBC síncrona. *(Sprint UI-D)*
 - `EntityImportService.java` — `resolverEmpleadoId` sin filtro `activo=1`; nóminas históricas de empleados inactivos importables. *(Sprint C)*
-- `ImportService.java` — `parseFile()` enruta `.xlsb/.xlsm/.xltx/.xltm` a `parseExcel()`; `parseExcel()` usa `WorkbookFactory.create(file, null, true)` — cubre todos los formatos Excel. *(Sprint IMPORT-UPGRADE)*
+- `ImportService.java` — `parseFile()` soporta CSV/Excel/JSON. XLSB se lee con `XSSFBEventBasedExcelExtractor` y se pasa por el mismo parser tabulado. CSV vacío devuelve resultado vacío, no excepción. Parser común por grid: detecta cabecera real, conserva tablas laterales, hace cabeceras únicas, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y filtra separadores/cabeceras repetidas. Añadidos `validateImportData()` (Ollama + fallback local), `corregirValor()`, `ImportRepairPlan` y fallback local permanente en `mapearCampos()`. *(Sprint IMPORT-UPGRADE + WIZARD-VALIDATION + IMPORT-REPAIR + IMPORT-PARSER)*
+- `TypedValueFormatter.java` — helper común para normalizar/formatear `PRECIO`, `NUMERICO` y `FECHA`; acepta separadores españoles, símbolo `€` y fechas `dd/MM/yyyy`/ISO. Incluye modo estricto (`tryNormalizeForStorage`) para rechazar valores no convertibles. *(Sprint COLUMN-FORMAT + IMPORT-REPAIR)*
+- `ValidationIssue.java` — record nuevo: `rowIndex`, `columnName`, `issue`, `suggestedFix (Optional<String>)`, `severity (ERROR/WARNING)`. *(Sprint WIZARD-VALIDATION)*
+- `DatabaseManager.java` — añadido `dropColumn(tabla, columna)` con `requireSqlIdentifier` + `quoteIdentifier`. Requiere SQLite 3.35+. *(Sprint COLUMN-TYPES)*
+- `ColumnConfigDAO.java` — record `ColumnConfig` añade campo `dataType`. Nuevo `updateDataType()`, `deleteDynamic()`, `setColumnVisible()` genérico (sin filtro base_column). Migración automática de `data_type` en `ensureConfigTable()`. *(Sprint COLUMN-TYPES)*
+- `ColumnConfiguratorDialog.java` — botón "+ Añadir" muestra ComboBox de tipo; botón "Tipo…" para editar tipo en columnas existentes; botón "Eliminar" (solo columnas usuario con doble confirmación); ocultar/mostrar funciona para base y usuario. *(Sprint COLUMN-TYPES)*
+- `DynamicColumnRuntime.java` — `addFormFields()` renderiza DatePicker (FECHA), TextField numérico (NUMÉRICO), TextField decimal (PRECIO) o TextField libre (TEXTO). Ahora las tablas muestran valores formateados por tipo y guardan valores normalizados. *(Sprint COLUMN-TYPES + COLUMN-FORMAT)*
+- `DynamicColumnValueDAO.java` — añadido `findUnconvertibleValues()` y `normalizeColumnValues()` transaccional para adaptar valores existentes de columnas dinámicas al cambiar tipo. Usa `requireSqlIdentifier` + `quoteIdentifier`. *(Sprint COLUMN-FORMAT)*
+- `ColumnConfiguratorDialog.java` — al cambiar tipo de columna de usuario pregunta si adaptar valores existentes; reporta valores no convertibles y solo normaliza con confirmación. *(Sprint COLUMN-FORMAT)*
+- `Material.java` / `Tarifa.java` — sinónimos de importación ampliados. Tarifas reconoce `UNIDADES`/`CANTIDAD` como `minimo_unidades`, `CONCEPTO`/`DESCRIPCIÓN` como `nombre`; Materiales reconoce `tipo_papel`, `tipo de papel`, `modelo`, `producto`, `familia`, `concepto` como `nombre` y precios de resma/pliego/euro como `precio_unidad`. *(Sprint IMPORT-PARSER + MAPPING-GUARD)*
+- `ImportService.java` — añadido `ImportRepairPlan`, `DynamicFieldSuggestion`, `RowValueFix` y `proponerReparacionImportacion()`; parsea JSON IA filtrando columnas/campos permitidos. Validación local de precios usa `TypedValueFormatter`. `mapearCampos()` ya no confía ciegamente en Ollama: ejecuta fallback local siempre para evitar `0/20 columnas mapeadas`. *(Sprint IMPORT-REPAIR + MAPPING-GUARD)*
+- `EntityImportService.java` — validación y conversión numérica usan `TypedValueFormatter`, evitando fallos con `1.234,56 €`. *(Sprint IMPORT-REPAIR)*
+- `ImportView.java` — paso 3.5 entre mapeo e importación; añade "🤖 Reparar importación" para aplicar plan IA con confirmación, crear campos dinámicos tipados, valores fijos y correcciones de celda. Normaliza valores mapeados antes de validar/importar. Activa técnica/categoría fija por defecto cuando falta el campo de agrupación, usando el nombre del archivo. Bloquea `Siguiente` si faltan campos obligatorios sin mapear, sin valor fijo y sin modo expandido que los cubra. *(Sprint WIZARD-VALIDATION + IMPORT-REPAIR + MAPPING-GUARD)*
+- `TableColumnSizing.java` — nuevo helper: `enableHorizontalScroll()` + `autoSizeLater()` para scroll horizontal real en TableViews con muchas columnas. *(Sprint WIZARD-VALIDATION)*
 - `EntityImportSpec.java` — `tableName()` computed method: mapea nombre del spec a tabla SQLite; devuelve `null` para entidades parent-child (Presupuestos, Facturas, Albaranes). *(Sprint IMPORT-UPGRADE)*
 - `EntityImportService.java` — `procesarFila()` devuelve `int[3]{insertadas, actualizadas, entityId}`; `insertarFilas()` detecta columnas extra y las escribe via `DynamicColumnValueDAO`. *(Sprint IMPORT-UPGRADE)*
 - `ColumnMappingDialog.java` — `opciones` es `ObservableList<String>` compartida entre todas las `CampoCelda`; botón "➕ Nuevo campo…" crea columna dinámica via `ColumnConfigDAO.addDynamicColumn()` y actualiza todos los ComboBoxes al instante. *(Sprint IMPORT-UPGRADE)*
@@ -418,6 +437,221 @@ Ampliar el asistente de importación para: (a) soportar archivos XLSB/XLSM de fo
 
 ---
 
+## SPRINT IMPORT-WIZARD/PIVOT UI — EN CURSO (2026-06-11)
+
+### Objetivo
+Hacer que la importación nueva sea visible desde los módulos reales y que el modo expandido sirva para importar matrices de precios tipo `01_TARJETAS_DE_VISITA.xlsx` sin generar una macro tabla plana inútil.
+
+### Implementado hasta ahora
+
+| Área | Estado |
+|---|---|
+| Entrada al wizard | `ClientesView`, `MaterialesView`, `EmpleadosView` y `TarifasView` abren `ImportView` con el tipo de entidad fijado desde el módulo. |
+| Sidebar | Eliminado el grupo `DATOS` y su entrada de importación global; la importación vive en cada módulo. |
+| Servicio | `ImportView` importa mediante `EntityImportService` + `EntityImportSpec`; el flujo antiguo queda desplazado para estas entidades planas. |
+| Modo expandido | Añadido en paso 3: columnas de valor seleccionables, campo destino para nombre de columna y campo destino para valor de celda. |
+| Tarifas tipo matriz | Soporta convertir 39 filas x 8 columnas de precio en aprox. 312 registros, uno por combinación cantidad/técnica. |
+| Agrupación básica | Materiales usa `categoria`; Tarifas usa `tecnica`. Para Tarifas con modo expandido NO activar grupo fijo si `tecnica` ya sale del nombre de columna. |
+| Scroll/tablas | Añadido `TableColumnSizing` y `UNCONSTRAINED_RESIZE_POLICY` para que columnas anchas generen scroll horizontal real. |
+| Legibilidad | Reforzado color de labels/checkboxes del wizard y CSS de `.check-box .text` con `-fx-fill: -c-text`. |
+| Seguridad | No se aceptan nombres de columnas dinámicas sin pasar por `ColumnConfigDAO`/validaciones existentes; valores importados siguen entrando por `PreparedStatement`. |
+
+### Cómo rellenar el modo expandido para TARIFAS
+
+Abrir desde `Tarifas > Importar`, no desde Materiales.
+
+En la tabla principal de mapeo:
+- `UNIDADES` -> `minimo_unidades`
+- `DESCRIPCIÓN` -> `nombre`
+- Las columnas de precio -> `(ignorar)`
+
+En `Modo expandido`:
+- Marcar solo las columnas de precio/valor.
+- `El nombre de columna va al campo` -> `tecnica`
+- `El valor de la celda va al campo` -> `precio_unit`
+- No activar `Aplicar técnica fija a toda la importación` en este caso.
+
+Resultado esperado: por cada fila de cantidad se generan tantos registros como columnas de precio marcadas.
+
+### Pendiente inmediato
+
+1. Smoke test manual con el Excel real `01_TARJETAS_DE_VISITA.xlsx`.
+2. Mejorar UX del paso 3: deshabilitar o advertir visualmente las columnas ya mapeadas para que no se marquen como pivot por error.
+3. Confirmar en ventana maximizada que las tablas mantienen scroll horizontal y no comprimen columnas.
+4. Decidir si migrar otros módulos planos después: Proveedores si existe vista, Nóminas solo si el flujo actual lo permite. Parent-child (`Pedidos`, `Presupuestos`, `Facturas`, `Albaranes`) queda para fase posterior por mayor riesgo.
+
+### Validación última
+
+- `.\mvnw.cmd clean compile` — BUILD SUCCESS (104 fuentes).
+- `.\mvnw.cmd test` — BUILD SUCCESS, 99/99 tests verdes.
+
+---
+
+---
+
+## SPRINT COLUMN-TYPES — COLUMNAS TIPADAS + HARD DELETE — CERRADO (2026-06-11)
+
+### Objetivo
+Permitir especificar y editar el tipo de dato (TEXTO/NUMÉRICO/PRECIO/FECHA) de cualquier columna en todos los módulos, rendir controles de entrada adecuados en formularios, permitir eliminación definitiva de columnas de usuario y ocultar/mostrar columnas base.
+
+### Commits
+
+| Commit | Cambio |
+|---|---|
+| `e12a687` | `DatabaseManager.dropColumn()` con validación de identificadores SQL |
+| `701fc5e` | `ColumnConfigDAO`: campo `dataType`, `deleteDynamic()`, `setColumnVisible()` genérico, migración DDL |
+| `9979bdf` | `ColumnConfiguratorDialog`: ComboBox tipo al añadir, botón Eliminar, ocultar/mostrar en base |
+| `43ef10d` | `DynamicColumnRuntime`: DatePicker (FECHA), TextField numérico/precio, `extraControls` |
+| `bc90305` | `ColumnConfigDAO.updateDataType()` |
+| `d4db11b` | `ColumnConfiguratorDialog`: botón "Tipo…" para editar tipo en columnas existentes |
+
+### Decisiones de diseño
+
+- El tipo se almacena en `column_configs.data_type` (TEXT), nunca en el esquema SQLite de la tabla de datos. Los valores siguen siendo TEXT libre en SQLite; el tipo solo controla el control de entrada.
+- Las columnas base NO se pueden eliminar (romperían el código Java). Solo ocultar/mostrar.
+- `setColumnVisible()` es genérico sin filtro `base_column=0`, lo que permite ocultar/mostrar base Y usuario.
+- `deleteDynamic()` tiene doble protección: `AND base_column=0` en SQL + alerta informativa en la UI.
+- Migración automática de `data_type` en `ensureConfigTable()` para bases de datos existentes.
+
+---
+
+## SPRINT WIZARD-VALIDATION — PASO 3.5 IA EN IMPORTACIÓN — CERRADO (2026-06-11)
+
+### Objetivo
+Añadir un paso de validación con IA entre el mapeo de campos (paso 3) y la vista previa/importación (paso 4). La IA analiza las primeras 20 filas, detecta problemas y permite corrección individual antes de importar.
+
+### Commits
+
+| Commit | Cambio |
+|---|---|
+| `988a8fb` | `TableColumnSizing` — helper scroll horizontal real |
+| `0563405` | `ValidationIssue` record — rowIndex, columnName, issue, suggestedFix, severity |
+| `b33d095` | `ImportService`: `validateImportData()`, `corregirValor()`, validación local, helpers privados |
+| `94b449d` | `ImportView`: paso 3.5 completo (cargando → tabla issues → botones → continuar bloqueado) |
+| `979cd06` | Fix: `issueList.remove()` solo cuando `fix.isPresent()` — no ocultar ERRORs sin corregir |
+
+### Comportamiento esperado
+
+- **Con Ollama disponible:** analiza las primeras 20 filas con el modelo activo; parsea JSON array de issues.
+- **Sin Ollama:** validación local de NIF (regex), email (regex), precios (parseDouble), enteros, fechas (4 formatos), duplicados de NIF/email.
+- **Corrección IA:** llama a `corregirValor()` que pide a Ollama `{"correctedValue": "..."}`. Si devuelve valor, muta la fila en memoria y descarta el issue. Si Ollama falla o devuelve null, el issue permanece y el botón muestra "Sin corrección — reintentar".
+- **"Continuar →"** queda deshabilitado mientras haya issues `ERROR` sin resolver. Los `WARNING` no bloquean.
+- **Seguridad:** bounds check en `rowIndex` para evitar `IndexOutOfBoundsException` si Ollama devuelve índice fuera de rango.
+
+### Validación local por campo
+
+| Campo | Tipo de validación |
+|---|---|
+| `nif` | Regex NIF/CIF + deduplicación |
+| `email` | Regex básico `\S+@\S+\.\S+` + deduplicación |
+| `precio_unidad`, `precio_unit`, `precio_setup`, `salario_base` | parseDouble, no negativo |
+| `stock_actual`, `stock_minimo`, `minimo_unidades` | parseInt |
+| `fecha_alta` | 4 formatos: `dd/MM/yyyy`, `yyyy-MM-dd`, `dd-MM-yyyy`, `d/M/yyyy` |
+| Campos requeridos | `nombre` (Clientes/Materiales); `nombre`+`nif` (Empleados); `tecnica`+`nombre` (Tarifas) |
+
+---
+
+## SPRINT COLUMN-FORMAT + IMPORT-REPAIR — CERRADO EN WORKING TREE (2026-06-11)
+
+### Objetivo
+Hacer que los tipos de columna tengan efecto real sobre valores existentes y edición diaria, y ampliar el wizard para que la IA proponga una reparación estructurada de importación antes de descartar filas.
+
+### Cambios principales
+
+- `PRECIO` se guarda normalizado (`12.50`) y se muestra como importe con `€`.
+- `FECHA` se guarda en ISO (`yyyy-MM-dd`) y se edita con `DatePicker`; acepta formatos habituales (`dd/MM/yyyy`, `dd-MM-yyyy`, ISO).
+- `NUMERICO` se limpia con parseo robusto de separadores españoles.
+- El botón "Tipo…" puede adaptar valores existentes de columnas de usuario al nuevo tipo; antes reporta valores no convertibles y la actualización se ejecuta dentro de transacción.
+- La edición directa de celdas tipadas rechaza valores no convertibles y mantiene el valor anterior.
+- El wizard añade "🤖 Reparar importación": Ollama devuelve un plan JSON con mapeo, campos dinámicos tipados, valores fijos seguros y correcciones de celda.
+- El plan IA se aplica solo tras confirmación del usuario y se filtra contra columnas/campos permitidos.
+- Antes de validar/importar se normalizan precios, números y fechas de campos mapeados.
+
+### Seguridad y límites
+
+- SQL dinámico limitado a identificadores validados con `requireSqlIdentifier` y `quoteIdentifier`.
+- La IA no puede crear nombres de columna físicos directamente; solo propone etiquetas, y `ColumnConfigDAO` genera el identificador seguro.
+- La IA no debe inventar NIF, emails, clientes, proveedores ni relaciones; esos casos quedan para decisión del usuario.
+- `rowFixes` se ignora si la fila o columna no existe.
+- Validado en ese sprint con `.\mvnw.cmd test`: 104/104 verdes. Estado vigente tras sprint posterior: 110/110 verdes.
+
+---
+
+## SPRINT IMPORT-PARSER + MAPPING-GUARD — CERRADO EN WORKING TREE (2026-06-12)
+
+### Objetivo
+Corregir el fallo real reportado por el usuario en captura: el wizard de Tarifas permitía importar con `IA mapeó 0/20 columnas`, llegaba al paso 4 y descartaba todas las filas porque `técnica` y `nombre` estaban vacíos.
+
+### Causa raíz
+- El parser ya abría muchos archivos, pero algunas cabeceras reales estaban en filas posteriores o en tablas laterales.
+- Ollama podía devolver JSON válido con todos los campos a `null`; `ImportService.mapearCampos()` lo aceptaba como éxito y no ejecutaba fallback local.
+- `ImportView` no bloqueaba el avance al paso 4 si faltaban campos obligatorios.
+- En tarifas, `tecnica` suele venir del nombre del archivo o del modo expandido, no de una columna explícita.
+
+### Cambios ejecutados
+
+| Archivo | Cambio |
+|---|---|
+| `ImportService.java` | Parser común por grid para CSV/XLSX/XLSB; CSV vacío no revienta; XLSB se lee por `XSSFBEventBasedExcelExtractor`; detección de cabecera real; cabeceras únicas; inferencia de cabeceras vacías; filtrado de separadores/cabeceras repetidas. |
+| `ImportService.java` | `mapearCampos()` ejecuta `fallbackMapping()` siempre, aunque Ollama responda sin error. El fallback usa el `IMPORT_SPEC` real de cada entidad y evita duplicar destinos. |
+| `Tarifa.java` | Sinónimos: `UNIDADES`/`CANTIDAD` → `minimo_unidades`; `CONCEPTO`/`DESCRIPCIÓN` → `nombre`. |
+| `Material.java` | Sinónimos: `tipo_papel`, `tipo de papel`, `modelo`, `producto`, `familia`, `concepto` → `nombre`; precios de resma/pliego/euro → `precio_unidad`. |
+| `ImportView.java` | Preselecciona técnica/categoría fija cuando falta el campo de agrupación y rellena el valor desde el nombre del archivo. Bloquea `Siguiente` si quedan obligatorios sin cubrir. |
+| `ImportServiceParsingTest.java` | 6 tests: CSV vacío, cabecera tras filas título, tablas laterales con duplicados, cabeceras repetidas internas, inferencia de cabeceras vacías tipo OVALOS, sinónimos locales. |
+
+### Validación con archivos reales del usuario
+
+Rutas probadas:
+- `C:\Users\Gipsy Dávy\Desktop\CSV`
+- `C:\Users\Gipsy Dávy\Desktop\excel`
+- `C:\Users\Gipsy Dávy\Desktop\EXCEL_SEPARADO`
+- `C:\Users\Gipsy Dávy\Desktop\files`
+- `C:\Users\Gipsy Dávy\Desktop\TARIFAS_SEPARADAS`
+- `C:\Users\Gipsy Dávy\Desktop\TARIFAS_SEPARADAS 1`
+- `C:\Users\Gipsy Dávy\Desktop\todas_las_tarifas`
+
+Resultado del probe con `ImportService.parseFile()`:
+- **288/288 archivos abren.**
+- **110 CSV**, **177 XLSX**, **1 XLSB**.
+- **34 archivos** abren pero están vacíos o sin columnas reales; no son error de parser.
+
+Dry-run contra SQLite temporal (`jdbc:sqlite:C:\tmp\gm-import-dryrun.db`) sin tocar la BD real:
+- `17_DISEÑOS.xlsx`: 18/18 importables.
+- `19_OVALOS.xlsx`: 12/12 importables.
+- `40_IMANES.xlsx`: 31/31 importables.
+- CSV de `Desktop\files`: muestras probadas importan limpias.
+- `NUEVAS TARIFAS (2) (version 1).xlsb`: abre y recupera 1020 filas; 938 importables en dry-run simple, con descartes por secciones internas del libro.
+- `PRECIOS PAPEL PROVEEDORES Formulas.xlsx`: 39/76 importables en dry-run simple; el resto son separadores/bloques humanos.
+
+### Prueba directa del fallo de captura
+
+Archivo usado: `C:\Users\Gipsy Dávy\Desktop\CSV\01_TARJETAS_DE_VISITA.csv`.
+
+Resultado esperado vigente de `ImportService.mapearCampos(TARIFAS, headers)` aunque Ollama esté caído:
+```text
+UNIDADES=minimo_unidades
+DESCRIPCIÓN=nombre
+PRECIO S/ PLASTIFICAR UNA CARA=precio_unit
+```
+
+En el wizard:
+- Si no se usa modo expandido, la técnica fija debe salir activada y prellenada con el nombre del archivo.
+- Si se usa modo expandido, desactivar técnica fija y usar `nombre de columna -> tecnica`, `valor de celda -> precio_unit`.
+- `Siguiente` no debe permitir llegar al paso 4 si faltan `tecnica` o `nombre`.
+
+### Seguridad
+- No se ejecuta contenido de CSV/Excel/XLSB.
+- XLSB se transforma a texto tabulado mediante POI y pasa por parser propio.
+- No hay SQL dinámico nuevo.
+- Los valores dudosos se descartan o bloquean, no se inventan.
+- La IA no es autoridad final: fallback local y bloqueo de obligatorios protegen el flujo.
+
+### Validación
+- `.\mvnw.cmd test` — **110/110 verdes**.
+- `git diff --check` — sin errores; solo avisos CRLF habituales del working tree.
+
+---
+
 ## PRÓXIMOS SPRINTS CANDIDATOS
 
 ### 1. Sprint MIGRACION-COMPLEJA — Tablas complejas históricas (Deuda 27)
@@ -451,10 +685,9 @@ principiante/avanzado. Sin tocar código Java en esta fase.
 Crear la estructura de documentación local empaquetable con la aplicación: artículos, primeros pasos,
 manual básico, FAQ, glosario, guías por módulo y advertencias operativas.
 
-### 5. HELP-2 — Centro de ayuda JavaFX (más adelante)
+### 5. HELP-2 — Centro de ayuda JavaFX
 
-Implementar una vista JavaFX buscable para navegar la ayuda offline, abrir artículos por módulo y
-servir como base para ayuda contextual posterior.
+Completado en `47e46dc`: sistema de ayuda integrado offline con 81 artículos.
 
 ### 6. Refactor B2 — Inyección de Connection en DAOs (después de HELP-2)
 
@@ -529,13 +762,13 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 1. **Leer:** `CLAUDE.md`, este `Resumen.md`, `continuar.md` — en ese orden, antes de declarar nada.
 
 2. **Verificar estado git:**
-   - `git log --oneline -5` — confirmar HEAD `67ae150` o documentar cualquier commit posterior.
-   - `git status --short` — declarar si hay archivos sin commitear (solo `.claude/settings.local.json` es esperado).
+   - `git log --oneline -5` — confirmar HEAD `979cd06` o documentar cualquier commit posterior.
+   - `git status --short` — declarar que el working tree está no limpio y separar cambios previos de cambios funcionales recientes.
 
-3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 89/89 verdes.
+3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 110/110 verdes o documentar divergencia.
 
 4. **Declarar situación:**
-   > HEAD `65588cf`, tests 89/89 verdes. Working tree limpio. Sprints completados: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0, HELP-1. Cola activa prioritaria: **Sprint HELP-2** (`HelpService.java` + `HelpView.java`). Ver `HELP-SPEC.md` secciones 6-7. ¿Arrancamos?
+   > HEAD `979cd06`, tests 110/110 verdes tras última validación. Sprints completados en commits: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0/1/2, COLUMN-TYPES y WIZARD-VALIDATION. Cerrados en working tree: COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD. Cola activa: validar manualmente `Tarifas > Importar` con `01_TARJETAS_DE_VISITA.csv/xlsx` y preparar commit atómico si el usuario aprueba.
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 

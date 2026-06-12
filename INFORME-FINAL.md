@@ -1,6 +1,8 @@
 # INFORME-FINAL.md — Gráficas Mulberry
 ## Auditoría técnica completa · Informe ejecutivo consolidado
 
+> **Nota de vigencia 2026-06-12:** informe histórico de auditoría. No usar sus cifras de tests como estado actual. Estado vigente en `continuar.md`/`Resumen.md`: 110/110 tests esperados, working tree con sprints de importación cerrados pendiente de commit.
+
 **Fecha:** 2026-06-02  
 **Fases ejecutadas:** 1–7 (8 fases totales)  
 **Auditor principal:** Claude Code  

@@ -290,6 +290,33 @@ Commit: `34bca4c`
 
 ---
 
+### SPRINT IMPORT WIZARD/PIVOT UI — EN CURSO (2026-06-11)
+
+**Objetivo:** que la importación nueva sea usable desde los módulos reales, con tablas que no compriman columnas y con modo expandido comprensible para matrices de precios.
+
+| Tarea | Estado |
+|-------|--------|
+| Importar desde módulos reales | En curso: `ClientesView`, `MaterialesView`, `EmpleadosView`, `TarifasView` abren `ImportView` con entidad fijada. |
+| Eliminar sidebar `DATOS` | Implementado: evita duplicar una importación global que confundía al usuario. |
+| Scroll horizontal real | Implementado helper `TableColumnSizing` con `UNCONSTRAINED_RESIZE_POLICY` y ancho por contenido. Pendiente verificación visual con Excel real y ventana maximizada. |
+| Modo expandido | Implementado en paso 3. Convierte columnas de precio/valor en registros nuevos. |
+| Legibilidad del wizard | Corregido: labels y CheckBox usan `-c-text`; `.check-box .text` ahora define también `-fx-fill`. |
+| Agrupación básica | Implementada con campos existentes: `categoria` para Materiales y `tecnica` para Tarifas. |
+
+**Regla UX para Tarifas con modo expandido:**
+- Las columnas fijas se mapean en la tabla principal (`UNIDADES -> minimo_unidades`, `DESCRIPCIÓN -> nombre`).
+- Las columnas de precio se dejan en `(ignorar)` en la tabla principal.
+- En modo expandido se marcan solo columnas de precio.
+- `Nombre de columna -> tecnica`; `valor de celda -> precio_unit`.
+- No activar técnica fija cuando `tecnica` viene del nombre de la columna.
+
+**Pendiente visual inmediato:**
+- Validar que al maximizar la ventana los controles del paso 3 no se estiran ni solapan.
+- Confirmar que el scroll horizontal aparece cuando las columnas exceden el ancho.
+- Si el usuario sigue confundido, separar el modo expandido en un subpaso propio con texto operativo mínimo y estados deshabilitados para columnas ya mapeadas.
+
+---
+
 ## PARTE 5 — CAPA DE AYUDA INTEGRADA
 
 ### 5.1 Objetivo
@@ -307,7 +334,7 @@ adecuado y sin bloquear el trabajo de usuarios expertos.
 
 | Componente | Objetivo | Estado |
 |---|---|---|
-| Centro de ayuda | Punto único para buscar y navegar documentación dentro de la app | **HELP-2 — SIGUIENTE** |
+| Centro de ayuda | Punto único para buscar y navegar documentación dentro de la app | **✅ HELP-2 cerrado** (`47e46dc`) |
 | Ayuda contextual por pantalla | Explicar acciones, campos, estados y flujos desde cada módulo | HELP-3 |
 | Manual de usuario integrado | Manual offline mantenido con el comportamiento real de la aplicación | **✅ HELP-1 cerrado** (`65588cf`) |
 | Guías paso a paso | Acompañar tareas principales: crear cliente, factura, pedido, importar CSV, exportar PDF | **✅ HELP-1 cerrado** |
@@ -318,7 +345,7 @@ adecuado y sin bloquear el trabajo de usuarios expertos.
 | Glosario de formatos | Explicar CSV, PDF, Excel, NIF, IVA, estados, roles, importes y columnas esperadas | **✅ HELP-1 cerrado** (GEN-REF-1) |
 | Riesgos y advertencias | Explicar consecuencias antes de importaciones, borrados, cambios de rol o datos sensibles | **✅ HELP-1 cerrado** (artículos ADV) |
 | Documentación offline | Empaquetar la ayuda con la aplicación, sin depender de internet | **✅ HELP-1 cerrado** (recursos en `src/main/resources`) |
-| Buscador de ayuda | Buscar por módulo, palabra clave, acción, error o formato | **HELP-2 — SIGUIENTE** (index.json listo) |
+| Buscador de ayuda | Buscar por módulo, palabra clave, acción, error o formato | **✅ HELP-2 cerrado** (`47e46dc`) |
 | Enlaces desde errores | Conectar mensajes de error con soluciones o guías relacionadas | HELP-3 |
 | Modo principiante / avanzado | Ajustar densidad de ayuda según experiencia del usuario | Pendiente |
 
@@ -334,6 +361,24 @@ adecuado y sin bloquear el trabajo de usuarios expertos.
 ---
 
 ## PARTE 6 — CRITERIOS DE CALIDAD
+
+### 6.0 Estado UI Import Wizard — 2026-06-12
+
+Sprint IMPORT-PARSER + MAPPING-GUARD cerró un fallo visual/funcional del wizard: el paso 4 permitía importar aunque el paso 3 hubiera quedado con `0/20 columnas` mapeadas. El síntoma visible era una alerta final con `0 filas importadas` y todas las filas descartadas por `técnica`/`nombre` obligatorios vacíos.
+
+Comportamiento UI vigente:
+- En `Tarifas > Importar`, si no hay columna mapeada a `tecnica`, el bloque de agrupación debe aparecer activado y prellenado con el nombre del archivo.
+- En `Materiales > Importar`, si no hay columna mapeada a `categoria`, el bloque de agrupación debe aparecer activado y prellenado con el nombre del archivo.
+- El botón `Siguiente` del paso 3 debe bloquear el avance si faltan campos obligatorios sin mapear, sin valor fijo y sin modo expandido que los cubra.
+- En matrices de precios, usar modo expandido: columnas de precio marcadas, `nombre de columna -> tecnica`, `valor de celda -> precio_unit`. En este caso desactivar técnica fija si entra en conflicto.
+- El resumen del paso 4 no debe volver a mostrar `0 campos mapeados` para archivos como `01_TARJETAS_DE_VISITA.csv/xlsx`; el fallback local debe mapear `UNIDADES`, `DESCRIPCIÓN` y `PRECIO...`.
+
+Smoke test visual recomendado:
+1. Abrir `Tarifas > Importar`.
+2. Seleccionar `C:\Users\Gipsy Dávy\Desktop\CSV\01_TARJETAS_DE_VISITA.csv`.
+3. Comprobar en paso 3: `UNIDADES -> minimo_unidades`, `DESCRIPCIÓN -> nombre`, `PRECIO S/ PLASTIFICAR UNA CARA -> precio_unit`.
+4. Comprobar que técnica fija está activa y rellena con `01 TARJETAS DE VISITA`.
+5. No continuar si la tabla muestra `0 campos mapeados`.
 
 ### Por sprint
 
@@ -419,4 +464,4 @@ Por impacto en percepción de calidad cuando no están estilizados:
 
 ---
 
-*interfaz.md — Gráficas Mulberry — 2026-06-03 — Sprints UI-A/B/C completados*
+*interfaz.md — Gráficas Mulberry — 2026-06-11 — Import Wizard/Pivot UI en curso*
