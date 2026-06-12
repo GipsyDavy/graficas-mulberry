@@ -26,14 +26,6 @@ public final class AppConstants {
         Si el usuario te pregunta por datos del ERP, utiliza el contexto proporcionado.
         """;
 
-    // Claves técnicas para el mapeo de JSON (Sin estas, OllamaService no lee la respuesta)
-    public static final String JSON_MODEL    = "model";
-    public static final String JSON_PROMPT   = "prompt";
-    public static final String JSON_STREAM   = "stream";
-    public static final String JSON_RESPONSE = "response";
-    public static final String JSON_DONE     = "done";
-    public static final String JSON_CONTEXT  = "context";
-
     // =========================================================================
     // 2. NOMBRES DE LA APLICACIÓN Y CONFIGURACIÓN DE EMPRESA (ORIGINALES)
     // =========================================================================
