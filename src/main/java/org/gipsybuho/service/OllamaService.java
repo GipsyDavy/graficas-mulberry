@@ -66,6 +66,7 @@ public class OllamaService {
         try {
             HttpRequest request = HttpRequest.newBuilder()
                     .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/tags"))
+                    .timeout(Duration.ofSeconds(15))
                     .GET().build();
             HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
 
@@ -73,7 +74,7 @@ public class OllamaService {
                 JsonNode root = mapper.readTree(response.body());
                 if (root.has("models")) {
                     root.get("models").forEach(m -> {
-                        String name = m.get("name").asText();
+                        String name = m.path("name").asText("");
                         long sizeBytes = m.has("size") ? m.get("size").asLong() : 0;
                         String sizeStr = String.format("%.2f GB", sizeBytes / (1024.0 * 1024.0 * 1024.0));
                         lista.add(new ModelInfo(name, sizeStr));
