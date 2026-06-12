@@ -63,11 +63,42 @@ public class ImportService {
         public final List<String> headers;
         public final List<Map<String, String>> rows;
         public final String formato;
+        public final FileStructureAnalysis structureAnalysis;
 
         public ImportResult(List<String> headers, List<Map<String, String>> rows, String formato) {
+            this(headers, rows, formato, null);
+        }
+
+        public ImportResult(List<String> headers, List<Map<String, String>> rows, String formato,
+                            FileStructureAnalysis structureAnalysis) {
             this.headers = headers;
             this.rows = rows;
             this.formato = formato;
+            this.structureAnalysis = structureAnalysis != null
+                ? structureAnalysis
+                : new FileStructureAnalysis(List.of(), false, "Sin análisis estructural.");
+        }
+    }
+
+    public enum RegionType { TABLE, NOTES, TITLE, EMPTY, UNKNOWN }
+
+    public record DetectedRegion(
+        int id,
+        RegionType type,
+        int startRow,
+        int endRow,
+        int startCol,
+        int endCol,
+        double confidence
+    ) {}
+
+    public record FileStructureAnalysis(
+        List<DetectedRegion> regions,
+        boolean complex,
+        String summary
+    ) {
+        public List<DetectedRegion> tableRegions() {
+            return regions.stream().filter(r -> r.type() == RegionType.TABLE).toList();
         }
     }
 
@@ -129,6 +160,233 @@ public class ImportService {
                 || name.endsWith(".xltx") || name.endsWith(".xltm"))
             return parseExcel(file);
         return parseCSV(file);  // desconocido → intentar CSV
+    }
+
+    public FileStructureAnalysis analyzeFileStructure(File file) throws Exception {
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".json")) {
+            return new FileStructureAnalysis(List.of(), false, "JSON estructurado: no requiere análisis tabular.");
+        }
+        List<List<String>> grid = readGridForAnalysis(file);
+        return analyzeGridStructure(grid);
+    }
+
+    public FileStructureAnalysis analyzeGridStructure(List<List<String>> grid) {
+        List<DetectedRegion> regions = detectFileRegions(grid);
+        long tables = regions.stream().filter(r -> r.type() == RegionType.TABLE).count();
+        long notes = regions.stream().filter(r -> r.type() == RegionType.NOTES).count();
+        boolean complex = tables > 1 || notes > 0;
+        String summary = complex
+            ? "Archivo complejo: " + tables + " tabla(s) y " + notes + " bloque(s) de notas detectados."
+            : "Archivo simple: una tabla principal detectada.";
+        return new FileStructureAnalysis(Collections.unmodifiableList(regions), complex, summary);
+    }
+
+    private List<DetectedRegion> detectFileRegions(List<List<String>> grid) {
+        if (grid == null || grid.isEmpty()) return List.of();
+        List<DetectedRegion> regions = new ArrayList<>();
+        int id = 1;
+        for (int r = 0; r < grid.size(); r++) {
+            List<String> row = grid.get(r);
+            if (isBlankRow(row)) continue;
+
+            List<int[]> tableSegments = headerSegments(row);
+            if (!tableSegments.isEmpty()) {
+                int endRow = findTableEndRow(grid, r + 1);
+                for (int[] segment : tableSegments) {
+                    regions.add(new DetectedRegion(id++, RegionType.TABLE, r, endRow,
+                        segment[0], segment[1], tableConfidence(row, segment)));
+                }
+                r = Math.max(r, endRow);
+                continue;
+            }
+
+            if (isNoteOnlyRow(row)) {
+                int endRow = r;
+                while (endRow + 1 < grid.size() && isNoteOnlyRow(grid.get(endRow + 1))) endRow++;
+                regions.add(new DetectedRegion(id++, RegionType.NOTES, r, endRow,
+                    firstNonBlankCol(row), lastNonBlankCol(row), 0.80));
+                r = endRow;
+                continue;
+            }
+
+            if (countNonBlank(row) <= 2) {
+                regions.add(new DetectedRegion(id++, RegionType.TITLE, r, r,
+                    firstNonBlankCol(row), lastNonBlankCol(row), 0.65));
+            }
+        }
+        return regions;
+    }
+
+    private List<int[]> headerSegments(List<String> row) {
+        if (headerScore(row) < 12) return List.of();
+        List<int[]> byBlanks = splitSegmentsByBlankColumns(row);
+        if (byBlanks.size() > 1) return byBlanks;
+
+        List<int[]> byRepeatedFirstHeader = splitSegmentsByRepeatedFirstHeader(row);
+        return byRepeatedFirstHeader.size() > 1 ? byRepeatedFirstHeader : byBlanks;
+    }
+
+    private List<int[]> splitSegmentsByBlankColumns(List<String> row) {
+        List<int[]> segments = new ArrayList<>();
+        int start = -1;
+        for (int c = 0; c < row.size(); c++) {
+            if (getCell(row, c).isBlank()) {
+                if (start >= 0) {
+                    addHeaderSegmentIfUseful(row, segments, start, c - 1);
+                    start = -1;
+                }
+            } else if (start < 0) {
+                start = c;
+            }
+        }
+        if (start >= 0) addHeaderSegmentIfUseful(row, segments, start, row.size() - 1);
+        return segments;
+    }
+
+    private List<int[]> splitSegmentsByRepeatedFirstHeader(List<String> row) {
+        int first = firstNonBlankCol(row);
+        if (first < 0) return List.of();
+        String firstHeader = normalize(getCell(row, first));
+        if (firstHeader.isBlank() || !isHeaderKeyword(firstHeader)) return List.of();
+
+        List<Integer> starts = new ArrayList<>();
+        starts.add(first);
+        for (int c = first + 1; c < row.size(); c++) {
+            if (normalize(getCell(row, c)).equals(firstHeader)) starts.add(c);
+        }
+        if (starts.size() < 2) return List.of();
+
+        List<int[]> segments = new ArrayList<>();
+        for (int i = 0; i < starts.size(); i++) {
+            int start = starts.get(i);
+            int end = i + 1 < starts.size() ? starts.get(i + 1) - 1 : row.size() - 1;
+            while (end >= start && getCell(row, end).isBlank()) end--;
+            addHeaderSegmentIfUseful(row, segments, start, end);
+        }
+        return segments;
+    }
+
+    private void addHeaderSegmentIfUseful(List<String> row, List<int[]> segments, int start, int end) {
+        if (start < 0 || end < start) return;
+        int keywords = 0;
+        int nonBlank = 0;
+        for (int c = start; c <= end; c++) {
+            String value = getCell(row, c);
+            if (value.isBlank()) continue;
+            nonBlank++;
+            if (isHeaderKeyword(normalize(value))) keywords++;
+        }
+        if (nonBlank >= 2 && keywords >= 2) segments.add(new int[]{start, end});
+    }
+
+    private int findTableEndRow(List<List<String>> grid, int startRow) {
+        int end = startRow - 1;
+        for (int r = startRow; r < grid.size(); r++) {
+            List<String> row = grid.get(r);
+            if (isBlankRow(row) || isNoteOnlyRow(row)) break;
+            if (!headerSegments(row).isEmpty()) break;
+            end = r;
+        }
+        return Math.max(startRow - 1, end);
+    }
+
+    private double tableConfidence(List<String> row, int[] segment) {
+        int nonBlank = 0;
+        int keywords = 0;
+        for (int c = segment[0]; c <= segment[1]; c++) {
+            String value = getCell(row, c);
+            if (value.isBlank()) continue;
+            nonBlank++;
+            if (isHeaderKeyword(normalize(value))) keywords++;
+        }
+        if (nonBlank == 0) return 0.0;
+        return Math.min(0.95, 0.55 + (keywords / (double) nonBlank) * 0.40);
+    }
+
+    private boolean isNoteOnlyRow(List<String> row) {
+        if (countNonBlank(row) != 1) return false;
+        for (String value : row) {
+            if (value != null && !value.isBlank()) return looksLikeNoteRow(value);
+        }
+        return false;
+    }
+
+    private int countNonBlank(List<String> row) {
+        if (row == null) return 0;
+        int count = 0;
+        for (String value : row) {
+            if (value != null && !value.isBlank()) count++;
+        }
+        return count;
+    }
+
+    private int firstNonBlankCol(List<String> row) {
+        if (row == null) return -1;
+        for (int c = 0; c < row.size(); c++) {
+            if (!getCell(row, c).isBlank()) return c;
+        }
+        return -1;
+    }
+
+    private int lastNonBlankCol(List<String> row) {
+        if (row == null) return -1;
+        for (int c = row.size() - 1; c >= 0; c--) {
+            if (!getCell(row, c).isBlank()) return c;
+        }
+        return -1;
+    }
+
+    private List<List<String>> readGridForAnalysis(File file) throws Exception {
+        String name = file.getName().toLowerCase(Locale.ROOT);
+        if (name.endsWith(".csv") || name.endsWith(".txt")) return readCsvGrid(file);
+        if (name.endsWith(".xlsb")) return readXlsbGrid(file);
+        if (name.endsWith(".xlsx") || name.endsWith(".xls")
+                || name.endsWith(".xlsm") || name.endsWith(".xltx") || name.endsWith(".xltm")) {
+            try (Workbook wb = WorkbookFactory.create(file, null, true)) {
+                Sheet sheet = wb.getSheetAt(0);
+                FormulaEvaluator ev = wb.getCreationHelper().createFormulaEvaluator();
+                return sheetToGrid(sheet, ev);
+            }
+        }
+        return readCsvGrid(file);
+    }
+
+    private List<List<String>> readCsvGrid(File file) throws Exception {
+        byte[] raw;
+        try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
+        String content;
+        if (raw.length >= 3 && raw[0] == (byte) 0xEF && raw[1] == (byte) 0xBB && raw[2] == (byte) 0xBF) {
+            content = new String(raw, 3, raw.length - 3, StandardCharsets.UTF_8);
+        } else {
+            try {
+                content = decodeStrict(raw, StandardCharsets.UTF_8);
+            } catch (CharacterCodingException e) {
+                content = new String(raw, Charset.forName("windows-1252"));
+            }
+        }
+        if (content.isBlank()) return List.of();
+
+        char sep = detectSeparator(content);
+        List<List<String>> grid = new ArrayList<>();
+        for (String line : content.split("\\R", -1)) {
+            if (line.isBlank()) continue;
+            grid.add(parseCsvRow(line, sep));
+        }
+        return grid;
+    }
+
+    private List<List<String>> readXlsbGrid(File file) throws Exception {
+        try (OPCPackage pkg = OPCPackage.open(file, PackageAccess.READ)) {
+            XSSFBEventBasedExcelExtractor extractor = new XSSFBEventBasedExcelExtractor(pkg);
+            String text = extractor.getText();
+            List<List<String>> grid = new ArrayList<>();
+            for (String line : text.split("\\R", -1)) {
+                if (line.isBlank()) continue;
+                grid.add(Arrays.asList(line.split("\\t", -1)));
+            }
+            return grid;
+        }
     }
 
     private ImportResult parseCSV(File file) throws Exception {
@@ -251,15 +509,20 @@ public class ImportService {
     private ImportResult buildImportResultFromGrid(List<List<String>> grid, String formato) {
         List<String> headers = new ArrayList<>();
         List<Map<String, String>> rows = new ArrayList<>();
+        FileStructureAnalysis analysis = analyzeGridStructure(grid);
         if (grid == null || grid.isEmpty() || grid.stream().allMatch(this::isBlankRow)) {
-            return new ImportResult(headers, rows, formato);
+            return new ImportResult(headers, rows, formato, analysis);
+        }
+        if (analysis.tableRegions().size() > 1) {
+            ImportResult regional = buildImportResultFromTableRegions(grid, formato, analysis);
+            if (!regional.rows.isEmpty()) return regional;
         }
 
         int headerRowIdx = detectHeaderRow(grid);
         int maxCol = maxColumns(grid);
         List<Integer> includedColumns = includedColumns(grid, headerRowIdx, maxCol);
         if (includedColumns.isEmpty()) {
-            return new ImportResult(headers, rows, formato);
+            return new ImportResult(headers, rows, formato, analysis);
         }
 
         headers.addAll(buildUniqueHeaders(grid, headerRowIdx, includedColumns));
@@ -275,7 +538,65 @@ public class ImportService {
             }
             if (hasData) rows.add(map);
         }
-        return new ImportResult(headers, rows, formato);
+        return new ImportResult(headers, rows, formato, analysis);
+    }
+
+    private ImportResult buildImportResultFromTableRegions(List<List<String>> grid, String formato,
+                                                           FileStructureAnalysis analysis) {
+        List<DetectedRegion> tableRegions = analysis.tableRegions();
+        LinkedHashSet<String> headers = new LinkedHashSet<>();
+        List<Map<String, String>> rows = new ArrayList<>();
+
+        boolean hasContext = tableRegions.stream()
+            .map(region -> regionContext(grid, region))
+            .anyMatch(context -> !context.isBlank());
+        if (hasContext) headers.add("GRUPO");
+
+        for (DetectedRegion region : tableRegions) {
+            List<String> regionHeaders = regionHeaders(grid, region);
+            headers.addAll(regionHeaders);
+
+            String context = regionContext(grid, region);
+            for (int r = region.startRow() + 1; r <= region.endRow() && r < grid.size(); r++) {
+                List<String> sourceRow = grid.get(r);
+                if (isLikelyNonDataRow(sourceRow, columnsForRegion(region), regionHeaders)) continue;
+
+                Map<String, String> row = new LinkedHashMap<>();
+                if (hasContext) row.put("GRUPO", context);
+                boolean hasData = false;
+                for (int c = region.startCol(); c <= region.endCol(); c++) {
+                    String header = getCell(grid.get(region.startRow()), c);
+                    if (header.isBlank()) continue;
+                    String value = getCell(sourceRow, c);
+                    row.put(header, value);
+                    if (!value.isBlank()) hasData = true;
+                }
+                if (hasData) rows.add(row);
+            }
+        }
+
+        return new ImportResult(new ArrayList<>(headers), rows, formato, analysis);
+    }
+
+    private List<String> regionHeaders(List<List<String>> grid, DetectedRegion region) {
+        List<String> headers = new ArrayList<>();
+        List<String> row = grid.get(region.startRow());
+        for (int c = region.startCol(); c <= region.endCol(); c++) {
+            String header = getCell(row, c);
+            if (!header.isBlank() && !headers.contains(header)) headers.add(header);
+        }
+        return headers;
+    }
+
+    private List<Integer> columnsForRegion(DetectedRegion region) {
+        List<Integer> columns = new ArrayList<>();
+        for (int c = region.startCol(); c <= region.endCol(); c++) columns.add(c);
+        return columns;
+    }
+
+    private String regionContext(List<List<String>> grid, DetectedRegion region) {
+        String context = contextHeader(grid, region.startRow(), region.startCol());
+        return context != null ? context.trim() : "";
     }
 
     /** Elige la fila que parece cabecera real, no una fila título encima de la tabla. */
@@ -441,6 +762,9 @@ public class ImportService {
         int nonBlank = 0;
         int samePositionHeaders = 0;
         int headerLikeValues = 0;
+        int numericHeaderNonNumericValues = 0;
+        int onlyNonBlankIndex = -1;
+        String onlyNonBlankValue = "";
         Set<String> normalizedHeaders = headers.stream()
             .map(this::normalize)
             .collect(java.util.stream.Collectors.toSet());
@@ -449,19 +773,35 @@ public class ImportService {
             String value = getCell(row, columns.get(i));
             if (value.isBlank()) continue;
             nonBlank++;
+            onlyNonBlankIndex = i;
+            onlyNonBlankValue = value;
             String n = normalize(value);
             if (i < headers.size() && n.equals(normalize(headers.get(i)))) samePositionHeaders++;
             if (normalizedHeaders.contains(n) || isHeaderKeyword(n)) headerLikeValues++;
+            if (i < headers.size() && isNumericTableHeader(headers.get(i)) && !looksLikeNumber(value)) {
+                numericHeaderNonNumericValues++;
+            }
         }
 
         if (nonBlank == 0) return true;
+        if (numericHeaderNonNumericValues > 0 && numericHeaderNonNumericValues == nonBlank) return true;
         if (columns.size() > 1 && nonBlank == 1) {
-            for (int i = 0; i < columns.size(); i++) {
-                String value = getCell(row, columns.get(i));
-                if (!value.isBlank()) return i < headers.size() && isNumericTableHeader(headers.get(i));
+            if (onlyNonBlankIndex < headers.size() && isNumericTableHeader(headers.get(onlyNonBlankIndex))) {
+                return true;
             }
+            if (looksLikeNoteRow(onlyNonBlankValue)) return true;
         }
         return samePositionHeaders >= 2 || (headerLikeValues >= 2 && headerLikeValues >= nonBlank - 1);
+    }
+
+    private boolean looksLikeNoteRow(String value) {
+        String n = normalize(value);
+        return value.contains(":")
+            || n.startsWith("cambio")
+            || n.startsWith("nota")
+            || n.startsWith("observacion")
+            || n.startsWith("diseno")
+            || n.startsWith("incluye");
     }
 
     private boolean isNumericTableHeader(String header) {

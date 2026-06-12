@@ -565,6 +565,7 @@ public class EntityImportService {
 
         String tecnica = t.getTecnica();
         String nombre  = t.getNombre();
+        int minimoUnidades = t.getMinimoUnidades();
         // tecnica y nombre son NOT NULL en el spec, pero check defensivo para UPDATE
         if ((tecnica == null || tecnica.isBlank()) || (nombre == null || nombre.isBlank())) {
             errores.add(new RowError(vr.numero(), "tecnica+nombre",
@@ -573,8 +574,8 @@ public class EntityImportService {
             return new int[]{0, 0, 0};
         }
 
-        // TODO: añadir UNIQUE(tecnica, nombre) en migración futura para defensa en profundidad
-        int existingId = buscarIdTarifa(conn, tecnica, nombre);
+        // TODO: añadir UNIQUE(tecnica, nombre,minimo_unidades) en migración futura para defensa en profundidad
+        int existingId = buscarIdTarifa(conn, tecnica, nombre, minimoUnidades);
         if (existingId == 0) {
             dao.save(t);
             return new int[]{1, 0, t.getId()};
@@ -1041,12 +1042,13 @@ public class EntityImportService {
         }
     }
 
-    /** Busca el id de una tarifa por su clave compuesta (tecnica, nombre). */
-    private int buscarIdTarifa(Connection conn, String tecnica, String nombre) throws SQLException {
-        String sql = "SELECT id FROM tarifas WHERE tecnica=? AND nombre=?";
+    /** Busca el id de una tarifa por su clave compuesta (tecnica, nombre, minimo_unidades). */
+    private int buscarIdTarifa(Connection conn, String tecnica, String nombre, int minimoUnidades) throws SQLException {
+        String sql = "SELECT id FROM tarifas WHERE tecnica=? AND nombre=? AND minimo_unidades=?";
         try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tecnica);
             ps.setString(2, nombre);
+            ps.setInt(3, minimoUnidades);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getInt(1) : 0;
         }

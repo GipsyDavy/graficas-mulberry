@@ -222,6 +222,10 @@ public class ImportView extends VBox {
                 resultadoParseo = svc.parseFile(archivoSeleccionado);
                 log("✅ " + resultadoParseo.rows.size() + " filas, " + resultadoParseo.headers.size() +
                     " columnas detectadas. Formato: " + resultadoParseo.formato);
+                if (resultadoParseo.structureAnalysis.complex()) {
+                    log("⚠ " + resultadoParseo.structureAnalysis.summary());
+                    log("   Revisa la vista previa: puede requerir modo expandido o importación adaptativa.");
+                }
                 mostrarPaso2();
             } catch (Exception ex) {
                 log("❌ Error al leer el archivo: " + ex.getMessage());

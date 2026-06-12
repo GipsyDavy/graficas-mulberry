@@ -24,7 +24,7 @@ public class Tarifa {
 
     private static EntityImportSpec buildSpec() {
         var syn = Map.of(
-            "tecnica",         List.of("tecnica", "proceso", "technique", "tipo", "type"),
+            "tecnica",         List.of("tecnica", "proceso", "technique", "tipo", "type", "grupo", "seccion"),
             "nombre",          List.of("nombre", "name", "servicio", "tarifa", "concepto", "descripcion", "description"),
             "descripcion",     List.of("detalle", "observaciones", "notas"),
             "precio_unit",     List.of("precio unitario", "precio unidad", "precio unit", "precio", "price", "rate", "pvp"),
