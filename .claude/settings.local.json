@@ -147,7 +147,12 @@
       "Bash(.\\\\mvnw.cmd clean *)",
       "Bash(claude doctor *)",
       "PowerShell($content = Get-Content \"C:\\\\Users\\\\Gipsy Dávy\\\\.claude\\\\config.json\" -Raw; try { $null = $content | ConvertFrom-Json; Write-Host \"JSON VÁLIDO\" } catch { Write-Host \"JSON INVÁLIDO: $_\" })",
-      "PowerShell($content = Get-Content \"C:\\\\Users\\\\Gipsy Dávy\\\\.claude\\\\config.json\" -Raw; try { $null = $content | ConvertFrom-Json; Write-Host \"JSON VÁLIDO - config.json corregido\" } catch { Write-Host \"JSON INVÁLIDO: $_\" })"
+      "PowerShell($content = Get-Content \"C:\\\\Users\\\\Gipsy Dávy\\\\.claude\\\\config.json\" -Raw; try { $null = $content | ConvertFrom-Json; Write-Host \"JSON VÁLIDO - config.json corregido\" } catch { Write-Host \"JSON INVÁLIDO: $_\" })",
+      "Skill(run)",
+      "Bash(MAVEN_OPTS=\"-Djavax.net.ssl.trustStoreType=Windows-ROOT\" .\\\\mvnw.cmd compile -q)",
+      "PowerShell(cd \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; $env:MAVEN_OPTS=\"-Djavax.net.ssl.trustStoreType=Windows-ROOT\"; .\\\\mvnw.cmd compile -q 2>&1)",
+      "PowerShell(cd \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; $env:MAVEN_OPTS=\"-Djavax.net.ssl.trustStoreType=Windows-ROOT\"; .\\\\mvnw.cmd test -q 2>&1 | Select-String -Pattern \"Tests run|BUILD|ERROR|FAIL\" | Select-Object -Last 20)",
+      "PowerShell(cd \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\"; $env:MAVEN_OPTS=\"-Djavax.net.ssl.trustStoreType=Windows-ROOT\"; .\\\\mvnw.cmd test 2>&1 | Select-String -Pattern \"Tests run|BUILD|FAILURE|ERROR\" | Select-Object -Last 15)"
     ]
   },
   "hooks": {
