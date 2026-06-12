@@ -391,14 +391,15 @@ public class EntityImportService {
             return new int[]{1, 0, m.getId()};
         }
 
+        // Clave de negocio: referencia si existe; si no, nombre (los archivos reales
+        // de material rara vez traen referencia y descartarlos dejaba 0 importados).
         String ref = m.getReferencia();
-        if (ref == null || ref.isBlank()) {
-            errores.add(new RowError(vr.numero(), "referencia", ref, ErrorTipo.OTRO,
-                "Sin clave de negocio ('referencia') requerida por la política " + policy));
-            return new int[]{0, 0, 0};
+        int existingId;
+        if (ref != null && !ref.isBlank()) {
+            existingId = buscarId(conn, "SELECT id FROM materiales WHERE referencia=?", ref);
+        } else {
+            existingId = buscarId(conn, "SELECT id FROM materiales WHERE nombre=?", m.getNombre());
         }
-
-        int existingId = buscarId(conn, "SELECT id FROM materiales WHERE referencia=?", ref);
         if (existingId == 0) {
             dao.save(m);
             return new int[]{1, 0, m.getId()};
