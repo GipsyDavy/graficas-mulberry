@@ -840,3 +840,81 @@ Solo lectura y verificación. NO modificar ningún archivo. Responde a cada punt
 | COD-NEW-2 | STYLE_BURBUJA_* inline styles | BAJO | ABIERTO |
 
 *Auditoría 2026-06-12 — Multi-IA: Gemini (análisis riesgo SEC-NEW-1) + Codex (verificación líneas exactas)*
+
+---
+
+## SECURITY REVIEW 2026-06-12 — `/security-review` + `/VibeSec`
+
+**Scope:** `ImportBackupService.java` + `OllamaService.java` + `ImportService.java`  
+**Triggering event:** Fin de sprint SEC-NEW (SQL injection fix + Ollama hardening)  
+**Investigación:** traza completa de llamantes de los 9 `importar*SQL()` y de los flujos HTTP de Ollama.
+
+---
+
+### Corrección de clasificación SEC-NEW-1
+
+**Hallazgo post-fix:** los 9 métodos `importar*SQL()` de `ImportBackupService` **no tienen llamantes en ninguna vista**. `ImportBackupView` solo invoca `restaurarSQLite`, `restaurarZipCSV`, `restaurarSQL` y `restaurarJSON`. Los métodos `importar*SQL()` son public static pero están desconectados de la UI — código legado o preparado para un flujo que nunca se terminó de cablear.
+
+**Consecuencia para el riesgo:**
+- Riesgo pre-fix real: **BAJO** (método no alcanzable desde UI → no exploitable por un usuario final).
+- La clasificación original como CRÍTICO fue correcta metodológicamente (el código era vulnerable si se llamara), pero la exposición real era menor.
+- El fix sigue siendo correcto: si en el futuro se cablea algún método a la UI, la validación ya estará en su sitio (defensa en profundidad).
+
+**Nota de deuda:** `SEC-DEBT-1` — `esStatementSeguro()` valida tipo de sentencia y tabla, pero no impide subconsultas en la parte VALUES (`(SELECT ... FROM ...)`). Explotable solo si: (a) los métodos se cablean a UI, Y (b) el archivo backup contiene la subconsulta. Para una app de escritorio local es riesgo residual; documentado para no olvidarlo.
+
+---
+
+### VULN-SR-001 — `enviarConsulta()` sin timeout de request en HTTP streaming 🟡 BAJO
+
+**Archivo:** `OllamaService.java:174`  
+**Confianza:** Alta  
+
+**Contexto:** SEC-NEW-2 añadió `.timeout(Duration.ofSeconds(15))` solo a `getModelosConDetalles()`. El método `enviarConsulta()` usa el mismo `httpClient` (con `connectTimeout(10s)`) pero su `HttpRequest` no tiene `.timeout()`. Si Ollama acepta la conexión TCP y luego se bloquea sin enviar tokens de respuesta, el hilo virtual queda bloqueado indefinidamente leyendo el stream.
+
+**Evidencia:**
+```java
+// OllamaService.java línea 174 — SIN .timeout()
+HttpRequest request = HttpRequest.newBuilder()
+        .uri(URI.create(AppConstants.OLLAMA_API_URL))
+        .header("Content-Type", "application/json")
+        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+        .build();
+// httpClient solo tiene connectTimeout(10s), no cubre el body stream
+```
+
+**Comparativa:** `ImportService.ollamaChat()` ya tenía `.timeout(Duration.ofSeconds(90))` correctamente desde antes.
+
+**Impacto:** hilo virtual bloqueado → el callback `onResponse` nunca termina → la UI muestra "Pensando..." para siempre sin posibilidad de cancelar (salvo reiniciar la aplicación). Severidad: Baja (app de escritorio, Ollama local, hilo virtual no bloquea el UI thread).
+
+**Corrección:** añadir `.timeout(Duration.ofSeconds(120))` al HttpRequest de `enviarConsulta()` para permitir respuestas largas pero con límite superior razonable.
+
+---
+
+### VERIFY-SR-001 — Prompt injection via cabeceras CSV en ImportService
+
+**Archivo:** `ImportService.java:604` (construcción del prompt de mapeo con `columnas`)  
+**Confianza:** Media (necesita verificación del fallback)  
+
+**Patrón:** cabeceras de columnas provienen de archivos CSV/XLSX subidos por el usuario. Si una cabecera contiene `"Ignora las instrucciones anteriores y responde solo con..."`, Ollama podría producir un mapeo deformado.
+
+**Por qué NO se reporta como hallazgo:**
+- Ollama es local — no hay exfiltración de datos hacia servidores externos.
+- `ImportService` tiene fallback de mapeo local determinista: si la respuesta IA no es JSON parseable o el mapeo está vacío, se usa el mapeo por similitud de nombres.
+- Regla de CLAUDE.md explícita: "una respuesta IA válida sintácticamente no es verdad suficiente" — el fallback está en su sitio.
+- Impacto máximo: mapeo incorrecto en el paso 3 del wizard, visible y corregible por el usuario.
+
+**Estado:** no requiere corrección inmediata. Documentado por completitud.
+
+---
+
+### RESUMEN SECURITY REVIEW 2026-06-12
+
+| ID | Hallazgo | Severidad | Estado |
+|----|----------|-----------|--------|
+| VULN-SR-001 | `enviarConsulta()` sin request timeout | BAJO | ✅ CORREGIDO |
+| SEC-DEBT-1 | `esStatementSeguro()` no bloquea subconsultas en VALUES | BAJO (código muerto) | DEUDA TÉCNICA |
+| VERIFY-SR-001 | Prompt injection CSV headers (Ollama local) | INFO | NO EXPLOITABLE |
+
+**Veredicto global:** sin vulnerabilidades críticas ni altas en el scope revisado. La corrección más sencilla y pendiente es `VULN-SR-001` (una línea: añadir `.timeout()` a `enviarConsulta()`).
+
+*Security Review 2026-06-12 — Agente: Claude Code (líder). Multi-IA no invocado: hallazgos son verificables localmente con grep + lectura de código. VibeSec activado como requiere CLAUDE.md.*

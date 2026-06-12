@@ -173,6 +173,7 @@ public class OllamaService {
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(AppConstants.OLLAMA_API_URL))
+                        .timeout(Duration.ofSeconds(120))
                         .header("Content-Type", "application/json")
                         .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
                         .build();
