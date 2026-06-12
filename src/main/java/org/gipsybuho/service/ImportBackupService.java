@@ -606,8 +606,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_ALBARAN")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -765,8 +770,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_FACTURA")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -944,8 +954,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_PRESUPUESTO")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1124,8 +1139,13 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO nominas" +
                     stmt.substring("INSERT INTO nominas".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1265,8 +1285,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO NOMINAS")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1426,8 +1451,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO PAGOS_MATERIAL")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1595,8 +1625,13 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO tarifas" +
                     stmt.substring("INSERT INTO tarifas".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1738,8 +1773,13 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO clientes" +
                     stmt.substring("INSERT INTO clientes".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
@@ -1809,8 +1849,13 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO PAGOS_PEDIDO")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                st.execute(stmt);
-                count++;
+                if (esStatementSeguro(stmt)) {
+                    st.execute(stmt);
+                    count++;
+                } else {
+                    String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                }
             }
             conn.commit();
         } catch (Exception e) {
