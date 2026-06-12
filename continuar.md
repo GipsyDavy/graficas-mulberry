@@ -21,6 +21,14 @@ antes de proponer cualquier cambio: leer COMPLETOS y en este orden exacto los 5 
 **Un agente que omite cualquiera de estos archivos opera en modo genérico y producirá
 cambios incorrectos, incoherentes o regresivos. No es una recomendación: es el protocolo.**
 
+## MODO DE COMUNICACIÓN PERMANENTE
+
+Al inicio de cada sesión, tras leer estos archivos, activar automáticamente la skill
+`caveman` en nivel `full` y mantenerla activa durante toda la conversación.
+
+Regla de salida: solo desactivar si el usuario escribe explícitamente `normal mode`,
+`stop caveman` o pide una respuesta extensa/normal para una tarea concreta.
+
 Tras leerlos, verificar estado git:
 ```powershell
 git log --oneline -5

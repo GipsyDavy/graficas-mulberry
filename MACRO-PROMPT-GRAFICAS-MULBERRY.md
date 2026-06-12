@@ -568,6 +568,12 @@ Estado actual documentado en: Resumen.md + interfaz.md (raíz del proyecto).
 
 # FORMATO DE RESPUESTA DE CLAUDE CODE
 
+Preferencia permanente del usuario: activar `caveman` nivel `full` al inicio de cada
+sesión y mantenerlo activo. Esta preferencia comprime el lenguaje, pero no elimina
+datos técnicos, comandos, errores exactos, rutas ni criterios de validación. Solo
+desactivar si el usuario escribe `normal mode`, `stop caveman` o pide explícitamente
+una respuesta extensa/normal para una tarea concreta.
+
 Responder siempre en este orden cuando se ejecute una fase o sprint:
 
 1. **Qué voy a hacer** (una frase)
