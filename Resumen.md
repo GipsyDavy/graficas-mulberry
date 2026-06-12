@@ -1,5 +1,5 @@
-# HANDOFF — Graficas Mulberry · Sprint IMPORT-PARSER + MAPPING-GUARD CERRADO EN WORKING TREE
-# Versión: 4.9 · Fecha revisión documentación: 12/06/2026 · HEAD: 979cd06 · Tests: 110/110 verdes. Cola activa: validación manual final del wizard de tarifas y commit atómico.
+# HANDOFF — Graficas Mulberry · Auditoría 2026-06-12 aplicada · Sprints importación pendientes de commit
+# Versión: 5.0 · Fecha revisión documentación: 12/06/2026 · HEAD: 5c1a7f7 · Tests: 110/110 verdes. Auditoría SEC-NEW-1..5 aplicada. Cola activa: commit atómico sprints working tree + validación manual wizard Tarifas.
 
 ---
 
@@ -254,8 +254,8 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 
 ### Git
 - **Rama:** `master`
-- **HEAD actual:** `979cd06` — `fix: corrección IA en paso 3.5 solo descarta issue si el valor fue corregido`.
-- **Working tree:** no limpio. Pendientes anteriores: `.claude/settings.local.json`, `CLAUDE.md`, `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTMLs de ayuda de importación, `styles.css`. Pendientes funcionales recientes: `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportService`, `Material.java`, `Tarifa.java`, `ColumnConfiguratorDialog`, `DynamicColumnRuntime`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
+- **HEAD actual:** `5c1a7f7` — `docs: añadir hallazgos SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2 en AUDITORIA.md`.
+- **Working tree:** no limpio. Pendientes: `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTMLs de ayuda de importación, `styles.css`, `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
 
 ### Commits de sprints relevantes
 | Sprint | Commits | Descripción |
@@ -278,6 +278,7 @@ La Deuda 20 estaba parcialmente mal descrita. Realidad:
 | **Sprint WIZARD-VALIDATION** | **`988a8fb`→`979cd06`** | **Paso 3.5 en wizard: validación IA (Ollama) + local de primeras 20 filas. ValidationIssue record. Tabla de incidencias con "🤖 Corregir con IA" / "Ignorar". Bloqueo de Continuar mientras haya ERRORs. Fix: issue no se descarta si IA no pudo corregir. CSS data-table + texto en wizard.** |
 | **Sprint COLUMN-FORMAT + IMPORT-REPAIR** | **working tree** | **Formato real de columnas dinámicas tipadas: PRECIO con €, FECHA con DatePicker/ISO, NUMERICO normalizado; conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción; rechazo de edición inválida en celdas tipadas; `TypedValueFormatter`; botón "🤖 Reparar importación" con plan IA para mapeo/campos dinámicos tipados/valores fijos/correcciones; normalización determinista antes de importar. Revisión Gemini incorporada.** |
 | **Sprint IMPORT-PARSER + MAPPING-GUARD** | **working tree** | **Parser real probado contra 288 archivos del usuario (110 CSV, 177 XLSX, 1 XLSB): 288/288 abren. `ImportService` detecta cabecera real, soporta XLSB por extractor tabulado, maneja CSV vacío, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta separadores/cabeceras repetidas. `mapearCampos()` siempre completa con fallback local aunque Ollama devuelva 0 columnas. `ImportView` activa técnica/categoría fija por defecto y bloquea avanzar si faltan obligatorios.** |
+| **Auditoría 2026-06-12** | **`3d7f765`→`5c1a7f7`** | **SEC-NEW-1 (CRÍTICO: importar*SQL sin validación SQL — corregido con esStatementSeguro()), SEC-NEW-2/3 (timeout + NPE en OllamaService), ARCH-NEW-1 (OLLAMA_URL unificada), COD-NEW-1 (6 dead constants), CLAUDE.md actualizado (eliminadas referencias CLI Codex/Gemini). Abiertos: SEC-NEW-4/5, COD-NEW-2.** |
 
 ### Tests
 - **110/110 verdes** con `.\mvnw.cmd test`. Incluye `TypedValueFormatterTest` (5 tests) e `ImportServiceParsingTest` (6 tests).
@@ -768,7 +769,7 @@ El usuario abrirá un chat nuevo con "continúa" o "¿qué toca?". Mi primer men
 3. **Verificar tests:** `.\mvnw.cmd test` — confirmar 110/110 verdes o documentar divergencia.
 
 4. **Declarar situación:**
-   > HEAD `979cd06`, tests 110/110 verdes tras última validación. Sprints completados en commits: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0/1/2, COLUMN-TYPES y WIZARD-VALIDATION. Cerrados en working tree: COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD. Cola activa: validar manualmente `Tarifas > Importar` con `01_TARJETAS_DE_VISITA.csv/xlsx` y preparar commit atómico si el usuario aprueba.
+   > HEAD `5c1a7f7`, tests 110/110 verdes. Sprints completados en commits: D-ter, SEC, COD, UI-A/B/C/D, Sprint C, Deuda 24, IMPORT-UPGRADE, HELP-0/1/2, COLUMN-TYPES y WIZARD-VALIDATION. Cerrados en working tree: COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD. Auditoría 2026-06-12 aplicada: SEC-NEW-1 CRÍTICO corregido (importar*SQL + esStatementSeguro), SEC-NEW-2/3, ARCH-NEW-1, COD-NEW-1 corregidos. Abiertos: SEC-NEW-4/5, COD-NEW-2. Cola activa: commit atómico de sprints en working tree + validación manual wizard Tarifas.
 
 5. **Si la verificación revela divergencia** inesperada, diagnosticar con `git log --oneline -10` antes de avanzar.
 
