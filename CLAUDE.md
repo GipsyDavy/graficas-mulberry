@@ -131,7 +131,7 @@ Esta lista es orientativa y no exhaustiva:
 - La integración debe funcionar desde cualquier punto de entrada: chat de Claude Code, chat de Codex, chat de Gemini, IDE, CLI local, MCP, terminal o transferencia manual de contexto.
 - Cualquier agente puede solicitar apoyo, revisión, planificación, análisis, validación o ejecución a cualquiera de los otros cuando aporte valor técnico real.
 - La colaboración entre agentes debe iniciarse sin pedir intervención humana, salvo que haga falta autorización de seguridad, permisos del sistema, acceso a secretos, acciones destructivas o una decisión funcional ambigua.
-- Si una IA no puede invocar directamente a otra por limitaciones del entorno, debe usar el mecanismo equivalente disponible: CLI local, integración del IDE, MCP, terminal, bloque de instrucciones autocontenido o transferencia manual de contexto.
+- Codex y Gemini se invocan **exclusivamente mediante bloques IDE** escritos por Claude Code y pegados por el usuario en el chat del agente correspondiente. No existe invocación CLI de estos agentes desde Claude Code.
 - No se debe invocar otro agente para tareas triviales, repetitivas o cuando la verificación local sea suficiente.
 - Si un agente no está disponible por cuota, autenticación, red, permisos o limitaciones del IDE, se continuará con los agentes disponibles y se informará al usuario.
 
@@ -207,41 +207,16 @@ Antes de invocar otro agente, responder internamente:
 Si la respuesta no justifica claramente el coste, no se invoca otro agente y se documenta el motivo. En tareas medianas o grandes, la opción por defecto debe ser consultar o delegar al menos a un segundo agente disponible, salvo que una validación local objetiva sea claramente suficiente.
 
 ### Comprobación de disponibilidad
-Antes de delegar o depender de un agente, comprobar solo lo necesario:
+Solo se comprueba Claude Code (el agente principal):
 - Claude Code instalado: `claude --version`
 - Claude Code operativo: `claude -p "ping"`
-- Codex CLI instalado: `codex --version`
-- Codex CLI autenticado: `codex login status`
-- Codex CLI operativo: `$null | codex exec "ping" -s read-only --ephemeral`
-- Gemini CLI instalado: `gemini --version`
-- Gemini operativo: `gemini -p "ping"` con timeout mínimo de 3 minutos cuando la tarea requiera Gemini.
-- Integraciones del IDE activas para Claude Code, Gemini Code Assist y Codex, si se van a usar desde el IDE.
 
-No repetir estas comprobaciones en cada paso si ya se han realizado durante la misma sesión y el agente está funcionando.
-
-### Interpretación correcta de disponibilidad
-- **Un agente se considera operativo si responde con el token esperado** (CODEX_OK, GEMINI_OK, etc.), aunque muestre avisos secundarios (API key duplicada, ripgrep no disponible, color terminal, etc.). Los avisos no son fallos.
-- **Distinguir siempre entre dos estados distintos:**
-  - `CLI inaccesible desde Claude Code`: el comando falla cuando Claude Code lo invoca como subproceso, pero puede funcionar desde la sesión interactiva del usuario o desde el IDE.
-  - `Agente globalmente no disponible`: el agente falla en todos los entornos (CLI, IDE, sesión del usuario).
-- **Si Codex CLI falla desde Claude Code pero el usuario lo ha confirmado operativo**, reportar como `"Codex CLI inaccesible desde el subproceso de Claude Code"`, nunca como `"Codex sin cuota"` salvo que el error sea explícitamente de cuota, se haya comprobado desde la sesión interactiva del usuario y también falle fuera de Claude Code.
-- **No afirmar saldo agotado, cuota global agotada o agente caído globalmente** cuando solo haya fallado un subproceso. En ese caso, describir el alcance exacto: `"falla desde Claude Code"`, `"funciona desde IDE"`, `"funciona desde PowerShell"` o `"pendiente de confirmar en otros entornos"`.
-- **Si Gemini CLI falla desde Claude Code con `fetch failed`**, puede deberse a diferencias de red/proxy entre el subproceso y la sesión interactiva. No declarar Gemini caído si el usuario o Codex lo han confirmado operativo.
-- **Regla de diagnóstico antes de declarar un agente no operativo:**
-  1. ¿El error aparece solo desde el subproceso de Claude Code? → reportar fallo limitado a ese entorno.
-  2. ¿El usuario, Codex o el IDE lo confirmaron operativo en la misma sesión? → considerar el agente operativo por ese canal y usar método IDE/bloque autocontenido.
-  3. ¿El error es explícito (quota exceeded, auth error)? → reportar ese error concreto solo para el entorno donde se produjo.
-  4. ¿El error es de red/conexión (fetch failed, timeout)? → probablemente limitación del contexto de subproceso, proxy o red, no del agente completo.
-  5. ¿Falla en todos los entornos comprobados? → solo entonces declarar `Agente globalmente no disponible`.
+Codex y Gemini no se comprueban por CLI. Se usan siempre mediante bloques IDE que Claude Code redacta y el usuario pega en el chat del agente correspondiente.
 
 ### Comunicación entre agentes
-- Claude Code puede llamar a Codex mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
-- Claude Code puede llamar a Gemini mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
-- Codex puede llamar a Claude Code mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
-- Codex puede llamar a Gemini mediante CLI, IDE, MCP, terminal o bloque de instrucciones autocontenido.
-- Gemini puede llamar a Claude Code o Codex mediante el canal disponible en el entorno o mediante instrucciones autocontenidas para el usuario/agente intermedio.
-- Cuando un agente llame a otro, debe enviar contexto mínimo suficiente, ruta del proyecto, objetivo concreto, restricciones relevantes, archivos implicados y resultado esperado.
-- Si la llamada directa falla, usar el mecanismo alternativo disponible sin bloquear la tarea salvo que la colaboración sea obligatoria por riesgo.
+- Claude Code llama a Codex y Gemini **exclusivamente mediante bloques IDE**: Claude Code redacta el bloque, el usuario lo pega en el chat del agente en el IDE, y luego pega la respuesta de vuelta en Claude Code.
+- No existe invocación CLI de Codex ni Gemini desde Claude Code bajo ninguna circunstancia.
+- Cuando Claude Code redacte un bloque para Codex o Gemini, debe incluir: contexto mínimo suficiente, ruta del proyecto, objetivo concreto, restricciones relevantes, archivos implicados y resultado esperado.
 
 ### Asignación según tarea
 - Implementación localizada, edición de archivos, ejecución de tests o comandos: usar el agente que tenga acceso directo al workspace y menor fricción operativa.
@@ -262,17 +237,15 @@ No repetir estas comprobaciones en cada paso si ya se han realizado durante la m
 8. Para cambios relevantes, solicitar revisión final a Claude Code si está operativo; si no lo está, Codex o Gemini harán la revisión disponible.
 9. Informar al final qué agentes participaron, qué aportó cada uno y qué validación se ejecutó.
 
-### Mecanismo CLI / IDE
-- Si el CLI del agente está operativo, usarlo directamente con una instrucción concreta y acotada.
-- Si el CLI no está operativo pero existe integración IDE, preparar un bloque autocontenido para pegar en el IDE.
-- Si ningún mecanismo está disponible, continuar con el agente actual e informar de la limitación.
+### Mecanismo de colaboración — solo bloques IDE
+- Codex y Gemini se usan **siempre y únicamente** mediante bloques IDE: Claude Code redacta el bloque, el usuario lo pega en el IDE correspondiente y devuelve la respuesta.
+- No existe mecanismo CLI de estos agentes desde Claude Code. No intentar `codex exec`, `gemini -p` ni similares.
+- Si el usuario indica que un agente no está disponible en el IDE, continuar con los agentes disponibles e informar de la limitación.
 
 ### Interacción con Codex
-- Codex debe poder ser invocado por Claude Code, Gemini o el usuario cuando aporte valor técnico real.
-- **Método CLI** (Codex operativo): enviar instrucciones directamente vía `codex exec "..." -s workspace-write -C "<ruta-proyecto>"`.
-- **Método read-only** (consulta o ping): usar `$null | codex exec "..." -s read-only --ephemeral`.
-- **Método IDE** (Codex sin CLI operativo, sin cuota, sin red, sin autenticación o sin permisos): generar un bloque de instrucciones formateado con contexto del proyecto, ruta del archivo objetivo, cambios previos realizados por otros agentes y tarea concreta a ejecutar.
-- El bloque para Codex debe ser autocontenido y suficiente para actuar sin contexto adicional.
+- Codex se invoca **exclusivamente mediante bloque IDE**: Claude Code redacta un bloque autocontenido con contexto del proyecto, ruta del archivo objetivo, cambios previos realizados y tarea concreta; el usuario lo pega en el chat de Codex en el IDE.
+- El bloque debe ser suficiente para actuar sin contexto adicional.
+- No existe método CLI para invocar Codex desde Claude Code.
 
 ### Seguridad
 - No usar flags de bypass de permisos, modo YOLO o aprobación automática sin autorización explícita.
