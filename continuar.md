@@ -202,7 +202,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 
 ### Git
 - **Rama:** `master`
-- **HEAD:** `5c1a7f7` — `docs: añadir hallazgos SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2 en AUDITORIA.md`
+- **HEAD:** `a352225` — `fix: añadir timeout de request a enviarConsulta en OllamaService (VULN-SR-001)`
 - **Working tree:** no limpio. Pendientes: `interfaz.md`, vistas de módulos (`ClientesView`, `EmpleadosView`, `MainView`, `MaterialesView`, `TarifasView`), HTML de ayuda importación, `styles.css`, `TypedValueFormatter`, `DynamicColumnValueDAO`, `EntityImportService`, `ImportView`, `TypedValueFormatterTest`, `ImportServiceParsingTest`, `Resumen.md`, `continuar.md`.
 
 ### Tests
@@ -245,7 +245,7 @@ El usuario puede arrancar la sesión con solo decir **"continúa"** o **"¿qué 
 - **Sprint WIZARD-VALIDATION** — paso 3.5 de validación IA entre mapeo e importación; `ValidationIssue` record; `ImportService.validateImportData()` + `corregirValor()` + validación local (NIF, email, precios, fechas, duplicados); `TableColumnSizing`; fix corrección condicional (no borrar issue si la IA no corrijo). **COMPLETO.** (`988a8fb`→`979cd06`)
 - **Sprint COLUMN-FORMAT + IMPORT-REPAIR** — formato real de columnas dinámicas tipadas (`PRECIO` con €, `FECHA` con DatePicker/ISO, `NUMERICO` normalizado), conversión opcional de valores existentes al cambiar tipo con reporte de no convertibles + transacción, rechazo de edición inválida en celdas tipadas, botón "🤖 Reparar importación" para plan IA con campos dinámicos tipados/valores fijos/correcciones de celda, normalización determinista previa a importar. **COMPLETO en working tree. Revisión Gemini incorporada.**
 - **Sprint IMPORT-PARSER + MAPPING-GUARD** — parser real probado contra carpetas del usuario (`CSV`, `excel`, `EXCEL_SEPARADO`, `files`, `TARIFAS_SEPARADAS`, `TARIFAS_SEPARADAS 1`, `todas_las_tarifas`): 288/288 archivos abren (110 CSV, 177 XLSX, 1 XLSB). `ImportService` detecta cabecera real, soporta XLSB vía extractor tabulado, evita CSV vacío con excepción, conserva tablas laterales, infiere cabeceras vacías (`UNIDADES`, `DESCRIPCIÓN`, `PRECIO`) y salta cabeceras repetidas/separadores. `mapearCampos()` ejecuta fallback local siempre, aunque Ollama devuelva 0 columnas; `Tarifa.IMPORT_SPEC` reconoce `UNIDADES`, `CONCEPTO`, `DESCRIPCIÓN`; `Material.IMPORT_SPEC` reconoce `tipo_papel`, `modelo`, `producto`, `familia`. `ImportView` activa técnica/categoría fija por defecto cuando falta y bloquea `Siguiente` si faltan obligatorios. **COMPLETO en working tree.**
-- **Auditoría 2026-06-12 (SEC-NEW + COD-NEW + ARCH-NEW)** — 8 hallazgos nuevos. Corregidos: SEC-NEW-1 (importar*SQL sin validación SQL — CRÍTICO), SEC-NEW-2 (OllamaService sin request timeout), SEC-NEW-3 (NPE en getModelosConDetalles), ARCH-NEW-1 (OLLAMA_URL duplicada), COD-NEW-1 (6 dead constants JSON_*). Abiertos: SEC-NEW-4 (concurrencia OllamaService), SEC-NEW-5 (historial sin límite), COD-NEW-2 (STYLE_BURBUJA inline). Commits: `3d7f765`→`5c1a7f7`. **110/110 tests verdes.**
+- **Auditoría 2026-06-12 (SEC-NEW + COD-NEW + ARCH-NEW + Security Review)** — 9 hallazgos. Corregidos: SEC-NEW-1 (importar*SQL sin validación SQL — clasificación revisada: métodos son código muerto en UI, fix correcto como defensa en profundidad), SEC-NEW-2 (OllamaService getModelosConDetalles sin request timeout), SEC-NEW-3 (NPE getModelosConDetalles), ARCH-NEW-1 (OLLAMA_URL duplicada), COD-NEW-1 (6 dead constants JSON_*), VULN-SR-001 (enviarConsulta sin request timeout). Abiertos: SEC-NEW-4 (concurrencia OllamaService), SEC-NEW-5 (historial sin límite), COD-NEW-2 (STYLE_BURBUJA inline). Commits: `3d7f765`→`a352225`. **110/110 tests verdes.**
 
 ### Cola de trabajo
 
@@ -364,7 +364,7 @@ Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
    .\mvnw.cmd test
    ```
    Esperado: 110/110 verdes.
-4. Declarar: HEAD `5c1a7f7`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Auditoría 2026-06-12 aplicada (SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2 — 5 corregidos, 3 abiertos). Cola activa: commit atómico de sprints en working tree + validación manual del flujo `Tarifas > Importar`.
+4. Declarar: HEAD `a352225`. Sprints COLUMN-FORMAT + IMPORT-REPAIR e IMPORT-PARSER + MAPPING-GUARD cerrados en working tree. Auditoría 2026-06-12 completa (SEC-NEW-1..5, ARCH-NEW-1, COD-NEW-1/2, VULN-SR-001 — 6 corregidos, 3 abiertos). Cola activa: commit atómico de sprints en working tree + validación manual del flujo `Tarifas > Importar`.
 
 ---
 
