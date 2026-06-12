@@ -24,6 +24,7 @@ import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.ValidationIssue;
 import org.gipsybuho.service.importer.EntityImportSpec;
 import org.gipsybuho.service.importer.FieldSpec;
+import org.gipsybuho.service.importer.RowError;
 import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.File;
@@ -1116,6 +1117,7 @@ public class ImportView extends VBox {
         List<Map<String, String>> rows = copyRows(resultadoParseo.rows);
         Map<String, String> mapping = new LinkedHashMap<>(sourceMapping);
         mapping.entrySet().removeIf(entry -> entry.getValue() == null);
+        rellenarGrupoVacio(rows, mapping);
         if (groupingConfig != null) {
             mapping.entrySet().removeIf(entry -> groupingConfig.field().equals(entry.getValue()));
             for (Map<String, String> row : rows) {
@@ -1124,6 +1126,28 @@ public class ImportView extends VBox {
             mapping.put("__fixed_group__", groupingConfig.field());
         }
         return new PreparedImport(rows, mapping);
+    }
+
+    /**
+     * Si el campo de agrupación (tecnica/categoria) viene mapeado desde una columna
+     * pero algunas filas la traen vacía, rellena esos huecos con el nombre del archivo.
+     * Evita descartes por campo obligatorio vacío en archivos reales con grupos parciales.
+     */
+    private void rellenarGrupoVacio(List<Map<String, String>> rows, Map<String, String> mapping) {
+        if (groupingConfig != null) return; // el valor fijo ya cubre todas las filas
+        String groupField = groupingField(tipoSeleccionado);
+        if (groupField == null) return;
+        String sourceCol = mapping.entrySet().stream()
+            .filter(e -> groupField.equals(e.getValue()))
+            .map(Map.Entry::getKey)
+            .findFirst().orElse(null);
+        String fallback = defaultGroupingValue();
+        if (sourceCol == null || fallback.isBlank()) return;
+        for (Map<String, String> row : rows) {
+            if (row.getOrDefault(sourceCol, "").isBlank()) {
+                row.put(sourceCol, fallback);
+            }
+        }
     }
 
     private List<Map<String, String>> copyRows(List<Map<String, String>> rows) {
@@ -1219,7 +1243,19 @@ public class ImportView extends VBox {
             result.duracion().toMillis() / 1000.0));
         sb.append(String.format("✓ %d filas importadas%n", result.filasImportadas()));
         sb.append(String.format("✓ %d filas actualizadas%n", result.filasActualizadas()));
+        long filasConError = result.errores().stream()
+            .map(RowError::numeroFila)
+            .distinct()
+            .count();
+        long filasOmitidas = Math.max(0, result.filasDescartadas() - filasConError);
         sb.append(String.format("✗ %d filas descartadas", result.filasDescartadas()));
+        if (filasOmitidas > 0) {
+            sb.append(String.format("%n  • %d ya existían o fueron omitidas por la política de duplicados",
+                filasOmitidas));
+        }
+        if (filasConError > 0) {
+            sb.append(String.format("%n  • %d tenían errores de datos", filasConError));
+        }
         if (!result.errores().isEmpty()) {
             sb.append("\n\nErrores (primeros 10):");
             result.errores().stream().limit(10).forEach(error ->
