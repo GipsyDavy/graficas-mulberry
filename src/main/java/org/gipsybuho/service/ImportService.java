@@ -522,6 +522,7 @@ public class ImportService {
                 map.put(headers.get(i), val);
                 if (!val.isBlank()) hasData = true;
             }
+            if (expandPriceMatrix && isTarifaDataRowWithoutPrice(map)) continue;
             if (hasData) rows.add(map);
         }
         return new ImportResult(headers, rows, formato, analysis);
@@ -578,11 +579,34 @@ public class ImportService {
                     row.put(header, value);
                     if (!value.isBlank()) hasData = true;
                 }
+                if (expandPriceMatrix && isTarifaDataRowWithoutPrice(row)) continue;
                 if (hasData) rows.add(row);
             }
         }
 
         return new ImportResult(new ArrayList<>(headers), rows, formato, analysis);
+    }
+
+    private boolean isTarifaDataRowWithoutPrice(Map<String, String> row) {
+        boolean hasName = false;
+        boolean hasUnits = false;
+        boolean hasPriceColumn = false;
+        boolean hasPriceValue = false;
+        for (var entry : row.entrySet()) {
+            String header = normalize(entry.getKey());
+            String value = entry.getValue() != null ? entry.getValue().trim() : "";
+            if (header.contains("descripcion") || header.contains("concepto") || header.contains("nombre")) {
+                hasName |= !value.isBlank();
+            }
+            if (header.contains("unidad") || header.contains("cantidad") || header.contains("minimo")) {
+                hasUnits |= !value.isBlank();
+            }
+            if (isPriceHeader(entry.getKey())) {
+                hasPriceColumn = true;
+                hasPriceValue |= !value.isBlank();
+            }
+        }
+        return hasName && hasUnits && hasPriceColumn && !hasPriceValue;
     }
 
     private List<Integer> priceColumnsInRegion(List<List<String>> grid, DetectedRegion region) {
@@ -1103,9 +1127,10 @@ public class ImportService {
         return (start >= 0 && end > start) ? text.substring(start, end + 1) : text;
     }
 
-    private void fallbackMapping(Map<String, String> mapping, TipoEntidad tipo) {
+    void fallbackMapping(Map<String, String> mapping, TipoEntidad tipo) {
         sanitizeMapping(mapping, tipo);
         applyExactDestinationMappings(mapping, tipo);
+        deduplicateMapping(mapping, tipo);
 
         Set<String> usedDestinations = new HashSet<>();
         mapping.values().stream()
@@ -1157,8 +1182,50 @@ public class ImportService {
         }
     }
 
+    private void deduplicateMapping(Map<String, String> mapping, TipoEntidad tipo) {
+        Map<String, String> bestSourceByDestination = new HashMap<>();
+        for (var entry : mapping.entrySet()) {
+            String destination = entry.getValue();
+            if (destination == null) continue;
+            String currentBest = bestSourceByDestination.get(destination);
+            if (currentBest == null
+                    || mappingScore(tipo, entry.getKey(), destination)
+                    > mappingScore(tipo, currentBest, destination)) {
+                bestSourceByDestination.put(destination, entry.getKey());
+            }
+        }
+        for (var entry : new ArrayList<>(mapping.entrySet())) {
+            String destination = entry.getValue();
+            if (destination == null) continue;
+            if (!entry.getKey().equals(bestSourceByDestination.get(destination))) {
+                mapping.put(entry.getKey(), null);
+            }
+        }
+    }
+
+    private int mappingScore(TipoEntidad tipo, String sourceColumn, String destino) {
+        if (exactDestination(tipo, sourceColumn) != null
+                && exactDestination(tipo, sourceColumn).equals(destino)) {
+            return 100;
+        }
+        String source = normalize(sourceColumn);
+        if (tipo == TipoEntidad.TARIFAS) {
+            if ("tecnica".equals(destino) && isTarifaTechniqueHeader(source)) return 80;
+            if ("nombre".equals(destino) && isTarifaNameHeader(source)) return 80;
+            if ("minimo_unidades".equals(destino) && isTarifaUnitsHeader(source)) return 80;
+            if ("precio_unit".equals(destino) && isPriceHeaderForMapping(source)) return 80;
+        }
+        if (tipo == TipoEntidad.MATERIALES) {
+            if ("unidad".equals(destino) && isUnitHeader(source)) return 80;
+            if (("stock_actual".equals(destino) || "stock_minimo".equals(destino)) && isStockHeader(source)) return 80;
+            if ("precio_unidad".equals(destino) && isPriceHeaderForMapping(source)) return 80;
+        }
+        return isPlausibleMapping(tipo, sourceColumn, destino) ? 10 : 0;
+    }
+
     private String exactDestination(TipoEntidad tipo, String sourceColumn) {
         String source = normalize(sourceColumn);
+        if (tipo == TipoEntidad.TARIFAS && "descripcion".equals(source)) return null;
         for (String campo : tipo.campos) {
             if (normalize(campo).equals(source)) return campo;
         }
@@ -1166,9 +1233,19 @@ public class ImportService {
     }
 
     private boolean isPlausibleMapping(TipoEntidad tipo, String sourceColumn, String destino) {
+        String source = normalize(sourceColumn);
+        if (tipo == TipoEntidad.TARIFAS) {
+            if ("tecnica".equals(destino)) return isTarifaTechniqueHeader(source);
+            if ("nombre".equals(destino)) return isTarifaNameHeader(source);
+            if ("minimo_unidades".equals(destino)) return isTarifaUnitsHeader(source);
+            if ("precio_unit".equals(destino)) return isPriceHeaderForMapping(source);
+            if ("precio_setup".equals(destino)) return source.contains("setup")
+                || source.contains("arranque")
+                || source.contains("preparacion");
+            return true;
+        }
         if (tipo != TipoEntidad.MATERIALES) return true;
 
-        String source = normalize(sourceColumn);
         if ("unidad".equals(destino)) {
             return isUnitHeader(source);
         }
@@ -1179,6 +1256,35 @@ public class ImportService {
             return isPriceHeaderForMapping(source);
         }
         return true;
+    }
+
+    private boolean isTarifaTechniqueHeader(String normalizedHeader) {
+        return normalizedHeader.equals("tecnica")
+            || normalizedHeader.equals("grupo")
+            || normalizedHeader.equals("seccion")
+            || normalizedHeader.equals("proceso")
+            || normalizedHeader.equals("tipo")
+            || normalizedHeader.equals("tecnica_impresion");
+    }
+
+    private boolean isTarifaNameHeader(String normalizedHeader) {
+        return normalizedHeader.equals("nombre")
+            || normalizedHeader.equals("descripcion")
+            || normalizedHeader.equals("description")
+            || normalizedHeader.equals("concepto")
+            || normalizedHeader.equals("servicio")
+            || normalizedHeader.equals("tarifa");
+    }
+
+    private boolean isTarifaUnitsHeader(String normalizedHeader) {
+        return normalizedHeader.equals("minimo_unidades")
+            || normalizedHeader.equals("unidades")
+            || normalizedHeader.equals("unidad")
+            || normalizedHeader.equals("cantidad")
+            || normalizedHeader.equals("cantidad_minima")
+            || normalizedHeader.equals("minimo")
+            || normalizedHeader.equals("min_qty")
+            || normalizedHeader.equals("minimum");
     }
 
     private boolean isUnitHeader(String normalizedHeader) {

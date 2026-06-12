@@ -68,6 +68,28 @@ Tests:
 Pendiente operativo: cerrar app vieja, relanzar con código nuevo, limpiar datos
 malos ya importados y reimportar Materiales/IMANES.
 
+## ESTADO VIVO 2026-06-13 00:05 — FIX IMANES 2
+
+Capturas confirman:
+- Materiales quedó correcto (`ud`, precios en `Precio/ud.`).
+- Tarifas IMANES aún tenía `Técnica=100` y filas a `0,00 €`.
+
+Fix:
+- Saneado específico de mapeo de Tarifas en `ImportService`.
+- `CANTIDAD` ya no puede mapear a `tecnica`; pasa a `minimo_unidades`.
+- `DESCRIPCIÓN` se mantiene como `nombre`, no como campo opcional.
+- Filas de tarifa con cantidad+nombre y precio vacío se ignoran antes de
+  importar.
+
+Tests:
+```powershell
+.\mvnw.cmd test
+# 131/131 verdes
+```
+
+Pendiente operativo: limpiar filas IMANES malas ya insertadas y reimportar con
+app relanzada.
+
 ---
 
 ## CÓMO TRATARME

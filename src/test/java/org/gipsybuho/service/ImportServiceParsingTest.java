@@ -11,6 +11,7 @@ import org.junit.jupiter.api.io.TempDir;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -97,6 +98,44 @@ class ImportServiceParsingTest {
         assertEquals("FOLIOS - PRECI S/D", result.rows.get(0).get("TECNICA"));
         assertEquals("FOLIOS - PRECIO C/D", result.rows.get(1).get("TECNICA"));
         assertEquals("46,90", result.rows.get(1).get("PRECIO_UNIT"));
+    }
+
+    @Test
+    void parseCsvTarifaFlatMatrixSkipsRowsWithoutPrice() throws Exception {
+        Path file = tempDir.resolve("imanes.csv");
+        Files.writeString(file, String.join("\n",
+            ",,IMANES A-5,,,,",
+            ",CANTIDAD,DESCRIPCIÓN,PRECIO,,,",
+            ",100,IMANES FINOS 4 TINTAS,90,0.9,,40.0",
+            ",200,IMANES FINOS 4 TINTAS,145,0.725,,75.0",
+            ",400,IMANES FINOS 4 TINTAS,,,,",
+            ",500,IMANES FINOS 4 TINTAS,292,0.584,,175.0",
+            ",1000,IMANES FINOS 4 TINTAS,,,,"
+        ), StandardCharsets.UTF_8);
+
+        ImportService.ImportResult result = new ImportService().parseFile(file.toFile(), true);
+
+        assertEquals(3, result.rows.size());
+        assertEquals("100", result.rows.get(0).get("CANTIDAD"));
+        assertEquals("90", result.rows.get(0).get("PRECIO"));
+        assertEquals("500", result.rows.get(2).get("CANTIDAD"));
+        assertEquals("292", result.rows.get(2).get("PRECIO"));
+    }
+
+    @Test
+    void tarifaMappingRejectsCantidadAsTecnicaAndKeepsGrupoAsTecnica() {
+        Map<String, String> mapping = new LinkedHashMap<>();
+        mapping.put("GRUPO", "tecnica");
+        mapping.put("CANTIDAD", "tecnica");
+        mapping.put("DESCRIPCIÓN", "nombre");
+        mapping.put("PRECIO", "precio_unit");
+
+        new ImportService().fallbackMapping(mapping, ImportService.TipoEntidad.TARIFAS);
+
+        assertEquals("tecnica", mapping.get("GRUPO"));
+        assertEquals("minimo_unidades", mapping.get("CANTIDAD"));
+        assertEquals("nombre", mapping.get("DESCRIPCIÓN"));
+        assertEquals("precio_unit", mapping.get("PRECIO"));
     }
 
     @Test

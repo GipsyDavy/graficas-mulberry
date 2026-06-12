@@ -145,6 +145,34 @@ Validación post-fix:
 Queda pendiente: limpiar o borrar de la BD real los materiales ya importados con
 unidad incorrecta antes de reimportar.
 
+2026-06-13 00:05: segunda prueba manual detecta mejora parcial y dos restos en
+`40_IMANES.xlsx`:
+- Materiales ya muestra `ud` y precios correctos.
+- Tarifas aún mostraba `Técnica = 100` porque la IA podía mapear `CANTIDAD`
+  como `tecnica` y pisar `GRUPO`.
+- Filas con precio vacío seguían entrando como tarifas `0,00 €`.
+
+Fix aplicado:
+- `ImportService` sanea mapeo de Tarifas igual que Materiales: `CANTIDAD`
+  solo puede ser `minimo_unidades`, `GRUPO`/`TECNICA` solo pueden ser `tecnica`,
+  `DESCRIPCIÓN` queda como `nombre`.
+- Si el parser está en modo Tarifas y una fila tiene cantidad+nombre pero precio
+  vacío, la fila se ignora antes de importar. Evita tarifas a `0,00 €` por celda
+  vacía.
+- Se deduplican destinos del mapeo y se conserva la columna fuente más plausible.
+
+Validación post-fix:
+```powershell
+.\mvnw.cmd test "-Dtest=ImportServiceParsingTest"
+# 15/15 verdes
+
+.\mvnw.cmd test
+# 131/131 verdes
+```
+
+Queda pendiente operativo: borrar de la BD real las tarifas IMANES ya importadas
+mal (`Técnica=100`, precios `0,00 €`) y reimportar con la app relanzada.
+
 ---
 
 ## Bloque Gemini — segunda opinión obligatoria

@@ -119,6 +119,44 @@ Pendiente tras commit:
 
 ---
 
+## Estado vivo — Fix IMANES 2 (2026-06-13 00:05)
+
+Capturas del usuario tras `15706fa`:
+- Materiales ya OK: unidad `ud`, precio correcto.
+- Tarifas IMANES aún mal: `Técnica=100` en algunas filas y precios `0,00 €`
+  para cantidades sin precio.
+
+Causa:
+- La IA podía mapear `CANTIDAD -> tecnica`; al mapear valores, `CANTIDAD`
+  pisaba `GRUPO`.
+- Las filas de tarifa con precio vacío se importaban como `0.0` porque
+  `precio_unit` no era obligatorio.
+
+Fix en working tree:
+- `ImportService.fallbackMapping()` ahora sanea también Tarifas:
+  - `GRUPO/TECNICA -> tecnica`;
+  - `CANTIDAD/UNIDADES -> minimo_unidades`;
+  - `DESCRIPCIÓN/CONCEPTO/NOMBRE -> nombre`;
+  - `PRECIO -> precio_unit`;
+  - duplicados: gana la columna más plausible.
+- Parser en modo Tarifas ignora filas con cantidad+nombre pero sin precio.
+- Tests nuevos en `ImportServiceParsingTest`:
+  - `parseCsvTarifaFlatMatrixSkipsRowsWithoutPrice`
+  - `tarifaMappingRejectsCantidadAsTecnicaAndKeepsGrupoAsTecnica`
+
+Validado:
+```powershell
+.\mvnw.cmd test
+# 131/131 verdes
+```
+
+Pendiente:
+- Commit.
+- Relanzar app.
+- Borrar de BD real filas IMANES ya importadas mal y reimportar.
+
+---
+
 ## Raíz correcta del proyecto
 
 Abrir siempre:
