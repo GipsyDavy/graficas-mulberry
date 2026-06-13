@@ -184,7 +184,7 @@
       "Bash(powershell -Command 'Get-Process | Where-Object { $_.MainWindowTitle -match '\\\\''Mulberry|Gr.ficas'\\\\'' } | Select-Object -First 1 -ExpandProperty MainWindowTitle')",
       "PowerShell(Get-Process *)",
       "Bash(Select-Object Name)",
-      "PowerShell(pip install *)",
+      "PowerShell(pip install openpyxl --quiet)",
       "PowerShell(python \"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry\\\\scripts\\\\extrae_material.py\")",
       "PowerShell(Start-Process -FilePath \"cmd.exe\" -ArgumentList \"/c\", \"cd /d `\"C:\\\\Users\\\\GipsyDavy\\\\MAVEN\\\\Graficas Mulberry`\" && .\\\\mvnw.cmd javafx:run\" -WindowStyle Normal)"
     ]
