@@ -221,12 +221,12 @@ Orden de Sprint UI-E según prioridad conjunta Claude Code + Codex:
 
 | # | Mejora | Impacto | Esfuerzo | Estado |
 |---|---|---|---|---|
-| 1 | Sistema de elevación (CSS) | ★★★★★ | Bajo | pendiente |
-| 2 | KPI números animados (Timeline) | ★★★★★ | Bajo | pendiente |
-| 3 | Shimmer animado skeleton | ★★★★☆ | Bajo | pendiente |
+| 1 | Sistema de elevación (CSS) | ★★★★★ | Bajo | **HECHO** `a5b6116` — 18 dropshadow → 4 niveles L0/L1/L2/L3 |
+| 2 | KPI números animados (Timeline) | ★★★★★ | Bajo | **HECHO** `96ef919` + `aa10dc4` — count-up con fix valor=0 |
+| 3 | Animación escalonada filas | ★★★★☆ | Bajo | **HECHO** `7d2ee82` + `3bd6e1e` — fade+slide 260ms, 45ms/fila, Clientes+Facturas+Pedidos |
 | 4 | **Slide+fade entre vistas** | ★★★★☆ | Bajo | **HECHO** `0bb8c8b` — 220ms puede subirse a 260ms si se quiere más suave |
 | 5 | Shake en campos erróneos | ★★★☆☆ | Mínimo | pendiente |
-| 6 | Sliding pill sidebar | ★★★★★ | Medio | pendiente — defer hasta cerrar MIGRACION-COMPLEJA |
+| 6 | Sliding pill sidebar | ★★★★★ | Medio | pendiente — defer hasta RELEASE-GATE |
 | 7 | Pattern de fondo dashboard | ★★★☆☆ | Mínimo | pendiente |
 
 Para después de RELEASE-GATE + INSTALLER-REPRO (Sprint UI-F):

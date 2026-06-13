@@ -21,6 +21,22 @@ Actualizar tras cada sprint cerrado.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
 
+### Qué se hizo en la sesión 2026-06-14 (Sprint UI-E ítems 1-3)
+
+- **UI-E ítem 1** (CSS elevación) — CERRADO en sesión anterior, commit `a5b6116`
+- **UI-E ítem 2** (KPI animados) — CERRADO en sesión anterior, commits `96ef919` + `aa10dc4`
+- **UI-E ítem 3** (animación escalonada de filas):
+  - Opción A elegida: FadeTransition + TranslateTransition, 10 filas máx, `Platform.runLater`
+  - Método `animarFilas(TableView<?>)` añadido a `TableColumnSizing.java`
+  - Hook añadido en `ClientesView.cargar()`, `FacturasView.cargar()`, `PedidosView.cargarPedidos()`
+  - Commit `7d2ee82` — implementación inicial
+  - Fix posterior: doble `Platform.runLater()` (2 ciclos VirtualFlow), sort por Y real (top→bottom), delay 45ms, Y 22px, duración 260ms
+  - Commit `3bd6e1e` — fix animación
+  - VibeSec: 0 vulnerabilidades. BUILD SUCCESS.
+  - Validación visual: usuario confirmó efecto visible (antes vacío, ahora con datos de test)
+  - CSVs de prueba generados en Escritorio: `test_clientes.csv`, `test_pedidos.csv`, `test_facturas.csv` (15 filas c/u, importar en ese orden)
+  - Nota: la sesión cerró antes de confirmación final del fix visual — pendiente verificar al inicio de próxima sesión
+
 ### Qué se hizo en la sesión 2026-06-13 (tarde)
 - Reorganización completa de `.md`: archivos históricos movidos a `docs/archive/audits/`, creado `docs/context/STATE.md`.
 - Traducción al español de `AGENTS.md`, `GEMINI.md`, `SECURITY.md`.
@@ -54,11 +70,13 @@ Actualizar tras cada sprint cerrado.
 - **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
-1. **MIGRACION-COMPLEJA** — leer `MIGRACION_HISTORICO.md` y continuar. Prioridad máxima.
-2. Si el usuario quiere UI antes: **sistema de elevación CSS** — unificar los 18 `dropshadow` de `styles.css` en 4 variables de nivel. Solo CSS, cero riesgo Java.
-3. Después: **KPI números animados** en `DashboardView` con `Timeline` + `KeyFrame`. Patrón de referencia en `VisualAssistantView.java` (método `escrituraAnimacion`).
-4. Después: **Shimmer skeleton** animado con `Timeline` (patrón `pulsoVozAnimacion` en `VisualAssistantView`).
-5. Después: **Shake en campos erróneos** — copiar KeyFrames de `VisualAssistantView` a formularios.
+1. **Verificar UI-E ítem 3** al inicio de sesión — navegar a Clientes/Facturas/Pedidos y confirmar que el efecto fade+slide es visible en todas las filas de arriba a abajo. Si no, ajustar params en `TableColumnSizing.animarFilas()`.
+2. **Sprint UI-E ítem 5** — Shake en campos erróneos: copiar KeyFrames de `VisualAssistantView.java` (método shake existente) a formularios cuando falla validación. Bajo esfuerzo, mínimo riesgo.
+3. **Sprint UI-E ítem 7** — Pattern de fondo en dashboard: grid de puntos/líneas a 4-6% opacidad. Solo CSS o Canvas.
+4. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta RELEASE-GATE. Toca `navBtnImpl` y coordenadas dentro de ScrollPane.
+5. **RELEASE-GATE MANUAL** — revisar antes de empaquetar.
+6. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
+7. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -80,19 +98,19 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `fd1f34b` |
-| Mensaje | `v13.0.0 modificaciones Selene` |
+| HEAD | `3bd6e1e` |
+| Mensaje | `fix(ui): mejorar animación escalonada de filas en tablas` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
-| Versión app | v13.0.0 (`AppConstants.APP_VERSION`) |
+| Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
 
 ---
 
 ## Sprint activo
 
-**Sprint MIGRACION-COMPLEJA** — migración de archivos históricos con estructura humana compleja (Excel con celdas combinadas, múltiples mini-tablas, bloques laterales). Ver `MIGRACION_HISTORICO.md` para procedimiento completo.
+**Sprint UI-E** — ítems 1/2/3/4 cerrados. Pendiente: ítem 5 (shake), ítem 7 (pattern fondo), ítem 6 (sliding pill, defer). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
-**Sprint UI-E** (micro, en paralelo con bajo riesgo) — microinteracciones de bajo riesgo. Ver `docs/ui/MEJORAS-VISUALES.md` para lista completa y estado.
+**Sprint MIGRACION-COMPLEJA** — CSVs restantes aún pendientes de importación manual por el usuario. Ver `MIGRACION_HISTORICO.md`.
 
 ---
 
@@ -118,7 +136,8 @@ Actualizar tras cada sprint cerrado.
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
 | HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
-| Sprint UI-E (parcial) | `0bb8c8b` | slide+fade en mostrarVista (220ms, EASE_OUT, +24px X) |
+| Sprint UI-E ítems 1-3 | `3bd6e1e` | CSS elevación + KPI animados + filas escalonadas (Clientes/Facturas/Pedidos) |
+| Sprint UI-E (slide+fade) | `0bb8c8b` | slide+fade en mostrarVista (220ms, EASE_OUT, +24px X) |
 | Sprint UI-A/B/C/D | varios | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint SEC | — | 5 fixes seguridad P0/P1 |
 | Sprint COD | — | Dead code eliminado |
