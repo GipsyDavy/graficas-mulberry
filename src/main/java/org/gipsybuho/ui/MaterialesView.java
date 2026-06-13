@@ -25,6 +25,7 @@ import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -1107,6 +1108,12 @@ public class MaterialesView extends VBox {
     }
     private void alerta(String m)     { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait();
+        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+        if (w != null && msg.contains("UNIQUE constraint failed")) {
+            ToastService.error(w, "Código de material ya existente.", "MAT-ERR-1");
+        } else {
+            new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
+        }
     }
 }

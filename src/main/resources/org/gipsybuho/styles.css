@@ -634,6 +634,17 @@
 .toast-error   { -fx-background-color: #E74C3C; }
 .toast-info    { -fx-background-color: #3498DB; }
 
+.toast-link {
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-background-color: transparent;
+    -fx-underline: true;
+    -fx-font-size: 12px;
+    -fx-padding: 0;
+    -fx-cursor: hand;
+}
+.toast-link:hover { -fx-opacity: 0.82; }
+
 /* ── COMMAND BAR ─────────────────────────────────────────── */
 .command-bar {
     -fx-padding: 0 0 10 0;

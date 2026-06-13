@@ -9,6 +9,7 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportBackupService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 
 import java.io.File;
 import java.nio.file.Path;
@@ -265,12 +266,17 @@ public class ImportBackupView extends VBox {
     }
 
     private void mostrarError(Exception e) {
-        Alert alert = new Alert(Alert.AlertType.ERROR);
-        alert.setTitle("Error al restaurar backup");
-        alert.setHeaderText("No se pudo completar la restauración");
-        alert.setContentText("Error: " + e.getMessage());
-        if (getScene() != null) alert.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
-        alert.showAndWait();
+        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+        if (w != null) {
+            ToastService.error(w, "Error al restaurar backup: " + msg, "BAK-ERR-1");
+        } else {
+            Alert alert = new Alert(Alert.AlertType.ERROR);
+            alert.setTitle("Error al restaurar backup");
+            alert.setHeaderText("No se pudo completar la restauración");
+            alert.setContentText("Error: " + msg);
+            alert.showAndWait();
+        }
     }
 
     private void log(String msg) {

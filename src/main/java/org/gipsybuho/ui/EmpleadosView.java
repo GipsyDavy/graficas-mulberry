@@ -18,6 +18,7 @@ import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -535,5 +536,13 @@ public class EmpleadosView extends VBox {
     }
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) {
+        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+        if (w != null && msg.contains("UNIQUE constraint failed")) {
+            ToastService.error(w, "DNI ya registrado en otro empleado.", "EMP-ERR-1");
+        } else {
+            new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
+        }
+    }
 }

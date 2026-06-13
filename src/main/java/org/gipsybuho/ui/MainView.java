@@ -31,6 +31,7 @@ import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserPermissions;
 import org.gipsybuho.service.AuthService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 import org.gipsybuho.util.AppConstants;
 
 import java.time.format.DateTimeFormatter;
@@ -80,6 +81,7 @@ public class MainView extends BorderPane {
         this.authService = authService;
         this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
+        ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "Ayuda"));
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");

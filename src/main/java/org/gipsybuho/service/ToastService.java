@@ -6,12 +6,16 @@ import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
+import javafx.scene.Node;
+import javafx.scene.control.Hyperlink;
 import javafx.scene.control.Label;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.Popup;
 import javafx.stage.Window;
 import javafx.util.Duration;
+
+import java.util.function.Consumer;
 
 /**
  * Notificaciones tipo toast en esquina inferior derecha de la ventana.
@@ -24,11 +28,14 @@ public final class ToastService {
     private static final int MAX_STACK = 4;
     private static final VBox stack = new VBox(6);
     private static Popup popup;
+    private static Consumer<String> articleNavigator;
 
     private ToastService() {}
 
+    public static void setArticleNavigator(Consumer<String> nav) { articleNavigator = nav; }
+
     public static void show(Window owner, String mensaje, Type type) {
-        Platform.runLater(() -> mostrar(owner, mensaje, type));
+        Platform.runLater(() -> mostrar(owner, mensaje, type, null));
     }
 
     public static void success(Window owner, String msg) { show(owner, msg, Type.SUCCESS); }
@@ -36,7 +43,12 @@ public final class ToastService {
     public static void error(Window owner, String msg)   { show(owner, msg, Type.ERROR);   }
     public static void info(Window owner, String msg)    { show(owner, msg, Type.INFO);    }
 
-    private static void mostrar(Window owner, String mensaje, Type type) {
+    /** Muestra un toast de error con enlace "Ver solución →" que abre el artículo de ayuda indicado. */
+    public static void error(Window owner, String msg, String articleId) {
+        Platform.runLater(() -> mostrar(owner, msg, Type.ERROR, articleId));
+    }
+
+    private static void mostrar(Window owner, String mensaje, Type type, String articleId) {
         if (popup == null) {
             stack.getStyleClass().add("toast-stack");
             stack.setAlignment(Pos.BOTTOM_RIGHT);
@@ -50,12 +62,8 @@ public final class ToastService {
             stack.getChildren().remove(0);
         }
 
-        Label lbl = new Label(mensaje);
-        lbl.getStyleClass().addAll("toast", "toast-" + type.name().toLowerCase());
-        lbl.setWrapText(true);
-        lbl.setMaxWidth(300);
-
-        StackPane card = new StackPane(lbl);
+        Node inner = buildNode(mensaje, type, articleId);
+        StackPane card = new StackPane(inner);
         card.setOpacity(0);
         stack.getChildren().add(card);
 
@@ -87,6 +95,28 @@ public final class ToastService {
         owner.yProperty().addListener((o, ov, nv) -> posicionar(owner));
         owner.widthProperty().addListener((o, ov, nv) -> posicionar(owner));
         owner.heightProperty().addListener((o, ov, nv) -> posicionar(owner));
+    }
+
+    private static Node buildNode(String mensaje, Type type, String articleId) {
+        Label lbl = new Label(mensaje);
+        lbl.setWrapText(true);
+
+        if (articleId == null || articleNavigator == null) {
+            lbl.getStyleClass().addAll("toast", "toast-" + type.name().toLowerCase());
+            lbl.setMaxWidth(300);
+            return lbl;
+        }
+
+        lbl.setMaxWidth(276);
+        Hyperlink link = new Hyperlink("Ver solución →");
+        link.getStyleClass().add("toast-link");
+        link.setOnAction(e -> articleNavigator.accept(articleId));
+
+        VBox box = new VBox(4, lbl, link);
+        box.getStyleClass().addAll("toast", "toast-" + type.name().toLowerCase());
+        box.setMaxWidth(300);
+        box.setPadding(new Insets(10, 16, 10, 16));
+        return box;
     }
 
     private static void posicionar(Window owner) {

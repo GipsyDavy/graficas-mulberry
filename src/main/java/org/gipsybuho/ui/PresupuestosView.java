@@ -26,6 +26,7 @@ import org.gipsybuho.service.importer.ImportResult;
 import org.gipsybuho.service.PDFService; // Importar PDFService
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -918,5 +919,14 @@ public class PresupuestosView extends VBox {
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { SoundService.play(SoundService.Sound.ERROR); new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) {
+        SoundService.play(SoundService.Sound.ERROR);
+        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+        if (w != null && msg.contains("UNIQUE constraint failed")) {
+            ToastService.error(w, "Número de presupuesto ya existente.", "PRE-ERR-1");
+        } else {
+            new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
+        }
+    }
 }

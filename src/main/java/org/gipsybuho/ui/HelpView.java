@@ -79,6 +79,17 @@ public class HelpView extends BorderPane {
         init(firstId);
     }
 
+    private HelpView(String articleId, boolean byArticleId) {
+        init(articleId);
+    }
+
+    /** Abre la ayuda mostrando el artículo con el ID exacto indicado. */
+    public static HelpView forArticle(String articleId) {
+        boolean exists = HelpService.getInstance().getAll().stream()
+            .anyMatch(e -> e.id().equals(articleId));
+        return new HelpView(exists ? articleId : DEFAULT_ARTICLE, true);
+    }
+
     private void init(String initialArticleId) {
         getStyleClass().add("help-view");
         for (HelpEntry e : service.getAll()) {

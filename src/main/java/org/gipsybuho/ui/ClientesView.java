@@ -23,6 +23,7 @@ import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.ToastService;
 import org.gipsybuho.util.TypedValueFormatter;
 
 import java.io.File;
@@ -570,5 +571,13 @@ public class ClientesView extends VBox {
     private Label lbl(String t) { return new Label(t); }
     private String nvl(String s) { return s != null ? s : ""; }
     private void alerta(String msg) { new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) {
+        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
+        if (w != null && msg.contains("UNIQUE constraint failed")) {
+            ToastService.error(w, "NIF ya registrado en otro cliente.", "CLI-ERR-1");
+        } else {
+            new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
+        }
+    }
 }
