@@ -7,12 +7,55 @@ Actualizar tras cada sprint cerrado.
 
 ---
 
+## HANDOFF PARA PRÓXIMO AGENTE — leer antes de tocar nada
+
+### Lectura obligatoria en orden
+1. Este archivo (`docs/context/STATE.md`) — HEAD, cola, estado.
+2. `AGENTS.md` — reglas entre agentes, sinceridad técnica.
+3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
+4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
+5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
+6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-13 (tarde)
+- Reorganización completa de `.md`: archivos históricos movidos a `docs/archive/audits/`, creado `docs/context/STATE.md`.
+- Traducción al español de `AGENTS.md`, `GEMINI.md`, `SECURITY.md`.
+- Análisis UI/UX experto → `docs/ui/MEJORAS-VISUALES.md` (propuestas + correcciones Codex).
+- **Sprint UI-E iniciado:** slide+fade en `mostrarVista` — commit `0bb8c8b`. Probado y funciona. Usuario dice "un poco rápido" → si se quiere más suave, cambiar `Duration.millis(220)` a `Duration.millis(260)` en `MainView.java` línea ~607 (método `mostrarVista`, dos apariciones: FadeTransition y TranslateTransition).
+
+### Qué NO se hizo y por qué
+- **Sliding pill sidebar**: Codex recomendó defer hasta cerrar MIGRACION-COMPLEJA. Riesgo moderado (toca navBtnImpl y coordenadas dentro de ScrollPane). Ver `docs/ui/MEJORAS-VISUALES.md` tabla de prioridad.
+- **Sprint MIGRACION-COMPLEJA**: no se avanzó esta sesión — la sesión se dedicó a documentación y UI. Es la prioridad máxima para la próxima sesión.
+
+### Próximos pasos recomendados (en orden)
+1. **MIGRACION-COMPLEJA** — leer `MIGRACION_HISTORICO.md` y continuar. Prioridad máxima.
+2. Si el usuario quiere UI antes: **sistema de elevación CSS** — unificar los 18 `dropshadow` de `styles.css` en 4 variables de nivel. Solo CSS, cero riesgo Java.
+3. Después: **KPI números animados** en `DashboardView` con `Timeline` + `KeyFrame`. Patrón de referencia en `VisualAssistantView.java` (método `escrituraAnimacion`).
+4. Después: **Shimmer skeleton** animado con `Timeline` (patrón `pulsoVozAnimacion` en `VisualAssistantView`).
+5. Después: **Shake en campos erróneos** — copiar KeyFrames de `VisualAssistantView` a formularios.
+
+### Decisiones tomadas que el próximo agente debe respetar
+- Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
+- Hover tilt perspectiva: **EVITAR** — puede sentirse juguete en herramienta de trabajo.
+- Floating labels: **EVITAR por ahora** — riesgo de romper formularios existentes.
+- `docs/archive/audits/SECURITY_AUDIT_2026-06-13.md`: **NO MODIFICAR** — es baseline de auditoría. Solo crear nuevos archivos con fecha.
+- Commits: atómicos, en español, sin WIP. Compilar siempre antes de commit.
+
+### Comandos de validación
+```powershell
+.\mvnw.cmd clean compile     # validar tras cualquier cambio Java/CSS
+.\mvnw.cmd test              # antes de cerrar cualquier sprint
+.\mvnw.cmd javafx:run        # probar UI manualmente
+```
+
+---
+
 ## Estado git
 
 | Campo | Valor |
 |---|---|
-| HEAD | `0bb8c8b` |
-| Mensaje | `feat(ui): añadir slide+fade en transición entre vistas` |
+| HEAD | `c3c0015` |
+| Mensaje | `docs: actualizar STATE.md y MEJORAS-VISUALES.md con Sprint UI-E` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
