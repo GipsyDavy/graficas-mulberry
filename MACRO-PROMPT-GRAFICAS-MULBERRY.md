@@ -1,6 +1,6 @@
 # MACRO-PROMPT — GRAFICAS MULBERRY
 
-> **Estado vigente 2026-06-13:** HEAD `610a0f2`, rama `master`, `.\mvnw.cmd test` esperado **135/135**. Leer `CLAUDE.md` e `interfaz.md` antes de actuar. `continuar.md` y `Resumen.md` ya no existen — el estado actual está en la memoria del agente (`MEMORY.md`). Sprints cerrados esta sesión: **HELP-4-FIX** (DDL UNIQUE constraints, factorías HelpView) y **HELP-5** (PreferenceService, OnboardingDialog, modo principiante, hint bar en ClientesView). Regla vigente: no confiar en IA sin fallback local y bloqueo de obligatorios.
+> **Estado vigente 2026-06-13:** HEAD `6268479`, rama `master`, `.\mvnw.cmd test` **142/142**. Leer `CLAUDE.md` antes de actuar. Estado operativo actual en `docs/context/STATE.md`. Regla vigente: no confiar en IA sin fallback local y bloqueo de obligatorios.
 
 Activa TODAS las skills relevantes al máximo nivel:
 
@@ -57,8 +57,8 @@ Base de datos local SQLite vía JDBC directo.
 
 ## Estado actual
 **Proyecto existente y funcional.** No es un proyecto nuevo.
-Versión actual de la app: v13.5.0. HEAD: `65588cf`.
-Handoff técnico en `Resumen.md` (actualmente v4.5).
+Versión actual de la app: v13.5.0. HEAD: `6268479`.
+Estado operativo actual: `docs/context/STATE.md`.
 
 ## Raíz del proyecto
 `C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`
@@ -80,12 +80,12 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 # CONTEXTO DE ESTADO ACTUAL
 
-## Estado técnico verificado (2026-06-12)
+## Estado técnico verificado (2026-06-13)
 
 | Componente | Estado | Notas |
 |---|---|---|
-| HEAD funcional | `63c6592` | Último commit funcional: `fix(import): reconocer cabeceras comunes en documentos` |
-| Build Maven | Funcional | `.\mvnw.cmd test` — 121/121 verdes |
+| HEAD funcional | `6268479` | `security: auditoría y remediación completa 2026-06-13` |
+| Build Maven | Funcional | `.\mvnw.cmd test` — 142/142 verdes |
 | BD SQLite | Funcional | Singleton `DatabaseManager`, PRAGMA foreign_keys=ON |
 | Auth BCrypt | Implementado | `AuthService`, `User`, `UserRole`, `UserPermissions` |
 | Sistema de temas | Funcional | 5 temas CSS + modo oscuro, `TemaManager` |
@@ -100,14 +100,15 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint HELP-4 | COMPLETADO | ToastService con enlace artículo; HelpView inline en MainView |
 | Sprint HELP-4-FIX | COMPLETADO | DDL UNIQUE constraints; factorías estáticas HelpView; tests (`4117cdf`) |
 | Sprint HELP-5 | COMPLETADO | PreferenceService; OnboardingDialog; modo principiante; hint bar ClientesView (`610a0f2`) |
+| Sprint SECURITY-2026-06-13 | COMPLETADO | Auditoría + remediación completa SEC-01..10 + NEW-01..03 (`6268479`) |
 | Sprint COLUMN-TYPES | COMPLETADO | Tipos de columnas dinámicas + edición "Tipo…" |
-| Sprint COLUMN-FORMAT + IMPORT-REPAIR | COMPLETADO EN WORKING TREE | Formato real PRECIO/FECHA/NUMERICO + reparación IA |
-| Sprint IMPORT-PARSER + MAPPING-GUARD | COMPLETADO EN WORKING TREE | 288/288 archivos reales abren; fallback local de mapeo; bloqueo de obligatorios |
+| Sprint COLUMN-FORMAT + IMPORT-REPAIR | COMPLETADO | Formato real PRECIO/FECHA/NUMERICO + reparación IA |
+| Sprint IMPORT-PARSER + MAPPING-GUARD | COMPLETADO | 288/288 archivos reales abren; fallback local de mapeo; bloqueo de obligatorios |
 | Sprint COD | COMPLETADO | Dead code eliminado |
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
 | Deuda 24 | COMPLETADO | 15 tests JDBC nuevos (5 DAOs sin cobertura) |
-| Tests JDBC / servicio | 135/135 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación y UNIQUE constraints |
+| Tests JDBC / servicio | 142/142 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación, UNIQUE constraints y lockout persistente |
 | Instalador Windows | v3.3 disponible | NSIS + jpackage pipeline |
 | Integración Ollama | Funcional | IA local opcional vía `OllamaService` |
 | TTS / Asistente visual | Funcional | `TextToSpeechService`, `VisualAssistantView` |
@@ -125,11 +126,10 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 
 ## Lo que está pendiente o tiene deuda técnica
 
-Ver `Resumen.md` — sección DEUDAS TÉCNICAS para el listado completo.
+Ver `docs/context/STATE.md` para deuda técnica actualizada.
 Cola activa prioritaria: **Sprint MIGRACION-COMPLEJA** — retomar la migración de tablas complejas
 históricas desde Excel/PDF/Word humanos. No confundir con la importación CSV/Excel limpio ya cerrada.
-Después, el orden recomendado es: **DOC-SYNC → HELP-0 → HELP-1 → HELP-2 → Refactor B2**.
-Refactor B2 queda como trabajo técnico posterior porque es amplio y de mayor riesgo.
+Después: **Refactor B2** (largo plazo — inyección de Connection en DAOs).
 
 ## Prioridad actual — Migración de tablas complejas
 

@@ -15,16 +15,27 @@ Gemini Code Assist, and other IDE agents.
 
 Before modifying this project, read:
 
-- `CLAUDE.md` for project workflow, Multi-IA rules, validation, and coding rules.
-- `docs/security/README.md` for the security documentation index.
-- `docs/security/SECURITY_AUDIT_2026-06-13.md` for the latest full security audit.
-- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` for the current remediation status.
-- `docs/security/SECURITY_AUDIT_RUNBOOK.md` for reproducible security audit commands.
+- `CLAUDE.md` — project workflow, Multi-IA rules, coding standards, sprint checklist.
+- `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — full project context: architecture, modules, security rules, UX.
+- `docs/context/STATE.md` — current HEAD, tests, active sprint and known debt (update after each sprint).
+- `docs/security/README.md` — security documentation index.
+- `docs/security/SECURITY_AUDIT_2026-06-13.md` — latest full security audit.
+- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` — current remediation status.
+- `docs/security/SECURITY_AUDIT_RUNBOOK.md` — reproducible security audit commands.
 
 For UI and product context, read:
 
-- `interfaz.md`
-- `AUDITORIA.md`
+- `docs/ui/interfaz.md` — CSS architecture, component table, design system, sprint history.
+
+For migration of complex historical files, read:
+
+- `MIGRACION_HISTORICO.md` — procedure for Sprint MIGRACION-COMPLEJA (active).
+
+## Sinceridad técnica
+
+> **Si no estás seguro, dilo claramente: "no lo sé" o "no puedo verificarlo".**
+> No inventar datos, causas, estados, rutas, APIs, resultados de tests ni conclusiones.
+> Priorizar sinceridad técnica sobre aparentar certeza.
 
 ## Security Audit Status
 

@@ -2,8 +2,8 @@
 
 README técnico sobre cómo procesar archivos históricos de la empresa cliente cuando lleguen.
 
-**Última revisión:** 12/06/2026 (actualizado Sprint IMPORT-PARSER + MAPPING-GUARD)
-**Estado:** Vía A activa y documentada. Sprint 2 (Importación CSV) cerrado. Sprint IMPORT-UPGRADE (`4bc6c9c`) cerrado. Sprint IMPORT-PARSER + MAPPING-GUARD cerrado en working tree: 288/288 archivos reales aportados por el usuario abren con `ImportService.parseFile()` (110 CSV, 177 XLSX, 1 XLSB). El problema pendiente NO es abrir archivos ni importar CSV/Excel plano, sino migrar **tablas complejas en formato humano** con secciones internas, bloques laterales, varias mini-tablas por hoja y filas decorativas. La siguiente línea de trabajo debe centrarse en limpiar/clasificar esos casos complejos.
+**Última revisión:** 13/06/2026 (HEAD `6268479`, 142/142 tests)
+**Estado:** Vía A activa y documentada. Sprint 2 (Importación CSV) cerrado. Sprint IMPORT-UPGRADE cerrado. Sprint IMPORT-PARSER + MAPPING-GUARD cerrado: 288/288 archivos reales abren con `ImportService.parseFile()` (110 CSV, 177 XLSX, 1 XLSB). El problema pendiente NO es abrir archivos ni importar CSV/Excel plano, sino migrar **tablas complejas en formato humano** con secciones internas, bloques laterales, varias mini-tablas por hoja y filas decorativas. La siguiente línea de trabajo debe centrarse en limpiar/clasificar esos casos complejos.
 
 ---
 
@@ -19,9 +19,9 @@ Sprint 2 cerrado por Vía A en mayo 2026:
 - Import con el asistente de Fase 1 + Fase 2 (parent-child) ya existente.
 - Las 9 vistas tienen botón `📥 Importar` funcional cableado contra `EntityImportService`. Ya no hay Alerts "Funcionalidad próximamente".
 
-**Aclaración para próximas sesiones:** si el usuario pregunta por "Excel", "tablas complejas",
-"migración de archivos" o "lo que quedó por la 3.9", NO arrancar Refactor B2 ni DOC/HELP.
-Primero retomar esta línea: analizar archivos reales, definir conversión a CSV limpio o plantilla
+**Regla para agentes:** si el usuario pregunta por "Excel", "tablas complejas",
+"migración de archivos" o "lo que quedó por la 3.9", NO arrancar Refactor B2.
+Primero retomar este sprint: analizar archivos reales, definir conversión a CSV limpio o plantilla
 específica, y documentar el procedimiento.
 
 ---

@@ -17,23 +17,35 @@ Seguimiento de los hallazgos del informe `SECURITY_AUDIT_2026-06-13.md`.
 | SEC-2026-06-13-09 | Corregido | Instaladores archivados ya no ejecutan `install.ps1`; abren la descarga oficial en navegador. |
 | SEC-2026-06-13-10 | Corregido | `OllamaService` limita prompt de usuario, contexto ERP, historial y prompt total. |
 
+## Hallazgos adicionales identificados y corregidos en la misma sesion (2026-06-13)
+
+Identificados durante verificacion manual post-audit en la misma sesion. Todos corregidos en commit `6268479`.
+
+| ID | Estado | Cambio aplicado |
+|---|---|---|
+| NEW-01 | Corregido | `HelpView.init()`: `engine.setJavaScriptEnabled(false)` desactiva JS en WebView. El contenido HTML es classpath-only; JS no aporta nada y amplía superficie de ataque. |
+| NEW-02 | Corregido | `_cajon-desastre/` eliminado del tracking git (`git rm -rf`). Contenía scripts de instalador legacy con `iex` y ejecucion remota de PowerShell sin verificar. |
+| NEW-03 | Corregido | Bloqueo de login/recuperacion migrado de `ConcurrentHashMap` en memoria a 4 columnas SQLite (`login_failed`, `login_locked_until`, `recovery_failed`, `recovery_locked_until`). El bloqueo ahora persiste entre reinicios. Nuevos metodos publicos en `UserDAO`. `AuthService` delega completamente en `UserDAO`. 2 nuevos tests de persistencia en `AuthServiceTest`. |
+
 ## Archivos principales modificados
 
 - `.gitleaks.toml`
 - `.mvn/wrapper/maven-wrapper.properties`
 - `pom.xml`
-- `_cajon-desastre/installer_v2.iss`
-- `_cajon-desastre/installer_v3.iss`
 - `src/main/java/org/gipsybuho/SingleInstanceLock.java`
 - `src/main/java/org/gipsybuho/dao/ClienteDAO.java`
+- `src/main/java/org/gipsybuho/dao/UserDAO.java` (NEW-03)
+- `src/main/java/org/gipsybuho/db/DatabaseManager.java` (NEW-03: 4 columnas DDL + migraciones)
 - `src/main/java/org/gipsybuho/service/AuthService.java`
 - `src/main/java/org/gipsybuho/service/ImportBackupService.java`
 - `src/main/java/org/gipsybuho/service/OllamaService.java`
+- `src/main/java/org/gipsybuho/ui/HelpView.java` (NEW-01)
 - `src/main/java/org/gipsybuho/ui/LoginView.java`
 - `src/main/java/org/gipsybuho/ui/OllamaInstallerDialog.java`
 - `src/test/java/org/gipsybuho/dao/ClienteDAOTest.java`
-- `src/test/java/org/gipsybuho/service/AuthServiceTest.java`
+- `src/test/java/org/gipsybuho/service/AuthServiceTest.java` (NEW-03: 2 tests nuevos)
 - `src/test/java/org/gipsybuho/service/ImportBackupServiceTest.java`
+- `_cajon-desastre/` eliminado del repositorio (NEW-02)
 
 ## Validaciones ejecutadas
 
@@ -78,3 +90,7 @@ Artefactos post-fix:
 
 - Semgrep post-fix no pudo descargar reglas remotas (`p/java`) por `SSLCertVerificationError` contra `semgrep.dev` en el entorno Python local. La auditoria original conserva `semgrep-2026-06-13.json`; el error post-fix queda en `semgrep-postfix-java-2026-06-13.err`.
 - ClamAV completo sobre todo el repositorio excedio 5 minutos y se cancelo. Se completo un escaneo acotado a `src`, `docs`, `pom.xml`, `.mvn`, `.gitleaks.toml`, `AGENTS.md`, `GEMINI.md`, `SECURITY.md` y `CLAUDE.md` con 0 infecciones.
+
+## Commit final
+
+Todas las correcciones (SEC-2026-06-13-01..10 + NEW-01..03) incluidas en commit `6268479` — `security: auditoría y remediación completa 2026-06-13 (SEC-01..10 + NEW-01..03)`. Validado: 142/142 tests verdes. Fecha: 2026-06-13.

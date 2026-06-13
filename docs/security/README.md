@@ -2,13 +2,11 @@
 
 Documentacion viva para auditorias de seguridad del proyecto Graficas Mulberry.
 
-- Entradas raiz para agentes IA: `../../AGENTS.md`, `../../GEMINI.md`, `../../SECURITY.md`
-- Informe actual: `SECURITY_AUDIT_2026-06-13.md`
-- Remediacion actual: `SECURITY_REMEDIATION_2026-06-13.md`
+- Entrada raiz para agentes IA: `../../AGENTS.md`
+- Informe actual: `SECURITY_AUDIT_2026-06-13.md` — 10 hallazgos (SEC-01..10) + 3 adicionales (NEW-01..03)
+- Remediacion actual: `SECURITY_REMEDIATION_2026-06-13.md` — todos corregidos, commit `6268479`
 - Procedimiento reproducible: `SECURITY_AUDIT_RUNBOOK.md`
-- Resultados de herramientas: `*-2026-06-13.*`, `*-postfix-2026-06-13.*` y `*-postfix-*-2026-06-13.*`
-- Validacion post-fix documentada: `SECURITY_REMEDIATION_2026-06-13.md`
+- Resultados de herramientas baseline: `semgrep-2026-06-13.json`, `gitleaks-redacted-2026-06-13.json`, `osv-scanner-2026-06-13.json`, `spotbugsXml-2026-06-13.xml`, `clamscan-*.log`
+- Resultados post-fix: `*-postfix-2026-06-13.*`
 
-La base de firmas de ClamAV no se guarda aqui por tamano. En esta auditoria se uso:
-
-`C:\Users\GipsyDavy\.codex-security-tools\clamav-db`
+La base de firmas de ClamAV no se guarda aqui por tamano (archivo local, no versionado).

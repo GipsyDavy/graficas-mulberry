@@ -6,6 +6,8 @@ Security documentation for Graficas Mulberry lives in:
 docs/security/
 ```
 
+Last audit: 2026-06-13 — commit `6268479` — 13 findings (SEC-01..10 + NEW-01..03), all remediated.
+
 Current audit:
 
 ```text
