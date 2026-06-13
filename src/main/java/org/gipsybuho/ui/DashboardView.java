@@ -1,6 +1,12 @@
 package org.gipsybuho.ui;
 
+import javafx.animation.Interpolator;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -149,32 +155,55 @@ public class DashboardView extends VBox {
 
     private void cargarDatos(FlowPane tarjetas) {
         try {
-            int clientes    = new ClienteDAO().count();
-            int presupPend  = new PresupuestoDAO().countByEstado("enviado");
-            int factPend    = new FacturaDAO().countByEstado("pendiente");
-            int bajoStock   = new MaterialDAO().countBajoStock();
+            int clientes     = new ClienteDAO().count();
+            int presupPend   = new PresupuestoDAO().countByEstado("enviado");
+            int factPend     = new FacturaDAO().countByEstado("pendiente");
+            int bajoStock    = new MaterialDAO().countBajoStock();
             double facturado = new FacturaDAO().totalFacturadoAnio(LocalDate.now().getYear());
 
-            String[] valores = {
-                String.valueOf(clientes), String.valueOf(presupPend),
-                String.valueOf(factPend), String.valueOf(bajoStock),
-                String.format("%.0f €", facturado)
-            };
-            String[] ids = {"c1","c2","c3","c4","c5"};
-            for (int i = 0; i < ids.length; i++) {
-                final String v = valores[i];
-                final String id = ids[i];
+            int[]    enteros = {clientes, presupPend, factPend, bajoStock};
+            String[] idsEnt  = {"c1", "c2", "c3", "c4"};
+            for (int i = 0; i < idsEnt.length; i++) {
+                final int    target = enteros[i];
+                final String id     = idsEnt[i];
                 tarjetas.getChildren().stream()
-                    .filter(n -> n instanceof VBox)
-                    .map(n -> (VBox) n)
+                    .filter(n -> n instanceof VBox).map(n -> (VBox) n)
                     .flatMap(vb -> vb.getChildren().stream())
                     .filter(n -> n instanceof Label && id.equals(n.getUserData()))
                     .map(n -> (Label) n)
                     .findFirst()
-                    .ifPresent(lbl -> lbl.setText(v));
+                    .ifPresent(lbl -> animarEntero(lbl, target));
             }
+
+            tarjetas.getChildren().stream()
+                .filter(n -> n instanceof VBox).map(n -> (VBox) n)
+                .flatMap(vb -> vb.getChildren().stream())
+                .filter(n -> n instanceof Label && "c5".equals(n.getUserData()))
+                .map(n -> (Label) n)
+                .findFirst()
+                .ifPresent(lbl -> animarMoneda(lbl, facturado));
+
         } catch (Exception e) {
             System.err.println("Error al cargar datos del dashboard: " + e.getMessage());
         }
+    }
+
+    private void animarEntero(Label lbl, int target) {
+        SimpleIntegerProperty prop = new SimpleIntegerProperty(0);
+        prop.addListener((obs, oldV, newV) -> lbl.setText(String.valueOf(newV.intValue())));
+        int durMs = Math.min(900, Math.max(400, target * 4)); // escala con el valor, máx 900ms
+        new Timeline(
+            new KeyFrame(Duration.ZERO,         new KeyValue(prop, 0)),
+            new KeyFrame(Duration.millis(durMs), new KeyValue(prop, target, Interpolator.EASE_OUT))
+        ).play();
+    }
+
+    private void animarMoneda(Label lbl, double target) {
+        SimpleDoubleProperty prop = new SimpleDoubleProperty(0);
+        prop.addListener((obs, oldV, newV) -> lbl.setText(String.format("%.0f €", newV.doubleValue())));
+        new Timeline(
+            new KeyFrame(Duration.ZERO,        new KeyValue(prop, 0.0)),
+            new KeyFrame(Duration.millis(900), new KeyValue(prop, target, Interpolator.EASE_OUT))
+        ).play();
     }
 }
