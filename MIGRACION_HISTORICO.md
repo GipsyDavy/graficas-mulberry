@@ -296,6 +296,65 @@ Si tu CSV trae un valor explícito, gana sobre el default.
 
 ---
 
+## Piloto MIGRACION-COMPLEJA — PRECIOS PAPEL PROVEEDORES Formulas.xlsx (2026-06-13)
+
+### Inventario de CSVs generados
+
+Ubicación: `C:\Users\Gipsy Dávy\Desktop\files\` (8 archivos) y `C:\Users\Gipsy Dávy\Desktop\excel\` (3 archivos).
+
+| CSV | Filas | Entidad | Estado | Columnas clave |
+|---|---|---|---|---|
+| `1_precios_papel_proveedor.csv` | 84 | Material | ✅ listo para wizard | `tipo_papel`→`nombre`, `precio_resma`→`precio_unidad`, `proveedor`→`proveedor` |
+| `2_precios_papel_por_gramaje.csv` | 330 | Material | ✅ listo para wizard | `familia`→`nombre`, `eur_resma`→`precio_unidad` |
+| `3_union_papelera_otros_productos.csv` | ~30 | Material | ✅ listo para wizard | `producto`→`nombre`, `categoria`→`categoria` |
+| `3_materiales_plasticos_tintas.csv` | 14 | Material | ✅ listo (cabeceras directas) | `nombre`, `categoria`, `unidad`, `precio_unidad`, `proveedor` |
+| `5a_material_tintas.csv` | 4 | Material | ⚠️ sin precios — importar igual | `modelo`→`nombre` (manual en wizard) |
+| `5b_material_plastico.csv` | ~15 | Material | ⚠️ precios incompletos | `modelo`→`nombre` (manual en wizard) |
+| `5c_material_otros.csv` | ~7 | Material | ⚠️ notas mezcladas | limpiar antes de importar |
+| `4_tamanos_papel.csv` | 12 | — | ❌ referencia pura | sin entidad destino |
+| `6_horas_trabajos.csv` | ~12 | — | ❌ texto libre | sin estructura numérica, no importable |
+
+### Script de extracción generado
+
+`scripts/extrae_material.py` en la raíz del proyecto — extrae la hoja `MATERIAL` del Excel original (plásticos, tintas, consumibles). Usar si se necesita regenerar el CSV desde el Excel fuente.
+
+### Procedimiento de importación — wizard paso a paso
+
+**Piloto recomendado:** `Desktop\files\1_precios_papel_proveedor.csv` — 84 filas, todas con proveedor, estructura limpia.
+
+1. Abrir la app (`.\mvnw.cmd javafx:run` o instalador).
+2. Ir al módulo **Materiales** → botón `📥 Importar`.
+3. Seleccionar `C:\Users\Gipsy Dávy\Desktop\files\1_precios_papel_proveedor.csv`.
+4. En el wizard `ColumnMappingDialog`, verificar el mapping automático:
+   - `tipo_papel` → **Nombre** (obligatorio — debe estar mapeado)
+   - `precio_resma` → **Precio unidad**
+   - `proveedor` → **Proveedor**
+   - El resto (`precio_pliego`, `incremento`) → sin mapear (ignorar)
+5. Confirmar → revisar `ImportResult`: importadas/descartadas/errores.
+6. Validar visualmente en la tabla de Materiales.
+
+**Resultado real (2026-06-13):** importación ejecutada y validada visualmente en la app. Registros visibles con datos correctos: `1ª BLANCA 65X92` → 61.72€ → UNION_PAPELERA, `300 G. 75X105 (118,13) 1635` → 180.18€ → UNION_PAPELERA, etc. Proveedores UNION_PAPELERA, MRPAPEL y CODIAL presentes. Categoría asignada automáticamente como `"1 precios papel proveedor"` (derivada del nombre de archivo). **Limitación detectada:** fila `"1 pliego 45x64 cm ="` con precio 0.00€ — fórmula sin resolver en el CSV fuente. Limpiar manualmente del CSV antes de reimportar si es necesario.
+
+### Reglas de normalización documentadas
+
+- Cabecera real en fila 3 del Excel (fila 1 = título, fila 2 = vacía).
+- 33 celdas combinadas por hoja de proveedor → ignoradas al extraer solo columnas A-D.
+- Fórmulas resueltas con `data_only=True` en openpyxl.
+- Bloques laterales (cols G-K) = tabla de precios por gramaje → CSV separado (`2_precios_papel_por_gramaje.csv`).
+- Decimales normalizados a punto, 4 cifras máximo.
+- Filas sin nombre descartadas. Filas con precio "NO TIENE" descartadas.
+- Proveedores en la hoja `MATERIAL` detectados por nombre conocido (CODIAL, UNIÓN PAPELERA).
+
+### Limitaciones del piloto
+
+- **Tintas sin precio** (`5a_material_tintas.csv`): CYAN, MAGENTA, AMARILLO, NEGRO GAMA no tienen precio en el Excel fuente. Se importan como materiales sin precio. El usuario debe actualizar el precio manualmente en la app.
+- **Plásticos CODIAL incompletos**: solo 2 de 8 productos tienen precio en el Excel fuente. Los demás quedan sin precio.
+- **`6_horas_trabajos.csv`**: no importable. Los precios de horas están en texto libre ("MÍNIMO 1/2 HORA: 10 € PVP"). Requiere extracción manual a Tarifa si se decide importar.
+- **`4_tamanos_papel.csv`**: tabla de referencia ISO (A0-A7 etc.), no es una entidad del sistema.
+- **`5c_material_otros.csv`**: contiene notas (textos descriptivos como "0,22 m/lineal de plástico") mezcladas con datos. Limpiar antes de importar eliminando filas sin nombre real o sin precio.
+
+---
+
 ## Ejemplo concreto: xlsx con múltiples bloques (Fase 1)
 
 Caso real procesado al inicio del proyecto: `PRECIOS_PAPEL_PROVEEDORES_Formulas.xlsx`. Excel del proveedor con 7 hojas, cada hoja con varias mini-tablas pegadas en horizontal (precios principales + sub-tablas por gramaje), celdas combinadas, fórmulas, filas en blanco como separadores.

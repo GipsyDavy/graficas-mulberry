@@ -172,8 +172,9 @@ Estas reglas deben respetar siempre las instrucciones explícitas del usuario, l
 ## ADAPTACIÓN Y PREFERENCIAS
 
 - Analiza automáticamente la versión de Java, sistema de build y frameworks del proyecto.
-- Activar `caveman` nivel `full` por defecto al inicio de cada sesión y mantenerlo activo.
+- Activar `/caveman full` por defecto al inicio de cada sesión y mantenerlo activo.
   Solo volver a modo normal si el usuario escribe `normal mode`, `stop caveman` o lo pide explícitamente.
+- Usar `/caveman-commit` para todos los commits del proyecto (genera mensaje atómico en español siguiendo convenciones Git del proyecto).
 - **Base de Datos**: SQLite es la base de datos principal del proyecto. No introducir MySQL, MongoDB u otra base de datos salvo petición expresa.
 - Adáptate completamente al estilo existente.
 - Mantener la arquitectura actual de aplicación JavaFX de escritorio.

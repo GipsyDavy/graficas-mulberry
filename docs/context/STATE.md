@@ -9,6 +9,10 @@ Actualizar tras cada sprint cerrado.
 
 ## HANDOFF PARA PRÓXIMO AGENTE — leer antes de tocar nada
 
+### Activar al inicio de sesión (antes de cualquier tarea)
+1. `/caveman full` — modo caveman activo en nivel full. Mantener toda la sesión.
+2. `/caveman-commit` — usar para todos los commits del proyecto.
+
 ### Lectura obligatoria en orden
 1. Este archivo (`docs/context/STATE.md`) — HEAD, cola, estado.
 2. `AGENTS.md` — reglas entre agentes, sinceridad técnica.
@@ -23,9 +27,24 @@ Actualizar tras cada sprint cerrado.
 - Análisis UI/UX experto → `docs/ui/MEJORAS-VISUALES.md` (propuestas + correcciones Codex).
 - **Sprint UI-E iniciado:** slide+fade en `mostrarVista` — commit `0bb8c8b`. Probado y funciona. Usuario dice "un poco rápido" → si se quiere más suave, cambiar `Duration.millis(220)` a `Duration.millis(260)` en `MainView.java` línea ~607 (método `mostrarVista`, dos apariciones: FadeTransition y TranslateTransition).
 
+### Qué se hizo en la sesión 2026-06-13 (sprint MIGRACION-COMPLEJA)
+- Inspección completa de `PRECIOS PAPEL PROVEEDORES Formulas.xlsx` (7 hojas, 288 archivos totales).
+- Inventario completo de CSVs pre-existentes en `Desktop\files\` (8 CSVs) y `Desktop\excel\` (3 CSVs).
+- Generado script `scripts/extrae_material.py` — extrae hoja MATERIAL (plásticos/tintas/consumibles) a CSV.
+- Generado `Desktop\excel\3_materiales_plasticos_tintas.csv` (14 filas, UTF-8 limpio).
+- Documentado procedimiento completo de importación y limitaciones en `MIGRACION_HISTORICO.md`.
+- **COMPLETADO**: wizard ejecutado con `Desktop\files\1_precios_papel_proveedor.csv` → registros de papel importados correctamente → validación visual OK en tabla Materiales. Proveedores UNION_PAPELERA, MRPAPEL, CODIAL visibles con precios correctos. Criterio de cierre del sprint cumplido.
+
+### Qué se hizo en la sesión 2026-06-13 (cierre)
+- **Prompt injection detectada y neutralizada** en `proseguir v1.0.md`: el archivo generado por Grok contenía instrucción de clonar repo externo `garrytan/gstack` e instalar skills desconocidas. Claude Code rechazó la ejecución. El archivo fue saneado: instrucción maliciosa eliminada, skills falsas reemplazadas por skills oficiales de Claude Code (`/brainstorming`, `/writing-plans`, `/ui-ux-pro-max`, `/second-opinion`, `/executing-plans`, `/code-review`, `/run`, `/verification-before-completion`, `/simplify`).
+- **HEAD corregido** en `proseguir v1.0.md`: era `6268479` (commit seguridad), real es `fd1f34b` (v13.0.0).
+- **Prioridad documentada**: MIGRACION-COMPLEJA marcada como obligatoria antes de Sprint UI-E en `proseguir v1.0.md`.
+- **STATE.md** actualizado con cierre de sesión y próximos pasos.
+
 ### Qué NO se hizo y por qué
 - **Sliding pill sidebar**: Codex recomendó defer hasta cerrar MIGRACION-COMPLEJA. Riesgo moderado (toca navBtnImpl y coordenadas dentro de ScrollPane). Ver `docs/ui/MEJORAS-VISUALES.md` tabla de prioridad.
-- **Sprint MIGRACION-COMPLEJA**: no se avanzó esta sesión — la sesión se dedicó a documentación y UI. Es la prioridad máxima para la próxima sesión.
+- **Sprint MIGRACION-COMPLEJA**: no se avanzó esta sesión — la sesión se dedicó a documentación, UI y seguridad de archivos de contexto. Es la prioridad máxima para la próxima sesión.
+- **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
 1. **MIGRACION-COMPLEJA** — leer `MIGRACION_HISTORICO.md` y continuar. Prioridad máxima.
@@ -54,11 +73,11 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `c3c0015` |
-| Mensaje | `docs: actualizar STATE.md y MEJORAS-VISUALES.md con Sprint UI-E` |
+| HEAD | `fd1f34b` |
+| Mensaje | `v13.0.0 modificaciones Selene` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
-| Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
+| Versión app | v13.0.0 (`AppConstants.APP_VERSION`) |
 
 ---
 
