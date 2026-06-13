@@ -1,7 +1,7 @@
 # HELP-SPEC.md — Especificación del Sistema de Ayuda Integrado
 ## Proyecto: Gráficas Mulberry — Sprint HELP-0
 
-> **Nota de vigencia 2026-06-12:** HELP-0/1/2 están cerrados; HELP-3 queda pendiente. Para estado global y cola activa leer `continuar.md` y `Resumen.md` antes de actuar.
+> **Nota de vigencia 2026-06-13:** HELP-0/1/2/3/4/4-FIX/5 cerrados. `continuar.md` y `Resumen.md` ya no existen. Estado actual en memoria del agente (`MEMORY.md`) y cabecera de `MACRO-PROMPT-GRAFICAS-MULBERRY.md`.
 
 **Fecha:** 2026-06-10  
 **Estado:** Especificación cerrada. Base para Sprint HELP-1 (contenidos) y HELP-2 (vista JavaFX).  

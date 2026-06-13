@@ -1,6 +1,6 @@
 # MACRO-PROMPT — GRAFICAS MULBERRY
 
-> **Estado vigente 2026-06-12:** antes de actuar leer también `continuar.md`, `CLAUDE.md`, `interfaz.md` y `Resumen.md`. Handoff actual: último commit funcional `63c6592`, working tree solo con `.claude/settings.local.json` fuera de alcance y documentación de cierre si aún no se ha commiteado, `.\mvnw.cmd test` esperado 121/121. Se cerraron los sprints de importación adaptativa: normalización de tablas laterales, expansión segura de matrices de precios, mapeo parent-child y cabeceras comunes en documentos. Regla vigente: no confiar en IA sin fallback local y bloqueo de obligatorios.
+> **Estado vigente 2026-06-13:** HEAD `610a0f2`, rama `master`, `.\mvnw.cmd test` esperado **135/135**. Leer `CLAUDE.md` e `interfaz.md` antes de actuar. `continuar.md` y `Resumen.md` ya no existen — el estado actual está en la memoria del agente (`MEMORY.md`). Sprints cerrados esta sesión: **HELP-4-FIX** (DDL UNIQUE constraints, factorías HelpView) y **HELP-5** (PreferenceService, OnboardingDialog, modo principiante, hint bar en ClientesView). Regla vigente: no confiar en IA sin fallback local y bloqueo de obligatorios.
 
 Activa TODAS las skills relevantes al máximo nivel:
 
@@ -96,6 +96,10 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint HELP-0 | COMPLETADO | HELP-SPEC.md — spec completa del sistema de ayuda (`39d060e`) |
 | Sprint HELP-1 | COMPLETADO | 81 artículos HTML offline en 19 módulos (`65588cf`) |
 | Sprint HELP-2 | COMPLETADO | HelpService + HelpView JavaFX (`47e46dc`) |
+| Sprint HELP-3 | COMPLETADO | F1 contextual por módulo; `HelpView.forModule()` (`67f7d4e`) |
+| Sprint HELP-4 | COMPLETADO | ToastService con enlace artículo; HelpView inline en MainView |
+| Sprint HELP-4-FIX | COMPLETADO | DDL UNIQUE constraints; factorías estáticas HelpView; tests (`4117cdf`) |
+| Sprint HELP-5 | COMPLETADO | PreferenceService; OnboardingDialog; modo principiante; hint bar ClientesView (`610a0f2`) |
 | Sprint COLUMN-TYPES | COMPLETADO | Tipos de columnas dinámicas + edición "Tipo…" |
 | Sprint COLUMN-FORMAT + IMPORT-REPAIR | COMPLETADO EN WORKING TREE | Formato real PRECIO/FECHA/NUMERICO + reparación IA |
 | Sprint IMPORT-PARSER + MAPPING-GUARD | COMPLETADO EN WORKING TREE | 288/288 archivos reales abren; fallback local de mapeo; bloqueo de obligatorios |
@@ -103,7 +107,7 @@ Empleados de la empresa Gráficas Mulberry con roles (enum `UserRole`):
 | Sprint UI-A/B/C/D | COMPLETADO | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint C | COMPLETADO | Fix resolverEmpleadoId — filtro activo=1 eliminado (Deuda 2) |
 | Deuda 24 | COMPLETADO | 15 tests JDBC nuevos (5 DAOs sin cobertura) |
-| Tests JDBC / servicio | 121/121 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación |
+| Tests JDBC / servicio | 135/135 verdes | Harness con BD efímera `@TempDir`; incluye parser/importación y UNIQUE constraints |
 | Instalador Windows | v3.3 disponible | NSIS + jpackage pipeline |
 | Integración Ollama | Funcional | IA local opcional vía `OllamaService` |
 | TTS / Asistente visual | Funcional | `TextToSpeechService`, `VisualAssistantView` |
