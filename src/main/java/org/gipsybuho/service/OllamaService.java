@@ -159,8 +159,9 @@ public class OllamaService {
                 // Centralizamos el prompt de sistema en AppConstants como sugeriste
                 StringBuilder fullPrompt = new StringBuilder(AppConstants.SYSTEM_PROMPT_IA);
 
-                if (contextoERP != null) {
-                    fullPrompt.append("\n[CONTEXTO ERP]\n").append(contextoERP);
+                String ctx = contextoERP;
+                if (ctx != null) {
+                    fullPrompt.append("\n[CONTEXTO ERP]\n").append(ctx);
                 }
 
                 synchronized (historial) {
@@ -198,7 +199,9 @@ public class OllamaService {
                     }
                     synchronized (historial) {
                         if (historial.size() >= MAX_HISTORIAL) historial.remove(0);
-                        historial.add(new String[]{prompt, fullAiResponse.toString()});
+                        String respTruncada = fullAiResponse.length() > 2000
+                                ? fullAiResponse.substring(0, 2000) : fullAiResponse.toString();
+                        historial.add(new String[]{prompt, respTruncada});
                     }
                     if (onComplete != null) {
                         Platform.runLater(onComplete);
