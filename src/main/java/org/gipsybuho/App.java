@@ -17,8 +17,10 @@ import org.gipsybuho.service.OllamaManager;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
 import org.gipsybuho.ui.AdminSetupView;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.ui.LoginView;
 import org.gipsybuho.ui.MainView;
+import org.gipsybuho.ui.OnboardingDialog;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
@@ -143,7 +145,14 @@ public class App extends Application {
         });
 
         SoundService.play(SoundService.Sound.NOTIFICATION);
-        Platform.runLater(this::notificarRecordatoriosProximos);
+        Platform.runLater(() -> {
+            if (PreferenceService.getInstance().isFirstRun()) {
+                OnboardingDialog dlg = new OnboardingDialog();
+                dlg.initOwner(primaryStage);
+                dlg.showAndWait();
+            }
+            notificarRecordatoriosProximos();
+        });
         if (musicaAutoplay && !MusicService.getPlaylist().isEmpty()) {
             Platform.runLater(MusicService::play);
         }

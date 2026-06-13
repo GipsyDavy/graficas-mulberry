@@ -1491,3 +1491,38 @@
 .help-tree-article {
     -fx-font-size: 12px;
 }
+
+/* ── BEGINNER HINT ───────────────────────────────────────── */
+.beginner-hint {
+    -fx-background-color: derive(-c-primary, 88%);
+    -fx-border-color: derive(-c-primary, 60%);
+    -fx-border-width: 0 0 0 3;
+    -fx-border-radius: 0 4 4 0;
+    -fx-background-radius: 0 4 4 0;
+    -fx-padding: 8 14;
+    -fx-text-fill: -c-text;
+    -fx-font-size: 12px;
+}
+
+/* ── ONBOARDING DIALOG ───────────────────────────────────── */
+.onboarding-paso {
+    -fx-background-color: transparent;
+    -fx-min-height: 260;
+}
+
+.onboarding-titulo {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: -c-primary;
+    -fx-text-alignment: center;
+}
+
+.onboarding-desc {
+    -fx-font-size: 13px;
+    -fx-text-fill: -c-text;
+    -fx-text-alignment: center;
+}
+
+.onboarding-check {
+    -fx-font-size: 13px;
+}

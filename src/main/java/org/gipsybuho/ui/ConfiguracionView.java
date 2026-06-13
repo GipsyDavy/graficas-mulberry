@@ -12,6 +12,7 @@ import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.MusicService;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
 
@@ -361,6 +362,7 @@ public class ConfiguracionView extends VBox {
         contenido.setPadding(new Insets(20));
 
         contenido.getChildren().addAll(
+            buildPanelExperiencia(),
             buildPanelFacturacion(),
             buildPanelRecordatorios()
         );
@@ -369,6 +371,31 @@ public class ConfiguracionView extends VBox {
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         return scroll;
+    }
+
+    private VBox buildPanelExperiencia() {
+        Label titulo = new Label("Experiencia de uso");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label("Personaliza cómo interactúas con la aplicación.");
+        desc.getStyleClass().add("config-section-desc");
+
+        CheckBox chkBeginner = new CheckBox("Modo principiante (muestra sugerencias en cada módulo)");
+        chkBeginner.setSelected(PreferenceService.getInstance().isBeginnerMode());
+        chkBeginner.selectedProperty().addListener((obs, ov, nv) ->
+            PreferenceService.getInstance().setBeginnerMode(nv));
+
+        Button btnGuia = new Button("Ver guía de inicio");
+        btnGuia.getStyleClass().add("btn-secondary");
+        btnGuia.setOnAction(e -> {
+            OnboardingDialog dlg = new OnboardingDialog();
+            dlg.initOwner(getScene() != null ? getScene().getWindow() : null);
+            dlg.showAndWait();
+        });
+
+        VBox panel = new VBox(8, titulo, desc, chkBeginner, btnGuia);
+        panel.getStyleClass().add("config-section");
+        panel.setPadding(new Insets(16));
+        return panel;
     }
 
     private VBox buildPanelFacturacion() {

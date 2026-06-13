@@ -23,6 +23,7 @@ import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.ToastService;
 import org.gipsybuho.util.TypedValueFormatter;
 
@@ -78,10 +79,24 @@ public class ClientesView extends VBox {
         cargando.setMaxSize(48, 48);
         cargando.setVisible(false);
         StackPane tableStack = new StackPane(buildTabla(), cargando);
-        getChildren().addAll(titulo, buildToolbar(), tableStack);
+        Label hint = buildBeginnerHint();
+        getChildren().addAll(titulo, hint, buildToolbar(), tableStack);
         VBox.setVgrow(tableStack, Priority.ALWAYS);
         cargar();
         actualizarColumnasDinamicas();
+    }
+
+    // ── Beginner hint ─────────────────────────────────────────────────────────
+
+    private Label buildBeginnerHint() {
+        Label hint = new Label("💡  Usa el botón \"Nuevo\" para añadir un cliente. Pulsa F1 para abrir la ayuda.");
+        hint.getStyleClass().add("beginner-hint");
+        hint.setWrapText(true);
+        hint.setMaxWidth(Double.MAX_VALUE);
+        PreferenceService prefs = PreferenceService.getInstance();
+        hint.visibleProperty().bind(prefs.beginnerModeProperty());
+        hint.managedProperty().bind(prefs.beginnerModeProperty());
+        return hint;
     }
 
     // ── Toolbar ───────────────────────────────────────────────────────────────
