@@ -21,6 +21,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.animation.FadeTransition;
+import javafx.animation.Interpolator;
 import javafx.animation.RotateTransition;
 import javafx.animation.TranslateTransition;
 import javafx.scene.input.MouseButton;
@@ -602,11 +603,17 @@ public class MainView extends BorderPane {
             currentModuleId = TITULO_A_MODULO.getOrDefault(titulo, "general");
         }
         vista.setOpacity(0);
+        vista.setTranslateX(24);
         contentArea.getChildren().setAll(vista);
         FadeTransition ft = new FadeTransition(Duration.millis(220), vista);
         ft.setFromValue(0);
         ft.setToValue(1);
+        TranslateTransition tt = new TranslateTransition(Duration.millis(220), vista);
+        tt.setFromX(24);
+        tt.setToX(0);
+        tt.setInterpolator(Interpolator.EASE_OUT);
         ft.play();
+        tt.play();
         if (vista instanceof Parent parent) {
             visualAssistant.instalarAyudaAutomatica(parent);
         }
