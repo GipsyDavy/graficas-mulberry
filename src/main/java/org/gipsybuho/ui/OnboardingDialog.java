@@ -37,6 +37,8 @@ public class OnboardingDialog extends Dialog<Void> {
         construirBotones();
         getDialogPane().setContent(contenido);
         actualizarVista();
+        // Garantiza que first_run_completed se marca independientemente de cómo se cierre el diálogo.
+        setOnHiding(e -> aplicarPreferencias());
     }
 
     private void construirPasos() {
@@ -118,8 +120,7 @@ public class OnboardingDialog extends Dialog<Void> {
             paso--;
             actualizarVista();
         });
-        btnEmpezar.addEventFilter(ActionEvent.ACTION, e -> aplicarPreferencias());
-        btnSaltar.addEventFilter(ActionEvent.ACTION, e -> aplicarPreferencias());
+        // No action filter needed — setOnHiding covers all close paths.
     }
 
     private void actualizarVista() {
