@@ -1,35 +1,35 @@
-# Gemini Code Assist Entry Point
+# Punto de entrada — Gemini Code Assist
 
-Project: Graficas Mulberry — Java 21 + JavaFX 21 + SQLite/JDBC + Maven.
+Proyecto: Gráficas Mulberry — Java 21 + JavaFX 21 + SQLite/JDBC + Maven.
 
-Treat `AGENTS.md` as the main cross-agent instruction file.
+Tratar `AGENTS.md` como el archivo de instrucciones principal entre agentes.
 
-## Required reading
+## Lectura obligatoria
 
-- `AGENTS.md` — cross-agent rules, required reading list, sinceridad técnica.
-- `CLAUDE.md` — project workflow, Multi-IA rules, sprint checklist.
-- `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — full project context.
-- `docs/context/STATE.md` — current HEAD, tests, active sprint.
-- `docs/security/README.md` — security documentation index.
-- `docs/security/SECURITY_AUDIT_2026-06-13.md` — latest full security audit.
-- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` — current remediation status.
-- `docs/security/SECURITY_AUDIT_RUNBOOK.md` — reproducible audit commands.
+- `AGENTS.md` — reglas entre agentes, lista de lectura obligatoria, sinceridad técnica.
+- `CLAUDE.md` — flujo de trabajo, reglas Multi-IA, checklist de sprint.
+- `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — contexto completo del proyecto.
+- `docs/context/STATE.md` — HEAD actual, tests, sprint activo.
+- `docs/security/README.md` — índice de documentación de seguridad.
+- `docs/security/SECURITY_AUDIT_2026-06-13.md` — auditoría de seguridad completa más reciente.
+- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` — estado actual de remediación.
+- `docs/security/SECURITY_AUDIT_RUNBOOK.md` — comandos reproducibles de auditoría.
 
-## Path rules
+## Reglas de rutas
 
-- Project root: `C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`
-- Use project-relative paths in all suggestions (e.g. `src/main/java/...`).
-- Avoid paths with accents or spaces when suggesting shell commands.
-- The database is SQLite only. Do not suggest MySQL, MongoDB, or any remote DB.
+- Raíz del proyecto: `C:\Users\GipsyDavy\MAVEN\Graficas Mulberry`
+- Usar rutas relativas al proyecto en todas las sugerencias (p. ej. `src/main/java/...`).
+- Evitar rutas con acentos o espacios al sugerir comandos de shell.
+- La base de datos es SQLite únicamente. No sugerir MySQL, MongoDB ni ninguna BD remota.
 
-## Invocation model
+## Modelo de invocación
 
-Gemini is invoked exclusively via IDE blocks pasted by the user — never via CLI.
-When responding, scope your analysis to the specific question in the block.
-Do not modify files directly unless the block explicitly requests it.
+Gemini se invoca exclusivamente mediante bloques IDE pegados por el usuario — nunca por CLI.
+Al responder, limitar el análisis a la pregunta concreta del bloque.
+No modificar archivos directamente salvo que el bloque lo solicite explícitamente.
 
 ## VibeSec
 
-VibeSec is the security review skill for this project.
-Invoke it proactively when the conversation touches auth, permissions, file paths,
-import/export, or sensitive data. If unavailable, flag the gap explicitly.
+VibeSec es la skill de revisión de seguridad de este proyecto.
+Invocarla de forma proactiva cuando la conversación toque autenticación, permisos,
+rutas de archivos, import/export o datos sensibles. Si no está disponible, indicarlo explícitamente.

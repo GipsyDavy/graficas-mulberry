@@ -1,32 +1,32 @@
-# Security
+# Seguridad
 
-Security documentation for Graficas Mulberry lives in:
+La documentación de seguridad de Gráficas Mulberry está en:
 
 ```text
 docs/security/
 ```
 
-Last audit: 2026-06-13 — commit `6268479` — 13 findings (SEC-01..10 + NEW-01..03), all remediated.
+Última auditoría: 2026-06-13 — commit `6268479` — 13 hallazgos (SEC-01..10 + NEW-01..03), todos remediados.
 
-Current audit:
+Auditoría actual:
 
 ```text
 docs/security/SECURITY_AUDIT_2026-06-13.md
 ```
 
-Current remediation:
+Remediación actual:
 
 ```text
 docs/security/SECURITY_REMEDIATION_2026-06-13.md
 ```
 
-Reproducible audit runbook:
+Procedimiento reproducible de auditoría:
 
 ```text
 docs/security/SECURITY_AUDIT_RUNBOOK.md
 ```
 
-Tool outputs from the last audit are also stored in `docs/security/`.
+Los resultados de herramientas de la última auditoría también están en `docs/security/`.
 
-For future audits, keep prior artifacts and add new dated reports. Update
-`docs/security/README.md` when a new report becomes the current one.
+Para auditorías futuras, conservar los artefactos anteriores y añadir nuevos informes con fecha.
+Actualizar `docs/security/README.md` cuando un nuevo informe se convierta en el actual.

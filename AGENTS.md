@@ -1,35 +1,35 @@
-# AI Agent Entry Point
+# Punto de entrada para agentes IA
 
-Project: Graficas Mulberry, Java 21 + JavaFX 21 + SQLite/JDBC + Maven.
+Proyecto: Gráficas Mulberry — Java 21 + JavaFX 21 + SQLite/JDBC + Maven.
 
-Root path:
+Ruta raíz:
 
 ```text
 C:\Users\GipsyDavy\MAVEN\Graficas Mulberry
 ```
 
-This file is the neutral entry point for AI agents such as Codex, Claude Code,
-Gemini Code Assist, and other IDE agents.
+Este archivo es el punto de entrada neutral para agentes IA como Codex, Claude Code,
+Gemini Code Assist y otros agentes de IDE.
 
-## Required Reading
+## Lectura obligatoria
 
-Before modifying this project, read:
+Antes de modificar el proyecto, leer:
 
-- `CLAUDE.md` — project workflow, Multi-IA rules, coding standards, sprint checklist.
-- `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — full project context: architecture, modules, security rules, UX.
-- `docs/context/STATE.md` — current HEAD, tests, active sprint and known debt (update after each sprint).
-- `docs/security/README.md` — security documentation index.
-- `docs/security/SECURITY_AUDIT_2026-06-13.md` — latest full security audit.
-- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` — current remediation status.
-- `docs/security/SECURITY_AUDIT_RUNBOOK.md` — reproducible security audit commands.
+- `CLAUDE.md` — flujo de trabajo, reglas Multi-IA, estándares de código, checklist de sprint.
+- `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — contexto completo: arquitectura, módulos, reglas de seguridad, UX.
+- `docs/context/STATE.md` — HEAD actual, tests, sprint activo y deuda conocida (actualizar tras cada sprint).
+- `docs/security/README.md` — índice de documentación de seguridad.
+- `docs/security/SECURITY_AUDIT_2026-06-13.md` — auditoría de seguridad completa más reciente.
+- `docs/security/SECURITY_REMEDIATION_2026-06-13.md` — estado actual de remediación.
+- `docs/security/SECURITY_AUDIT_RUNBOOK.md` — comandos reproducibles de auditoría de seguridad.
 
-For UI and product context, read:
+Para contexto de UI y producto, leer:
 
-- `docs/ui/interfaz.md` — CSS architecture, component table, design system, sprint history.
+- `docs/ui/interfaz.md` — arquitectura CSS, tabla de componentes, sistema de diseño, historial de sprints.
 
-For migration of complex historical files, read:
+Para migración de archivos históricos complejos, leer:
 
-- `MIGRACION_HISTORICO.md` — procedure for Sprint MIGRACION-COMPLEJA (active).
+- `MIGRACION_HISTORICO.md` — procedimiento del Sprint MIGRACION-COMPLEJA (activo).
 
 ## Sinceridad técnica
 
@@ -37,33 +37,33 @@ For migration of complex historical files, read:
 > No inventar datos, causas, estados, rutas, APIs, resultados de tests ni conclusiones.
 > Priorizar sinceridad técnica sobre aparentar certeza.
 
-## Security Audit Status
+## Estado de auditoría de seguridad
 
-The latest documented security audit is:
+La auditoría de seguridad documentada más reciente es:
 
 ```text
 docs/security/SECURITY_AUDIT_2026-06-13.md
 ```
 
-The current remediation status is:
+El estado de remediación actual es:
 
 ```text
 docs/security/SECURITY_REMEDIATION_2026-06-13.md
 ```
 
-Supporting tool outputs are stored under:
+Los resultados de herramientas de soporte se almacenan en:
 
 ```text
 docs/security/
 ```
 
-Do not delete or overwrite previous audit artifacts. For a new audit, create
-new dated files and update `docs/security/README.md`.
+No eliminar ni sobreescribir artefactos de auditorías anteriores. Para una nueva auditoría,
+crear nuevos archivos con fecha y actualizar `docs/security/README.md`.
 
-## Agent Handoff Rules
+## Reglas de traspaso entre agentes
 
-- Preserve existing user changes unless explicitly instructed otherwise.
-- For security, authentication, database, import/export, installers, or file
-  system changes, consult the security docs before editing.
-- If an external tool is unavailable, record the limitation in the audit notes.
-- If using Gemini Code Assist, start from `GEMINI.md`, which points back here.
+- Preservar los cambios existentes del usuario salvo instrucción explícita en contrario.
+- Para cambios en seguridad, autenticación, base de datos, import/export, instaladores o
+  sistema de archivos, consultar los docs de seguridad antes de editar.
+- Si una herramienta externa no está disponible, registrar la limitación en las notas de auditoría.
+- Si usas Gemini Code Assist, comenzar desde `GEMINI.md`, que apunta de vuelta aquí.
