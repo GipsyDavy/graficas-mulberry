@@ -5,6 +5,8 @@ import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserRole;
 
 import java.sql.*;
+import java.time.Duration;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,6 +119,89 @@ public class UserDAO {
         } catch (SQLException e) {
             System.err.println("Error al actualizar último acceso: " + e.getMessage());
         }
+    }
+
+    // ── Lockout persistente ───────────────────────────────────────────────────
+
+    private record LockoutState(int count, Instant lockedUntil) {}
+
+    private LockoutState readLockout(int userId, String colFailed, String colUntil) {
+        String sql = "SELECT " + colFailed + ", " + colUntil + " FROM usuarios WHERE id = ?";
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, userId);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) {
+                int cnt = rs.getInt(1);
+                String until = rs.getString(2);
+                return new LockoutState(cnt, until != null ? Instant.parse(until) : null);
+            }
+        } catch (SQLException e) {
+            System.err.println("Error leyendo lockout: " + e.getMessage());
+        }
+        return new LockoutState(0, null);
+    }
+
+    private void writeLockout(int userId, String colFailed, String colUntil, int count, Instant lockedUntil) {
+        String sql = "UPDATE usuarios SET " + colFailed + " = ?, " + colUntil + " = ? WHERE id = ?";
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+            ps.setInt(1, count);
+            ps.setString(2, lockedUntil != null ? lockedUntil.toString() : null);
+            ps.setInt(3, userId);
+            ps.executeUpdate();
+        } catch (SQLException e) {
+            System.err.println("Error escribiendo lockout: " + e.getMessage());
+        }
+    }
+
+    private static final String COL_LOGIN_FAILED  = "login_failed";
+    private static final String COL_LOGIN_UNTIL   = "login_locked_until";
+    private static final String COL_REC_FAILED    = "recovery_failed";
+    private static final String COL_REC_UNTIL     = "recovery_locked_until";
+
+    public boolean isLoginLocked(int userId) {
+        LockoutState s = readLockout(userId, COL_LOGIN_FAILED, COL_LOGIN_UNTIL);
+        return s.lockedUntil() != null && Instant.now().isBefore(s.lockedUntil());
+    }
+
+    public long getLoginSecondsRemaining(int userId) {
+        LockoutState s = readLockout(userId, COL_LOGIN_FAILED, COL_LOGIN_UNTIL);
+        if (s.lockedUntil() == null) return 0;
+        long secs = Duration.between(Instant.now(), s.lockedUntil()).toSeconds();
+        return Math.max(0, secs);
+    }
+
+    public void clearLoginLockout(int userId) {
+        writeLockout(userId, COL_LOGIN_FAILED, COL_LOGIN_UNTIL, 0, null);
+    }
+
+    public void recordLoginFailure(int userId, int maxAttempts, Duration lockoutDuration) {
+        LockoutState s = readLockout(userId, COL_LOGIN_FAILED, COL_LOGIN_UNTIL);
+        int newCount = s.count() + 1;
+        Instant until = newCount >= maxAttempts ? Instant.now().plus(lockoutDuration) : null;
+        writeLockout(userId, COL_LOGIN_FAILED, COL_LOGIN_UNTIL, newCount, until);
+    }
+
+    public boolean isRecoveryLocked(int userId) {
+        LockoutState s = readLockout(userId, COL_REC_FAILED, COL_REC_UNTIL);
+        return s.lockedUntil() != null && Instant.now().isBefore(s.lockedUntil());
+    }
+
+    public long getRecoverySecondsRemaining(int userId) {
+        LockoutState s = readLockout(userId, COL_REC_FAILED, COL_REC_UNTIL);
+        if (s.lockedUntil() == null) return 0;
+        long secs = Duration.between(Instant.now(), s.lockedUntil()).toSeconds();
+        return Math.max(0, secs);
+    }
+
+    public void clearRecoveryLockout(int userId) {
+        writeLockout(userId, COL_REC_FAILED, COL_REC_UNTIL, 0, null);
+    }
+
+    public void recordRecoveryFailure(int userId, int maxAttempts, Duration lockoutDuration) {
+        LockoutState s = readLockout(userId, COL_REC_FAILED, COL_REC_UNTIL);
+        int newCount = s.count() + 1;
+        Instant until = newCount >= maxAttempts ? Instant.now().plus(lockoutDuration) : null;
+        writeLockout(userId, COL_REC_FAILED, COL_REC_UNTIL, newCount, until);
     }
 
     public boolean hasAdmin() {

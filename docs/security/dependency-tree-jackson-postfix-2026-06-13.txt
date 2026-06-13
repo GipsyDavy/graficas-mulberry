@@ -1,0 +1,4 @@
+org.gipsybuho:GraficasMulberry:jar:13.5.0
+\- com.fasterxml.jackson.core:jackson-databind:jar:2.21.4:compile
+   +- com.fasterxml.jackson.core:jackson-annotations:jar:2.21:compile
+   \- com.fasterxml.jackson.core:jackson-core:jar:2.21.4:compile

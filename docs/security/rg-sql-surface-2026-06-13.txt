@@ -1,0 +1,788 @@
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:48:        String sql = """
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:49:            SELECT table_name, column_name, label, base_column, visible, data_type
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:54:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:56:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:107:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:108:                "UPDATE column_configs SET label=? WHERE table_name=? AND column_name=?")) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:112:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:121:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:122:                "UPDATE column_configs SET data_type=? WHERE table_name=? AND column_name=?")) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:126:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:142:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:143:                "UPDATE column_configs SET visible=? WHERE table_name=? AND column_name=?")) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:147:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:155:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:156:                "DELETE FROM column_configs WHERE table_name=? AND column_name=? AND base_column=0")) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:159:            int deleted = ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:167:        try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:168:            st.execute("""
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:180:            try { st.execute("ALTER TABLE column_configs ADD COLUMN data_type TEXT DEFAULT 'TEXTO'"); }
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:193:        String sql = """
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:194:            INSERT INTO column_configs (table_name, column_name, label, base_column, visible, data_type)
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:196:            ON CONFLICT(table_name, column_name) DO UPDATE SET
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:200:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:207:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:213:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\ColumnConfigDAO.java:214:             ResultSet rs = st.executeQuery("PRAGMA table_info(" + DatabaseManager.quoteIdentifier(tableName) + ")")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:15:        String sql = """
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:16:            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:21:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:22:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:29:        String sql = """
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:30:            SELECT f.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:35:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:37:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:47:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:48:                "SELECT * FROM lineas_factura WHERE factura_id=? ORDER BY orden")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:50:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:134:        String sql = "INSERT INTO facturas (numero,presupuesto_id,cliente_id,fecha,fecha_vencimiento,estado,forma_pago,base_imponible,iva_porcentaje,iva_importe,total,notas) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:135:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:137:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:144:        String sql = "UPDATE facturas SET numero=?,presupuesto_id=?,cliente_id=?,fecha=?,fecha_vencimiento=?,estado=?,forma_pago=?,base_imponible=?,iva_porcentaje=?,iva_importe=?,total=?,notas=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:145:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:148:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:153:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:154:                "DELETE FROM lineas_factura WHERE factura_id=?")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:156:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:158:        String sql = "INSERT INTO lineas_factura (factura_id,descripcion,tecnica,cantidad,precio_unit,descuento,total,orden) VALUES (?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:159:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:177:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:178:                "UPDATE facturas SET estado=? WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:181:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:186:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:187:                "DELETE FROM facturas WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:189:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:194:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:195:                "SELECT COUNT(*) FROM facturas WHERE estado=?")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:197:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:203:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:204:                "SELECT COALESCE(SUM(total),0) FROM facturas WHERE strftime('%Y',fecha)=? AND estado!='anulada'")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:206:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:213:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:214:                "SELECT COALESCE(SUM(total),0) FROM facturas WHERE strftime('%Y-%m',fecha)=? AND estado!='anulada'")) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:216:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:224:        String sql = """
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:225:            SELECT (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) AS cliente_nombre,
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:234:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\FacturaDAO.java:237:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:18:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:19:             ResultSet rs = st.executeQuery("SELECT * FROM clientes ORDER BY nombre")) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:27:        String sql = "SELECT * FROM clientes WHERE nombre LIKE ? OR apellidos LIKE ? OR nif LIKE ? OR email LIKE ? ORDER BY nombre";
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:28:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:31:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:38:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:39:                "SELECT * FROM clientes WHERE id = ?")) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:41:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:57:        String sql = "INSERT INTO clientes (" + quotedColumns(cols) + ") VALUES (" +
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:60:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:64:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:76:        StringBuilder sql = new StringBuilder("UPDATE clientes SET ");
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:82:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:87:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:92:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:93:                "DELETE FROM clientes WHERE id = ?")) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:95:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:100:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:101:             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM clientes")) {
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:109:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\ClienteDAO.java:110:             ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:23:        StringBuilder sql = new StringBuilder("SELECT id");
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:29:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:30:             ResultSet rs = st.executeQuery(sql.toString())) {
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:45:        StringBuilder sql = new StringBuilder("SELECT ");
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:52:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:54:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:65:        String sql = "UPDATE " + DatabaseManager.quoteIdentifier(tableName)
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:67:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:70:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:88:        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:90:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:91:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:108:        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:110:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\DynamicColumnValueDAO.java:111:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:19:        String sql = "SELECT " + SELECT_COLS + " FROM usuarios WHERE username = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:20:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:22:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\UserDAO.java:31:        String sql = "SELECT " + SELECT_COLS + " FROM usuarios WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:32:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:34:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\UserDAO.java:43:        String sql = "INSERT INTO usuarios (username, password_hash, role, permissions, created_at) VALUES (?, ?, ?, ?, ?)";
+src/main/java\org\gipsybuho\dao\UserDAO.java:44:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:50:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\UserDAO.java:61:        String sql = "UPDATE usuarios SET username = ?, password_hash = ?, role = ?, permissions = ? WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:62:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:68:            return ps.executeUpdate() > 0;
+src/main/java\org\gipsybuho\dao\UserDAO.java:76:        String sql = "DELETE FROM usuarios WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:77:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:79:            return ps.executeUpdate() > 0;
+src/main/java\org\gipsybuho\dao\UserDAO.java:88:        String sql = "SELECT " + SELECT_COLS + " FROM usuarios ORDER BY username";
+src/main/java\org\gipsybuho\dao\UserDAO.java:89:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\UserDAO.java:90:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:99:        String sql = "UPDATE usuarios SET security_question = ?, security_answer_hash = ? WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:100:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:104:            return ps.executeUpdate() > 0;
+src/main/java\org\gipsybuho\dao\UserDAO.java:112:        String sql = "UPDATE usuarios SET last_login = ? WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:113:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\UserDAO.java:116:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\UserDAO.java:123:        String sql = "SELECT COUNT(*) FROM usuarios WHERE role = 'ADMINISTRADOR'";
+src/main/java\org\gipsybuho\dao\UserDAO.java:124:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\UserDAO.java:125:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:15:             ResultSet rs = st.executeQuery("SELECT * FROM empleados WHERE activo=1 ORDER BY nombre")) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:23:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:24:             ResultSet rs = st.executeQuery("SELECT * FROM empleados ORDER BY nombre")) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:31:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:32:                "SELECT * FROM empleados WHERE id = ?")) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:34:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:44:        String sql = "INSERT INTO empleados (nombre,apellidos,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:45:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:47:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:54:        String sql = "UPDATE empleados SET nombre=?,apellidos=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:55:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:58:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:63:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:64:                "UPDATE empleados SET activo=0, fecha_baja=date('now') WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:66:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:71:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:72:                "UPDATE empleados SET activo=1, fecha_baja=NULL WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:74:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:79:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\EmpleadoDAO.java:80:             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM empleados WHERE activo=1")) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:14:        String sql = """
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:15:            SELECT cmt.*, m.nombre AS material_nombre, m.unidad
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:20:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:21:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:29:        String sql = """
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:30:            SELECT cmt.*, m.nombre AS material_nombre, m.unidad
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:35:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:37:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:48:        String sql = "INSERT INTO consumo_material_tecnica (tecnica, material_id, cantidad_por_unidad) VALUES (?, ?, ?)";
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:49:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:53:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:60:        String sql = "UPDATE consumo_material_tecnica SET tecnica=?, material_id=?, cantidad_por_unidad=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:61:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:66:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:71:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:72:                "DELETE FROM consumo_material_tecnica WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\ConsumoMaterialDAO.java:74:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:14:        SELECT pp.*,
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:24:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:27:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:35:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:36:             ResultSet rs = st.executeQuery(SELECT_BASE +
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:48:        String sql = """
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:49:            INSERT INTO pagos_pedido
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:54:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:57:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:64:        String sql = """
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:65:            UPDATE pagos_pedido SET
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:70:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:73:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:78:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:79:                "UPDATE pagos_pedido SET estado='pagado', fecha_pago=? WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:82:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:87:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:88:                "DELETE FROM pagos_pedido WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:90:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:95:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:96:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:97:                 "SELECT COUNT(*) FROM pagos_pedido WHERE estado='pendiente' AND fecha_vencimiento < date('now')")) {
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:103:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:104:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\dao\PagoPedidoDAO.java:105:                 "SELECT COALESCE(SUM(importe),0) FROM pagos_pedido WHERE estado='pendiente'")) {
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:14:        SELECT p.*,
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:16:            COALESCE((SELECT SUM(pp.importe) FROM pagos_pedido pp
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:18:            COALESCE((SELECT COUNT(*) FROM pagos_pedido pp
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:27:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:28:             ResultSet rs = st.executeQuery(SELECT_BASE + "ORDER BY p.fecha DESC, p.id DESC")) {
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:35:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:38:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:48:        String sql = """
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:49:            INSERT INTO pedidos
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:54:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:57:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:64:        String sql = """
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:65:            UPDATE pedidos SET
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:70:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:73:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:78:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:79:                "DELETE FROM pedidos WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PedidoDAO.java:81:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:14:        SELECT pm.*, m.nombre AS mat_nombre, m.unidad AS mat_unidad
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:21:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:22:             ResultSet rs = st.executeQuery(SELECT_BASE +
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:31:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:32:             ResultSet rs = st.executeQuery(SELECT_BASE +
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:42:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:45:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:55:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:59:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:67:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:68:                "SELECT COUNT(*) FROM pagos_material WHERE estado='pendiente' AND fecha_vencimiento < ?")) {
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:70:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:76:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:77:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:78:                 "SELECT COALESCE(SUM(importe_total),0) FROM pagos_material WHERE estado='pendiente'")) {
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:88:        String sql = """
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:89:            INSERT INTO pagos_material
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:95:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:98:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:105:        String sql = """
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:106:            UPDATE pagos_material SET
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:112:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:115:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:120:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:121:                "UPDATE pagos_material SET estado='pagado', fecha_pago=? WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:124:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:129:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:130:                "DELETE FROM pagos_material WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PagoMaterialDAO.java:132:            ps.executeUpdate();
+src/main/java\org\gipsybuho\db\DatabaseManager.java:33:            try (Statement st = connection.createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:34:                st.execute("PRAGMA foreign_keys = ON");
+src/main/java\org\gipsybuho\db\DatabaseManager.java:49:            "ALTER TABLE clientes ADD COLUMN apellido TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:50:            "ALTER TABLE empleados ADD COLUMN apellido TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:51:            "ALTER TABLE clientes ADD COLUMN apellidos TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:52:            "ALTER TABLE empleados ADD COLUMN apellidos TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:53:            "UPDATE clientes SET apellidos = apellido WHERE apellidos IS NULL AND apellido IS NOT NULL",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:54:            "UPDATE empleados SET apellidos = apellido WHERE apellidos IS NULL AND apellido IS NOT NULL",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:61:                factura_id INTEGER REFERENCES facturas(id) ON DELETE SET NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:62:                pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:70:                albaran_id INTEGER REFERENCES albaranes(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:76:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('prefijo_albaran', 'ALB')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:77:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('siguiente_albaran', '1')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:78:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_playlist', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:79:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_volumen', '50')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:80:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_loop', '1')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:81:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('musica_autoplay', '0')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:82:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('ia_voz_activada', '0')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:83:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('tts_voz', 'Windows femenina')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:84:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_activo', '1')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:85:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_voz', '0')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:86:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_personaje', 'Búho')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:87:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_tamano', '58')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:88:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_x', '24')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:89:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_y', '24')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:90:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('asistente_visual_instalador_animado', '1')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:91:            "DELETE FROM config WHERE clave IN ('session_timeout_minutes','max_login_attempts','login_lockout_minutes')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:92:            "ALTER TABLE usuarios ADD COLUMN last_login TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:93:            "ALTER TABLE usuarios ADD COLUMN security_question TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:94:            "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:95:            "ALTER TABLE tarifas ADD COLUMN usa_tiempo INTEGER DEFAULT 0",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:96:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('prefijo_pedido', 'PED')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:97:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('factura_vencimiento_dias', '30')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:98:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('factura_forma_pago', 'Transferencia')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:99:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_logo_path', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:100:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_pie_legal', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:101:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_presupuesto', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:102:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_factura', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:103:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_albaran', '')",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:108:        for (String sql : migrations) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:109:            try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:110:                st.execute(sql);
+src/main/java\org\gipsybuho\db\DatabaseManager.java:112:                // Solo ignorar si la columna ya existe (ALTER TABLE ADD COLUMN repetido).
+src/main/java\org\gipsybuho\db\DatabaseManager.java:135:                try (Statement drop = conn.createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:136:                    drop.execute("DROP TABLE IF EXISTS log_accesos");
+src/main/java\org\gipsybuho\db\DatabaseManager.java:137:                    drop.execute("DROP TABLE IF EXISTS usuarios");
+src/main/java\org\gipsybuho\db\DatabaseManager.java:142:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:143:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:156:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:172:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:190:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:203:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:206:                    tarifa_id      INTEGER NOT NULL REFERENCES tarifas(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:212:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:226:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:237:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:254:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:257:                    presupuesto_id INTEGER REFERENCES presupuestos(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:267:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:285:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:288:                    factura_id INTEGER REFERENCES facturas(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:298:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:302:                    material_id INTEGER REFERENCES materiales(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:306:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:331:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:337:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:348:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:357:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:373:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:376:                    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:388:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:391:                    material_id INTEGER REFERENCES materiales(id) ON DELETE SET NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:406:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:412:                    factura_id INTEGER REFERENCES facturas(id) ON DELETE SET NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:413:                    pedido_id INTEGER REFERENCES pedidos(id) ON DELETE SET NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:419:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:422:                    albaran_id INTEGER REFERENCES albaranes(id) ON DELETE CASCADE,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:432:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:434:            st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:435:                INSERT OR IGNORE INTO config (clave, valor) VALUES
+src/main/java\org\gipsybuho\db\DatabaseManager.java:470:            try (ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\db\DatabaseManager.java:471:                    "SELECT COUNT(*) FROM config WHERE clave='datos_ejemplo_insertados'")) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:476:                st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:477:                    INSERT OR IGNORE INTO tarifas (id, tecnica, nombre, descripcion, precio_unit, precio_setup, minimo_unidades) VALUES
+src/main/java\org\gipsybuho\db\DatabaseManager.java:490:                st.execute("""
+src/main/java\org\gipsybuho\db\DatabaseManager.java:491:                    INSERT OR IGNORE INTO materiales (id, nombre, referencia, categoria, stock_actual, stock_minimo, unidad, precio_unidad) VALUES
+src/main/java\org\gipsybuho\db\DatabaseManager.java:504:                st.execute("INSERT INTO config (clave, valor) VALUES ('datos_ejemplo_insertados','1')");
+src/main/java\org\gipsybuho\db\DatabaseManager.java:510:        try (var st = getConnection().prepareStatement("SELECT valor FROM config WHERE clave = ?")) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:512:            var rs = st.executeQuery();
+src/main/java\org\gipsybuho\db\DatabaseManager.java:520:        try (var st = getConnection().prepareStatement(
+src/main/java\org\gipsybuho\db\DatabaseManager.java:521:                "INSERT OR REPLACE INTO config (clave, valor) VALUES (?, ?)")) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:524:            st.executeUpdate();
+src/main/java\org\gipsybuho\db\DatabaseManager.java:569:        try (Statement st = getConnection().createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:570:            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(columna) + " TEXT");
+src/main/java\org\gipsybuho\db\DatabaseManager.java:577:        try (Statement st = getConnection().createStatement()) {
+src/main/java\org\gipsybuho\db\DatabaseManager.java:578:            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " DROP COLUMN " + quoteIdentifier(columna));
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:15:             ResultSet rs = st.executeQuery("SELECT * FROM tarifas ORDER BY tecnica, nombre")) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:23:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:24:                "SELECT * FROM tarifas WHERE tecnica=? AND activa=1 ORDER BY nombre")) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:26:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:33:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:34:                "SELECT * FROM tarifas WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:36:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:46:        String sql = "INSERT INTO tarifas (tecnica,nombre,descripcion,precio_unit,precio_setup,minimo_unidades,activa,usa_tiempo) VALUES (?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:47:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:49:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:56:        String sql = "UPDATE tarifas SET tecnica=?,nombre=?,descripcion=?,precio_unit=?,precio_setup=?,minimo_unidades=?,activa=?,usa_tiempo=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:57:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:60:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:65:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:66:                "DELETE FROM tarifas WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\TarifaDAO.java:68:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:19:        String sql = "INSERT INTO notas_calendario (fecha, titulo, nota) VALUES (?, ?, ?)";
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:20:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:24:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:32:        String sql = "UPDATE notas_calendario SET titulo=?, nota=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:33:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:37:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:42:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:43:                "DELETE FROM notas_calendario WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:45:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:51:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:52:                "SELECT * FROM notas_calendario WHERE fecha=? ORDER BY id")) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:54:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:64:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:65:                "SELECT DISTINCT fecha FROM notas_calendario WHERE fecha >= ? AND fecha <= ?")) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:68:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:78:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:79:                "SELECT * FROM notas_calendario WHERE fecha >= ? AND fecha <= ? ORDER BY fecha, id")) {
+src/main/java\org\gipsybuho\dao\NotaCalendarioDAO.java:82:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:19:        String sql = """
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:20:            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:25:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:26:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:33:        String sql = """
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:34:            SELECT p.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:39:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:41:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:51:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:52:                "SELECT * FROM lineas_presupuesto WHERE presupuesto_id=? ORDER BY orden")) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:54:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:77:        String sql = "INSERT INTO presupuestos (numero,cliente_id,fecha,fecha_validez,estado,base_imponible,iva_porcentaje,iva_importe,total,notas,condiciones) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:78:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:80:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:87:        String sql = "UPDATE presupuestos SET numero=?,cliente_id=?,fecha=?,fecha_validez=?,estado=?,base_imponible=?,iva_porcentaje=?,iva_importe=?,total=?,notas=?,condiciones=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:88:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:91:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:96:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:97:                "DELETE FROM lineas_presupuesto WHERE presupuesto_id=?")) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:99:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:101:        String sql = "INSERT INTO lineas_presupuesto (presupuesto_id,descripcion,tecnica,cantidad,precio_unit,descuento,total,orden) VALUES (?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:102:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:120:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:121:                "UPDATE presupuestos SET estado=? WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:124:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:129:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:130:                "DELETE FROM presupuestos WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:132:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:137:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:138:                "SELECT COUNT(*) FROM presupuestos WHERE estado=?")) {
+src/main/java\org\gipsybuho\dao\PresupuestoDAO.java:140:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:14:        String sql = """
+src/main/java\org\gipsybuho\dao\NominaDAO.java:15:            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellidos, ''), '')) as empleado_nombre
+src/main/java\org\gipsybuho\dao\NominaDAO.java:20:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:21:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:29:        String sql = """
+src/main/java\org\gipsybuho\dao\NominaDAO.java:30:            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellidos, ''), '')) as empleado_nombre
+src/main/java\org\gipsybuho\dao\NominaDAO.java:36:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:38:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:45:        String sql = """
+src/main/java\org\gipsybuho\dao\NominaDAO.java:46:            SELECT n.*, (e.nombre || COALESCE(' ' || NULLIF(e.apellidos, ''), '')) as empleado_nombre
+src/main/java\org\gipsybuho\dao\NominaDAO.java:51:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:53:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:63:        String sql = """
+src/main/java\org\gipsybuho\dao\NominaDAO.java:64:            INSERT INTO nominas (empleado_id,mes,anio,salario_base,complementos,
+src/main/java\org\gipsybuho\dao\NominaDAO.java:70:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:72:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:79:        String sql = """
+src/main/java\org\gipsybuho\dao\NominaDAO.java:80:            UPDATE nominas SET empleado_id=?,mes=?,anio=?,salario_base=?,complementos=?,
+src/main/java\org\gipsybuho\dao\NominaDAO.java:86:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:89:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\NominaDAO.java:94:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\NominaDAO.java:95:                "DELETE FROM nominas WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\NominaDAO.java:97:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:15:             ResultSet rs = st.executeQuery("SELECT * FROM materiales ORDER BY categoria, nombre")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:23:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:24:             ResultSet rs = st.executeQuery("SELECT * FROM materiales WHERE stock_actual <= stock_minimo ORDER BY nombre")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:31:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:32:             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM materiales WHERE stock_actual <= stock_minimo")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:38:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:39:                "SELECT * FROM materiales WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:41:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:51:        String sql = "INSERT INTO materiales (nombre,referencia,categoria,stock_actual,stock_minimo,unidad,precio_unidad,proveedor) VALUES (?,?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:52:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:54:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:61:        String sql = "UPDATE materiales SET nombre=?,referencia=?,categoria=?,stock_actual=?,stock_minimo=?,unidad=?,precio_unidad=?,proveedor=?,updated_at=datetime('now') WHERE id=?";
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:62:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:65:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:77:            try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:78:                    "UPDATE materiales SET stock_actual=?, updated_at=datetime('now') WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:81:                ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:83:            try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:84:                    "INSERT INTO movimientos_material (material_id,tipo,cantidad,fecha,descripcion) VALUES (?,?,?,date('now'),?)")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:89:                ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:101:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:102:                "DELETE FROM materiales WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\MaterialDAO.java:104:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:14:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:15:                "SELECT * FROM tarifa_tramos WHERE tarifa_id=? ORDER BY tiempo_minutos ASC")) {
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:17:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:28:        String sql = "INSERT INTO tarifa_tramos (tarifa_id, tiempo_minutos, precio_tiempo) VALUES (?,?,?)";
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:29:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:34:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:41:        String sql = "UPDATE tarifa_tramos SET tiempo_minutos=?, precio_tiempo=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:42:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:46:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:51:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:52:                "DELETE FROM tarifa_tramos WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\TarifaTramoDAO.java:54:            ps.executeUpdate();
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:27: * añade dinámicamente las que no existan vía ALTER TABLE.
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:145:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:146:             ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:159:                try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:160:                    st.execute("ALTER TABLE clientes ADD COLUMN \"" + col + "\" TEXT");
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:375:            boolean esNuestro = slice.startsWith("INSERT INTO CLIENTES") ||
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:376:                                slice.startsWith("INSERT OR REPLACE INTO CLIENTES");
+src/main/java\org\gipsybuho\service\ImportarClientesService.java:409:            throw new Exception("El SQL no contiene INSERT INTO clientes válidos.");
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:15:        String sql = """
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:16:            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre,
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:24:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:25:             ResultSet rs = st.executeQuery(sql)) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:32:        String sql = """
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:33:            SELECT a.*, (c.nombre || COALESCE(' ' || NULLIF(c.apellidos, ''), '')) as cliente_nombre,
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:41:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:43:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:53:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:54:                "SELECT * FROM lineas_albaran WHERE albaran_id=? ORDER BY orden")) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:56:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:150:        String sql = "INSERT INTO albaranes (numero,cliente_id,fecha,factura_id,pedido_id,estado,observaciones) VALUES (?,?,?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:151:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:153:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:160:        String sql = "UPDATE albaranes SET numero=?,cliente_id=?,fecha=?,factura_id=?,pedido_id=?,estado=?,observaciones=? WHERE id=?";
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:161:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:164:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:169:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:170:                "DELETE FROM lineas_albaran WHERE albaran_id=?")) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:172:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:175:        String sql = "INSERT INTO lineas_albaran (albaran_id,descripcion,cantidad,unidad,orden) VALUES (?,?,?,?,?)";
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:176:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:191:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:192:                "UPDATE albaranes SET estado=? WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:195:            ps.executeUpdate();
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:200:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:201:                "DELETE FROM albaranes WHERE id=?")) {
+src/main/java\org\gipsybuho\dao\AlbaranDAO.java:203:            ps.executeUpdate();
+src/main/java\org\gipsybuho\ui\ColumnConfiguratorDialog.java:92:        Button delete = new Button("Eliminar");
+src/main/java\org\gipsybuho\service\EstadisticasService.java:19:            "SELECT strftime('%m',fecha), COALESCE(SUM(total),0) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:28:            "SELECT strftime('%m',fecha_compra), COALESCE(SUM(importe_total),0) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:38:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:39:                "SELECT mes, COALESCE(SUM(neto),0) FROM nominas WHERE anio=? GROUP BY mes")) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:41:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:54:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:55:                "SELECT m.nombre, COALESCE(SUM(mv.cantidad),0) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:61:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:71:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:72:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:73:                "SELECT COALESCE(NULLIF(categoria,''),'Sin categoría'), COUNT(*) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:84:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:85:                "SELECT nombre, stock_actual FROM materiales " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:88:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:98:            "SELECT strftime('%m',created_at), COUNT(*) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:107:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:108:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:109:                "SELECT COALESCE(NULLIF(tipo,''),'Sin tipo'), COUNT(*) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:120:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:121:                "SELECT (c.nombre||COALESCE(' '||NULLIF(c.apellidos,''),'')) as nombre, " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:127:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:137:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:138:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:139:                "SELECT COALESCE(NULLIF(tecnica,''),'Sin técnica'), COALESCE(SUM(total),0) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:150:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:151:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:152:                "SELECT COALESCE(NULLIF(tecnica,''),'Sin técnica'), COUNT(*) " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:163:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:164:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:165:                "SELECT estado, COUNT(*) FROM pedidos GROUP BY 1 ORDER BY 2 DESC")) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:175:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:176:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:177:                "SELECT estado, COUNT(*) FROM facturas GROUP BY 1 ORDER BY 2 DESC")) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:187:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:188:             ResultSet rs = st.executeQuery(
+src/main/java\org\gipsybuho\service\EstadisticasService.java:189:                "SELECT estado, COUNT(*) FROM presupuestos GROUP BY 1 ORDER BY 2 DESC")) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:211:        return scalarStr("SELECT COALESCE(SUM(total),0) FROM facturas " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:216:        return scalarStr("SELECT COALESCE(SUM(importe_total),0) FROM pagos_material " +
+src/main/java\org\gipsybuho\service\EstadisticasService.java:221:        return scalarInt("SELECT COALESCE(SUM(neto),0) FROM nominas WHERE anio=?", anio);
+src/main/java\org\gipsybuho\service\EstadisticasService.java:225:        return (int) scalarStr("SELECT COUNT(*) FROM clientes WHERE strftime('%Y',created_at)=?", anio);
+src/main/java\org\gipsybuho\service\EstadisticasService.java:229:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:230:             ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM clientes")) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:241:        try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:243:                "SELECT DISTINCT strftime('%Y',fecha) FROM facturas WHERE fecha IS NOT NULL",
+src/main/java\org\gipsybuho\service\EstadisticasService.java:244:                "SELECT DISTINCT strftime('%Y',created_at) FROM clientes WHERE created_at IS NOT NULL",
+src/main/java\org\gipsybuho\service\EstadisticasService.java:245:                "SELECT DISTINCT strftime('%Y',fecha_compra) FROM pagos_material WHERE fecha_compra IS NOT NULL"
+src/main/java\org\gipsybuho\service\EstadisticasService.java:247:                try (ResultSet rs = st.executeQuery(q)) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:266:    private static Map<String, Double> queryMensualStr(String sql, int anio) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:268:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:270:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:282:    private static double scalarStr(String sql, int anio) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:283:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:285:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EstadisticasService.java:290:    private static double scalarInt(String sql, int anio) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:291:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EstadisticasService.java:293:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EntityImportService.java:369:     * Fallos pre-INSERT (FK de cabecera, etc.) pueden retornar {0,0,0} añadiendo el RowError correspondiente.
+src/main/java\org\gipsybuho\service\EntityImportService.java:399:            existingId = buscarId(conn, "SELECT id FROM materiales WHERE referencia=?", ref);
+src/main/java\org\gipsybuho\service\EntityImportService.java:401:            existingId = buscarId(conn, "SELECT id FROM materiales WHERE nombre=?", m.getNombre());
+src/main/java\org\gipsybuho\service\EntityImportService.java:467:        int existingId = buscarId(conn, "SELECT id FROM empleados WHERE nif=?", nif);
+src/main/java\org\gipsybuho\service\EntityImportService.java:526:        int existingId = buscarId(conn, "SELECT id FROM clientes WHERE nif=?", nif);
+src/main/java\org\gipsybuho\service\EntityImportService.java:579:        // tecnica y nombre son NOT NULL en el spec, pero check defensivo para UPDATE
+src/main/java\org\gipsybuho\service\EntityImportService.java:728:        int existingId = buscarId(conn, "SELECT id FROM pedidos WHERE numero=?", numero);
+src/main/java\org\gipsybuho\service\EntityImportService.java:785:            int id = buscarId(conn, "SELECT id FROM clientes WHERE nif=?", nifLimpio);
+src/main/java\org\gipsybuho\service\EntityImportService.java:824:        String sql = "SELECT id FROM " + tabla
+src/main/java\org\gipsybuho\service\EntityImportService.java:834:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EntityImportService.java:837:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EntityImportService.java:875:        int existingId = buscarId(conn, "SELECT id FROM presupuestos WHERE numero=?", numero);
+src/main/java\org\gipsybuho\service\EntityImportService.java:965:        int existingId = buscarId(conn, "SELECT id FROM facturas WHERE numero=?", numero);
+src/main/java\org\gipsybuho\service\EntityImportService.java:1037:        int id = buscarId(conn, "SELECT id FROM presupuestos WHERE numero=?", presNumero.trim());
+src/main/java\org\gipsybuho\service\EntityImportService.java:1047:    private int buscarId(Connection conn, String sql, String valor) throws SQLException {
+src/main/java\org\gipsybuho\service\EntityImportService.java:1048:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EntityImportService.java:1050:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EntityImportService.java:1057:        String sql = "SELECT id FROM tarifas WHERE tecnica=? AND nombre=? AND minimo_unidades=?";
+src/main/java\org\gipsybuho\service\EntityImportService.java:1058:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EntityImportService.java:1062:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EntityImportService.java:1069:        String sql = "SELECT id FROM nominas WHERE empleado_id=? AND mes=? AND anio=?";
+src/main/java\org\gipsybuho\service\EntityImportService.java:1070:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\EntityImportService.java:1074:            ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\EntityImportService.java:1140:        int existingId = buscarId(conn, "SELECT id FROM albaranes WHERE numero=?", numero);
+src/main/java\org\gipsybuho\service\EntityImportService.java:1209:        int id = buscarId(conn, "SELECT id FROM facturas WHERE numero=?", facturaNumero.trim());
+src/main/java\org\gipsybuho\service\EntityImportService.java:1224:        int id = buscarId(conn, "SELECT id FROM pedidos WHERE numero=?", pedidoNumero.trim());
+src/main/java\org\gipsybuho\ui\ImportBackupView.java:126:            "Contiene sentencias DROP TABLE, CREATE TABLE e INSERT con todos los datos.\n" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:41:            try (PreparedStatement ps = conn.prepareStatement("ATTACH DATABASE ? AS backup_db")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:43:                ps.execute();
+src/main/java\org\gipsybuho\service\ImportBackupService.java:56:                    try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:57:                        st.execute("INSERT OR REPLACE INTO " + tablaSql + " (" + colList + ") " +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:58:                                   "SELECT " + colList + " FROM backup_db." + tablaSql);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:63:                try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:64:                    st.execute("DETACH DATABASE backup_db");
+src/main/java\org\gipsybuho\service\ImportBackupService.java:121:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:125:                        st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:133:            try (Statement st = conn.createStatement()) { st.execute("ROLLBACK"); }
+src/main/java\org\gipsybuho\service\ImportBackupService.java:135:            try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
+src/main/java\org\gipsybuho\service\ImportBackupService.java:180:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" + colNames + ") VALUES (" + placeholders + ")";
+src/main/java\org\gipsybuho\service\ImportBackupService.java:182:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:369:        try (ResultSet rs = conn.createStatement()
+src/main/java\org\gipsybuho\service\ImportBackupService.java:370:                .executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:386:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:391:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:459:        try (ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:466:                conn.createStatement().execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(col) + " TEXT");
+src/main/java\org\gipsybuho\service\ImportBackupService.java:507:    /** INSERT OR REPLACE de todos los registros de un array JSON en la tabla dada. */
+src/main/java\org\gipsybuho\service\ImportBackupService.java:514:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:519:        try (PreparedStatement ps = conn.prepareStatement(sql)) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:566:        try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ImportBackupService.java:567:                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:569:            return ps.executeQuery().next();
+src/main/java\org\gipsybuho\service\ImportBackupService.java:601:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:605:                if (!upper.startsWith("INSERT INTO ALBARANES") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:606:                    !upper.startsWith("INSERT INTO LINEAS_ALBARAN")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:608:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:610:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:765:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:769:                if (!upper.startsWith("INSERT INTO FACTURAS") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:770:                    !upper.startsWith("INSERT INTO LINEAS_FACTURA")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:772:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:774:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:949:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:953:                if (!upper.startsWith("INSERT INTO PRESUPUESTOS") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:954:                    !upper.startsWith("INSERT INTO LINEAS_PRESUPUESTO")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:956:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:958:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1135:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1138:                if (!trimmed.toUpperCase().startsWith("INSERT INTO NOMINAS")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1140:                stmt = "INSERT OR REPLACE INTO nominas" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1141:                    stmt.substring("INSERT INTO nominas".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1143:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1280:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1284:                if (!upper.startsWith("INSERT INTO EMPLEADOS") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1285:                    !upper.startsWith("INSERT INTO NOMINAS")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1287:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1289:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1444:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1448:                if (!upper.startsWith("INSERT INTO MATERIALES") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1449:                    !upper.startsWith("INSERT INTO CONSUMO_MATERIAL_TECNICA") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1450:                    !upper.startsWith("INSERT INTO MOVIMIENTOS_MATERIAL") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1451:                    !upper.startsWith("INSERT INTO PAGOS_MATERIAL")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1453:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1455:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1621:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1624:                if (!trimmed.toUpperCase().startsWith("INSERT INTO TARIFAS")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1626:                stmt = "INSERT OR REPLACE INTO tarifas" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1627:                    stmt.substring("INSERT INTO tarifas".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1629:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1744:    // Semántica: INSERT OR REPLACE — añade nuevos y actualiza existentes por ID.
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1769:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1772:                if (!trimmed.toUpperCase().startsWith("INSERT INTO CLIENTES")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1774:                stmt = "INSERT OR REPLACE INTO clientes" +
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1775:                    stmt.substring("INSERT INTO clientes".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1777:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1844:        try (Statement st = conn.createStatement()) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1848:                if (!upper.startsWith("INSERT INTO PEDIDOS") &&
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1849:                    !upper.startsWith("INSERT INTO PAGOS_PEDIDO")) continue;
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1851:                stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1853:                    st.execute(stmt);
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1912:        try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = OFF"); }
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1916:        try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
+src/main/java\org\gipsybuho\service\ImportBackupService.java:1980:    private static String limpiarComentariosSql(String sql) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2021:        try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2022:                "SELECT 1 FROM " + schema + ".sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2024:            return ps.executeQuery().next();
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2034:        try (ResultSet rs = conn.createStatement().executeQuery(
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2035:                "PRAGMA " + schema + ".table_info(" + quoteIdentifier(tabla) + ")")) {
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2044:     * transacción, PRAGMA foreign_keys, DROP TABLE IF EXISTS, CREATE TABLE e
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2045:     * INSERT INTO sobre identificadores SQLite válidos. Rechaza ATTACH, DETACH,
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2046:     * PRAGMA arbitrarios, UPDATE, DELETE, TRUNCATE y cualquier otra cosa.
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2063:    private static final Pattern TABLA_DROP = Pattern.compile("(?is)^\\s*DROP\\s+TABLE\\s+IF\\s+EXISTS\\s+" + CAPTURA_IDENT + "\\s*$");
+src/main/java\org\gipsybuho\service\ImportBackupService.java:2065:    private static final Pattern TABLA_INSERT = Pattern.compile("(?is)^\\s*INSERT(?:\\s+OR\\s+(?:REPLACE|IGNORE))?\\s+INTO\\s+" + CAPTURA_IDENT + "(?:\\s*\\(|\\s+).*");
+src/main/java\org\gipsybuho\ui\ImportView.java:177:    // ── PASO 1: Select file ───────────────────────────────────────────────────
+src/main/java\org\gipsybuho\service\ExportService.java:76:        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:79:            ps.executeUpdate();
+src/main/java\org\gipsybuho\service\ExportService.java:107:        try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:108:             ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:137:    //    Script completo con DROP + CREATE + INSERT, restaurable en cualquier SQLite
+src/main/java\org\gipsybuho\service\ExportService.java:149:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:157:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:158:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:160:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:163:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:170:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:171:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:184:                        StringBuilder sb = new StringBuilder("INSERT INTO ")
+src/main/java\org\gipsybuho\service\ExportService.java:204:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:229:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:230:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:267:        try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:268:                "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:270:            return ps.executeQuery().next();
+src/main/java\org\gipsybuho\service\ExportService.java:294:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:295:                     ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM " + t)) {
+src/main/java\org\gipsybuho\service\ExportService.java:324:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:328:            try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:329:                    "SELECT sql FROM sqlite_master WHERE type='table' AND name='clientes'")) {
+src/main/java\org\gipsybuho\service\ExportService.java:330:                ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:332:                    pw.println("DROP TABLE IF EXISTS clientes;");
+src/main/java\org\gipsybuho\service\ExportService.java:338:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:339:                 ResultSet rs = st.executeQuery("SELECT * FROM clientes")) {
+src/main/java\org\gipsybuho\service\ExportService.java:349:                    StringBuilder sb = new StringBuilder("INSERT INTO clientes ")
+src/main/java\org\gipsybuho\service\ExportService.java:362:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:375:        try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:376:             ResultSet rs = st.executeQuery("SELECT * FROM clientes")) {
+src/main/java\org\gipsybuho\service\ExportService.java:541:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:546:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:547:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:549:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:551:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:556:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:557:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:567:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:580:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:595:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:596:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:770:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:775:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:776:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:778:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:780:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:785:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:786:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:796:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:809:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:824:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:825:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:993:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:998:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:999:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:1001:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:1003:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:1008:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1009:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1019:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:1032:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:1047:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1048:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1232:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:1238:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:1239:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:1241:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:1243:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:1248:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1249:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1259:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:1272:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:1288:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1289:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1474:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:1479:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:1480:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:1482:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:1484:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:1489:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1490:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1500:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:1513:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:1528:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1529:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1707:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:1712:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:1713:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:1715:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:1717:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:1722:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1723:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1733:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:1746:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:1761:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1762:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1944:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:1949:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:1950:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:1952:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:1954:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:1959:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1960:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:1970:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:1983:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:1998:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:1999:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:2203:            pw.println("PRAGMA foreign_keys = OFF;");
+src/main/java\org\gipsybuho\service\ExportService.java:2208:                try (PreparedStatement ps = conn.prepareStatement(
+src/main/java\org\gipsybuho\service\ExportService.java:2209:                        "SELECT sql FROM sqlite_master WHERE type='table' AND name=?")) {
+src/main/java\org\gipsybuho\service\ExportService.java:2211:                    ResultSet rs = ps.executeQuery();
+src/main/java\org\gipsybuho\service\ExportService.java:2213:                        pw.println("DROP TABLE IF EXISTS " + tabla + ";");
+src/main/java\org\gipsybuho\service\ExportService.java:2218:                try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:2219:                     ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {
+src/main/java\org\gipsybuho\service\ExportService.java:2229:                        StringBuilder sb = new StringBuilder("INSERT INTO " + tabla + " ")
+src/main/java\org\gipsybuho\service\ExportService.java:2242:            pw.println("PRAGMA foreign_keys = ON;");
+src/main/java\org\gipsybuho\service\ExportService.java:2257:            try (Statement st = conn.createStatement();
+src/main/java\org\gipsybuho\service\ExportService.java:2258:                 ResultSet rs = st.executeQuery("SELECT * FROM " + tabla)) {

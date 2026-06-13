@@ -1,0 +1,6 @@
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Generated JDK runtime java.security is not project secret material"
+paths = ['''(^|/)output/GraficasMulberry/runtime/conf/security/java\.security$''']

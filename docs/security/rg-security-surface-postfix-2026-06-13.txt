@@ -1,0 +1,193 @@
+src\main\java\org\gipsybuho\db\DatabaseManager.java:33:            try (Statement st = connection.createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:34:                st.execute("PRAGMA foreign_keys = ON");
+src\main\java\org\gipsybuho\db\DatabaseManager.java:109:            try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:135:                try (Statement drop = conn.createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:142:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:432:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:569:        try (Statement st = getConnection().createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:570:            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(columna) + " TEXT");
+src\main\java\org\gipsybuho\db\DatabaseManager.java:577:        try (Statement st = getConnection().createStatement()) {
+src\main\java\org\gipsybuho\db\DatabaseManager.java:578:            st.execute("ALTER TABLE " + quoteIdentifier(tabla) + " DROP COLUMN " + quoteIdentifier(columna));
+src\main\java\org\gipsybuho\db\DatabaseManager.java:582:    public static String quoteIdentifier(String identifier) {
+src\main\java\org\gipsybuho\SingleInstanceLock.java:6:import java.net.ServerSocket;
+src\main\java\org\gipsybuho\SingleInstanceLock.java:11:    private static ServerSocket lockSocket;
+src\main\java\org\gipsybuho\SingleInstanceLock.java:21:            lockSocket = new ServerSocket();
+src\main\java\org\gipsybuho\SingleInstanceLock.java:33:     * Libera el bloqueo de instancia única cerrando el ServerSocket.
+src\main\java\org\gipsybuho\dao\AlbaranDAO.java:24:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:19:        assertTrue(esSeguro("PRAGMA foreign_keys = OFF"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:20:        assertTrue(esSeguro("PRAGMA foreign_keys = ON"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:41:        assertFalse(esSeguro("ATTACH DATABASE 'malicioso.db' AS evil"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:47:        assertFalse(esSeguro("PRAGMA key = 'secreto'"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:48:        assertFalse(esSeguro("PRAGMA cipher_compatibility = 4"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:49:        assertFalse(esSeguro("PRAGMA journal_mode = WAL"));
+src\test\java\org\gipsybuho\service\ImportBackupServiceTest.java:77:        assertFalse(esSeguro("SELECT load_extension('mal.so')"));
+src\main\java\org\gipsybuho\service\EstadisticasService.java:71:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:107:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:137:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:150:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:163:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:175:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:187:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:229:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\EstadisticasService.java:241:        try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src\main\java\org\gipsybuho\service\ImportarClientesService.java:145:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\ImportarClientesService.java:146:             ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
+src\main\java\org\gipsybuho\service\ImportarClientesService.java:159:                try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src\main\java\org\gipsybuho\service\ImportarClientesService.java:296:        byte[] bytes = Files.readAllBytes(path);
+src\main\java\org\gipsybuho\service\ImportarClientesService.java:364:        String contenido = Files.readString(path, StandardCharsets.UTF_8);
+src\main\java\org\gipsybuho\service\ImportBackupService.java:55:        return Files.readString(origen, StandardCharsets.UTF_8);
+src\main\java\org\gipsybuho\service\ImportBackupService.java:152:            try (PreparedStatement ps = conn.prepareStatement("ATTACH DATABASE ? AS backup_db")) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:165:                    String colList = cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", "));
+src\main\java\org\gipsybuho\service\ImportBackupService.java:166:                    String tablaSql = quoteIdentifier(tabla);
+src\main\java\org\gipsybuho\service\ImportBackupService.java:167:                    try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:174:                try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:244:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:251:            try (Statement st = conn.createStatement()) { st.execute("ROLLBACK"); }
+src\main\java\org\gipsybuho\service\ImportBackupService.java:253:            try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
+src\main\java\org\gipsybuho\service\ImportBackupService.java:298:        String colNames     = cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", "));
+src\main\java\org\gipsybuho\service\ImportBackupService.java:300:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" + colNames + ") VALUES (" + placeholders + ")";
+src\main\java\org\gipsybuho\service\ImportBackupService.java:502:        try (ResultSet rs = conn.createStatement()
+src\main\java\org\gipsybuho\service\ImportBackupService.java:503:                .executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:520:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+src\main\java\org\gipsybuho\service\ImportBackupService.java:521:            cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", ")) +
+src\main\java\org\gipsybuho\service\ImportBackupService.java:601:        try (ResultSet rs = conn.createStatement().executeQuery("PRAGMA table_info(" + quoteIdentifier(tabla) + ")")) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:608:                conn.createStatement().execute("ALTER TABLE " + quoteIdentifier(tabla) + " ADD COLUMN " + quoteIdentifier(col) + " TEXT");
+src\main\java\org\gipsybuho\service\ImportBackupService.java:658:        String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
+src\main\java\org\gipsybuho\service\ImportBackupService.java:659:            cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", ")) + ") VALUES (" +
+src\main\java\org\gipsybuho\service\ImportBackupService.java:744:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:906:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1088:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1272:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1415:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1577:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1752:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1898:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:1971:        try (Statement st = conn.createStatement()) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2038:        try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = OFF"); }
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2042:        try (Statement st = conn.createStatement()) { st.execute("PRAGMA foreign_keys = ON"); }
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2137:    private static String quoteIdentifier(String identifier) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2170:        try (ResultSet rs = conn.createStatement().executeQuery(
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2171:                "PRAGMA " + schema + ".table_info(" + quoteIdentifier(tabla) + ")")) {
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2180:     * transacción, PRAGMA foreign_keys, DROP TABLE IF EXISTS, CREATE TABLE e
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2182:     * PRAGMA arbitrarios, UPDATE, DELETE, TRUNCATE y cualquier otra cosa.
+src\main\java\org\gipsybuho\service\ImportBackupService.java:2193:        "PRAGMA\\s+foreign_keys\\s*=\\s*(?:ON|OFF|0|1|TRUE|FALSE)|" +
+src\main\java\org\gipsybuho\service\ExportService.java:107:        try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:149:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:170:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:204:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:229:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:294:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:324:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:338:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:362:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:375:        try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:541:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:556:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:580:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:595:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:770:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:785:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:809:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:824:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:993:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:1008:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1032:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:1047:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1232:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:1248:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1272:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:1288:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1474:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:1489:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1513:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:1528:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1707:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:1722:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1746:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:1761:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1944:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:1959:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:1983:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:1998:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:2203:            pw.println("PRAGMA foreign_keys = OFF;");
+src\main\java\org\gipsybuho\service\ExportService.java:2218:                try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ExportService.java:2242:            pw.println("PRAGMA foreign_keys = ON;");
+src\main\java\org\gipsybuho\service\ExportService.java:2257:            try (Statement st = conn.createStatement();
+src\main\java\org\gipsybuho\service\ImportService.java:1477:        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+src\main\java\org\gipsybuho\service\ImportService.java:1494:            HttpClient c = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+src\main\java\org\gipsybuho\service\OllamaManager.java:4:import java.net.http.HttpClient;
+src\main\java\org\gipsybuho\service\OllamaManager.java:34:            ProcessBuilder pb = new ProcessBuilder(exe.toString(), "serve");
+src\main\java\org\gipsybuho\service\OllamaManager.java:35:            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+src\main\java\org\gipsybuho\service\OllamaManager.java:36:            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+src\main\java\org\gipsybuho\service\OllamaManager.java:58:            HttpClient c = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
+src\main\java\org\gipsybuho\service\OllamaService.java:13:import java.net.http.HttpClient;
+src\main\java\org\gipsybuho\service\OllamaService.java:42:    private final HttpClient httpClient;
+src\main\java\org\gipsybuho\service\OllamaService.java:55:        this.httpClient = HttpClient.newBuilder()
+src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1052:            String.valueOf(Runtime.getRuntime().availableProcessors()));
+src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1133:            Process p = new ProcessBuilder(cmd).start();
+src\main\java\org\gipsybuho\ui\ClientesView.java:544:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\dao\NominaDAO.java:20:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PedidoDAO.java:27:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\MaterialDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\MaterialDAO.java:23:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\MaterialDAO.java:31:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ConsumoMaterialDAO.java:20:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:18:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:78:        baseFields.forEach(f -> sets.add(DatabaseManager.quoteIdentifier(f) + "=?"));
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:79:        extraKeys.forEach(k -> sets.add(DatabaseManager.quoteIdentifier(k) + "=?"));
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:100:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:109:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:110:             ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
+src\main\java\org\gipsybuho\dao\ClienteDAO.java:121:            .map(DatabaseManager::quoteIdentifier)
+src\main\java\org\gipsybuho\ui\AlbaranesView.java:598:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\AlbaranesView.java:600:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+src\main\java\org\gipsybuho\dao\FacturaDAO.java:21:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\UserDAO.java:89:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\UserDAO.java:124:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PagoPedidoDAO.java:35:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PagoPedidoDAO.java:95:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PagoPedidoDAO.java:103:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:25:            sql.append(", ").append(DatabaseManager.quoteIdentifier(column));
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:27:        sql.append(" FROM ").append(DatabaseManager.quoteIdentifier(tableName));
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:29:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:48:            sql.append(DatabaseManager.quoteIdentifier(columns.get(i)));
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:50:        sql.append(" FROM ").append(DatabaseManager.quoteIdentifier(tableName)).append(" WHERE id=?");
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:65:        String sql = "UPDATE " + DatabaseManager.quoteIdentifier(tableName)
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:66:            + " SET " + DatabaseManager.quoteIdentifier(columnName) + "=? WHERE id=?";
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:88:        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:89:            + " FROM " + DatabaseManager.quoteIdentifier(tableName);
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:90:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:108:        String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:109:            + " FROM " + DatabaseManager.quoteIdentifier(tableName);
+src\main\java\org\gipsybuho\dao\DynamicColumnValueDAO.java:110:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ColumnConfigDAO.java:167:        try (Statement st = DatabaseManager.getConnection().createStatement()) {
+src\main\java\org\gipsybuho\dao\ColumnConfigDAO.java:213:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\ColumnConfigDAO.java:214:             ResultSet rs = st.executeQuery("PRAGMA table_info(" + DatabaseManager.quoteIdentifier(tableName) + ")")) {
+src\main\java\org\gipsybuho\dao\EmpleadoDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\EmpleadoDAO.java:23:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\EmpleadoDAO.java:79:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\service\TextToSpeechService.java:85:        ProcessBuilder pb = new ProcessBuilder(
+src\main\java\org\gipsybuho\service\TextToSpeechService.java:161:        ProcessBuilder pb = new ProcessBuilder(
+src\main\java\org\gipsybuho\service\TextToSpeechService.java:191:        ProcessBuilder pb = new ProcessBuilder(
+src\main\java\org\gipsybuho\dao\PagoMaterialDAO.java:21:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PagoMaterialDAO.java:31:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\PagoMaterialDAO.java:76:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\dao\TarifaDAO.java:14:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\ui\EmpleadosView.java:497:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\FacturasView.java:742:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\FacturasView.java:744:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+src\main\java\org\gipsybuho\dao\PresupuestoDAO.java:25:        try (Statement st = DatabaseManager.getConnection().createStatement();
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:249:        HttpClient client = HttpClient.newBuilder()
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:251:            .followRedirects(HttpClient.Redirect.NORMAL)
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:339:        Process proc = new ProcessBuilder(realExe.toString())
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:340:            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:341:            .redirectError(ProcessBuilder.Redirect.DISCARD)
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:381:                $sig = Get-AuthenticodeSignature -LiteralPath $path
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:388:        Process proc = new ProcessBuilder(
+src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:446:        Process proc = new ProcessBuilder(ollamaExe.toString(), "pull", DEFAULT_MODEL)
+src\main\java\org\gipsybuho\ui\NominasView.java:597:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\PresupuestosView.java:867:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\PresupuestosView.java:869:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+src\main\java\org\gipsybuho\ui\MaterialesView.java:1059:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\PedidosView.java:1220:                    pdfBytes = Files.readAllBytes(pdfPath);
+src\main\java\org\gipsybuho\ui\TarifasView.java:546:                    pdfBytes = Files.readAllBytes(pdfPath);

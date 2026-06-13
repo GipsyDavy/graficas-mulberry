@@ -1,6 +1,8 @@
 package org.gipsybuho;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
 public class SingleInstanceLock {
@@ -15,9 +17,9 @@ public class SingleInstanceLock {
      */
     public static boolean acquireLock() {
         try {
-            // Intenta abrir un ServerSocket en un puerto específico.
-            // Si tiene éxito, esta es la primera instancia.
-            lockSocket = new ServerSocket(LOCK_PORT);
+            // Enlazar solo a loopback evita exponer el puerto de bloqueo en la red.
+            lockSocket = new ServerSocket();
+            lockSocket.bind(new InetSocketAddress(InetAddress.getLoopbackAddress(), LOCK_PORT));
             System.out.println("Bloqueo de instancia única adquirido en el puerto " + LOCK_PORT);
             return true;
         } catch (IOException e) {

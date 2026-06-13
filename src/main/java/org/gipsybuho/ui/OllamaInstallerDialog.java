@@ -14,8 +14,11 @@ import org.gipsybuho.service.OllamaManager;
 import java.io.*;
 import java.net.URI;
 import java.net.http.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.time.Duration;
+import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -312,6 +315,7 @@ public class OllamaInstallerDialog extends Stage {
             throw new Exception("El archivo descargado es demasiado pequeño (" + fileSize + " bytes) — posible descarga corrupta");
         }
 
+        verificarFirmaInstalador(dest);
         log("  Descarga completada (" + (fileSize / 1_048_576) + " MB) → " + dest.getFileName());
         return dest;
     }
@@ -363,6 +367,60 @@ public class OllamaInstallerDialog extends Stage {
 
         int code = proc.exitValue();
         log("  Instalador finalizado (código de salida: " + code + ")");
+    }
+
+    private void verificarFirmaInstalador(Path installer) throws Exception {
+        if (!System.getProperty("os.name", "").toLowerCase(Locale.ROOT).contains("win")) {
+            throw new SecurityException("La verificación Authenticode solo está disponible en Windows — ejecución cancelada");
+        }
+
+        log("  Verificando firma digital Authenticode del instalador...");
+        String command = """
+            & {
+                param([string]$path)
+                $sig = Get-AuthenticodeSignature -LiteralPath $path
+                $subject = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { '' }
+                Write-Output $sig.Status
+                Write-Output $subject
+            }
+            """;
+
+        Process proc = new ProcessBuilder(
+                "powershell.exe",
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                command,
+                installer.toRealPath().toString())
+            .redirectErrorStream(true)
+            .start();
+
+        boolean finished = proc.waitFor(20, TimeUnit.SECONDS);
+        if (!finished) {
+            proc.destroyForcibly();
+            throw new SecurityException("No se pudo verificar la firma del instalador dentro del tiempo esperado");
+        }
+
+        String output = new String(proc.getInputStream().readAllBytes(), StandardCharsets.UTF_8);
+        List<String> lines = output.lines()
+            .map(String::trim)
+            .filter(s -> !s.isBlank())
+            .toList();
+
+        if (proc.exitValue() != 0 || lines.size() < 2) {
+            throw new SecurityException("No se pudo leer la firma Authenticode del instalador: " + output.trim());
+        }
+
+        String status = lines.get(0);
+        String subject = lines.get(1);
+        if (!"Valid".equalsIgnoreCase(status)) {
+            throw new SecurityException("Firma Authenticode no válida del instalador: " + status);
+        }
+        if (!subject.toLowerCase(Locale.ROOT).contains("ollama")) {
+            throw new SecurityException("Firmante inesperado del instalador: " + subject);
+        }
+
+        log("  Firma válida. Firmante: " + subject);
     }
 
     // ── Paso 3: Descargar modelo ──────────────────────────────────────────────

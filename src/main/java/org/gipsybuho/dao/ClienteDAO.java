@@ -75,8 +75,8 @@ public class ClienteDAO {
 
         StringBuilder sql = new StringBuilder("UPDATE clientes SET ");
         List<String> sets = new ArrayList<>();
-        baseFields.forEach(f -> sets.add(f + "=?"));
-        extraKeys.forEach(k -> sets.add("\"" + k + "\"=?"));
+        baseFields.forEach(f -> sets.add(DatabaseManager.quoteIdentifier(f) + "=?"));
+        extraKeys.forEach(k -> sets.add(DatabaseManager.quoteIdentifier(k) + "=?"));
         sql.append(String.join(",", sets)).append(" WHERE id=?");
 
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {

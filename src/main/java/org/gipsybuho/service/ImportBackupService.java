@@ -26,6 +26,116 @@ public class ImportBackupService {
     private static final Set<String> TABLAS_PERMITIDAS =
         Collections.unmodifiableSet(new HashSet<>(Arrays.asList(TABLAS_ORDEN)));
     private static final Pattern IDENTIFICADOR_SQL = Pattern.compile("[\\p{L}_][\\p{L}\\p{N}_]*");
+    private static final long MAX_SQLITE_BACKUP_BYTES = 2L * 1024 * 1024 * 1024;
+    private static final long MAX_TEXT_IMPORT_BYTES = 50L * 1024 * 1024;
+    private static final long MAX_ZIP_BACKUP_BYTES = 512L * 1024 * 1024;
+    private static final long MAX_ZIP_ENTRY_BYTES = 50L * 1024 * 1024;
+    private static final long MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES = 250L * 1024 * 1024;
+    private static final long MAX_OFFICE_IMPORT_BYTES = 100L * 1024 * 1024;
+    private static final int MAX_IMPORT_ROWS = 100_000;
+    private static final int MAX_IMPORT_COLUMNS = 256;
+    private static final int MAX_SQL_STATEMENTS = 250_000;
+
+    private record ZipEntryContent(byte[] bytes, long size) {}
+
+    private static void validarArchivoImportacion(Path origen, long maxBytes, String tipo) throws IOException {
+        Path archivo = origen.toAbsolutePath().normalize();
+        if (!Files.isRegularFile(archivo)) {
+            throw new FileNotFoundException("No existe el archivo de importación: " + archivo);
+        }
+        long size = Files.size(archivo);
+        if (size > maxBytes) {
+            throw new IOException(tipo + " demasiado grande: " + formatoBytes(size) +
+                " (máximo " + formatoBytes(maxBytes) + ")");
+        }
+    }
+
+    private static String leerTextoLimitado(Path origen, long maxBytes, String tipo) throws IOException {
+        validarArchivoImportacion(origen, maxBytes, tipo);
+        return Files.readString(origen, StandardCharsets.UTF_8);
+    }
+
+    private static String leerSqlMulberry(Path origen) throws IOException {
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "SQL");
+        validarCabeceraSqlMulberry(contenido);
+        return contenido;
+    }
+
+    private static JsonNode leerJsonLimitado(ObjectMapper mapper, Path origen) throws IOException {
+        validarArchivoImportacion(origen, MAX_TEXT_IMPORT_BYTES, "JSON");
+        try (BufferedReader reader = Files.newBufferedReader(origen, StandardCharsets.UTF_8)) {
+            return mapper.readTree(reader);
+        }
+    }
+
+    private static org.apache.pdfbox.pdmodel.PDDocument cargarPdf(Path origen) throws IOException {
+        validarArchivoImportacion(origen, MAX_OFFICE_IMPORT_BYTES, "PDF");
+        return org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile());
+    }
+
+    private static ZipEntryContent leerEntradaZipLimitada(ZipInputStream zis, String nombre, long totalAnterior) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buffer = new byte[64 * 1024];
+        long entryBytes = 0;
+        int n;
+        while ((n = zis.read(buffer)) != -1) {
+            entryBytes += n;
+            if (entryBytes > MAX_ZIP_ENTRY_BYTES) {
+                throw new IOException("Entrada ZIP demasiado grande: " + nombre);
+            }
+            if (totalAnterior + entryBytes > MAX_ZIP_TOTAL_UNCOMPRESSED_BYTES) {
+                throw new IOException("Backup ZIP demasiado grande al descomprimir");
+            }
+            out.write(buffer, 0, n);
+        }
+        return new ZipEntryContent(out.toByteArray(), entryBytes);
+    }
+
+    private static void validarCabeceraSqlMulberry(String contenido) {
+        boolean cabeceraValida = contenido.lines()
+            .limit(5)
+            .anyMatch(linea -> linea.contains("Gráficas Mulberry") || linea.contains("Graficas Mulberry"));
+        if (!cabeceraValida) {
+            throw new SecurityException("El SQL no parece generado por Gráficas Mulberry");
+        }
+    }
+
+    private static void validarNumeroFilasTabla(List<String[]> filas, String tabla) {
+        int filasDatos = Math.max(0, filas.size() - 1);
+        if (filasDatos > MAX_IMPORT_ROWS) {
+            throw new IllegalArgumentException("Demasiadas filas para importar en " + tabla + ": " + filasDatos);
+        }
+    }
+
+    private static void validarNumeroFilasJson(JsonNode arr, String tabla) {
+        if (arr.size() > MAX_IMPORT_ROWS) {
+            throw new IllegalArgumentException("Demasiadas filas JSON para importar en " + tabla + ": " + arr.size());
+        }
+    }
+
+    private static void validarNumeroColumnas(int columnas, String tabla) {
+        if (columnas > MAX_IMPORT_COLUMNS) {
+            throw new IllegalArgumentException("Demasiadas columnas para importar en " + tabla + ": " + columnas);
+        }
+    }
+
+    private static void validarNuevaFila(List<String[]> filas, String origen) {
+        if (filas.size() >= MAX_IMPORT_ROWS + 1) {
+            throw new IllegalArgumentException("Demasiadas filas en " + origen + " (máximo " + MAX_IMPORT_ROWS + ")");
+        }
+    }
+
+    private static void addFilaLimitada(List<String[]> filas, String[] vals, String origen) {
+        validarNuevaFila(filas, origen);
+        filas.add(vals);
+    }
+
+    private static String formatoBytes(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format(Locale.ROOT, "%.1f KB", bytes / 1024.0);
+        if (bytes < 1024L * 1024 * 1024) return String.format(Locale.ROOT, "%.1f MB", bytes / (1024.0 * 1024.0));
+        return String.format(Locale.ROOT, "%.2f GB", bytes / (1024.0 * 1024.0 * 1024.0));
+    }
 
     // ─── 1. RESTAURAR DESDE .db ───────────────────────────────────────────────
 
@@ -35,6 +145,7 @@ public class ImportBackupService {
         if (!Files.isRegularFile(backup)) {
             throw new FileNotFoundException("No existe el archivo de backup: " + backup);
         }
+        validarArchivoImportacion(backup, MAX_SQLITE_BACKUP_BYTES, "backup SQLite");
         desactivarFK(conn);
         conn.setAutoCommit(false);
         try {
@@ -76,22 +187,26 @@ public class ImportBackupService {
     // ─── 2. RESTAURAR DESDE .zip (CSV) ────────────────────────────────────────
 
     public static void restaurarZipCSV(Path origen) throws Exception {
+        validarArchivoImportacion(origen, MAX_ZIP_BACKUP_BYTES, "backup ZIP");
         Connection conn = DatabaseManager.getConnection();
         desactivarFK(conn);
         conn.setAutoCommit(false);
         try {
+            long totalDescomprimido = 0;
             try (ZipInputStream zis = new ZipInputStream(
                     new BufferedInputStream(new FileInputStream(origen.toFile())),
                     StandardCharsets.UTF_8)) {
                 ZipEntry entry;
                 while ((entry = zis.getNextEntry()) != null) {
                     String nombre = entry.getName();
-                    if (!nombre.endsWith(".csv")) { zis.closeEntry(); continue; }
-                    String tabla = nombre.substring(0, nombre.length() - 4);
+                    if (entry.isDirectory() || !nombre.endsWith(".csv")) { zis.closeEntry(); continue; }
+                    String archivo = Path.of(nombre).getFileName().toString();
+                    String tabla = archivo.substring(0, archivo.length() - 4);
                     if (!tablaExiste(conn, tabla)) { zis.closeEntry(); continue; }
 
-                    byte[] bytes = zis.readAllBytes();
-                    String contenido = new String(bytes, StandardCharsets.UTF_8);
+                    ZipEntryContent entryContent = leerEntradaZipLimitada(zis, nombre, totalDescomprimido);
+                    totalDescomprimido += entryContent.size();
+                    String contenido = new String(entryContent.bytes(), StandardCharsets.UTF_8);
                     if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
                     restaurarTablaCSV(conn, tabla, contenido);
                     zis.closeEntry();
@@ -115,18 +230,21 @@ public class ImportBackupService {
     // ─── 3. RESTAURAR DESDE .sql ──────────────────────────────────────────────
 
     public static void restaurarSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
+        List<String> sentencias = dividirSentenciasSql(contenido);
+        for (String stmt : sentencias) {
+            if (!stmt.isBlank() && !esStatementSeguro(stmt)) {
+                String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
+                throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
+            }
+        }
+
         Connection conn  = DatabaseManager.getConnection();
 
         try (Statement st = conn.createStatement()) {
-            for (String stmt : dividirSentenciasSql(contenido)) {
+            for (String stmt : sentencias) {
                 if (!stmt.isBlank()) {
-                    if (esStatementSeguro(stmt)) {
-                        st.execute(stmt);
-                    } else {
-                        String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                        System.err.println("[Backup .sql] Sentencia rechazada por filtro de seguridad: " + resumen);
-                    }
+                    st.execute(stmt);
                 }
             }
         } catch (Exception e) {
@@ -142,7 +260,7 @@ public class ImportBackupService {
 
     public static void restaurarJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tables = root.get("tables");
         if (tables == null)
@@ -169,10 +287,12 @@ public class ImportBackupService {
 
     private static void restaurarTablaJSON(Connection conn, String tabla, JsonNode arr) throws Exception {
         if (!arr.has(0)) return;
+        validarNumeroFilasJson(arr, tabla);
 
         List<String> cols = new ArrayList<>();
         arr.get(0).fieldNames().forEachRemaining(cols::add);
         cols = filtrarColumnasExistentes(conn, tabla, cols);
+        validarNumeroColumnas(cols.size(), tabla);
         if (cols.isEmpty()) return;
 
         String colNames     = cols.stream().map(ImportBackupService::quoteIdentifier).collect(Collectors.joining(", "));
@@ -248,13 +368,13 @@ public class ImportBackupService {
     public static int importarPedidosPDF(Path origen) throws Exception {
         List<String[]> filasPed = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasPed.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasPed, vals, "PDF");
             }
         }
         if (filasPed.size() < 2)
@@ -274,6 +394,7 @@ public class ImportBackupService {
     // ─── Helpers: lectura de formatos externos ────────────────────────────────
 
     private static void leerLibroExcel(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        validarArchivoImportacion(path, MAX_OFFICE_IMPORT_BYTES, "Excel");
         String nombre = path.getFileName().toString().toLowerCase();
         try (org.apache.poi.ss.usermodel.Workbook wb =
                  org.apache.poi.ss.usermodel.WorkbookFactory.create(path.toFile(), null, true)) {
@@ -301,11 +422,15 @@ public class ImportBackupService {
                 vals[c] = cell == null ? "" : fmt.formatCellValue(cell).trim();
                 if (!vals[c].isBlank()) blank = false;
             }
-            if (!blank) dest.add(vals);
+            if (!blank) {
+                validarNuevaFila(dest, "Excel");
+                dest.add(vals);
+            }
         }
     }
 
     private static void leerWordDocx(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        validarArchivoImportacion(path, MAX_OFFICE_IMPORT_BYTES, "Word");
         try (org.apache.poi.xwpf.usermodel.XWPFDocument doc =
                  new org.apache.poi.xwpf.usermodel.XWPFDocument(new java.io.FileInputStream(path.toFile()))) {
             List<org.apache.poi.xwpf.usermodel.XWPFTable> tablas = doc.getTables();
@@ -323,11 +448,15 @@ public class ImportBackupService {
                 vals[c] = celdas.get(c).getText().trim();
                 if (!vals[c].isBlank()) blank = false;
             }
-            if (!blank) dest.add(vals);
+            if (!blank) {
+                validarNuevaFila(dest, "Word");
+                dest.add(vals);
+            }
         }
     }
 
     private static void leerWordDoc(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+        validarArchivoImportacion(path, MAX_OFFICE_IMPORT_BYTES, "Word");
         try (org.apache.poi.hwpf.HWPFDocument doc =
                  new org.apache.poi.hwpf.HWPFDocument(new java.io.FileInputStream(path.toFile()))) {
             org.apache.poi.hwpf.usermodel.TableIterator it =
@@ -346,7 +475,10 @@ public class ImportBackupService {
                 vals[c] = fila.getCell(c).text().trim().replace("", "");
                 if (!vals[c].isBlank()) blank = false;
             }
-            if (!blank) dest.add(vals);
+            if (!blank) {
+                validarNuevaFila(dest, "Word");
+                dest.add(vals);
+            }
         }
     }
 
@@ -362,6 +494,7 @@ public class ImportBackupService {
     private static int importarFilasEnTabla(Connection conn, String tabla, List<String[]> filas) throws Exception {
         if (filas.size() < 2) return 0;
         validarTablaPermitida(tabla);
+        validarNumeroFilasTabla(filas, tabla);
 
         // Leer restricciones NOT NULL y defaults declarados en el esquema
         Map<String, Boolean> notNullCols = new LinkedHashMap<>();
@@ -380,6 +513,7 @@ public class ImportBackupService {
             .filter(h -> !h.isBlank())
             .collect(Collectors.toList());
         if (cols.isEmpty()) return 0;
+        validarNumeroColumnas(cols.size(), tabla);
 
         asegurarColumnas(conn, tabla, cols);
 
@@ -447,8 +581,16 @@ public class ImportBackupService {
     /** Convierte el contenido de un CSV (separador «;») en lista de filas para importarFilasEnTabla. */
     private static List<String[]> leerCSV(String contenido) {
         List<String[]> filas = new ArrayList<>();
-        for (String linea : contenido.split("\r?\n")) {
-            if (!linea.trim().isEmpty()) filas.add(parsearLineaCSV(linea));
+        try (BufferedReader reader = new BufferedReader(new StringReader(contenido))) {
+            String linea;
+            while ((linea = reader.readLine()) != null) {
+                if (!linea.trim().isEmpty()) {
+                    validarNuevaFila(filas, "CSV");
+                    filas.add(parsearLineaCSV(linea));
+                }
+            }
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
         return filas;
     }
@@ -506,9 +648,11 @@ public class ImportBackupService {
 
     /** INSERT OR REPLACE de todos los registros de un array JSON en la tabla dada. */
     private static int importarTablaJSON(Connection conn, String tabla, JsonNode arr) throws Exception {
+        validarNumeroFilasJson(arr, tabla);
         List<String> cols = new ArrayList<>();
         arr.get(0).fieldNames().forEachRemaining(cols::add);
         cols = filtrarColumnasExistentes(conn, tabla, cols);
+        validarNumeroColumnas(cols.size(), tabla);
         if (cols.isEmpty()) return 0;
 
         String sql = "INSERT OR REPLACE INTO " + quoteIdentifier(tabla) + " (" +
@@ -576,8 +720,7 @@ public class ImportBackupService {
     // CSV exporta solo 'albaranes'. SQL y JSON exportan además 'lineas_albaran'.
 
     public static int importarAlbaranesCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -593,7 +736,7 @@ public class ImportBackupService {
     }
 
     public static int importarAlbaranesSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -606,13 +749,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_ALBARAN")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -626,7 +768,7 @@ public class ImportBackupService {
 
     public static int importarAlbaranesJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode  = root.has("tables") ? root.get("tables") : root;
         JsonNode arrAlb      = tablesNode.get("albaranes");
@@ -712,13 +854,13 @@ public class ImportBackupService {
     public static int importarAlbaranesPDF(Path origen) throws Exception {
         List<String[]> filasAlb = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasAlb.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasAlb, vals, "PDF");
             }
         }
         if (filasAlb.size() < 2)
@@ -740,8 +882,7 @@ public class ImportBackupService {
     // CSV exporta solo 'facturas'. SQL y JSON exportan además 'lineas_factura'.
 
     public static int importarFacturasCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -757,7 +898,7 @@ public class ImportBackupService {
     }
 
     public static int importarFacturasSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -770,13 +911,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_FACTURA")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -790,7 +930,7 @@ public class ImportBackupService {
 
     public static int importarFacturasJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arrFact    = tablesNode.get("facturas");
@@ -890,13 +1030,13 @@ public class ImportBackupService {
     public static int importarFacturasPDF(Path origen) throws Exception {
         List<String[]> filasFact = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasFact.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasFact, vals, "PDF");
             }
         }
         if (filasFact.size() < 2)
@@ -924,8 +1064,7 @@ public class ImportBackupService {
     // CSV exporta solo 'presupuestos'. SQL y JSON exportan además 'lineas_presupuesto'.
 
     public static int importarPresupuestosCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -941,7 +1080,7 @@ public class ImportBackupService {
     }
 
     public static int importarPresupuestosSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -954,13 +1093,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO LINEAS_PRESUPUESTO")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -974,7 +1112,7 @@ public class ImportBackupService {
 
     public static int importarPresupuestosJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         // Admite exportación individual {"presupuestos":[...], "lineas_presupuesto":[...]}
         // y backup completo {"tables":{"presupuestos":[...], "lineas_presupuesto":[...]}}
@@ -1077,13 +1215,13 @@ public class ImportBackupService {
     public static int importarPresupuestosPDF(Path origen) throws Exception {
         List<String[]> filasPres = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasPres.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasPres, vals, "PDF");
             }
         }
         if (filasPres.size() < 2)
@@ -1110,8 +1248,7 @@ public class ImportBackupService {
     // ─── IMPORTAR NÓMINAS (CSV / SQL / JSON) ─────────────────────────────────
 
     public static int importarNominasCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1127,7 +1264,7 @@ public class ImportBackupService {
     }
 
     public static int importarNominasSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1139,13 +1276,12 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO nominas" +
                     stmt.substring("INSERT INTO nominas".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1159,7 +1295,7 @@ public class ImportBackupService {
 
     public static int importarNominasJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arr = tablesNode.get("nominas");
@@ -1229,13 +1365,13 @@ public class ImportBackupService {
     public static int importarNominasPDF(Path origen) throws Exception {
         List<String[]> filasNom = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasNom.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasNom, vals, "PDF");
             }
         }
         if (filasNom.size() < 2)
@@ -1255,8 +1391,7 @@ public class ImportBackupService {
     // CSV exporta solo 'empleados'. SQL y JSON exportan además 'nominas'.
 
     public static int importarEmpleadosCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1272,7 +1407,7 @@ public class ImportBackupService {
     }
 
     public static int importarEmpleadosSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1285,13 +1420,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO NOMINAS")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1305,7 +1439,7 @@ public class ImportBackupService {
 
     public static int importarEmpleadosJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arrEmp     = tablesNode.get("empleados");
@@ -1391,13 +1525,13 @@ public class ImportBackupService {
     public static int importarEmpleadosPDF(Path origen) throws Exception {
         List<String[]> filasEmp = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasEmp.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasEmp, vals, "PDF");
             }
         }
         if (filasEmp.size() < 2)
@@ -1419,8 +1553,7 @@ public class ImportBackupService {
     // 'consumo_material_tecnica', 'movimientos_material' y 'pagos_material'.
 
     public static int importarMaterialesCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1436,7 +1569,7 @@ public class ImportBackupService {
     }
 
     public static int importarMaterialesSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1451,13 +1584,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO PAGOS_MATERIAL")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1471,7 +1603,7 @@ public class ImportBackupService {
 
     public static int importarMaterialesJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arrMat     = tablesNode.get("materiales");
@@ -1570,13 +1702,13 @@ public class ImportBackupService {
     public static int importarMaterialesPDF(Path origen) throws Exception {
         List<String[]> filasMat = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasMat.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasMat, vals, "PDF");
             }
         }
         if (filasMat.size() < 2)
@@ -1596,8 +1728,7 @@ public class ImportBackupService {
     // ─── IMPORTAR TARIFAS (CSV / SQL / JSON) ─────────────────────────────────
 
     public static int importarTarifasCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1613,7 +1744,7 @@ public class ImportBackupService {
     }
 
     public static int importarTarifasSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1625,13 +1756,12 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO tarifas" +
                     stmt.substring("INSERT INTO tarifas".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1645,7 +1775,7 @@ public class ImportBackupService {
 
     public static int importarTarifasJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arr = tablesNode.get("tarifas");
@@ -1717,13 +1847,13 @@ public class ImportBackupService {
     public static int importarTarifasPDF(Path origen) throws Exception {
         List<String[]> filasTar = new ArrayList<>();
         try (org.apache.pdfbox.pdmodel.PDDocument doc =
-                 org.apache.pdfbox.pdmodel.PDDocument.load(origen.toFile())) {
+                 cargarPdf(origen)) {
             org.apache.pdfbox.text.PDFTextStripper ts = new org.apache.pdfbox.text.PDFTextStripper();
             ts.setSortByPosition(true);
             for (String linea : ts.getText(doc).split("\r?\n")) {
                 if (linea.trim().isEmpty()) continue;
                 String[] vals = parsearLineaPDF(linea);
-                if (vals.length > 1) filasTar.add(vals);
+                if (vals.length > 1) addFilaLimitada(filasTar, vals, "PDF");
             }
         }
         if (filasTar.size() < 2)
@@ -1744,8 +1874,7 @@ public class ImportBackupService {
     // Semántica: INSERT OR REPLACE — añade nuevos y actualiza existentes por ID.
 
     public static int importarClientesCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1761,7 +1890,7 @@ public class ImportBackupService {
     }
 
     public static int importarClientesSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1773,13 +1902,12 @@ public class ImportBackupService {
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO clientes" +
                     stmt.substring("INSERT INTO clientes".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1793,7 +1921,7 @@ public class ImportBackupService {
 
     public static int importarClientesJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arr = tablesNode.get("clientes");
@@ -1819,8 +1947,7 @@ public class ImportBackupService {
     // CSV exporta solo 'pedidos'. SQL y JSON exportan además 'pagos_pedido'.
 
     public static int importarPedidosCSV(Path origen) throws Exception {
-        byte[] bytes = Files.readAllBytes(origen);
-        String contenido = new String(bytes, StandardCharsets.UTF_8);
+        String contenido = leerTextoLimitado(origen, MAX_TEXT_IMPORT_BYTES, "CSV");
         if (contenido.startsWith("﻿")) contenido = contenido.substring(1);
         List<String[]> filas = leerCSV(contenido);
         if (filas.size() < 2) return 0;
@@ -1836,7 +1963,7 @@ public class ImportBackupService {
     }
 
     public static int importarPedidosSQL(Path origen) throws Exception {
-        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+        String contenido = leerSqlMulberry(origen);
         Connection conn  = DatabaseManager.getConnection();
 
         int count = 0;
@@ -1849,13 +1976,12 @@ public class ImportBackupService {
                     !upper.startsWith("INSERT INTO PAGOS_PEDIDO")) continue;
                 String stmt = trimmed.endsWith(";") ? trimmed.substring(0, trimmed.length() - 1) : trimmed;
                 stmt = "INSERT OR REPLACE INTO " + stmt.substring("INSERT INTO ".length());
-                if (esStatementSeguro(stmt)) {
-                    st.execute(stmt);
-                    count++;
-                } else {
+                if (!esStatementSeguro(stmt)) {
                     String resumen = stmt.length() > 80 ? stmt.substring(0, 80) + "..." : stmt;
-                    System.err.println("[Import SQL] Sentencia rechazada: " + resumen);
+                    throw new SecurityException("Sentencia SQL rechazada por filtro de seguridad: " + resumen);
                 }
+                st.execute(stmt);
+                count++;
             }
             conn.commit();
         } catch (Exception e) {
@@ -1869,7 +1995,7 @@ public class ImportBackupService {
 
     public static int importarPedidosJSON(Path origen) throws Exception {
         ObjectMapper mapper = new ObjectMapper();
-        JsonNode root = mapper.readTree(origen.toFile());
+        JsonNode root = leerJsonLimitado(mapper, origen);
 
         JsonNode tablesNode = root.has("tables") ? root.get("tables") : root;
         JsonNode arrPed     = tablesNode.get("pedidos");
@@ -1964,7 +2090,12 @@ public class ImportBackupService {
 
             if (c == ';' && !enComillaSimple && !enComillaDoble) {
                 String stmt = limpiarComentariosSql(actual.toString()).trim();
-                if (!stmt.isEmpty()) sentencias.add(stmt);
+                if (!stmt.isEmpty()) {
+                    if (sentencias.size() >= MAX_SQL_STATEMENTS) {
+                        throw new IllegalArgumentException("Demasiadas sentencias SQL en el backup");
+                    }
+                    sentencias.add(stmt);
+                }
                 actual.setLength(0);
                 continue;
             }
@@ -1973,7 +2104,12 @@ public class ImportBackupService {
         }
 
         String resto = limpiarComentariosSql(actual.toString()).trim();
-        if (!resto.isEmpty()) sentencias.add(resto);
+        if (!resto.isEmpty()) {
+            if (sentencias.size() >= MAX_SQL_STATEMENTS) {
+                throw new IllegalArgumentException("Demasiadas sentencias SQL en el backup");
+            }
+            sentencias.add(resto);
+        }
         return sentencias;
     }
 

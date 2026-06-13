@@ -152,7 +152,13 @@ public class LoginView extends VBox {
                 msgRec.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres."); event.consume(); return;
             }
             if (!authService.resetPasswordWithAnswer(selected.getUsername(), answer, newPw)) {
-                msgRec.setText("Respuesta incorrecta. Inténtalo de nuevo."); event.consume();
+                if (authService.isRecoveryTemporarilyBlocked(selected.getUsername())) {
+                    msgRec.setText("Demasiados intentos. Espera " +
+                        formatearEspera(authService.getRecoveryLockoutSecondsRemaining(selected.getUsername())) + ".");
+                } else {
+                    msgRec.setText("Respuesta incorrecta. Inténtalo de nuevo.");
+                }
+                event.consume();
             }
         });
 
@@ -202,10 +208,20 @@ public class LoginView extends VBox {
         authService.login(selected.getUsername(), password).ifPresentOrElse(
             onLoginSuccess,
             () -> {
-                msgLabel.setText("Contraseña incorrecta.");
+                if (authService.isLoginTemporarilyBlocked(selected.getUsername())) {
+                    msgLabel.setText("Demasiados intentos. Espera " +
+                        formatearEspera(authService.getLoginLockoutSecondsRemaining(selected.getUsername())) + ".");
+                } else {
+                    msgLabel.setText("Contraseña incorrecta.");
+                }
                 passwordField.clear();
                 passwordField.requestFocus();
             }
         );
+    }
+
+    private static String formatearEspera(long seconds) {
+        long minutes = Math.max(1, (seconds + 59) / 60);
+        return minutes == 1 ? "1 minuto" : minutes + " minutos";
     }
 }

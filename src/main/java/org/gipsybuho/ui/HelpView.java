@@ -91,6 +91,7 @@ public class HelpView extends BorderPane {
     }
 
     private void init(String initialArticleId) {
+        engine.setJavaScriptEnabled(false);
         getStyleClass().add("help-view");
         for (HelpEntry e : service.getAll()) {
             idToEntry.put(e.id(), e);

@@ -1,0 +1,831 @@
+.\_cajon-desastre\build-v2.ps1:27:$jarPath = "$PROJECT\target\$JAR_ORIG"
+.\_cajon-desastre\build-v2.ps1:28:if (-not (Test-Path $jarPath)) { Write-Error "ERROR: No se encontro $JAR_ORIG en target\"; exit 1 }
+.\_cajon-desastre\build-v2.ps1:29:$sizeMB = [math]::Round((Get-Item $jarPath).Length / 1MB, 1)
+.\_cajon-desastre\build-v2.ps1:42:Copy-Item $jarPath "$INPUT_DIR\GraficasMulberry.jar"
+.\_cajon-desastre\build-v2.ps1:53:Write-Host ("  Modulos JavaFX win: " + $mods + "  |  Libs classpath: " + $libs) -ForegroundColor Green
+.\_cajon-desastre\build-v2.ps1:69:    --java-options  "--module-path `$APPDIR/mods" `
+.\_cajon-desastre\build-v2.ps1:95:if (Test-Path $exeV1) {
+.\_cajon-desastre\build-v2.ps1:99:if (Test-Path $exeV2) {
+.\_cajon-desastre\build-v3.ps1:27:$jarPath = "$PROJECT\target\$JAR_ORIG"
+.\_cajon-desastre\build-v3.ps1:28:if (-not (Test-Path $jarPath)) { Write-Error "ERROR: No se encontro $JAR_ORIG en target\"; exit 1 }
+.\_cajon-desastre\build-v3.ps1:29:$sizeMB = [math]::Round((Get-Item $jarPath).Length / 1MB, 1)
+.\_cajon-desastre\build-v3.ps1:40:Copy-Item $jarPath "$INPUT_DIR\GraficasMulberry.jar"
+.\_cajon-desastre\build-v3.ps1:51:Write-Host ("  Modulos JavaFX win: " + $mods + "  |  Libs classpath: " + $libs) -ForegroundColor Green
+.\_cajon-desastre\build-v3.ps1:67:    --java-options  "--module-path `$APPDIR/mods" `
+.\_cajon-desastre\build-v3.ps1:93:if (Test-Path $exeV2) {
+.\_cajon-desastre\build-v3.ps1:97:if (Test-Path $exeV3) {
+.\_cajon-desastre\build_exe.ps1:13:$destDir     = [System.IO.Path]::Combine([System.Environment]::GetFolderPath("Desktop"), "graficas_mulberry")
+.\_cajon-desastre\build_exe.ps1:18:# Añadir WiX al PATH para que jpackage lo encuentre
+.\_cajon-desastre\build_exe.ps1:19:$env:PATH = "$wixDir;$env:PATH"
+.\_cajon-desastre\build_exe.ps1:59:$jarPath = "$projectDir\target\$jarName"
+.\_cajon-desastre\build_exe.ps1:60:if (-not (Test-Path $jarPath)) {
+.\_cajon-desastre\build_exe.ps1:61:    Write-Host "ERROR: No se encontro el JAR en: $jarPath" -ForegroundColor Red
+.\_cajon-desastre\build_exe.ps1:64:$sizeMB = [math]::Round((Get-Item $jarPath).Length / 1MB, 1)
+.\_cajon-desastre\build_exe.ps1:68:if (Test-Path "$destDir\$appName") {
+.\_cajon-desastre\build_exe.ps1:73:New-Item -ItemType Directory -Path $destDir -Force | Out-Null
+.\_cajon-desastre\build_exe.ps1:105:$exePath = "$destDir\${appName}-${appVersion}.exe"
+.\_cajon-desastre\build_exe.ps1:106:if (Test-Path $exePath) {
+.\_cajon-desastre\build_exe.ps1:107:    $exeSizeMB = [math]::Round((Get-Item $exePath).Length / 1MB, 1)
+.\_cajon-desastre\build-installer.ps1:12:$ISCC = ($ISCC_candidatos | Where-Object { Test-Path $_ } | Select-Object -First 1)
+.\_cajon-desastre\build-installer.ps1:42:        # JARs JavaFX con DLLs nativas Windows -> module-path (carpeta mods/)
+.\_cajon-desastre\build-installer.ps1:45:        # Resto (SQLite, OpenPDF, Jackson, Ikonli...) -> classpath
+.\_cajon-desastre\build-installer.ps1:52:Write-Host "   Modulos JavaFX: $mods  |  Librerias classpath: $libs"
+.\_cajon-desastre\build-installer.ps1:67:    --java-options "--module-path `$APPDIR/mods" `
+.\_cajon-desastre\build-installer.ps1:99:# if (Test-Path $CERT_PFX) {
+.\build-nsis.ps1:13:) | Where-Object { Test-Path $_ } | Select-Object -First 1
+.\build-nsis.ps1:60:Write-Host "  Modulos JavaFX: $mods  |  Librerias classpath: $libs" -ForegroundColor Gray
+.\build-nsis.ps1:73:    --java-options "--module-path `$APPDIR/mods" `
+.\build-nsis.ps1:98:if (-not (Test-Path $histDir)) { New-Item $histDir -ItemType Directory | Out-Null }
+.\build-nsis.ps1:100:if (Test-Path $exeOut) {
+.\installer.nsi:90:    SetOutPath "$INSTDIR"
+.\src\test\java\org\gipsybuho\dao\AlbaranDAOTest.java:16:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\AlbaranDAOTest.java:27:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\AlbaranDAOTest.java:32:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\service\AuthServiceTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\AuthServiceTest.java:20:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\AuthServiceTest.java:27:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\ClienteDAOTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\ClienteDAOTest.java:24:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\ClienteDAOTest.java:29:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\ClienteDAOTest.java:110:            (proxy, method, args) -> switch (method.getName()) {
+.\src\test\java\org\gipsybuho\dao\ClienteDAOTest.java:120:            (proxy, method, args) -> switch (method.getName()) {
+.\src\test\java\org\gipsybuho\dao\NominaDAOTest.java:11:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\NominaDAOTest.java:19:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\NominaDAOTest.java:24:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\NominaDAOTest.java:74:        dao.delete(n.getId());
+.\src\test\java\org\gipsybuho\dao\TxAnidadaTest.java:14:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\TxAnidadaTest.java:31:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\TxAnidadaTest.java:36:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\MaterialDAOTest.java:10:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\MaterialDAOTest.java:23:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\MaterialDAOTest.java:28:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\FacturaDAOTest.java:14:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\FacturaDAOTest.java:28:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\FacturaDAOTest.java:33:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\PresupuestoDAOTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\PresupuestoDAOTest.java:23:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\PresupuestoDAOTest.java:28:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\PedidoDAOTest.java:11:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\PedidoDAOTest.java:19:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\PedidoDAOTest.java:24:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\PedidoDAOTest.java:71:        dao.delete(p.getId());
+.\src\test\java\org\gipsybuho\dao\EmpleadoDAOTest.java:10:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\EmpleadoDAOTest.java:17:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\EmpleadoDAOTest.java:22:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\dao\EmpleadoDAOTest.java:57:        dao.delete(e.getId());
+.\src\test\java\org\gipsybuho\dao\EmpleadoDAOTest.java:78:        dao.delete(inactivo.getId());
+.\src\test\java\org\gipsybuho\dao\PagoPedidoDAOTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\PagoPedidoDAOTest.java:21:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\PagoPedidoDAOTest.java:26:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceTarifaTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceTarifaTest.java:21:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceTarifaTest.java:26:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceNominaTest.java:14:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceNominaTest.java:24:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceNominaTest.java:29:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceNominaTest.java:101:        new EmpleadoDAO().delete(empleado.getId());
+.\src\test\java\org\gipsybuho\dao\PagoMaterialDAOTest.java:11:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\dao\PagoMaterialDAOTest.java:20:    Path tempDir;
+.\src\test\java\org\gipsybuho\dao\PagoMaterialDAOTest.java:25:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\main\java\org\gipsybuho\model\HelpEntry.java:11:    String path,
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceMaterialTest.java:12:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceMaterialTest.java:22:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceMaterialTest.java:27:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:13:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:26:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:30:        Path file = tempDir.resolve("empty.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:31:        Files.writeString(file, "\n", StandardCharsets.UTF_8);
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:42:        Path file = tempDir.resolve("tarifas.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:43:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:64:        Path file = tempDir.resolve("tarifas_pivot.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:65:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:87:        Path file = tempDir.resolve("folios.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:88:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:105:        Path file = tempDir.resolve("imanes.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:106:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:143:        Path file = tempDir.resolve("material_lateral.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:144:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:164:        Path file = tempDir.resolve("tarifas_repeated.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:165:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:182:        Path file = tempDir.resolve("tarjetas_visita.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:183:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:245:        Path file = tempDir.resolve("ovalos.csv");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:246:        Files.writeString(file, String.join("\n",
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:261:        Path file = tempDir.resolve("disenos.xlsx");
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:272:            try (var out = Files.newOutputStream(file)) {
+.\src\test\java\org\gipsybuho\service\ImportServiceParsingTest.java:273:                wb.write(out);
+.\src\main\java\org\gipsybuho\model\Cliente.java:55:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePresupuestoTest.java:14:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePresupuestoTest.java:27:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePresupuestoTest.java:32:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\main\java\org\gipsybuho\model\Empleado.java:56:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\main\java\org\gipsybuho\model\Albaran.java:73:        ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn);
+.\src\main\java\org\gipsybuho\model\Tarifa.java:42:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\main\java\org\gipsybuho\model\Material.java:47:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceFacturaTest.java:16:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceFacturaTest.java:29:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceFacturaTest.java:34:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\main\java\org\gipsybuho\model\Factura.java:51:        ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn);
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceAlbaranTest.java:18:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceAlbaranTest.java:32:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServiceAlbaranTest.java:37:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\main\java\org\gipsybuho\model\Pedido.java:63:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePedidoTest.java:14:import java.nio.file.Path;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePedidoTest.java:25:    Path tempDir;
+.\src\test\java\org\gipsybuho\service\importer\EntityImportServicePedidoTest.java:30:        System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
+.\src\main\java\org\gipsybuho\model\Presupuesto.java:49:        ColumnMatcher matcher = h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn);
+.\src\main\java\org\gipsybuho\model\Nomina.java:85:        ), h -> ColumnMatcher.matchLongest(ColumnMatcher.normalize(h), syn), DuplicatePolicy.SKIP_IF_EXISTS);
+.\src\main\java\org\gipsybuho\ui\DashboardView.java:50:    private VBox tarjeta(String id, String titulo, String valor, String color, String iconPath, String contexto) {
+.\src\main\java\org\gipsybuho\ui\DashboardView.java:59:        Node ico = Icons.cardIcon(iconPath, color, 22);
+.\src\main\java\org\gipsybuho\ui\HelpView.java:230:        loadHtml(entry.path());
+.\src\main\java\org\gipsybuho\ui\HelpView.java:240:            if (entry != null) loadHtml(entry.path());
+.\src\main\java\org\gipsybuho\ui\HelpView.java:251:            if (entry != null) loadHtml(entry.path());
+.\src\main\java\org\gipsybuho\ui\HelpView.java:259:     * Reemplaza el href relativo del CSS por la URL absoluta del classpath
+.\src\main\java\org\gipsybuho\ui\HelpView.java:262:    private void loadHtml(String path) {
+.\src\main\java\org\gipsybuho\ui\HelpView.java:263:        try (InputStream is = getClass().getResourceAsStream("/org/gipsybuho/help/" + path)) {
+.\src\main\java\org\gipsybuho\ui\HelpView.java:268:            String html = new String(is.readAllBytes(), StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:132:            String salida = new String(process.getInputStream().readAllBytes(), charsetConsolaWindows());
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:177:            process.getInputStream().readAllBytes();
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:212:            String salida = new String(process.getInputStream().readAllBytes(), charsetConsolaWindows());
+.\src\main\java\org\gipsybuho\service\TemaManager.java:16:    private static final String THEMES_PATH  = "/org/gipsybuho/themes/theme-";
+.\src\main\java\org\gipsybuho\service\TemaManager.java:46:            URL url = TemaManager.class.getResource(THEMES_PATH + temaNormalizado + ".css");
+.\src\main\java\org\gipsybuho\db\DatabaseManager.java:27:        return "jdbc:sqlite:" + new java.io.File(dir, "graficas_mulberry.db").getAbsolutePath();
+.\src\main\java\org\gipsybuho\db\DatabaseManager.java:99:            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_logo_path', '')",
+.\src\main\java\org\gipsybuho\service\SoundService.java:128:            System.arraycopy(note, 0, out, f * noteBytes, Math.min(note.length, noteBytes));
+.\src\main\java\org\gipsybuho\service\SoundService.java:163:            line.write(pcm, 0, pcm.length);
+.\src\main\java\org\gipsybuho\ui\ExportView.java:9:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\ExportView.java:15:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\ExportView.java:27:        void exportar(Path destino) throws Exception;
+.\src\main\java\org\gipsybuho\ui\ExportView.java:65:        Label lblRuta = new Label(dbFile.getAbsolutePath());
+.\src\main\java\org\gipsybuho\ui\ExportView.java:200:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ExportView.java:204:            new FileChooser.ExtensionFilter(ext.toUpperCase() + " — Gráficas Mulberry", "*." + ext));
+.\src\main\java\org\gipsybuho\ui\ExportView.java:207:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\ExportView.java:208:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\ExportView.java:214:        Path destino = f.toPath();
+.\src\main\java\org\gipsybuho\ui\ExportView.java:243:    private void mostrarExito(Path destino) {
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:14:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:32:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:245:                for (Cliente cliente : seleccionados) dao.delete(cliente.getId());
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:466:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:471:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Clientes", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:472:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:473:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:479:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:494:                            Path pdf = new PDFService().generarFichaCliente(c);
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:495:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:496:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:543:                    Path pdfPath = new PDFService().generarFichaCliente(c);
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:544:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:546:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\Icons.java:7:import javafx.scene.shape.SVGPath;
+.\src\main\java\org\gipsybuho\ui\Icons.java:66:        SVGPath path = new SVGPath();
+.\src\main\java\org\gipsybuho\ui\Icons.java:67:        path.setContent(CHEVRON_R);
+.\src\main\java\org\gipsybuho\ui\Icons.java:68:        path.getStyleClass().add("nav-group-arrow-icon");
+.\src\main\java\org\gipsybuho\ui\Icons.java:69:        path.getTransforms().add(new Scale(10.0 / 24.0, 10.0 / 24.0, 0, 0));
+.\src\main\java\org\gipsybuho\ui\Icons.java:70:        StackPane pane = new StackPane(path);
+.\src\main\java\org\gipsybuho\ui\Icons.java:79:        SVGPath path = new SVGPath();
+.\src\main\java\org\gipsybuho\ui\Icons.java:80:        path.setContent(pathData);
+.\src\main\java\org\gipsybuho\ui\Icons.java:81:        path.setStyle("-fx-fill: " + colorHex + ";");
+.\src\main\java\org\gipsybuho\ui\Icons.java:82:        path.getTransforms().add(new Scale(size / 24.0, size / 24.0, 0, 0));
+.\src\main\java\org\gipsybuho\ui\Icons.java:83:        StackPane pane = new StackPane(path);
+.\src\main\java\org\gipsybuho\ui\Icons.java:109:        SVGPath path = new SVGPath();
+.\src\main\java\org\gipsybuho\ui\Icons.java:110:        path.setContent(FILE);
+.\src\main\java\org\gipsybuho\ui\Icons.java:111:        path.getStyleClass().add("empty-state-icon");
+.\src\main\java\org\gipsybuho\ui\Icons.java:112:        path.getTransforms().add(new Scale(32.0 / 24.0, 32.0 / 24.0, 0, 0));
+.\src\main\java\org\gipsybuho\ui\Icons.java:113:        StackPane icon = new StackPane(path);
+.\src\main\java\org\gipsybuho\ui\Icons.java:137:        SVGPath path = new SVGPath();
+.\src\main\java\org\gipsybuho\ui\Icons.java:138:        path.setContent(pathData);
+.\src\main\java\org\gipsybuho\ui\Icons.java:139:        path.getStyleClass().add("nav-icon");
+.\src\main\java\org\gipsybuho\ui\Icons.java:140:        path.getTransforms().add(new Scale(18.0 / 24.0, 18.0 / 24.0, 0, 0));
+.\src\main\java\org\gipsybuho\ui\Icons.java:141:        StackPane pane = new StackPane(path);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:25:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:213:            try { dao.delete(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:413:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:418:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:419:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:420:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:426:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:441:                            Path pdf = new PDFService().generarFichaEmpleado(emp);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:442:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:443:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:496:                    Path pdfPath = new PDFService().generarFichaEmpleado(emp);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:497:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:499:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:16:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:487:                Path path = new PDFService().generarEstadisticas(a);
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:495:                    alert.setContentText("Guardado en:\n" + path.toAbsolutePath());
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:500:                            try { Desktop.getDesktop().open(path.toFile()); }
+.\src\main\java\org\gipsybuho\dao\TarifaTramoDAO.java:50:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\TarifaDAO.java:64:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:8:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:15:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:26:        void importar(Path origen) throws Exception;
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:72:        Label lblRuta = new Label(dbFile.getAbsolutePath());
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:211:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:221:            new FileChooser.ExtensionFilter(desc + " — Gráficas Mulberry", "*." + ext),
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:222:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*")
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:224:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:225:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:231:        Path origen = f.toPath();
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:235:        log("   Archivo: " + f.getName());
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:244:                    mostrarExito(f.getName());
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:8:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:30:        Path exe = findOllamaExe();
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:75:    private static Path findOllamaExe() {
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:76:        for (Path p : candidatePaths()) {
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:77:            if (Files.exists(p)) return p;
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:82:    private static List<Path> candidatePaths() {
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:83:        List<Path> paths = new ArrayList<>();
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:87:            Path installDir = Path.of(System.getProperty("java.home")).getParent();
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:88:            paths.add(installDir.resolve("app/ollama/ollama.exe"));
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:94:            paths.add(Path.of(localAppData, "Programs", "Ollama", "ollama.exe"));
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:100:            paths.add(Path.of(programFiles, "Ollama", "ollama.exe"));
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:104:        paths.add(Path.of("ollama.exe"));
+.\src\main\java\org\gipsybuho\service\MusicService.java:45:    public static void addTrack(String path) {
+.\src\main\java\org\gipsybuho\service\MusicService.java:46:        playlist.add(path);
+.\src\main\java\org\gipsybuho\service\MusicService.java:120:        return new File(playlist.get(indice)).getName();
+.\src\main\java\org\gipsybuho\service\MusicService.java:138:        File f = new File(playlist.get(idx));
+.\src\main\java\org\gipsybuho\service\MusicService.java:153:                notificarCambioTrack(f.getName());
+.\src\main\java\org\gipsybuho\service\MusicService.java:165:                System.err.println("Music error on track: " + f.getName());
+.\src\main\java\org\gipsybuho\dao\PresupuestoDAO.java:128:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\PedidoDAO.java:77:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\PagoPedidoDAO.java:86:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\PagoMaterialDAO.java:128:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\NominaDAO.java:93:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\MaterialDAO.java:100:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\FacturaDAO.java:185:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\dao\EmpleadoDAO.java:62:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\service\OllamaService.java:77:                        String name = m.path("name").asText("");
+.\src\main\java\org\gipsybuho\dao\ConsumoMaterialDAO.java:70:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\ui\IAView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\IAView.java:359:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\IAView.java:363:                new FileChooser.ExtensionFilter("Documento PDF (*.pdf)", "*.pdf"),
+.\src\main\java\org\gipsybuho\ui\IAView.java:364:                new FileChooser.ExtensionFilter("Documento Word (*.docx)", "*.docx")
+.\src\main\java\org\gipsybuho\ui\IAView.java:381:                                addMensajeSistema("✅ Historial guardado correctamente: " + file.getName());
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:31:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:182:                for (Albaran albaran : seleccionados) dao.delete(albaran.getId());
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:386:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:389:            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:390:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:517:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:522:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Albaranes", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:523:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:524:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:530:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:546:                            Path pdf = new PDFService().generarAlbaran(a, c);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:547:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:548:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:597:                    Path pdfPath = pdfService.generarAlbaran(a, c, true);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:598:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:599:                    Path pdfImpresionPath = pdfService.generarAlbaran(a, c, false);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:600:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:602:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\dao\ColumnConfigDAO.java:242:        String normalized = Normalizer.normalize(label, Normalizer.Form.NFD)
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:19:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:69:        String nombre = archivo.getName().toLowerCase();
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:73:            tabla = leerCSV(archivo.toPath());
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:75:            tabla = leerJSON(archivo.toPath());
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:77:            tabla = leerSQL(archivo.toPath());
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:263:        try (FileInputStream fis = new FileInputStream(archivo);
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:295:    private TablaImportada leerCSV(Path path) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:296:        byte[] bytes = Files.readAllBytes(path);
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:326:    private TablaImportada leerJSON(Path path) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:328:        JsonNode root = mapper.readTree(path.toFile());
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:363:    private TablaImportada leerSQL(Path path) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:364:        String contenido = Files.readString(path, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:417:        try (FileInputStream fis = new FileInputStream(archivo);
+.\src\main\java\org\gipsybuho\service\ImportarClientesService.java:434:        try (FileInputStream fis = new FileInputStream(archivo);
+.\src\main\java\org\gipsybuho\service\HelpService.java:70:                    node.get("path").asText(),
+.\src\main\java\org\gipsybuho\dao\ClienteDAO.java:91:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\service\PDFService.java:11:import javax.swing.filechooser.FileSystemView;
+.\src\main\java\org\gipsybuho\service\PDFService.java:15:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:38:    private static Path getDocumentosPath() {
+.\src\main\java\org\gipsybuho\service\PDFService.java:39:        return FileSystemView.getFileSystemView().getDefaultDirectory().toPath();
+.\src\main\java\org\gipsybuho\service\PDFService.java:64:    public Path generarPresupuesto(Presupuesto p, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:68:    public Path generarPresupuesto(Presupuesto p, Cliente c, boolean incluirMateriales) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:70:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Presupuestos")
+.\src\main\java\org\gipsybuho\service\PDFService.java:71:            .resolve(safeFilename(p.getNumero()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:72:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:75:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:106:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:109:    public Path generarFactura(Factura f, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:113:    public Path generarFactura(Factura f, Cliente c, boolean incluirMateriales) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:115:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Facturas")
+.\src\main\java\org\gipsybuho\service\PDFService.java:116:            .resolve(safeFilename(f.getNumero()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:117:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:120:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:147:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:150:    public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:154:    public Path generarAlbaran(org.gipsybuho.model.Albaran a, Cliente c, boolean incluirMateriales) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:156:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Albaranes")
+.\src\main\java\org\gipsybuho\service\PDFService.java:157:            .resolve(safeFilename(a.getNumero()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:158:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:161:        PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:252:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:255:    public Path generarNomina(Nomina n, Empleado e) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:257:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Nominas")
+.\src\main\java\org\gipsybuho\service\PDFService.java:258:            .resolve(safeFilename(n.getAnio() + "-" + String.format("%02d", n.getMes()) + "_" + e.getNombreCompleto()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:259:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:262:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:324:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:337:                Image logo = Image.getInstance(is.readAllBytes());
+.\src\main\java\org\gipsybuho\service\PDFService.java:524:    public Path generarEstadisticas(int anio) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:526:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Estadisticas")
+.\src\main\java\org\gipsybuho\service\PDFService.java:527:            .resolve(safeFilename("Estadisticas_" + anio) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:528:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:531:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:588:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:777:    public Path generarPedido(Pedido p, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:779:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Pedidos")
+.\src\main\java\org\gipsybuho\service\PDFService.java:780:            .resolve(safeFilename(p.getNumero()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:781:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:783:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:817:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:822:    public Path generarFichaCliente(Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:824:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Clientes")
+.\src\main\java\org\gipsybuho\service\PDFService.java:825:            .resolve(safeFilename(nvl(c.getNombreCompleto())) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:826:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:828:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:846:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:851:    public Path generarFichaTarifa(Tarifa tarifa) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:853:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Tarifas")
+.\src\main\java\org\gipsybuho\service\PDFService.java:854:            .resolve(safeFilename(nvl(tarifa.getTecnica()) + "_" + nvl(tarifa.getNombre())) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:855:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:857:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:874:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:879:    public Path generarFichaMaterial(Material m) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:881:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Materiales")
+.\src\main\java\org\gipsybuho\service\PDFService.java:882:            .resolve(safeFilename(nvl(m.getNombre())) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:883:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:885:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:904:        return path;
+.\src\main\java\org\gipsybuho\service\PDFService.java:909:    public Path generarFichaEmpleado(Empleado e) throws Exception {
+.\src\main\java\org\gipsybuho\service\PDFService.java:911:        Path path = getDocumentosPath().resolve("Mulberry").resolve("Empleados")
+.\src\main\java\org\gipsybuho\service\PDFService.java:912:            .resolve(safeFilename(e.getNombreCompleto()) + ".pdf");
+.\src\main\java\org\gipsybuho\service\PDFService.java:913:        path.getParent().toFile().mkdirs();
+.\src\main\java\org\gipsybuho\service\PDFService.java:915:        PdfWriter writer = PdfWriter.getInstance(doc, new FileOutputStream(path.toFile()));
+.\src\main\java\org\gipsybuho\service\PDFService.java:935:        return path;
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:33:        String nombreLower = archivo.getName().toLowerCase();
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:68:            try (FileOutputStream out = new FileOutputStream(archivo)) {
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:69:                doc.write(out);
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:76:        PdfWriter.getInstance(document, new FileOutputStream(archivo));
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:121:        PdfWriter.getInstance(doc, new FileOutputStream(archivo));
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:271:        try (FileOutputStream fos = new FileOutputStream(archivo)) {
+.\src\main\java\org\gipsybuho\service\ChatExportService.java:272:            doc.write(fos);
+.\src\main\java\org\gipsybuho\ui\OnboardingDialog.java:123:        // No action filter needed — setOnHiding covers all close paths.
+.\src\main\java\org\gipsybuho\dao\AlbaranDAO.java:199:    public void delete(int id) throws SQLException {
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:29:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:499:                for (Factura factura : seleccionadas) dao.delete(factura.getId());
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:514:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:517:            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:518:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:645:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:650:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Facturas", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:651:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:652:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:658:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:683:                        Path tempPdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:684:                        Files.copy(tempPdfPath, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:685:                        Files.deleteIfExists(tempPdfPath);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:741:                    Path pdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, true);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:742:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:743:                    Path pdfImpresionPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, false);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:744:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:746:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\ImportView.java:11:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\ImportView.java:200:            FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ImportView.java:203:                new FileChooser.ExtensionFilter("Archivos de datos", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json", "*.txt"),
+.\src\main\java\org\gipsybuho\ui\ImportView.java:204:                new FileChooser.ExtensionFilter("CSV", "*.csv", "*.txt"),
+.\src\main\java\org\gipsybuho\ui\ImportView.java:205:                new FileChooser.ExtensionFilter("Excel", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm"),
+.\src\main\java\org\gipsybuho\ui\ImportView.java:206:                new FileChooser.ExtensionFilter("JSON", "*.json"),
+.\src\main\java\org\gipsybuho\ui\ImportView.java:207:                new FileChooser.ExtensionFilter("Todos", "*.*")
+.\src\main\java\org\gipsybuho\ui\ImportView.java:212:                lblArchivo.setText("✅  " + f.getName() + "  (" + f.length() / 1024 + " KB)");
+.\src\main\java\org\gipsybuho\ui\ImportView.java:222:                log("📂 Leyendo " + archivoSeleccionado.getName() + "…");
+.\src\main\java\org\gipsybuho\ui\ImportView.java:1223:        String name = archivoSeleccionado.getName();
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:11:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:587:            @Override protected void updateItem(String path, boolean empty) {
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:588:                super.updateItem(path, empty);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:589:                setText(empty || path == null ? null : new File(path).getName());
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:601:            FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:604:                new FileChooser.ExtensionFilter("Audio MP3", "*.mp3", "*.MP3"));
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:609:                    String abs = f.getAbsolutePath();
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:610:                    if (!paths.contains(abs)) {
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:611:                        paths.add(abs);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:623:                paths.remove(idx);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:886:        TextField tfLogoPath = new TextField(DatabaseManager.getConfig("doc_logo_path"));
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:887:        tfLogoPath.setPromptText("Ruta del archivo de imagen (PNG, JPG)");
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:888:        tfLogoPath.setMaxWidth(Double.MAX_VALUE);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:889:        HBox.setHgrow(tfLogoPath, Priority.ALWAYS);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:893:            FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:896:                new FileChooser.ExtensionFilter("Imágenes", "*.png", "*.PNG", "*.jpg", "*.JPG", "*.jpeg", "*.JPEG"));
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:898:            if (f != null) tfLogoPath.setText(f.getAbsolutePath());
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:901:        HBox logoBox = new HBox(8, tfLogoPath, btnSeleccionarLogo);
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:907:            DatabaseManager.setConfig("doc_logo_path", tfLogoPath.getText().trim());
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1092:        Map<String, String> gpuWmi = wmicQuery("path", "win32_videocontroller", "get",
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1132:            System.arraycopy(args, 0, cmd, 1, args.length);
+.\src\main\java\org\gipsybuho\service\importer\ColumnMatcher.java:20:    static String normalize(String s) {
+.\src\main\java\org\gipsybuho\service\importer\ColumnMatcher.java:21:        String d = Normalizer.normalize(s.toLowerCase(), Normalizer.Form.NFD);
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:175:                Path installerPath = descargarInstalador();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:186:                ejecutarInstalador(installerPath);
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:242:    private Path descargarInstalador() throws Exception {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:267:        // Guardar en directorio temporal del sistema; después verificamos que el path no fue manipulado
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:268:        Path tmpDir = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:269:        Path dest = Files.createTempFile(tmpDir, "OllamaSetup", ".exe");
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:284:             OutputStream out = Files.newOutputStream(dest)) {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:289:                out.write(buf, 0, n);
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:309:        long fileSize = Files.size(dest);
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:311:            Files.deleteIfExists(dest);
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:321:    private void ejecutarInstalador(Path installer) throws Exception {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:322:        Path tmpDir  = Path.of(System.getProperty("java.io.tmpdir")).toRealPath();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:323:        Path realExe = installer.toRealPath();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:327:        if (!Files.isRegularFile(realExe)) {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:346:            Path ollamaExe = findOllamaExe();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:381:        Path ollamaExe = findOllamaExe();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:449:    private Path findOllamaExe() {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:452:            Path p = Path.of(local, "Programs", "Ollama", "ollama.exe");
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:453:            if (Files.exists(p)) return p;
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:457:            Path p = Path.of(pf, "Ollama", "ollama.exe");
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:458:            if (Files.exists(p)) return p;
+.\src\main\java\org\gipsybuho\service\ImportService.java:79:                : new FileStructureAnalysis(List.of(), false, "Sin análisis estructural.");
+.\src\main\java\org\gipsybuho\service\ImportService.java:137:        String name = file.getName().toLowerCase();
+.\src\main\java\org\gipsybuho\service\ImportService.java:151:        String name = file.getName().toLowerCase(Locale.ROOT);
+.\src\main\java\org\gipsybuho\service\ImportService.java:153:            return new FileStructureAnalysis(List.of(), false, "JSON estructurado: no requiere análisis tabular.");
+.\src\main\java\org\gipsybuho\service\ImportService.java:167:        return new FileStructureAnalysis(Collections.unmodifiableList(regions), complex, summary);
+.\src\main\java\org\gipsybuho\service\ImportService.java:235:        String firstHeader = normalize(getCell(row, first));
+.\src\main\java\org\gipsybuho\service\ImportService.java:241:            if (normalize(getCell(row, c)).equals(firstHeader)) starts.add(c);
+.\src\main\java\org\gipsybuho\service\ImportService.java:263:            if (isHeaderKeyword(normalize(value))) keywords++;
+.\src\main\java\org\gipsybuho\service\ImportService.java:286:            if (isHeaderKeyword(normalize(value))) keywords++;
+.\src\main\java\org\gipsybuho\service\ImportService.java:326:        String name = file.getName().toLowerCase(Locale.ROOT);
+.\src\main\java\org\gipsybuho\service\ImportService.java:342:        try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
+.\src\main\java\org\gipsybuho\service\ImportService.java:379:        try (var fis = new FileInputStream(file)) { raw = fis.readAllBytes(); }
+.\src\main\java\org\gipsybuho\service\ImportService.java:450:        String ext = file.getName().toLowerCase().replaceAll(".*\\.", "").toUpperCase();
+.\src\main\java\org\gipsybuho\service\ImportService.java:596:            String header = normalize(entry.getKey());
+.\src\main\java\org\gipsybuho\service\ImportService.java:651:            String header = normalize(getCell(grid.get(headerRowIndex), c));
+.\src\main\java\org\gipsybuho\service\ImportService.java:661:        if (priceHeader == null || priceHeader.isBlank() || normalize(priceHeader).equals("precio")) return context;
+.\src\main\java\org\gipsybuho\service\ImportService.java:733:            String n = normalize(v);
+.\src\main\java\org\gipsybuho\service\ImportService.java:749:            String header = normalize(getCell(grid.get(headerRowIndex), c));
+.\src\main\java\org\gipsybuho\service\ImportService.java:757:        String n = normalize(header);
+.\src\main\java\org\gipsybuho\service\ImportService.java:811:            if (!header.isBlank()) rawCounts.merge(normalize(header), 1, Integer::sum);
+.\src\main\java\org\gipsybuho\service\ImportService.java:820:            String normalized = normalize(header);
+.\src\main\java\org\gipsybuho\service\ImportService.java:832:                name = !context.isBlank() && !normalize(context).equals(normalized)
+.\src\main\java\org\gipsybuho\service\ImportService.java:840:            String finalKey = normalize(finalName);
+.\src\main\java\org\gipsybuho\service\ImportService.java:904:            String n = normalize(value);
+.\src\main\java\org\gipsybuho\service\ImportService.java:905:            if (i < headers.size() && n.equals(normalize(headers.get(i)))) samePositionHeaders++;
+.\src\main\java\org\gipsybuho\service\ImportService.java:924:        String n = normalize(value);
+.\src\main\java\org\gipsybuho\service\ImportService.java:934:        String n = normalize(header);
+.\src\main\java\org\gipsybuho\service\ImportService.java:965:        String n = normalize(value);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1150:            String colN = normalize(col);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1152:                if (normalize(campo).equals(colN) || colN.contains(normalize(campo))) {
+.\src\main\java\org\gipsybuho\service\ImportService.java:1211:        String source = normalize(sourceColumn);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1227:        String source = normalize(sourceColumn);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1230:            if (normalize(campo).equals(source)) return campo;
+.\src\main\java\org\gipsybuho\service\ImportService.java:1236:        String source = normalize(sourceColumn);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1322:    private String normalize(String s) {
+.\src\main\java\org\gipsybuho\service\ImportService.java:1618:                    String source = node.path("sourceColumn").asText(null);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1619:                    String label = node.path("label").asText(null);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1620:                    String type = normalizeRepairType(node.path("dataType").asText("TEXTO"));
+.\src\main\java\org\gipsybuho\service\ImportService.java:1642:                    int row = node.path("rowIndex").asInt(-1);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1643:                    String col = node.path("columnName").asText(null);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1652:                root.path("summary").asText(""),
+.\src\main\java\org\gipsybuho\service\ImportService.java:1701:                int row = node.path("rowIndex").asInt(-1);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1702:                String col = node.path("columnName").asText(null);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1703:                String issue = node.path("issue").asText(null);
+.\src\main\java\org\gipsybuho\service\ImportService.java:1708:                String sev = node.path("severity").asText("WARNING");
+.\src\main\java\org\gipsybuho\ui\NominasView.java:11:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\NominasView.java:26:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\NominasView.java:194:                for (Nomina nomina : seleccionadas) dao.delete(nomina.getId());
+.\src\main\java\org\gipsybuho\ui\NominasView.java:370:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\NominasView.java:373:            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+.\src\main\java\org\gipsybuho\ui\NominasView.java:374:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+.\src\main\java\org\gipsybuho\ui\NominasView.java:501:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\NominasView.java:506:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Nóminas", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\NominasView.java:507:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\NominasView.java:508:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\NominasView.java:514:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\NominasView.java:530:                            Path pdf = new PDFService().generarNomina(n, emp);
+.\src\main\java\org\gipsybuho\ui\NominasView.java:531:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\NominasView.java:532:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\NominasView.java:596:                    Path pdfPath = new PDFService().generarNomina(n, emp);
+.\src\main\java\org\gipsybuho\ui\NominasView.java:597:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\NominasView.java:599:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:26:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:213:                for (Tarifa tarifa : seleccionadas) dao.delete(tarifa.getId());
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:333:                try { new TarifaTramoDAO().delete(sel.getId()); recargar.run(); } catch (Exception e) { mostrarError(e); }
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:470:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:475:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Tarifas", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:476:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:477:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:483:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:498:                            Path pdf = new PDFService().generarFichaTarifa(t);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:499:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:500:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:545:                    Path pdfPath = new PDFService().generarFichaTarifa(t);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:546:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:548:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:12:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:33:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:201:                for (Presupuesto presupuesto : seleccionados) dao.delete(presupuesto.getId());
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:617:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:620:            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:621:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:748:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:753:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Presupuestos", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:754:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:755:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:761:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:793:                        Path tempPdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:794:                        Files.copy(tempPdfPath, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:795:                        Files.deleteIfExists(tempPdfPath);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:866:                    Path pdfPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado, true);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:867:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:868:                    Path pdfImpresionPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado, false);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:869:                    pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:873:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:14:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:32:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:278:                for (Material material : seleccionados) dao.delete(material.getId());
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:391:            () -> { try { consumoDao.delete(sel.getId()); cargarConsumo(); } catch (Exception e) { mostrarError(e); } });
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:731:            () -> { try { pagoDao.delete(sel.getId()); cargarPagos(); } catch (Exception e) { mostrarError(e); } });
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:962:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:967:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Materiales", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:968:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:969:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:975:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:990:                            Path pdf = new PDFService().generarFichaMaterial(m);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:991:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:992:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:1058:                    Path pdfPath = new PDFService().generarFichaMaterial(m);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:1059:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:1061:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:15:import javafx.stage.FileChooser;
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:33:import java.nio.file.Path;
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:609:                for (Pedido pedido : seleccionados) pedidoDao.delete(pedido.getId());
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:623:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:626:            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:627:            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:758:        FileChooser fc = new FileChooser();
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:763:            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]));
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:764:        File docs = new File(System.getProperty("user.home"), "Documents");
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:765:        if (!docs.exists()) docs = new File(System.getProperty("user.home"));
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:771:        Path destino = archivo.toPath();
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:787:                            Path pdf = new PDFService().generarPedido(p, c);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:788:                            Files.copy(pdf, destino, StandardCopyOption.REPLACE_EXISTING);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:789:                            Files.deleteIfExists(pdf);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:909:                pagoDao.delete(sel.getId());
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:1219:                    Path pdfPath = new PDFService().generarPedido(p, c);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:1220:                    pdfBytes = Files.readAllBytes(pdfPath);
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:1222:                    Files.deleteIfExists(pdfPath);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:14:import java.util.zip.ZipEntry;
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:15:import java.util.zip.ZipInputStream;
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:32:    public static void restaurarSQLite(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:34:        Path backup = origen.toAbsolutePath().normalize();
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:35:        if (!Files.isRegularFile(backup)) {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:36:            throw new FileNotFoundException("No existe el archivo de backup: " + backup);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:78:    public static void restaurarZipCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:83:            try (ZipInputStream zis = new ZipInputStream(
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:84:                    new BufferedInputStream(new FileInputStream(origen.toFile())),
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:86:                ZipEntry entry;
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:88:                    String nombre = entry.getName();
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:93:                    byte[] bytes = zis.readAllBytes();
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:117:    public static void restaurarSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:118:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:143:    public static void restaurarJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:204:    public static int importarPedidosExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:224:    public static int importarPedidosWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:248:    public static int importarPedidosPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:276:    private static void leerLibroExcel(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:277:        String nombre = path.getFileName().toString().toLowerCase();
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:279:                 org.apache.poi.ss.usermodel.WorkbookFactory.create(path.toFile(), null, true)) {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:308:    private static void leerWordDocx(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:310:                 new org.apache.poi.xwpf.usermodel.XWPFDocument(new java.io.FileInputStream(path.toFile()))) {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:330:    private static void leerWordDoc(Path path, List<String[]> filasPres, List<String[]> filasLineas) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:332:                 new org.apache.poi.hwpf.HWPFDocument(new java.io.FileInputStream(path.toFile()))) {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:578:    public static int importarAlbaranesCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:579:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:595:    public static int importarAlbaranesSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:596:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:627:    public static int importarAlbaranesJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:668:    public static int importarAlbaranesExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:688:    public static int importarAlbaranesWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:712:    public static int importarAlbaranesPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:742:    public static int importarFacturasCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:743:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:759:    public static int importarFacturasSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:760:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:791:    public static int importarFacturasJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:832:    public static int importarFacturasExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:858:    public static int importarFacturasWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:890:    public static int importarFacturasPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:926:    public static int importarPresupuestosCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:927:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:943:    public static int importarPresupuestosSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:944:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:975:    public static int importarPresupuestosJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1019:    public static int importarPresupuestosExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1045:    public static int importarPresupuestosWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1077:    public static int importarPresupuestosPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1112:    public static int importarNominasCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1113:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1129:    public static int importarNominasSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1130:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1160:    public static int importarNominasJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1189:    public static int importarNominasExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1207:    public static int importarNominasWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1229:    public static int importarNominasPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1257:    public static int importarEmpleadosCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1258:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1274:    public static int importarEmpleadosSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1275:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1306:    public static int importarEmpleadosJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1347:    public static int importarEmpleadosExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1367:    public static int importarEmpleadosWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1391:    public static int importarEmpleadosPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1421:    public static int importarMaterialesCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1422:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1438:    public static int importarMaterialesSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1439:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1472:    public static int importarMaterialesJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1528:    public static int importarMaterialesExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1547:    public static int importarMaterialesWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1570:    public static int importarMaterialesPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1598:    public static int importarTarifasCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1599:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1615:    public static int importarTarifasSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1616:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1646:    public static int importarTarifasJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1675:    public static int importarTarifasExcel(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1694:    public static int importarTarifasWord(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1717:    public static int importarTarifasPDF(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1746:    public static int importarClientesCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1747:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1763:    public static int importarClientesSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1764:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1794:    public static int importarClientesJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1821:    public static int importarPedidosCSV(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1822:        byte[] bytes = Files.readAllBytes(origen);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1838:    public static int importarPedidosSQL(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1839:        String contenido = Files.readString(origen, StandardCharsets.UTF_8);
+.\src\main\java\org\gipsybuho\service\ImportBackupService.java:1870:    public static int importarPedidosJSON(Path origen) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:48:import java.util.zip.ZipEntry;
+.\src\main\java\org\gipsybuho\service\ExportService.java:75:    public static Path backupSQLite(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:78:            ps.setString(1, destino.toAbsolutePath().toString());
+.\src\main\java\org\gipsybuho\service\ExportService.java:89:    public static Path exportarZipCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:92:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:95:                zos.putNextEntry(new ZipEntry(tabla + ".csv"));
+.\src\main\java\org\gipsybuho\service\ExportService.java:97:                zos.write(new byte[]{(byte) 0xEF, (byte) 0xBB, (byte) 0xBF});
+.\src\main\java\org\gipsybuho\service\ExportService.java:98:                zos.write(generarCSV(conn, tabla));
+.\src\main\java\org\gipsybuho\service\ExportService.java:140:    public static Path exportarSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:143:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:214:    public static Path exportarJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:276:        File dir = new File(
+.\src\main\java\org\gipsybuho\service\ExportService.java:279:        return new File(dir, "graficas_mulberry.db");
+.\src\main\java\org\gipsybuho\service\ExportService.java:307:    public static Path exportarClientesCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:310:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:311:            w.write('\uFEFF'); // BOM para compatibilidad con Excel
+.\src\main\java\org\gipsybuho\service\ExportService.java:312:            w.write(new String(generarCSV(conn, "clientes"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:317:    public static Path exportarClientesSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:320:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:367:    public static Path exportarClientesJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:404:    public static Path exportarClientesPDF(Path destino, List<Cliente> clientes) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:406:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:462:    public static Path exportarClientesWord(Path destino, List<Cliente> clientes) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:513:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:514:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:524:    public static Path exportarFacturasCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:527:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:528:            w.write('\uFEFF');
+.\src\main\java\org\gipsybuho\service\ExportService.java:529:            w.write(new String(generarCSV(conn, "facturas"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:534:    public static Path exportarFacturasSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:537:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:585:    public static Path exportarFacturasJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:625:    public static Path exportarFacturasPDF(Path destino, List<Factura> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:627:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:687:    public static Path exportarFacturasWord(Path destino, List<Factura> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:742:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:743:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:753:    public static Path exportarAlbaranesCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:756:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:757:            w.write('\uFEFF');
+.\src\main\java\org\gipsybuho\service\ExportService.java:758:            w.write(new String(generarCSV(conn, "albaranes"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:763:    public static Path exportarAlbaranesSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:766:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:814:    public static Path exportarAlbaranesJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:854:    public static Path exportarAlbaranesPDF(Path destino, List<Albaran> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:856:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:913:    public static Path exportarAlbaranesWord(Path destino, List<Albaran> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:965:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:966:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:976:    public static Path exportarPedidosCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:979:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:980:            w.write('\uFEFF');
+.\src\main\java\org\gipsybuho\service\ExportService.java:981:            w.write(new String(generarCSV(conn, "pedidos"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:986:    public static Path exportarPedidosSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:989:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1037:    public static Path exportarPedidosJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1077:    public static Path exportarPedidosPDF(Path destino, List<Pedido> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1079:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1144:    public static Path exportarPedidosWord(Path destino, List<Pedido> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1204:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1205:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1215:    public static Path exportarMaterialesCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1218:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1219:            w.write((char) 0xFEFF);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1220:            w.write(new String(generarCSV(conn, "materiales"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1225:    public static Path exportarMaterialesSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1228:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1277:    public static Path exportarMaterialesJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1318:    public static Path exportarMaterialesPDF(Path destino, List<Material> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1320:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1386:    public static Path exportarMaterialesWord(Path destino, List<Material> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1446:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1447:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1457:    public static Path exportarTarifasCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1460:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1461:            w.write((char) 0xFEFF);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1462:            w.write(new String(generarCSV(conn, "tarifas"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1467:    public static Path exportarTarifasSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1470:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1518:    public static Path exportarTarifasJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1558:    public static Path exportarTarifasPDF(Path destino, List<Tarifa> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1560:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1622:    public static Path exportarTarifasWord(Path destino, List<Tarifa> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1679:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1680:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1690:    public static Path exportarNominasCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1693:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1694:            w.write((char) 0xFEFF);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1695:            w.write(new String(generarCSV(conn, "nominas"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1700:    public static Path exportarNominasSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1703:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1751:    public static Path exportarNominasJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1791:    public static Path exportarNominasPDF(Path destino, List<Nomina> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1793:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1857:    public static Path exportarNominasWord(Path destino, List<Nomina> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1916:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1917:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1927:    public static Path exportarEmpleadosCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1930:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1931:            w.write((char) 0xFEFF);
+.\src\main\java\org\gipsybuho\service\ExportService.java:1932:            w.write(new String(generarCSV(conn, "empleados"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:1937:    public static Path exportarEmpleadosSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1940:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:1988:    public static Path exportarEmpleadosJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2028:    public static Path exportarEmpleadosPDF(Path destino, List<Empleado> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2030:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:2096:    public static Path exportarEmpleadosWord(Path destino, List<Empleado> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2156:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2157:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:2186:    public static Path exportarPresupuestosCSV(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2189:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8)) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2190:            w.write('\uFEFF');
+.\src\main\java\org\gipsybuho\service\ExportService.java:2191:            w.write(new String(generarCSV(conn, "presupuestos"), StandardCharsets.UTF_8));
+.\src\main\java\org\gipsybuho\service\ExportService.java:2196:    public static Path exportarPresupuestosSQL(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2199:                new FileOutputStream(destino.toFile()), StandardCharsets.UTF_8))) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2247:    public static Path exportarPresupuestosJSON(Path destino) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2287:    public static Path exportarPresupuestosPDF(Path destino, List<Presupuesto> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2289:        PdfWriter.getInstance(doc, new FileOutputStream(destino.toFile()));
+.\src\main\java\org\gipsybuho\service\ExportService.java:2348:    public static Path exportarPresupuestosWord(Path destino, List<Presupuesto> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2402:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2403:                word.write(fos);
+.\src\main\java\org\gipsybuho\service\ExportService.java:2409:    public static Path exportarPresupuestoDetalladoWord(Path destino, Presupuesto p, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2527:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2528:                document.write(out);
+.\src\main\java\org\gipsybuho\service\ExportService.java:2671:    public static Path exportarAlbaranDetalladoWord(Path destino, Albaran a, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2717:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2726:    public static Path exportarNominaDetalladaWord(Path destino, Nomina n, Empleado e) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2781:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2790:    public static Path exportarPedidoDetalladoWord(Path destino, Pedido p, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2831:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2840:    public static Path exportarClienteDetalladoWord(Path destino, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2860:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2869:    public static Path exportarTarifaDetalladaWord(Path destino, Tarifa tarifa) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2888:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2897:    public static Path exportarMaterialDetalladoWord(Path destino, Material m) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2918:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:2927:    public static Path exportarEmpleadoDetalladoWord(Path destino, Empleado e) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:2948:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) { document.write(out); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3065:    public static Path exportarFacturaDetalladaWord(Path destino, Factura f, Cliente c) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3178:            try (FileOutputStream out = new FileOutputStream(destino.toFile())) {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3179:                document.write(out);
+.\src\main\java\org\gipsybuho\service\ExportService.java:3237:    public static Path exportarClientesExcel(Path destino, List<Cliente> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3250:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3255:    public static Path exportarFacturasExcel(Path destino, List<Factura> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3272:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3277:    public static Path exportarAlbaranesExcel(Path destino, List<Albaran> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3291:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3296:    public static Path exportarPedidosExcel(Path destino, List<Pedido> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3315:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3320:    public static Path exportarMaterialesExcel(Path destino, List<Material> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3341:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3346:    public static Path exportarTarifasExcel(Path destino, List<Tarifa> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3363:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3368:    public static Path exportarNominasExcel(Path destino, List<Nomina> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3388:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3393:    public static Path exportarEmpleadosExcel(Path destino, List<Empleado> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3416:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }
+.\src\main\java\org\gipsybuho\service\ExportService.java:3421:    public static Path exportarPresupuestosExcel(Path destino, List<Presupuesto> lista) throws Exception {
+.\src\main\java\org\gipsybuho\service\ExportService.java:3437:            try (FileOutputStream fos = new FileOutputStream(destino.toFile())) { wb.write(fos); }

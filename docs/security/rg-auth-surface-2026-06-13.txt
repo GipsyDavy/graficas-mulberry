@@ -1,0 +1,249 @@
+src/main/java\org\gipsybuho\db\DatabaseManager.java:93:            "ALTER TABLE usuarios ADD COLUMN security_question TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:94:            "ALTER TABLE usuarios ADD COLUMN security_answer_hash TEXT",
+src/main/java\org\gipsybuho\db\DatabaseManager.java:147:                    password_hash TEXT NOT NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:148:                    role TEXT NOT NULL,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:149:                    permissions TEXT NOT NULL DEFAULT '',
+src/main/java\org\gipsybuho\db\DatabaseManager.java:152:                    security_question TEXT,
+src/main/java\org\gipsybuho\db\DatabaseManager.java:153:                    security_answer_hash TEXT
+src/main/java\org\gipsybuho\model\UserRole.java:5:public enum UserRole {
+src/main/java\org\gipsybuho\model\UserRole.java:8:        UserPermissions.DASHBOARD, UserPermissions.CLIENTES, UserPermissions.PRESUPUESTOS,
+src/main/java\org\gipsybuho\model\UserRole.java:9:        UserPermissions.FACTURAS, UserPermissions.ALBARANES, UserPermissions.PEDIDOS,
+src/main/java\org\gipsybuho\model\UserRole.java:10:        UserPermissions.TARIFAS, UserPermissions.MATERIALES, UserPermissions.EMPLEADOS,
+src/main/java\org\gipsybuho\model\UserRole.java:11:        UserPermissions.NOMINAS, UserPermissions.ESTADISTICAS, UserPermissions.CALENDARIO,
+src/main/java\org\gipsybuho\model\UserRole.java:12:        UserPermissions.IA, UserPermissions.IMPORTAR_BACKUP, UserPermissions.EXPORTAR_BACKUP,
+src/main/java\org\gipsybuho\model\UserRole.java:13:        UserPermissions.CONFIGURACION
+src/main/java\org\gipsybuho\model\UserRole.java:16:        UserPermissions.DASHBOARD, UserPermissions.CLIENTES, UserPermissions.PRESUPUESTOS,
+src/main/java\org\gipsybuho\model\UserRole.java:17:        UserPermissions.FACTURAS, UserPermissions.ALBARANES, UserPermissions.PEDIDOS,
+src/main/java\org\gipsybuho\model\UserRole.java:18:        UserPermissions.CALENDARIO, UserPermissions.IA, UserPermissions.CONFIGURACION
+src/main/java\org\gipsybuho\model\UserRole.java:21:        UserPermissions.DASHBOARD, UserPermissions.PEDIDOS, UserPermissions.MATERIALES,
+src/main/java\org\gipsybuho\model\UserRole.java:22:        UserPermissions.TARIFAS, UserPermissions.CALENDARIO, UserPermissions.IA,
+src/main/java\org\gipsybuho\model\UserRole.java:23:        UserPermissions.CONFIGURACION
+src/main/java\org\gipsybuho\model\UserRole.java:26:        UserPermissions.DASHBOARD, UserPermissions.FACTURAS, UserPermissions.ALBARANES,
+src/main/java\org\gipsybuho\model\UserRole.java:27:        UserPermissions.NOMINAS, UserPermissions.ESTADISTICAS, UserPermissions.IA,
+src/main/java\org\gipsybuho\model\UserRole.java:28:        UserPermissions.CONFIGURACION
+src/main/java\org\gipsybuho\model\UserRole.java:32:    private final Set<String> defaultPermissions;
+src/main/java\org\gipsybuho\model\UserRole.java:34:    UserRole(String label, Set<String> defaultPermissions) {
+src/main/java\org\gipsybuho\model\UserRole.java:36:        this.defaultPermissions = Set.copyOf(defaultPermissions);
+src/main/java\org\gipsybuho\model\UserRole.java:40:    public Set<String> getDefaultPermissions() { return defaultPermissions; }
+src/main/java\org\gipsybuho\model\UserRole.java:41:    public String getPermissionsString() { return String.join(",", defaultPermissions); }
+src/main/java\org\gipsybuho\model\User.java:10:    private String passwordHash;
+src/main/java\org\gipsybuho\model\User.java:11:    private UserRole role;
+src/main/java\org\gipsybuho\model\User.java:12:    private String permissions;
+src/main/java\org\gipsybuho\model\User.java:20:    public User(int id, String username, String passwordHash,
+src/main/java\org\gipsybuho\model\User.java:21:                UserRole role, String permissions, LocalDateTime createdAt, LocalDateTime lastLogin,
+src/main/java\org\gipsybuho\model\User.java:25:        this.passwordHash = passwordHash;
+src/main/java\org\gipsybuho\model\User.java:26:        this.role = role != null ? role : UserRole.COMERCIAL;
+src/main/java\org\gipsybuho\model\User.java:27:        this.permissions = permissions != null ? permissions : "";
+src/main/java\org\gipsybuho\model\User.java:34:    public boolean hasPermission(String module) {
+src/main/java\org\gipsybuho\model\User.java:36:        if (permissions == null || permissions.isBlank()) return false;
+src/main/java\org\gipsybuho\model\User.java:37:        return Arrays.asList(permissions.split(",")).contains(module.trim());
+src/main/java\org\gipsybuho\model\User.java:40:    public boolean isAdmin() {
+src/main/java\org\gipsybuho\model\User.java:41:        return UserRole.ADMINISTRADOR == role;
+src/main/java\org\gipsybuho\model\User.java:50:    public String getPasswordHash() { return passwordHash; }
+src/main/java\org\gipsybuho\model\User.java:51:    public void setPasswordHash(String passwordHash) { this.passwordHash = passwordHash; }
+src/main/java\org\gipsybuho\model\User.java:53:    public UserRole getRole() { return role; }
+src/main/java\org\gipsybuho\model\User.java:54:    public void setRole(UserRole role) { this.role = role != null ? role : UserRole.COMERCIAL; }
+src/main/java\org\gipsybuho\model\User.java:56:    public String getPermissions() { return permissions; }
+src/main/java\org\gipsybuho\model\User.java:57:    public void setPermissions(String permissions) { this.permissions = permissions != null ? permissions : ""; }
+src/main/java\org\gipsybuho\model\UserPermissions.java:6:public final class UserPermissions {
+src/main/java\org\gipsybuho\model\UserPermissions.java:46:    private UserPermissions() {}
+src/main/java\org\gipsybuho\service\MusicService.java:58:    // ── Controles ─────────────────────────────────────────────────────────────
+src/main/java\org\gipsybuho\service\ImportService.java:1469:        sys.put("role", "system");
+src/main/java\org\gipsybuho\service\ImportService.java:1472:        usr.put("role", "user");
+src/main/java\org\gipsybuho\service\SoundService.java:11:        HOVER,        // Paso del cursor por controles principales
+src/main/java\org\gipsybuho\dao\UserDAO.java:5:import org.gipsybuho.model.UserRole;
+src/main/java\org\gipsybuho\dao\UserDAO.java:16:        "id, username, password_hash, role, permissions, created_at, last_login, security_question, security_answer_hash";
+src/main/java\org\gipsybuho\dao\UserDAO.java:43:        String sql = "INSERT INTO usuarios (username, password_hash, role, permissions, created_at) VALUES (?, ?, ?, ?, ?)";
+src/main/java\org\gipsybuho\dao\UserDAO.java:46:            ps.setString(2, user.getPasswordHash());
+src/main/java\org\gipsybuho\dao\UserDAO.java:47:            ps.setString(3, user.getRole().name());
+src/main/java\org\gipsybuho\dao\UserDAO.java:48:            ps.setString(4, user.getPermissions());
+src/main/java\org\gipsybuho\dao\UserDAO.java:61:        String sql = "UPDATE usuarios SET username = ?, password_hash = ?, role = ?, permissions = ? WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:64:            ps.setString(2, user.getPasswordHash());
+src/main/java\org\gipsybuho\dao\UserDAO.java:65:            ps.setString(3, user.getRole().name());
+src/main/java\org\gipsybuho\dao\UserDAO.java:66:            ps.setString(4, user.getPermissions());
+src/main/java\org\gipsybuho\dao\UserDAO.java:86:    public List<User> getAllUsers() {
+src/main/java\org\gipsybuho\dao\UserDAO.java:99:        String sql = "UPDATE usuarios SET security_question = ?, security_answer_hash = ? WHERE id = ?";
+src/main/java\org\gipsybuho\dao\UserDAO.java:123:        String sql = "SELECT COUNT(*) FROM usuarios WHERE role = 'ADMINISTRADOR'";
+src/main/java\org\gipsybuho\dao\UserDAO.java:133:        UserRole role;
+src/main/java\org\gipsybuho\dao\UserDAO.java:135:            role = UserRole.valueOf(rs.getString("role"));
+src/main/java\org\gipsybuho\dao\UserDAO.java:138:            throw new SQLException("Rol de usuario desconocido en base de datos: " + rs.getString("role"));
+src/main/java\org\gipsybuho\dao\UserDAO.java:147:            rs.getString("password_hash"),
+src/main/java\org\gipsybuho\dao\UserDAO.java:148:            role,
+src/main/java\org\gipsybuho\dao\UserDAO.java:149:            rs.getString("permissions"),
+src/main/java\org\gipsybuho\dao\UserDAO.java:152:            rs.getString("security_question"),
+src/main/java\org\gipsybuho\dao\UserDAO.java:153:            rs.getString("security_answer_hash")
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:11:import org.gipsybuho.model.UserRole;
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:21:    private final PasswordField passwordField = new PasswordField();
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:22:    private final PasswordField confirmField  = new PasswordField();
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:46:        passwordField.setPromptText("Contraseña (mín. " + AuthService.MIN_PASSWORD_LENGTH + " caracteres)");
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:47:        passwordField.setMaxWidth(260);
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:61:        grid.add(wrapPasswordField(passwordField, showPw), 1, 1);
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:63:        grid.add(wrapPasswordField(confirmField,  showPw), 1, 2);
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:65:        questionCombo.setItems(FXCollections.observableArrayList(AuthService.SECURITY_QUESTIONS));
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:86:    private static StackPane wrapPasswordField(PasswordField pf, CheckBox showToggle) {
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:108:        String password = passwordField.getText();
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:114:        if (username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:118:        if (!password.equals(confirm)) {
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:122:        if (!AuthService.isPasswordValid(password)) {
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:123:            msgLabel.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:130:        if (!authService.registerUser(username, password,
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:131:                UserRole.ADMINISTRADOR, UserRole.ADMINISTRADOR.getPermissionsString())) {
+src/main/java\org\gipsybuho\ui\AdminSetupView.java:135:        authService.login(username, password).ifPresent(user -> {
+src/main/java\org\gipsybuho\ui\HelpView.java:50:        m.put("usuarios",      "Usuarios y Roles");
+src/main/java\org\gipsybuho\service\AuthService.java:5:import org.gipsybuho.model.UserRole;
+src/main/java\org\gipsybuho\service\AuthService.java:6:import org.mindrot.jbcrypt.BCrypt;
+src/main/java\org\gipsybuho\service\AuthService.java:13:    public static final int MIN_PASSWORD_LENGTH = 8;
+src/main/java\org\gipsybuho\service\AuthService.java:15:    public static final List<String> SECURITY_QUESTIONS = List.of(
+src/main/java\org\gipsybuho\service\AuthService.java:29:    public static boolean isPasswordValid(String password) {
+src/main/java\org\gipsybuho\service\AuthService.java:30:        return password != null && password.length() >= MIN_PASSWORD_LENGTH;
+src/main/java\org\gipsybuho\service\AuthService.java:33:    public Optional<User> login(String username, String password) {
+src/main/java\org\gipsybuho\service\AuthService.java:35:            .filter(u -> BCrypt.checkpw(password, u.getPasswordHash()))
+src/main/java\org\gipsybuho\service\AuthService.java:42:    public boolean registerUser(String username, String password, UserRole role, String permissions) {
+src/main/java\org\gipsybuho\service\AuthService.java:43:        if (!isPasswordValid(password)) return false;
+src/main/java\org\gipsybuho\service\AuthService.java:47:        user.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+src/main/java\org\gipsybuho\service\AuthService.java:48:        user.setRole(role);
+src/main/java\org\gipsybuho\service\AuthService.java:49:        user.setPermissions(permissions);
+src/main/java\org\gipsybuho\service\AuthService.java:53:    public boolean changePassword(int userId, String oldPassword, String newPassword) {
+src/main/java\org\gipsybuho\service\AuthService.java:54:        if (!isPasswordValid(newPassword)) return false;
+src/main/java\org\gipsybuho\service\AuthService.java:56:            .filter(u -> BCrypt.checkpw(oldPassword, u.getPasswordHash()))
+src/main/java\org\gipsybuho\service\AuthService.java:58:                u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+src/main/java\org\gipsybuho\service\AuthService.java:64:    public boolean resetPasswordAdmin(int userId, String newPassword) {
+src/main/java\org\gipsybuho\service\AuthService.java:65:        if (!isPasswordValid(newPassword)) return false;
+src/main/java\org\gipsybuho\service\AuthService.java:67:            u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+src/main/java\org\gipsybuho\service\AuthService.java:72:    public boolean updateRoleAndPermissions(int userId, UserRole role, String permissions) {
+src/main/java\org\gipsybuho\service\AuthService.java:74:            u.setRole(role);
+src/main/java\org\gipsybuho\service\AuthService.java:75:            u.setPermissions(permissions);
+src/main/java\org\gipsybuho\service\AuthService.java:88:    public List<User> getAllUsers() {
+src/main/java\org\gipsybuho\service\AuthService.java:89:        return userDAO.getAllUsers();
+src/main/java\org\gipsybuho\service\AuthService.java:93:        String hash = BCrypt.hashpw(answer.trim().toLowerCase(), BCrypt.gensalt());
+src/main/java\org\gipsybuho\service\AuthService.java:109:    public boolean resetPasswordWithAnswer(String username, String answer, String newPassword) {
+src/main/java\org\gipsybuho\service\AuthService.java:110:        if (!isPasswordValid(newPassword)) return false;
+src/main/java\org\gipsybuho\service\AuthService.java:113:                && BCrypt.checkpw(answer.trim().toLowerCase(), u.getSecurityAnswerHash()))
+src/main/java\org\gipsybuho\service\AuthService.java:115:                u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+src/main/java\org\gipsybuho\ui\LoginView.java:21:    private final ComboBox<User> userCombo   = new ComboBox<>();
+src/main/java\org\gipsybuho\ui\LoginView.java:22:    private final PasswordField passwordField = new PasswordField();
+src/main/java\org\gipsybuho\ui\LoginView.java:47:        passwordField.setPromptText("Contraseña");
+src/main/java\org\gipsybuho\ui\LoginView.java:48:        passwordField.setMaxWidth(260);
+src/main/java\org\gipsybuho\ui\LoginView.java:49:        passwordField.setOnAction(e -> handleLogin());
+src/main/java\org\gipsybuho\ui\LoginView.java:64:        getChildren().addAll(title, userCombo, wrapPasswordField(passwordField, showPw), showPw,
+src/main/java\org\gipsybuho\ui\LoginView.java:74:        ComboBox<User> userComboRec = new ComboBox<>();
+src/main/java\org\gipsybuho\ui\LoginView.java:80:        userComboRec.setItems(FXCollections.observableArrayList(authService.getAllUsers()));
+src/main/java\org\gipsybuho\ui\LoginView.java:89:        PasswordField newPwField     = new PasswordField();
+src/main/java\org\gipsybuho\ui\LoginView.java:90:        PasswordField confirmPwField = new PasswordField();
+src/main/java\org\gipsybuho\ui\LoginView.java:91:        newPwField.setPromptText("Nueva contraseña (mín. " + AuthService.MIN_PASSWORD_LENGTH + " caracteres)");
+src/main/java\org\gipsybuho\ui\LoginView.java:122:        grid.add(wrapPasswordField(newPwField, showPwRec),     1, 3);
+src/main/java\org\gipsybuho\ui\LoginView.java:124:        grid.add(wrapPasswordField(confirmPwField, showPwRec), 1, 4);
+src/main/java\org\gipsybuho\ui\LoginView.java:151:            if (!AuthService.isPasswordValid(newPw)) {
+src/main/java\org\gipsybuho\ui\LoginView.java:152:                msgRec.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres."); event.consume(); return;
+src/main/java\org\gipsybuho\ui\LoginView.java:154:            if (!authService.resetPasswordWithAnswer(selected.getUsername(), answer, newPw)) {
+src/main/java\org\gipsybuho\ui\LoginView.java:168:    private static StackPane wrapPasswordField(PasswordField pf, CheckBox showToggle) {
+src/main/java\org\gipsybuho\ui\LoginView.java:189:        List<User> users = authService.getAllUsers();
+src/main/java\org\gipsybuho\ui\LoginView.java:196:        String password = passwordField.getText();
+src/main/java\org\gipsybuho\ui\LoginView.java:198:        if (selected == null || password.isEmpty()) {
+src/main/java\org\gipsybuho\ui\LoginView.java:202:        authService.login(selected.getUsername(), password).ifPresentOrElse(
+src/main/java\org\gipsybuho\ui\LoginView.java:206:                passwordField.clear();
+src/main/java\org\gipsybuho\ui\LoginView.java:207:                passwordField.requestFocus();
+src/main/java\org\gipsybuho\ui\MainView.java:31:import org.gipsybuho.model.UserPermissions;
+src/main/java\org\gipsybuho\ui\MainView.java:98:        if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
+src/main/java\org\gipsybuho\ui\MainView.java:149:            + "  ·  " + loggedInUser.getRole().getLabel());
+src/main/java\org\gipsybuho\ui\MainView.java:185:        addIfPermiso(navMenu, UserPermissions.DASHBOARD,
+src/main/java\org\gipsybuho\ui\MainView.java:189:                navBtn(UserPermissions.CLIENTES, Icons.users(), "Clientes", ClientesView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:190:                navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "Tarifas",  TarifasView::new)
+src/main/java\org\gipsybuho\ui\MainView.java:193:                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(), "Presupuestos", PresupuestosView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:194:                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),       "Pedidos",      PedidosView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:195:                navBtn(UserPermissions.ALBARANES,    Icons.file(),       "Albaranes",    AlbaranesView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:196:                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),    "Facturas",     FacturasView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:197:                navBtn(UserPermissions.MATERIALES,   Icons.layers(),     "Materiales",   MaterialesView::new)
+src/main/java\org\gipsybuho\ui\MainView.java:200:                navBtn(UserPermissions.EMPLEADOS, Icons.person(), "Empleados", EmpleadosView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:201:                navBtn(UserPermissions.NOMINAS,   Icons.work(),   "Nóminas",   NominasView::new)
+src/main/java\org\gipsybuho\ui\MainView.java:204:                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(), "Estadísticas", EstadisticasView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:205:                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "Calendario",   CalendarioView::new),
+src/main/java\org\gipsybuho\ui\MainView.java:206:                navBtn(UserPermissions.IA, Icons.robot(), "Asistente",
+src/main/java\org\gipsybuho\ui\MainView.java:232:        if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)) {
+src/main/java\org\gipsybuho\ui\MainView.java:238:        if (loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
+src/main/java\org\gipsybuho\ui\MainView.java:244:        if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
+src/main/java\org\gipsybuho\ui\MainView.java:250:        if (loggedInUser.isAdmin()) {
+src/main/java\org\gipsybuho\ui\MainView.java:369:        return loggedInUser.hasPermission(permiso) ? navBtn(icon, texto, factory) : null;
+src/main/java\org\gipsybuho\ui\MainView.java:373:        if (loggedInUser.hasPermission(permiso) && node != null) parent.getChildren().add(node);
+src/main/java\org\gipsybuho\ui\MainView.java:395:        return loggedInUser.hasPermission(permiso)
+src/main/java\org\gipsybuho\ui\UserManagementView.java:16:import javafx.scene.control.PasswordField;
+src/main/java\org\gipsybuho\ui\UserManagementView.java:28:import org.gipsybuho.model.UserPermissions;
+src/main/java\org\gipsybuho\ui\UserManagementView.java:29:import org.gipsybuho.model.UserRole;
+src/main/java\org\gipsybuho\ui\UserManagementView.java:49:    private final PasswordField passwordField = new PasswordField();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:50:    private final PasswordField confirmField = new PasswordField();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:51:    private final ComboBox<UserRole> roleCombo = new ComboBox<>();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:89:        TableColumn<User, String> roleCol = new TableColumn<>("Rol");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:90:        roleCol.setCellValueFactory(data -> new SimpleStringProperty(data.getValue().getRole().getLabel()));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:91:        roleCol.setPrefWidth(180);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:102:        userTable.getColumns().addAll(usernameCol, roleCol, createdCol, lastLoginCol);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:111:        Button changePasswordButton = new Button("Cambiar contraseña");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:112:        changePasswordButton.getStyleClass().add("btn-toolbar");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:113:        changePasswordButton.setOnAction(e -> changeSelectedPassword());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:127:        HBox bar = new HBox(8, changePasswordButton, editButton, deleteButton, newButton);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:137:        passwordField.setPromptText("Contraseña");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:140:        roleCombo.setItems(FXCollections.observableArrayList(UserRole.values()));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:141:        roleCombo.valueProperty().addListener((obs, oldRole, newRole) -> {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:142:            if (newRole != null) applyPermissions(newRole.getDefaultPermissions());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:151:        grid.add(wrapPasswordField(passwordField, showPw), 1, 1);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:153:        grid.add(wrapPasswordField(confirmField,  showPw), 1, 2);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:155:        grid.add(roleCombo, 1, 3);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:157:        showPw.visibleProperty().bind(passwordField.disabledProperty().not());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:158:        showPw.managedProperty().bind(passwordField.disabledProperty().not());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:160:        questionCombo.setItems(FXCollections.observableArrayList(AuthService.SECURITY_QUESTIONS));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:174:        securitySection.visibleProperty().bind(passwordField.disabledProperty().not());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:175:        securitySection.managedProperty().bind(passwordField.disabledProperty().not());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:178:        UserPermissions.AVAILABLE.forEach((key, label) -> {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:184:        ScrollPane permissionsPane = new ScrollPane(checksBox);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:185:        permissionsPane.setFitToWidth(true);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:186:        permissionsPane.setPrefViewportHeight(170);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:191:        VBox form = new VBox(10, formTitle, grid, showPw, securitySection, permissionsPane, saveButton);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:197:        users.setAll(authService.getAllUsers());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:205:        passwordField.setDisable(false);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:207:        passwordField.clear();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:209:        roleCombo.setValue(UserRole.COMERCIAL);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:221:        passwordField.setDisable(false);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:223:        passwordField.clear();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:225:        roleCombo.setValue(user.getRole());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:226:        applyPermissions(parsePermissions(user.getPermissions()));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:240:        passwordField.setDisable(true);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:242:        passwordField.clear();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:244:        roleCombo.setValue(selected.getRole());
+src/main/java\org\gipsybuho\ui\UserManagementView.java:245:        applyPermissions(parsePermissions(selected.getPermissions()));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:260:        String password = passwordField.getText();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:262:        UserRole role = roleCombo.getValue();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:267:        if (username.isEmpty() || password.isEmpty() || confirm.isEmpty() || role == null) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:275:        if (!password.equals(confirm)) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:279:        if (!AuthService.isPasswordValid(password)) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:280:            showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:283:        if (!authService.registerUser(username, password, role, selectedPermissions())) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:295:        UserRole role = roleCombo.getValue();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:296:        if (role == null) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:300:        if (!authService.updateRoleAndPermissions(editingUser.getId(), role, selectedPermissions())) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:310:    private void changeSelectedPassword() {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:322:        PasswordField newPasswordField = new PasswordField();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:323:        PasswordField confirmPasswordField = new PasswordField();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:324:        newPasswordField.setPromptText("Nueva contraseña");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:325:        confirmPasswordField.setPromptText("Confirmar contraseña");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:332:        grid.add(wrapPasswordField(newPasswordField, showPwDialog), 1, 0);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:334:        grid.add(wrapPasswordField(confirmPasswordField, showPwDialog), 1, 1);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:341:            String password = newPasswordField.getText();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:342:            String confirm = confirmPasswordField.getText();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:343:            if (password.isEmpty() || confirm.isEmpty()) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:346:            } else if (!password.equals(confirm)) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:349:            } else if (!AuthService.isPasswordValid(password)) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:350:                showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+src/main/java\org\gipsybuho\ui\UserManagementView.java:355:        dialog.setResultConverter(button -> button == ButtonType.OK ? newPasswordField.getText() : null);
+src/main/java\org\gipsybuho\ui\UserManagementView.java:356:        dialog.showAndWait().ifPresent(password -> {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:357:            if (authService.resetPasswordAdmin(selected.getId(), password)) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:399:    private String selectedPermissions() {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:406:    private void applyPermissions(Set<String> permissions) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:407:        permissionChecks.forEach((key, checkBox) -> checkBox.setSelected(permissions.contains(key)));
+src/main/java\org\gipsybuho\ui\UserManagementView.java:410:    private Set<String> parsePermissions(String permissions) {
+src/main/java\org\gipsybuho\ui\UserManagementView.java:411:        if (permissions == null || permissions.isBlank()) return Set.of();
+src/main/java\org\gipsybuho\ui\UserManagementView.java:412:        return Arrays.stream(permissions.split(","))
+src/main/java\org\gipsybuho\ui\UserManagementView.java:440:    private static StackPane wrapPasswordField(PasswordField pf, CheckBox showToggle) {
+src/main/java\org\gipsybuho\ui\PdfPreviewWindow.java:146:        HBox controles = new HBox(8, btnAnterior, lblPagina, btnSiguiente, spacer,
+src/main/java\org\gipsybuho\ui\PdfPreviewWindow.java:148:        controles.setAlignment(Pos.CENTER_LEFT);
+src/main/java\org\gipsybuho\ui\PdfPreviewWindow.java:149:        controles.setPadding(new Insets(8, 12, 8, 12));
+src/main/java\org\gipsybuho\ui\PdfPreviewWindow.java:150:        controles.setStyle("-fx-background-color:#f5f5f5; -fx-border-color:#dddddd; -fx-border-width:0 0 1 0;");
+src/main/java\org\gipsybuho\ui\PdfPreviewWindow.java:153:        root.setTop(controles);

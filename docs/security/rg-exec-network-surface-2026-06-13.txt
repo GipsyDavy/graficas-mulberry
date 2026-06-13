@@ -1,0 +1,117 @@
+.\build-nsis.ps1:117:Start-Process explorer.exe "$PROJECT\output"
+.\_cajon-desastre\build_exe.ps1:117:    Start-Process explorer.exe $destDir
+.\_cajon-desastre\build_exe.ps1:120:    Start-Process explorer.exe $destDir
+.\_cajon-desastre\build-v2.ps1:108:Start-Process explorer.exe "$PROJECT\output"
+.\_cajon-desastre\build-v3.ps1:106:Start-Process explorer.exe "$PROJECT\output"
+.\src\main\java\org\gipsybuho\util\AppConstants.java:16:    public static final String OLLAMA_BASE_URL = "http://localhost:11434";
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:4:import java.net.ServerSocket;
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:9:    private static ServerSocket lockSocket;
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:18:            // Intenta abrir un ServerSocket en un puerto específico.
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:20:            lockSocket = new ServerSocket(LOCK_PORT);
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:31:     * Libera el bloqueo de instancia única cerrando el ServerSocket.
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:35:        if (lockSocket != null && !lockSocket.isClosed()) {
+.\src\main\java\org\gipsybuho\SingleInstanceLock.java:37:                lockSocket.close();
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:484:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ClientesView.java:538:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:396:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:407:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:535:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\AlbaranesView.java:590:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ExportView.java:219:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:431:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\EmpleadosView.java:491:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:151:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:464:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\EstadisticasView.java:485:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:524:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:535:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:670:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\FacturasView.java:727:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportBackupView.java:237:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\IAView.java:246:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\IAView.java:288:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\IAView.java:308:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\IAView.java:373:            Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:309:            Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:367:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:444:            Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:843:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:945:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ImportView.java:1064:            Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:980:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\MaterialesView.java:1053:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1052:            String.valueOf(Runtime.getRuntime().availableProcessors()));
+.\src\main\java\org\gipsybuho\ui\ConfiguracionView.java:1133:            Process p = new ProcessBuilder(cmd).start();
+.\src\main\java\org\gipsybuho\ui\ModelosGestionDialog.java:399:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\ModelosGestionDialog.java:458:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\NominasView.java:380:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\NominasView.java:391:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\NominasView.java:519:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\NominasView.java:590:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:170:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:246:        HttpClient client = HttpClient.newBuilder()
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:248:            .followRedirects(HttpClient.Redirect.NORMAL)
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:254:            HttpRequest head = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:255:                .uri(URI.create(INSTALLER_URL))
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:257:                .method("HEAD", HttpRequest.BodyPublishers.noBody()).build();
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:271:        HttpRequest req = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:272:            .uri(URI.create(INSTALLER_URL))
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:335:        Process proc = new ProcessBuilder(realExe.toString())
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:336:            .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:337:            .redirectError(ProcessBuilder.Redirect.DISCARD)
+.\src\main\java\org\gipsybuho\ui\OllamaInstallerDialog.java:388:        Process proc = new ProcessBuilder(ollamaExe.toString(), "pull", DEFAULT_MODEL)
+.\src\main\java\org\gipsybuho\ui\PdfPreviewWindow.java:123:            Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:627:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:638:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:780:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PresupuestosView.java:846:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:633:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:644:                        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:776:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\PedidosView.java:1213:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:488:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\ui\TarifasView.java:540:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\service\ImportService.java:1477:        HttpClient client = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
+.\src\main\java\org\gipsybuho\service\ImportService.java:1478:        HttpRequest req = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\ImportService.java:1479:            .uri(URI.create(OLLAMA_URL + "/api/chat"))
+.\src\main\java\org\gipsybuho\service\ImportService.java:1482:            .POST(HttpRequest.BodyPublishers.ofString(body.toString()))
+.\src\main\java\org\gipsybuho\service\ImportService.java:1494:            HttpClient c = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build();
+.\src\main\java\org\gipsybuho\service\ImportService.java:1495:            HttpRequest r = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\ImportService.java:1496:                .uri(URI.create(OLLAMA_URL + "/api/tags"))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:13:import java.net.http.HttpClient;
+.\src\main\java\org\gipsybuho\service\OllamaService.java:14:import java.net.http.HttpRequest;
+.\src\main\java\org\gipsybuho\service\OllamaService.java:42:    private final HttpClient httpClient;
+.\src\main\java\org\gipsybuho\service\OllamaService.java:50:        this.httpClient = HttpClient.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaService.java:67:            HttpRequest request = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaService.java:68:                    .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/tags"))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:71:            HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+.\src\main\java\org\gipsybuho\service\OllamaService.java:97:            HttpRequest request = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaService.java:98:                    .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/delete"))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:100:                    .method("DELETE", HttpRequest.BodyPublishers.ofString(payload.toString()))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:102:            return httpClient.send(request, HttpResponse.BodyHandlers.ofString()).statusCode() == 200;
+.\src\main\java\org\gipsybuho\service\OllamaService.java:110:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\service\OllamaService.java:116:                HttpRequest request = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaService.java:117:                        .uri(URI.create(AppConstants.OLLAMA_BASE_URL + "/api/pull"))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:118:                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString())).build();
+.\src\main\java\org\gipsybuho\service\OllamaService.java:120:                HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+.\src\main\java\org\gipsybuho\service\OllamaService.java:153:        Thread.ofVirtual().start(() -> {
+.\src\main\java\org\gipsybuho\service\OllamaService.java:175:                HttpRequest request = HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaService.java:176:                        .uri(URI.create(AppConstants.OLLAMA_API_URL))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:179:                        .POST(HttpRequest.BodyPublishers.ofString(payload.toString()))
+.\src\main\java\org\gipsybuho\service\OllamaService.java:182:                HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:4:import java.net.http.HttpClient;
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:5:import java.net.http.HttpRequest;
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:24:        Thread.ofVirtual().start(OllamaManager::startIfNeeded);
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:34:            ProcessBuilder pb = new ProcessBuilder(exe.toString(), "serve");
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:35:            pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:36:            pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:58:            HttpClient c = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(1)).build();
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:59:            c.send(HttpRequest.newBuilder()
+.\src\main\java\org\gipsybuho\service\OllamaManager.java:60:                    .uri(URI.create("http://localhost:11434/api/tags"))
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:68:        currentThread = Thread.ofVirtual().start(() -> speakWithWindows(text, generation));
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:85:        ProcessBuilder pb = new ProcessBuilder(
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:86:            "powershell.exe",
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:161:        ProcessBuilder pb = new ProcessBuilder(
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:162:            "powershell.exe",
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:191:        ProcessBuilder pb = new ProcessBuilder(
+.\src\main\java\org\gipsybuho\service\TextToSpeechService.java:192:            "powershell.exe",

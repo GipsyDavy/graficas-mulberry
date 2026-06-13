@@ -96,6 +96,23 @@ class ClienteDAOTest {
             "Insertar dos clientes con el mismo NIF no-nulo debe lanzar excepción");
     }
 
+    @Test
+    void updateMantieneColumnasExtraValidasConQuotingCentralizado() throws Exception {
+        DatabaseManager.addColumn("clientes", "campo_extra");
+        ClienteDAO dao = new ClienteDAO();
+
+        Cliente c = new Cliente();
+        c.setNombre("Empresa Extra");
+        c.setExtra("campo_extra", "uno");
+        dao.save(c);
+
+        c.setExtra("campo_extra", "dos");
+        dao.save(c);
+
+        Cliente recargado = dao.findById(c.getId());
+        assertEquals("dos", recargado.getExtra("campo_extra"));
+    }
+
     private Cliente mapCliente(List<String> columns, Map<String, Object> values) throws Exception {
         ClienteDAO dao = new ClienteDAO();
         Method map = ClienteDAO.class.getDeclaredMethod("map", ResultSet.class);

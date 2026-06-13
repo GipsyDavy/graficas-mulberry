@@ -7,6 +7,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ImportBackupServiceTest {
@@ -101,6 +102,17 @@ class ImportBackupServiceTest {
         assertEquals("COMMIT", sentencias.get(1));
     }
 
+    @Test
+    void cabeceraSqlDebeSerDeGraficasMulberry() {
+        assertThrows(SecurityException.class,
+            () -> validarCabecera("INSERT INTO clientes (id) VALUES (1);"));
+    }
+
+    @Test
+    void cabeceraSqlAceptaExportacionMulberry() throws Exception {
+        validarCabecera("-- Gráficas Mulberry — Volcado SQL completo\n-- Generado: prueba\n");
+    }
+
     private static boolean esSeguro(String stmt) throws Exception {
         Method m = ImportBackupService.class.getDeclaredMethod("esStatementSeguro", String.class);
         m.setAccessible(true);
@@ -112,5 +124,17 @@ class ImportBackupServiceTest {
         Method m = ImportBackupService.class.getDeclaredMethod("dividirSentenciasSql", String.class);
         m.setAccessible(true);
         return (List<String>) m.invoke(null, sql);
+    }
+
+    private static void validarCabecera(String sql) throws Exception {
+        Method m = ImportBackupService.class.getDeclaredMethod("validarCabeceraSqlMulberry", String.class);
+        m.setAccessible(true);
+        try {
+            m.invoke(null, sql);
+        } catch (java.lang.reflect.InvocationTargetException e) {
+            if (e.getCause() instanceof RuntimeException runtimeException) throw runtimeException;
+            if (e.getCause() instanceof Exception exception) throw exception;
+            throw e;
+        }
     }
 }

@@ -5,12 +5,15 @@ import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserRole;
 import org.mindrot.jbcrypt.BCrypt;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 
 public class AuthService {
 
     public static final int MIN_PASSWORD_LENGTH = 8;
+    private static final int MAX_FAILED_ATTEMPTS = 5;
+    private static final Duration LOCKOUT_DURATION = Duration.ofMinutes(5);
 
     public static final List<String> SECURITY_QUESTIONS = List.of(
         "¿Nombre de tu primera mascota?",
@@ -31,12 +34,50 @@ public class AuthService {
     }
 
     public Optional<User> login(String username, String password) {
+        if (username == null || password == null) return Optional.empty();
+
+        Optional<User> userOpt = userDAO.findByUsername(username);
+        if (userOpt.isEmpty()) return Optional.empty();
+
+        User user = userOpt.get();
+        if (userDAO.isLoginLocked(user.getId())) return Optional.empty();
+
+        if (BCrypt.checkpw(password, user.getPasswordHash())) {
+            userDAO.clearLoginLockout(user.getId());
+            userDAO.updateLastLogin(user.getId());
+            return Optional.of(user);
+        } else {
+            userDAO.recordLoginFailure(user.getId(), MAX_FAILED_ATTEMPTS, LOCKOUT_DURATION);
+            return Optional.empty();
+        }
+    }
+
+    public boolean isLoginTemporarilyBlocked(String username) {
+        if (username == null) return false;
         return userDAO.findByUsername(username)
-            .filter(u -> BCrypt.checkpw(password, u.getPasswordHash()))
-            .map(u -> {
-                userDAO.updateLastLogin(u.getId());
-                return u;
-            });
+            .map(u -> userDAO.isLoginLocked(u.getId()))
+            .orElse(false);
+    }
+
+    public long getLoginLockoutSecondsRemaining(String username) {
+        if (username == null) return 0;
+        return userDAO.findByUsername(username)
+            .map(u -> userDAO.getLoginSecondsRemaining(u.getId()))
+            .orElse(0L);
+    }
+
+    public boolean isRecoveryTemporarilyBlocked(String username) {
+        if (username == null) return false;
+        return userDAO.findByUsername(username)
+            .map(u -> userDAO.isRecoveryLocked(u.getId()))
+            .orElse(false);
+    }
+
+    public long getRecoveryLockoutSecondsRemaining(String username) {
+        if (username == null) return 0;
+        return userDAO.findByUsername(username)
+            .map(u -> userDAO.getRecoverySecondsRemaining(u.getId()))
+            .orElse(0L);
     }
 
     public boolean registerUser(String username, String password, UserRole role, String permissions) {
@@ -108,13 +149,22 @@ public class AuthService {
 
     public boolean resetPasswordWithAnswer(String username, String answer, String newPassword) {
         if (!isPasswordValid(newPassword)) return false;
-        return userDAO.findByUsername(username)
-            .filter(u -> u.getSecurityAnswerHash() != null
-                && BCrypt.checkpw(answer.trim().toLowerCase(), u.getSecurityAnswerHash()))
-            .map(u -> {
-                u.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
-                return userDAO.updateUser(u);
-            })
-            .orElse(false);
+        if (username == null || answer == null) return false;
+
+        Optional<User> userOpt = userDAO.findByUsername(username);
+        if (userOpt.isEmpty()) return false;
+
+        User user = userOpt.get();
+        if (userDAO.isRecoveryLocked(user.getId())) return false;
+
+        if (user.getSecurityAnswerHash() != null
+                && BCrypt.checkpw(answer.trim().toLowerCase(), user.getSecurityAnswerHash())) {
+            userDAO.clearRecoveryLockout(user.getId());
+            user.setPasswordHash(BCrypt.hashpw(newPassword, BCrypt.gensalt()));
+            return userDAO.updateUser(user);
+        } else {
+            userDAO.recordRecoveryFailure(user.getId(), MAX_FAILED_ATTEMPTS, LOCKOUT_DURATION);
+            return false;
+        }
     }
 }

@@ -2,6 +2,19 @@
 
 ---
 
+## Documentacion para agentes IA
+
+Punto de entrada comun para agentes externos: `AGENTS.md`.
+
+Gemini Code Assist: `GEMINI.md`.
+
+Documentacion de seguridad viva:
+- `SECURITY.md`
+- `docs/security/README.md`
+- `docs/security/SECURITY_AUDIT_2026-06-13.md`
+- `docs/security/SECURITY_REMEDIATION_2026-06-13.md`
+- `docs/security/SECURITY_AUDIT_RUNBOOK.md`
+
 # ⚠️ PROCESO OBLIGATORIO — LEER Y EJECUTAR ANTES DE CADA SPRINT ⚠️
 # INCUMPLIDO 7 VECES. NO CONTINUAR SIN EJECUTAR ESTE CHECKLIST.
 

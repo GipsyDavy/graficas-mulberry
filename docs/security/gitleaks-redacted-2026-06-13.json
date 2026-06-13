@@ -1,0 +1,42 @@
+[
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 961,
+  "EndLine": 961,
+  "StartColumn": 2,
+  "EndColumn": 37,
+  "Match": "jdk.tls.keyLimits=REDACTED ",
+  "Secret": "REDACTED",
+  "File": "output/GraficasMulberry/runtime/conf/security/java.security",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 3.8521688,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "output/GraficasMulberry/runtime/conf/security/java.security:generic-api-key:961"
+ },
+ {
+  "RuleID": "generic-api-key",
+  "Description": "Detected a Generic API Key, potentially exposing access to various services and sensitive operations.",
+  "StartLine": 988,
+  "EndLine": 988,
+  "StartColumn": 2,
+  "EndColumn": 42,
+  "Match": "jdk.quic.tls.keyLimits=REDACTED ",
+  "Secret": "REDACTED",
+  "File": "output/GraficasMulberry/runtime/conf/security/java.security",
+  "SymlinkFile": "",
+  "Commit": "",
+  "Entropy": 3.8521688,
+  "Author": "",
+  "Email": "",
+  "Date": "",
+  "Message": "",
+  "Tags": [],
+  "Fingerprint": "output/GraficasMulberry/runtime/conf/security/java.security:generic-api-key:988"
+ }
+]

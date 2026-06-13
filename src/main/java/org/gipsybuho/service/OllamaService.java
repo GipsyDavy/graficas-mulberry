@@ -45,6 +45,11 @@ public class OllamaService {
     private volatile String contextoERP = null;
     private final List<String[]> historial = new ArrayList<>();
     private static final int MAX_HISTORIAL = 10;
+    private static final int MAX_USER_PROMPT_CHARS = 8_000;
+    private static final int MAX_CONTEXT_CHARS = 20_000;
+    private static final int MAX_HISTORY_USER_CHARS = 2_000;
+    private static final int MAX_RESPONSE_HISTORY_CHARS = 2_000;
+    private static final int MAX_TOTAL_PROMPT_CHARS = 60_000;
 
     public OllamaService() {
         this.httpClient = HttpClient.newBuilder()
@@ -152,6 +157,17 @@ public class OllamaService {
     public void enviarConsulta(String prompt, Consumer<String> onResponse, Consumer<String> onError, Runnable onComplete) {
         Thread.ofVirtual().start(() -> {
             try {
+                if (prompt == null || prompt.isBlank()) {
+                    Platform.runLater(() -> onError.accept("La consulta está vacía."));
+                    return;
+                }
+                if (prompt.length() > MAX_USER_PROMPT_CHARS) {
+                    Platform.runLater(() -> onError.accept(
+                        "La consulta supera el límite de " + MAX_USER_PROMPT_CHARS +
+                        " caracteres. Reduce el texto y vuelve a intentarlo."));
+                    return;
+                }
+
                 ObjectNode payload = mapper.createObjectNode();
                 payload.put("model", modeloActual);
                 payload.put("stream", true);
@@ -161,16 +177,17 @@ public class OllamaService {
 
                 String ctx = contextoERP;
                 if (ctx != null) {
-                    fullPrompt.append("\n[CONTEXTO ERP]\n").append(ctx);
+                    fullPrompt.append("\n[CONTEXTO ERP]\n").append(limitarTexto(ctx, MAX_CONTEXT_CHARS));
                 }
 
                 synchronized (historial) {
                     for (String[] msg : historial) {
-                        fullPrompt.append("\nUsuario: ").append(msg[0]).append("\nAsistente: ").append(msg[1]);
+                        fullPrompt.append("\nUsuario: ").append(limitarTexto(msg[0], MAX_HISTORY_USER_CHARS))
+                            .append("\nAsistente: ").append(limitarTexto(msg[1], MAX_RESPONSE_HISTORY_CHARS));
                     }
                 }
                 fullPrompt.append("\nUsuario: ").append(prompt);
-                payload.put("prompt", fullPrompt.toString());
+                payload.put("prompt", limitarTexto(fullPrompt.toString(), MAX_TOTAL_PROMPT_CHARS));
 
                 HttpRequest request = HttpRequest.newBuilder()
                         .uri(URI.create(AppConstants.OLLAMA_API_URL))
@@ -199,8 +216,7 @@ public class OllamaService {
                     }
                     synchronized (historial) {
                         if (historial.size() >= MAX_HISTORIAL) historial.remove(0);
-                        String respTruncada = fullAiResponse.length() > 2000
-                                ? fullAiResponse.substring(0, 2000) : fullAiResponse.toString();
+                        String respTruncada = limitarTexto(fullAiResponse.toString(), MAX_RESPONSE_HISTORY_CHARS);
                         historial.add(new String[]{prompt, respTruncada});
                     }
                     if (onComplete != null) {
@@ -221,4 +237,11 @@ public class OllamaService {
     public String getModeloActual() { return modeloActual; }
     public void setContextoERP(String c) { this.contextoERP = c; }
     public void limpiarHistorial() { synchronized(historial) { historial.clear(); } }
+
+    private static String limitarTexto(String texto, int maxChars) {
+        if (texto == null || texto.length() <= maxChars) return texto;
+        String marca = "\n[Contenido recortado por límite de seguridad local]";
+        int limite = Math.max(0, maxChars - marca.length());
+        return texto.substring(0, limite) + marca;
+    }
 }

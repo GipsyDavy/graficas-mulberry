@@ -103,7 +103,11 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_albaran', '')",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_nif ON clientes(nif)",
             "CREATE UNIQUE INDEX IF NOT EXISTS idx_empleados_nif ON empleados(nif)",
-            "CREATE UNIQUE INDEX IF NOT EXISTS idx_materiales_referencia ON materiales(referencia)"
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_materiales_referencia ON materiales(referencia)",
+            "ALTER TABLE usuarios ADD COLUMN login_failed INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE usuarios ADD COLUMN login_locked_until TEXT",
+            "ALTER TABLE usuarios ADD COLUMN recovery_failed INTEGER NOT NULL DEFAULT 0",
+            "ALTER TABLE usuarios ADD COLUMN recovery_locked_until TEXT"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
@@ -150,7 +154,11 @@ public class DatabaseManager {
                     created_at TEXT DEFAULT (datetime('now')),
                     last_login TEXT,
                     security_question TEXT,
-                    security_answer_hash TEXT
+                    security_answer_hash TEXT,
+                    login_failed INTEGER NOT NULL DEFAULT 0,
+                    login_locked_until TEXT,
+                    recovery_failed INTEGER NOT NULL DEFAULT 0,
+                    recovery_locked_until TEXT
                 )""");
 
             st.execute("""
