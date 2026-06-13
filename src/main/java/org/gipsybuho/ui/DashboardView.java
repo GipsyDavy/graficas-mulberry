@@ -189,9 +189,10 @@ public class DashboardView extends VBox {
     }
 
     private void animarEntero(Label lbl, int target) {
+        if (target == 0) { lbl.setText("0"); return; }
         SimpleIntegerProperty prop = new SimpleIntegerProperty(0);
         prop.addListener((obs, oldV, newV) -> lbl.setText(String.valueOf(newV.intValue())));
-        int durMs = Math.min(900, Math.max(400, target * 4)); // escala con el valor, máx 900ms
+        int durMs = Math.min(900, Math.max(400, target * 4));
         new Timeline(
             new KeyFrame(Duration.ZERO,         new KeyValue(prop, 0)),
             new KeyFrame(Duration.millis(durMs), new KeyValue(prop, target, Interpolator.EASE_OUT))
@@ -199,6 +200,7 @@ public class DashboardView extends VBox {
     }
 
     private void animarMoneda(Label lbl, double target) {
+        if (target == 0.0) { lbl.setText("0 €"); return; }
         SimpleDoubleProperty prop = new SimpleDoubleProperty(0);
         prop.addListener((obs, oldV, newV) -> lbl.setText(String.format("%.0f €", newV.doubleValue())));
         new Timeline(
