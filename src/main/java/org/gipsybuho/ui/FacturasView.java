@@ -155,7 +155,7 @@ public class FacturasView extends VBox {
     private void cargar() {
         cargando.setVisible(true);
         tabla.setDisable(true);
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); }
+        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla); }
         catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tabla.setDisable(false); }
     }

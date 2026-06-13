@@ -1,9 +1,13 @@
 package org.gipsybuho.ui;
 
+import javafx.animation.FadeTransition;
+import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
 import javafx.scene.control.TableColumn;
+import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
+import javafx.util.Duration;
 
 final class TableColumnSizing {
 
@@ -49,6 +53,32 @@ final class TableColumnSizing {
         column.setMinWidth(Math.min(minWidth, target));
         column.setPrefWidth(target);
         column.setResizable(true);
+    }
+
+    static void animarFilas(TableView<?> tabla) {
+        Platform.runLater(() -> {
+            int[] idx = {0};
+            tabla.lookupAll(".table-row-cell").stream()
+                .filter(n -> n instanceof TableRow<?>)
+                .map(n -> (TableRow<?>) n)
+                .filter(r -> !r.isEmpty())
+                .limit(10)
+                .forEach(row -> {
+                    int delay = idx[0]++ * 30;
+                    row.setOpacity(0);
+                    row.setTranslateY(15);
+                    FadeTransition ft = new FadeTransition(Duration.millis(200), row);
+                    ft.setFromValue(0);
+                    ft.setToValue(1);
+                    ft.setDelay(Duration.millis(delay));
+                    TranslateTransition tt = new TranslateTransition(Duration.millis(200), row);
+                    tt.setFromY(15);
+                    tt.setToY(0);
+                    tt.setDelay(Duration.millis(delay));
+                    ft.play();
+                    tt.play();
+                });
+        });
     }
 
     private static double estimate(String text) {

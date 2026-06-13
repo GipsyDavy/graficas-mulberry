@@ -205,7 +205,7 @@ public class ClientesView extends VBox {
     private void cargar() {
         cargando.setVisible(true);
         tabla.setDisable(true);
-        try { datos.setAll(dao.findAll()); }
+        try { datos.setAll(dao.findAll()); TableColumnSizing.animarFilas(tabla); }
         catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tabla.setDisable(false); }
     }

@@ -547,6 +547,7 @@ public class PedidosView extends VBox {
                     .toList();
             }
             datosPedidos.setAll(resultado);
+            TableColumnSizing.animarFilas(tablaPedidos);
         } catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tablaPedidos.setDisable(false); }
     }
