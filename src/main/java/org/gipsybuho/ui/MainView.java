@@ -36,10 +36,32 @@ import org.gipsybuho.util.AppConstants;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
 
 public class MainView extends BorderPane {
+
+    private static final Map<String, String> TITULO_A_MODULO = Map.ofEntries(
+        Map.entry("Inicio",                 "general"),
+        Map.entry("Panel principal",        "general"),
+        Map.entry("Clientes",               "clientes"),
+        Map.entry("Tarifas",                "tarifas"),
+        Map.entry("Presupuestos",           "presupuestos"),
+        Map.entry("Pedidos",                "pedidos"),
+        Map.entry("Albaranes",              "albaranes"),
+        Map.entry("Facturas",               "facturas"),
+        Map.entry("Materiales",             "materiales"),
+        Map.entry("Empleados",              "empleados"),
+        Map.entry("Nóminas",                "nominas"),
+        Map.entry("Estadísticas",           "estadisticas"),
+        Map.entry("Calendario",             "calendario"),
+        Map.entry("Asistente IA",           "ia"),
+        Map.entry("Copia de seguridad",     "backups"),
+        Map.entry("Exportar base de datos", "exportacion"),
+        Map.entry("Configuración",          "configuracion"),
+        Map.entry("Gestión de usuarios",    "usuarios")
+    );
 
     private final StackPane contentArea = new StackPane();
     private final VisualAssistantView visualAssistant;
@@ -50,6 +72,7 @@ public class MainView extends BorderPane {
     private final User loggedInUser;
     private final AuthService authService;
     private final Stage primaryStage;
+    private String currentModuleId = "general";
 
     public MainView(Stage stage, User loggedInUser, AuthService authService) {
         this.primaryStage = stage;
@@ -63,6 +86,10 @@ public class MainView extends BorderPane {
         addEventFilter(KeyEvent.KEY_PRESSED, e -> {
             if (e.isControlDown() && e.getCode() == KeyCode.K) {
                 toggleBusqueda();
+                e.consume();
+            }
+            if (e.getCode() == KeyCode.F1) {
+                mostrarVista(new HelpView(currentModuleId), "Ayuda");
                 e.consume();
             }
         });
@@ -569,6 +596,9 @@ public class MainView extends BorderPane {
     }
 
     private void mostrarVista(Node vista, String titulo) {
+        if (!(vista instanceof HelpView)) {
+            currentModuleId = TITULO_A_MODULO.getOrDefault(titulo, "general");
+        }
         vista.setOpacity(0);
         contentArea.getChildren().setAll(vista);
         FadeTransition ft = new FadeTransition(Duration.millis(220), vista);

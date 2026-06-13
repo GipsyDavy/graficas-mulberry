@@ -69,18 +69,26 @@ public class HelpView extends BorderPane {
     private boolean programmaticSelection = false;
 
     public HelpView() {
-        getStyleClass().add("help-view");
+        init(DEFAULT_ARTICLE);
+    }
 
+    /** Abre la ayuda mostrando el primer artículo del módulo indicado. */
+    public HelpView(String moduleId) {
+        String firstId = service.getByModule(moduleId).stream()
+            .findFirst().map(HelpEntry::id).orElse(DEFAULT_ARTICLE);
+        init(firstId);
+    }
+
+    private void init(String initialArticleId) {
+        getStyleClass().add("help-view");
         for (HelpEntry e : service.getAll()) {
             idToEntry.put(e.id(), e);
         }
-
         setTop(buildTopBar());
         setLeft(buildLeftPanel());
         setCenter(webView);
-
         populateTree(null);
-        openArticle(DEFAULT_ARTICLE);
+        openArticle(initialArticleId);
     }
 
     // ── Barra superior ────────────────────────────────────────────────────────
