@@ -80,4 +80,21 @@ class EmpleadoDAOTest {
         assertEquals(1, dao.count(), "count solo debe contar empleados activos");
         assertEquals(2, dao.findAllIncluirBajas().size(), "findAllIncluirBajas debe devolver todos");
     }
+
+    @Test
+    void nifUnicoRechazaDuplicado() throws Exception {
+        EmpleadoDAO dao = new EmpleadoDAO();
+        Empleado e1 = new Empleado();
+        e1.setNombre("Ana");
+        e1.setNif("12345678A");
+        e1.setActivo(true);
+        dao.save(e1);
+
+        Empleado e2 = new Empleado();
+        e2.setNombre("Carlos");
+        e2.setNif("12345678A");
+        e2.setActivo(true);
+        assertThrows(Exception.class, () -> dao.save(e2),
+            "Insertar dos empleados con el mismo NIF no-nulo debe lanzar excepción");
+    }
 }

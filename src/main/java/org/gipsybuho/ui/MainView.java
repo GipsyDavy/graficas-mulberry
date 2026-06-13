@@ -91,7 +91,7 @@ public class MainView extends BorderPane {
                 e.consume();
             }
             if (e.getCode() == KeyCode.F1) {
-                mostrarVista(new HelpView(currentModuleId), "Ayuda");
+                mostrarVista(HelpView.forModule(currentModuleId), "Ayuda");
                 e.consume();
             }
         });

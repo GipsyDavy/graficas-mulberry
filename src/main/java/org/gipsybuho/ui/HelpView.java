@@ -73,13 +73,13 @@ public class HelpView extends BorderPane {
     }
 
     /** Abre la ayuda mostrando el primer artículo del módulo indicado. */
-    public HelpView(String moduleId) {
-        String firstId = service.getByModule(moduleId).stream()
+    public static HelpView forModule(String moduleId) {
+        String firstId = HelpService.getInstance().getByModule(moduleId).stream()
             .findFirst().map(HelpEntry::id).orElse(DEFAULT_ARTICLE);
-        init(firstId);
+        return new HelpView(firstId);
     }
 
-    private HelpView(String articleId, boolean byArticleId) {
+    private HelpView(String articleId) {
         init(articleId);
     }
 
@@ -87,7 +87,7 @@ public class HelpView extends BorderPane {
     public static HelpView forArticle(String articleId) {
         boolean exists = HelpService.getInstance().getAll().stream()
             .anyMatch(e -> e.id().equals(articleId));
-        return new HelpView(exists ? articleId : DEFAULT_ARTICLE, true);
+        return new HelpView(exists ? articleId : DEFAULT_ARTICLE);
     }
 
     private void init(String initialArticleId) {

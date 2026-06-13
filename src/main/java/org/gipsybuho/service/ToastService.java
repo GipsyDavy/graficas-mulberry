@@ -4,7 +4,6 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.SequentialTransition;
 import javafx.application.Platform;
-import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
 import javafx.scene.control.Hyperlink;
@@ -32,6 +31,7 @@ public final class ToastService {
 
     private ToastService() {}
 
+    /** Registra el navegador que abre artículos de ayuda desde los toasts de error con enlace. */
     public static void setArticleNavigator(Consumer<String> nav) { articleNavigator = nav; }
 
     public static void show(Window owner, String mensaje, Type type) {
@@ -115,7 +115,6 @@ public final class ToastService {
         VBox box = new VBox(4, lbl, link);
         box.getStyleClass().addAll("toast", "toast-" + type.name().toLowerCase());
         box.setMaxWidth(300);
-        box.setPadding(new Insets(10, 16, 10, 16));
         return box;
     }
 

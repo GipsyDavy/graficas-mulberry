@@ -100,7 +100,10 @@ public class DatabaseManager {
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_pie_legal', '')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_presupuesto', '')",
             "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_factura', '')",
-            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_albaran', '')"
+            "INSERT OR IGNORE INTO config (clave, valor) VALUES ('doc_texto_albaran', '')",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_clientes_nif ON clientes(nif)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_empleados_nif ON empleados(nif)",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_materiales_referencia ON materiales(referencia)"
         };
         for (String sql : migrations) {
             try (Statement st = conn.createStatement()) {
@@ -156,7 +159,7 @@ public class DatabaseManager {
                     nombre TEXT NOT NULL,
                     apellidos TEXT,
                     tipo TEXT DEFAULT 'empresa',
-                    nif TEXT,
+                    nif TEXT UNIQUE,
                     direccion TEXT,
                     ciudad TEXT DEFAULT 'Almería',
                     cp TEXT,
@@ -171,7 +174,7 @@ public class DatabaseManager {
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT NOT NULL,
                     apellidos TEXT,
-                    nif TEXT,
+                    nif TEXT UNIQUE,
                     categoria TEXT DEFAULT 'Operario',
                     salario_base REAL DEFAULT 1200.0,
                     fecha_alta TEXT,
@@ -210,7 +213,7 @@ public class DatabaseManager {
                 CREATE TABLE IF NOT EXISTS materiales (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     nombre TEXT NOT NULL,
-                    referencia TEXT,
+                    referencia TEXT UNIQUE,
                     categoria TEXT DEFAULT 'consumibles',
                     stock_actual REAL DEFAULT 0.0,
                     stock_minimo REAL DEFAULT 0.0,

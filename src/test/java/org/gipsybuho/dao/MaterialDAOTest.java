@@ -14,6 +14,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class MaterialDAOTest {
@@ -91,6 +92,27 @@ class MaterialDAOTest {
             "categoria null al insertar debe preservar DEFAULT DDL 'consumibles'");
         assertEquals("ud", recargado.getUnidad(),
             "unidad null al insertar debe preservar DEFAULT DDL 'ud'");
+    }
+
+    @Test
+    void referenciaUnicaRechazaDuplicado() throws Exception {
+        MaterialDAO dao = new MaterialDAO();
+        Material m1 = new Material();
+        m1.setNombre("Material A");
+        m1.setReferencia("REF-UNICA-001");
+        m1.setStockActual(0.0);
+        m1.setStockMinimo(0.0);
+        m1.setPrecioUnidad(0.0);
+        dao.save(m1);
+
+        Material m2 = new Material();
+        m2.setNombre("Material B");
+        m2.setReferencia("REF-UNICA-001");
+        m2.setStockActual(0.0);
+        m2.setStockMinimo(0.0);
+        m2.setPrecioUnidad(0.0);
+        assertThrows(Exception.class, () -> dao.save(m2),
+            "Insertar dos materiales con la misma referencia no-nula debe lanzar excepción");
     }
 
     private Material crearMaterial(String nombre, double stock) throws SQLException {

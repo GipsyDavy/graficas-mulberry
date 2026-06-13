@@ -1,5 +1,105 @@
 # CLAUDE.md - Reglas del Proyecto
 
+---
+
+# ⚠️ PROCESO OBLIGATORIO — LEER Y EJECUTAR ANTES DE CADA SPRINT ⚠️
+# INCUMPLIDO 7 VECES. NO CONTINUAR SIN EJECUTAR ESTE CHECKLIST.
+
+## CHECKLIST PRE-SPRINT (EJECUTAR EN ORDEN)
+
+### 1. Declarar agente líder
+Escribir en la respuesta: "Claude Code lidera esta fase."
+
+### 2. Evaluar tamaño y riesgo de la tarea
+
+| Criterio | Acción obligatoria |
+|---|---|
+| Tarea pequeña ≤2 archivos, mecánica, bajo riesgo | Un agente. Documentar motivo de no usar Multi-IA. |
+| Tarea mediana: ≥3 archivos, nuevo patrón, UI relevante | Bloque Gemini ANTES (planificación). Bloque Codex para revisión/tests. |
+| Toca auth, permisos, seguridad, BD, datos sensibles | Multi-IA obligatorio + VibeSec + /security-review. |
+| Incertidumbre técnica | Multi-IA obligatorio. |
+
+### 3. Si requiere Multi-IA → generar bloques ANTES de una línea de código
+
+**Bloque Gemini** (planificación / arquitectura / alternativas):
+```
+## Proyecto
+Gráficas Mulberry — Java 21 + JavaFX 21 + SQLite + Maven. Ruta: C:\Users\GipsyDavy\MAVEN\Graficas Mulberry
+
+## Contexto técnico
+[archivos relevantes, código clave, decisiones ya tomadas]
+
+## Pregunta / análisis solicitado
+[qué necesitas que Gemini analice, diseñe o valide]
+
+## Formato de respuesta esperado
+[longitud, tipo: análisis / código / alternativas / decisión UX]
+```
+📋 Pegar en Gemini Code Assist en el IDE.
+
+**Bloque Codex** (revisión / tests / verificación local):
+```
+## Contexto del proyecto
+Gráficas Mulberry — Java 21 + JavaFX 21 + SQLite + Maven. Ruta: C:\Users\GipsyDavy\MAVEN\Graficas Mulberry
+
+## Cambios ya aplicados por Claude Code
+[lista archivos + qué se hizo]
+
+## Tu tarea concreta
+[instrucción específica: qué archivo, qué lógica, qué verificar]
+
+## Restricciones
+- Cambios quirúrgicos: solo lo indicado.
+- Respetar estilo existente.
+- Confirmar qué hiciste al terminar.
+```
+📋 Pegar en Codex en el IDE.
+
+**ESPERAR respuesta del usuario con output de los agentes antes de implementar.**
+
+### 4. Implementar (cambios quirúrgicos)
+- Leer el archivo antes de editar.
+- Leer dependencias directas.
+- Verificar nombres exactos desde los archivos, nunca desde memoria.
+- Modificar solo lo estrictamente necesario.
+- JavaDoc en métodos públicos con lógica compleja.
+- JUnit 5 test para nueva lógica pública o bug corregido.
+
+### 5. Validar
+```
+.\mvnw.cmd clean compile     # tras cualquier cambio
+.\mvnw.cmd test              # al cerrar sprint
+```
+Nunca marcar tarea completada sin compilación verde.
+
+### 6. Checklist UX/Ayuda (por sprint funcional)
+- [ ] ¿Qué ayuda necesita la funcionalidad tocada? (tooltips, errores accionables, empty states)
+- [ ] ¿Se añadieron/actualizaron textos de ayuda?
+- [ ] ¿Hay que actualizar manual/FAQ/glosario por cambio de comportamiento?
+- [ ] ¿La ayuda funciona offline?
+- [ ] Accesibilidad básica: labels claros, foco, teclado, mensajes legibles.
+
+### 7. Seguridad ANTES del commit
+
+**VibeSec** (`/VibeSec`) — invocar cuando:
+- Se finaliza cualquier sprint (SIEMPRE al cierre).
+- Se toca auth, tokens, permisos, rutas de archivos, import/export, ownership.
+
+**`/security-review`** — invocar cuando:
+- Se toca auth, datos personales, roles, permisos, import/export de datos sensibles.
+- Funcionalidad crítica (auth BCrypt, rutas de archivo, acceso a nóminas/facturas/clientes).
+
+**Orden obligatorio:** implementar → compilar → tests → VibeSec → /security-review (si aplica) → commit.
+
+### 8. Trazabilidad al cerrar
+Indicar siempre:
+- Agente líder.
+- Agentes consultados (o motivo de no consulta).
+- Validación realizada.
+- Limitaciones encontradas.
+
+---
+
 Reglas obligatorias inspiradas en Andrej Karpathy, adaptadas a este proyecto Java de escritorio.  
 Estas reglas deben respetar siempre las instrucciones explícitas del usuario, las políticas de seguridad, los permisos del entorno y las capacidades reales de las herramientas disponibles.
 

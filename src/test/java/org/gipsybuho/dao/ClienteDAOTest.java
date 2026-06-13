@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class ClienteDAOTest {
 
@@ -78,6 +79,21 @@ class ClienteDAOTest {
         );
 
         assertEquals("Garcia Lopez", cliente.getApellidos());
+    }
+
+    @Test
+    void nifUnicoRechazaDuplicado() throws Exception {
+        ClienteDAO dao = new ClienteDAO();
+        Cliente c1 = new Cliente();
+        c1.setNombre("Empresa A");
+        c1.setNif("B12345678");
+        dao.save(c1);
+
+        Cliente c2 = new Cliente();
+        c2.setNombre("Empresa B");
+        c2.setNif("B12345678");
+        assertThrows(Exception.class, () -> dao.save(c2),
+            "Insertar dos clientes con el mismo NIF no-nulo debe lanzar excepción");
     }
 
     private Cliente mapCliente(List<String> columns, Map<String, Object> values) throws Exception {

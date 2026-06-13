@@ -70,6 +70,12 @@ class HelpServiceTest {
     }
 
     @Test
+    void defaultArticleExistenteParaFallbackDeForArticle() {
+        assertTrue(service.getEntry("GEN-PS-1").isPresent(),
+            "GEN-PS-1 debe existir: es el artículo de fallback de HelpView.forArticle()");
+    }
+
+    @Test
     void searchEsInsensibleAMayusculas() {
         List<HelpEntry> lower = service.search("factura");
         List<HelpEntry> upper = service.search("FACTURA");
