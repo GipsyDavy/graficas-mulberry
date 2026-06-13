@@ -1,5 +1,6 @@
 package org.gipsybuho.ui;
 
+import java.util.List;
 import javafx.animation.FadeTransition;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
@@ -56,29 +57,33 @@ final class TableColumnSizing {
     }
 
     static void animarFilas(TableView<?> tabla) {
-        Platform.runLater(() -> {
-            int[] idx = {0};
-            tabla.lookupAll(".table-row-cell").stream()
+        // Doble runLater: el VirtualFlow necesita dos ciclos de layout para crear las celdas
+        Platform.runLater(() -> Platform.runLater(() -> {
+            List<TableRow<?>> filas = tabla.lookupAll(".table-row-cell").stream()
                 .filter(n -> n instanceof TableRow<?>)
-                .map(n -> (TableRow<?>) n)
+                .<TableRow<?>>map(n -> (TableRow<?>) n)
                 .filter(r -> !r.isEmpty())
+                .sorted(java.util.Comparator.comparingDouble(
+                    r -> r.localToScene(r.getBoundsInLocal()).getMinY()))
                 .limit(10)
-                .forEach(row -> {
-                    int delay = idx[0]++ * 30;
-                    row.setOpacity(0);
-                    row.setTranslateY(15);
-                    FadeTransition ft = new FadeTransition(Duration.millis(200), row);
-                    ft.setFromValue(0);
-                    ft.setToValue(1);
-                    ft.setDelay(Duration.millis(delay));
-                    TranslateTransition tt = new TranslateTransition(Duration.millis(200), row);
-                    tt.setFromY(15);
-                    tt.setToY(0);
-                    tt.setDelay(Duration.millis(delay));
-                    ft.play();
-                    tt.play();
-                });
-        });
+                .toList();
+            for (int i = 0; i < filas.size(); i++) {
+                TableRow<?> row = filas.get(i);
+                int delay = i * 45;
+                row.setOpacity(0);
+                row.setTranslateY(22);
+                FadeTransition ft = new FadeTransition(Duration.millis(260), row);
+                ft.setFromValue(0);
+                ft.setToValue(1);
+                ft.setDelay(Duration.millis(delay));
+                TranslateTransition tt = new TranslateTransition(Duration.millis(260), row);
+                tt.setFromY(22);
+                tt.setToY(0);
+                tt.setDelay(Duration.millis(delay));
+                ft.play();
+                tt.play();
+            }
+        }));
     }
 
     private static double estimate(String text) {
