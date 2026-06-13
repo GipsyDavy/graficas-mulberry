@@ -30,14 +30,18 @@ def cell_val(ws, r, c):
     return v
 
 
-def to_num(v):
+def to_num(v, campo="", fila=None):
     if v is None:
         return ""
     if isinstance(v, (int, float)):
         return round(float(v), 4)
+    s = str(v).replace(",", ".").strip()
     try:
-        return round(float(str(v).replace(",", ".")), 4)
-    except Exception:
+        return round(float(s), 4)
+    except ValueError:
+        if campo:
+            loc = f" (fila {fila})" if fila else ""
+            print(f"  AVISO: campo '{campo}'{loc} no numérico — valor descartado: {v!r}")
         return ""
 
 
@@ -52,7 +56,7 @@ def main():
         nombre = cell_val(ws, r, 1)
         if nombre is None:
             continue
-        precio_ud = to_num(cell_val(ws, r, 3))
+        precio_ud = to_num(cell_val(ws, r, 3), campo="precio_ud", fila=r)
         proveedor = cell_val(ws, r, 5) or ""
         rows.append({
             "nombre": nombre,
@@ -82,7 +86,7 @@ def main():
             continue
         if isinstance(precio_ud_raw, str) and "NO" in precio_ud_raw.upper():
             precio_ud_raw = None
-        precio_num = to_num(precio_ud_raw) if precio_ud_raw is not None else to_num(precio_raw)
+        precio_num = to_num(precio_ud_raw, campo="precio_ud", fila=r) if precio_ud_raw is not None else to_num(precio_raw, campo="precio", fila=r)
         if precio_num == "":
             continue
         rows.append({
@@ -101,7 +105,7 @@ def main():
         precio_raw = cell_val(ws, r, 15)
         if precio_raw is None:
             continue
-        precio_num = to_num(precio_raw)
+        precio_num = to_num(precio_raw, campo="precio", fila=r)
         if precio_num == "":
             continue
         cantidad = cell_val(ws, r, 14)
