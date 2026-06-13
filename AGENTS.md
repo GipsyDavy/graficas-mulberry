@@ -26,6 +26,7 @@ Antes de modificar el proyecto, leer:
 Para contexto de UI y producto, leer:
 
 - `docs/ui/interfaz.md` — arquitectura CSS, tabla de componentes, sistema de diseño, historial de sprints.
+- `docs/ui/MEJORAS-VISUALES.md` — propuestas de modernización UI/UX (animaciones, elevación, glassmorphism, identidad visual).
 
 Para migración de archivos históricos complejos, leer:
 
