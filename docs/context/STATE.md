@@ -11,8 +11,8 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `6268479` |
-| Mensaje | `security: auditoría y remediación completa 2026-06-13 (SEC-01..10 + NEW-01..03)` |
+| HEAD | `0bb8c8b` |
+| Mensaje | `feat(ui): añadir slide+fade en transición entre vistas` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -23,12 +23,17 @@ Actualizar tras cada sprint cerrado.
 
 **Sprint MIGRACION-COMPLEJA** — migración de archivos históricos con estructura humana compleja (Excel con celdas combinadas, múltiples mini-tablas, bloques laterales). Ver `MIGRACION_HISTORICO.md` para procedimiento completo.
 
+**Sprint UI-E** (micro, en paralelo con bajo riesgo) — microinteracciones de bajo riesgo. Ver `docs/ui/MEJORAS-VISUALES.md` para lista completa y estado.
+
 ---
 
 ## Cola prioritaria
 
-1. Sprint MIGRACION-COMPLEJA (activo)
-2. Refactor B2 (largo plazo — inyección de Connection en DAOs)
+1. Sprint MIGRACION-COMPLEJA (activo — prioridad máxima)
+2. Sprint UI-E — mejoras visuales de bajo riesgo (ver MEJORAS-VISUALES.md)
+3. RELEASE-GATE MANUAL
+4. INSTALLER-REPRO
+5. Refactor B2 (largo plazo — inyección de Connection en DAOs)
 
 ---
 
@@ -44,6 +49,7 @@ Actualizar tras cada sprint cerrado.
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
 | HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
+| Sprint UI-E (parcial) | `0bb8c8b` | slide+fade en mostrarVista (220ms, EASE_OUT, +24px X) |
 | Sprint UI-A/B/C/D | varios | CSS variables, FadeTransition, IAView, skeleton+overlay |
 | Sprint SEC | — | 5 fixes seguridad P0/P1 |
 | Sprint COD | — | Dead code eliminado |

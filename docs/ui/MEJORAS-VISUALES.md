@@ -1,8 +1,25 @@
 # Análisis de mejoras visuales — Gráficas Mulberry
 
 **Fecha:** 2026-06-13
-**Autor:** Claude Code (revisión experta UI/UX)
-**Estado:** Propuestas sin implementar — requieren autorización sprint por sprint
+**Autores:** Claude Code (análisis inicial) + Codex (revisión y correcciones)
+**Estado:** Sprint UI-E en curso — ver tabla de prioridad para estado por ítem
+
+---
+
+## Correcciones post-revisión Codex
+
+Estas afirmaciones del análisis inicial eran incorrectas:
+
+- ~~Dashboard está inerte~~ → Ya tiene `TranslateTransition` hover en cards.
+- ~~ContextMenu sin estilar~~ → `styles.css` ya tiene `.context-menu`.
+- ~~Diálogos "desentonan completamente"~~ → `.dialog-pane` y `.alert` ya tienen estilos. Overlay custom sería más moderno pero no es urgente.
+
+Codex recomienda evitar o poner como experimental:
+- Glassmorphism sidebar — riesgo rendimiento, puede parecer moda en herramienta de trabajo.
+- Hover tilt con perspectiva — bonito en demo, peligro de sentirse "juguete" en ERP.
+- Floating labels masivos — coste medio/alto, riesgo de romper formularios.
+
+Orden correcto según Codex: cerrar MIGRACION-COMPLEJA → RELEASE-GATE → INSTALLER-REPRO → después Sprint UI-E completo.
 
 ---
 
@@ -198,22 +215,35 @@ La app sirve a una empresa de impresión y diseño gráfico. La UI no lo refleja
 
 ---
 
-## Tabla de prioridad
+## Tabla de prioridad (revisada con Codex)
 
-| Mejora | Impacto | Esfuerzo | Sprint sugerido |
-|---|---|---|---|
-| Sliding pill sidebar | ★★★★★ | Bajo | UI-E |
-| KPI números animados (Timeline) | ★★★★★ | Bajo | UI-E |
-| Overlay dialogs custom | ★★★★★ | Medio | UI-F |
-| Hover tilt en cards | ★★★★☆ | Bajo | UI-E |
-| Shimmer animado skeleton | ★★★★☆ | Bajo | UI-E |
-| Slide+fade entre vistas | ★★★★☆ | Bajo | UI-E |
-| Shake en campos erróneos | ★★★☆☆ | Mínimo | UI-E |
-| Floating labels | ★★★☆☆ | Medio | UI-F |
-| Mini sparklines dashboard | ★★★★☆ | Medio | UI-F |
-| Pattern de fondo dashboard | ★★★☆☆ | Mínimo | UI-E |
-| Glassmorphism sidebar | ★★★☆☆ | Medio-alto | UI-G |
-| Empty states con identidad gráfica | ★★★★☆ | Medio | UI-G |
+Orden de Sprint UI-E según prioridad conjunta Claude Code + Codex:
+
+| # | Mejora | Impacto | Esfuerzo | Estado |
+|---|---|---|---|---|
+| 1 | Sistema de elevación (CSS) | ★★★★★ | Bajo | pendiente |
+| 2 | KPI números animados (Timeline) | ★★★★★ | Bajo | pendiente |
+| 3 | Shimmer animado skeleton | ★★★★☆ | Bajo | pendiente |
+| 4 | **Slide+fade entre vistas** | ★★★★☆ | Bajo | **HECHO** `0bb8c8b` — 220ms puede subirse a 260ms si se quiere más suave |
+| 5 | Shake en campos erróneos | ★★★☆☆ | Mínimo | pendiente |
+| 6 | Sliding pill sidebar | ★★★★★ | Medio | pendiente — defer hasta cerrar MIGRACION-COMPLEJA |
+| 7 | Pattern de fondo dashboard | ★★★☆☆ | Mínimo | pendiente |
+
+Para después de RELEASE-GATE + INSTALLER-REPRO (Sprint UI-F):
+
+| Mejora | Notas |
+|---|---|
+| Overlay dialogs custom | más moderno que Alert nativo, medio esfuerzo |
+| Mini sparklines dashboard | requiere datos históricos accesibles |
+| Empty states con identidad gráfica | ilustraciones propias del negocio |
+
+Experimental / evitar por ahora (recomendación Codex):
+
+| Mejora | Motivo |
+|---|---|
+| Glassmorphism sidebar | riesgo rendimiento, no es herramienta de trabajo |
+| Hover tilt perspectiva | puede sentirse juguete en ERP |
+| Floating labels masivos | riesgo romper formularios existentes |
 
 ---
 
