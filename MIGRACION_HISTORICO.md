@@ -351,7 +351,14 @@ Ubicación: `C:\Users\Gipsy Dávy\Desktop\files\` (8 archivos) y `C:\Users\Gipsy
 - **Plásticos CODIAL incompletos**: solo 2 de 8 productos tienen precio en el Excel fuente. Los demás quedan sin precio.
 - **`6_horas_trabajos.csv`**: no importable. Los precios de horas están en texto libre ("MÍNIMO 1/2 HORA: 10 € PVP"). Requiere extracción manual a Tarifa si se decide importar.
 - **`4_tamanos_papel.csv`**: tabla de referencia ISO (A0-A7 etc.), no es una entidad del sistema.
-- **`5c_material_otros.csv`**: contiene notas (textos descriptivos como "0,22 m/lineal de plástico") mezcladas con datos. Limpiar antes de importar eliminando filas sin nombre real o sin precio.
+- **`5c_material_otros.csv`**: contiene notas mezcladas con datos. Usar `scripts/limpia_5c.py` → genera `5c_material_otros_limpio.csv` (5 filas importables). Resultado: ESPIRAL NEGRA PLÁSTICO×2, WIR-O BLANCO N4 ROLLO, CAJA DE CARTON INDULADO A4, CINTA ADHESIVA DOBLE CARA. Precios de CAJA y CINTA recuperados de columna `longitud_o_unidad` via regex. Importar el archivo limpio, no el original.
+
+### Script de limpieza 5c
+
+```powershell
+python "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry\scripts\limpia_5c.py"
+# Salida: C:\Users\Gipsy Dávy\Desktop\files\5c_material_otros_limpio.csv
+```
 
 ---
 
