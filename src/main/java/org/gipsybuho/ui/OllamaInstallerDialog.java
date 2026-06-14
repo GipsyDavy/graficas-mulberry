@@ -375,9 +375,10 @@ public class OllamaInstallerDialog extends Stage {
         }
 
         log("  Verificando firma digital Authenticode del instalador...");
+        // Path via env var para evitar rotura en rutas con espacios o caracteres acentuados
         String command = """
             & {
-                param([string]$path)
+                $path = $env:OLLAMA_INSTALLER_PATH
                 $sig = Get-AuthenticodeSignature -LiteralPath $path
                 $subject = if ($sig.SignerCertificate) { $sig.SignerCertificate.Subject } else { '' }
                 Write-Output $sig.Status
@@ -385,15 +386,15 @@ public class OllamaInstallerDialog extends Stage {
             }
             """;
 
-        Process proc = new ProcessBuilder(
+        ProcessBuilder pb = new ProcessBuilder(
                 "powershell.exe",
                 "-NoProfile",
                 "-NonInteractive",
                 "-Command",
-                command,
-                installer.toRealPath().toString())
-            .redirectErrorStream(true)
-            .start();
+                command);
+        pb.environment().put("OLLAMA_INSTALLER_PATH", installer.toRealPath().toString());
+        pb.redirectErrorStream(true);
+        Process proc = pb.start();
 
         boolean finished = proc.waitFor(20, TimeUnit.SECONDS);
         if (!finished) {
