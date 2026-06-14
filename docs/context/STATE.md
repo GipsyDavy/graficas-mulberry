@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-14
+**Última actualización:** 2026-06-14 (sesión RELEASE-GATE P0 parcial)
 
 ---
 
@@ -20,6 +20,41 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-14 (RELEASE-GATE MANUAL — P0 parcial)
+
+Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0/P1/P2).
+
+**Correcciones a matriz Gemini:**
+- "Recuperar contraseña → email" → INCORRECTO. App usa pregunta de seguridad. Adaptado.
+- "Logout → LoginView" → No existe logout in-app. "Salir" cierra app. Adaptado.
+- "Primer arranque / AdminSetup" → SKIP: BD ya tiene admin. Requiere entorno limpio.
+- "Estabilidad 1h+" → SKIP: no ejecutable en sprint.
+
+**Resultados P0 ejecutados:**
+
+| Caso | Estado | Notas |
+|---|---|---|
+| P0-01 AdminSetup | SKIP | BD ya tiene admin configurado |
+| P0-02 Login correcto | ✅ PASS | Dashboard visible |
+| P0-03 Login incorrecto | ✅ PASS | Mensaje error + shake en campo contraseña |
+| P0-04 Lockout 5 intentos | ✅ PASS | "Demasiados intentos. Espera 5 minutos." |
+| P0-05 Recuperar contraseña | ✅ PASS | Pregunta seguridad → nueva contraseña → mensaje verde en LoginView |
+| P0-06 Salir | ✅ PASS | App cierra limpiamente |
+| P0-07 Rol COMERCIAL | 🔲 PENDIENTE | Verificar si existe usuario COMERCIAL en BD |
+| P0-08 Rol EMPLEADO | 🔲 PENDIENTE | — |
+| P0-09 Clientes CRUD | 🔲 PENDIENTE | — |
+| P0-10 Presupuestos CRUD | 🔲 PENDIENTE | — |
+| P0-11 Flujo negocio | 🔲 PENDIENTE | Cliente→Presupuesto→Pedido→Albarán→Factura |
+| P0-12 Factura pago | 🔲 PENDIENTE | — |
+
+**P1 y P2: pendientes (0/20 y 0/6 ejecutados)**
+
+**Nota UX P2** (no bloqueante): lockout de login NO se cancela tras reset de contraseña por pregunta de seguridad. Comportamiento seguro pero puede sorprender al usuario legítimo. Clasificado P2 backlog.
+
+**Multi-IA:** Gemini (matriz 40 casos). Claude Code (ejecución). Codex: pendiente — invocar si aparecen bugs P0/P1 que requieran fix de código.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-14 (Sprint UI-E ítems 5 y 7)
 
@@ -92,12 +127,12 @@ Actualizar tras cada sprint cerrado.
 - **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
-1. **Verificar visualmente** ítems 5 y 7 con `/run` — shake al login incorrecto, puntos visibles en dashboard.
-2. ~~**Verificar UI-E ítem 3**~~ — animarFilas 260ms: misma limitación que shake, no capturable en PNG estático. Usuario confirmó efecto visible en sesión anterior. Code path verificado: 142/142 tests verdes, commits `7d2ee82`+`3bd6e1e`. **CERRADO.**
-3. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta RELEASE-GATE. Toca `navBtnImpl` y coordenadas dentro de ScrollPane.
-4. **RELEASE-GATE MANUAL** — revisar antes de empaquetar.
-5. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
-6. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
+1. **RELEASE-GATE MANUAL** (en curso) — reanudar en P0-07 (Roles COMERCIAL/EMPLEADO).
+   - Primer paso al reanudar: verificar si existe usuario COMERCIAL/EMPLEADO en BD (Gestión de Usuarios en app), o crear uno desde ahí.
+   - Continuar P0-07 → P0-12, luego P1 (20 casos), luego P2 (6 casos).
+2. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta cerrar RELEASE-GATE.
+3. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
+4. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -119,8 +154,8 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `6abf2a2` |
-| Mensaje | `fix(ui): propagar shake al TextField visible en modo mostrar contraseña` |
+| HEAD | `64b493a` |
+| Mensaje | `docs: cerrar verificación UI-E ítem 3 y actualizar estado tabla mejoras` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -129,7 +164,9 @@ Actualizar tras cada sprint cerrado.
 
 ## Sprint activo
 
-**Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill, defer hasta RELEASE-GATE). Ver `docs/ui/MEJORAS-VISUALES.md`.
+**Sprint RELEASE-GATE MANUAL** — EN CURSO. P0: 5/11 ejecutados (PASS), P0-07→P0-12 pendientes. P1: 0/20. P2: 0/6. Ver sección "Qué se hizo en sesión 2026-06-14 (RELEASE-GATE)".
+
+**Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill, defer hasta cerrar RELEASE-GATE). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
 **Sprint MIGRACION-COMPLEJA** — CSVs restantes aún pendientes de importación manual por el usuario. Ver `MIGRACION_HISTORICO.md`.
 
@@ -137,10 +174,10 @@ Actualizar tras cada sprint cerrado.
 
 ## Cola prioritaria
 
-1. Sprint MIGRACION-COMPLEJA (activo — prioridad máxima)
-2. Sprint UI-E — mejoras visuales de bajo riesgo (ver MEJORAS-VISUALES.md)
-3. RELEASE-GATE MANUAL
-4. INSTALLER-REPRO
+1. **RELEASE-GATE MANUAL** (en curso — reanudar P0-07)
+2. Sprint UI-E ítem 6 — sliding pill (defer hasta cerrar RELEASE-GATE)
+3. INSTALLER-REPRO
+4. Sprint MIGRACION-COMPLEJA — CSVs pendientes (acción manual usuario)
 5. Refactor B2 (largo plazo — inyección de Connection en DAOs)
 
 ---
