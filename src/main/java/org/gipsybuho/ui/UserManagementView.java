@@ -266,22 +266,27 @@ public class UserManagementView extends VBox {
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty() || role == null) {
             showError("Todos los campos son obligatorios.");
+            TableColumnSizing.shake(username.isEmpty() ? usernameField : password.isEmpty() ? passwordField : confirmField);
             return;
         }
         if (question == null || answer.isEmpty()) {
             showError("Selecciona una pregunta de seguridad y escribe la respuesta.");
+            TableColumnSizing.shake(answerField);
             return;
         }
         if (!password.equals(confirm)) {
             showError("Las contraseñas no coinciden.");
+            TableColumnSizing.shake(confirmField);
             return;
         }
         if (!AuthService.isPasswordValid(password)) {
             showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+            TableColumnSizing.shake(passwordField);
             return;
         }
         if (!authService.registerUser(username, password, role, selectedPermissions())) {
             showError("El nombre de usuario ya existe o no se pudo crear.");
+            TableColumnSizing.shake(usernameField);
             return;
         }
         authService.setSecurityQuestion(username, question, answer);
@@ -342,12 +347,15 @@ public class UserManagementView extends VBox {
             String confirm = confirmPasswordField.getText();
             if (password.isEmpty() || confirm.isEmpty()) {
                 showError("Introduce y confirma la nueva contraseña.");
+                TableColumnSizing.shake(password.isEmpty() ? newPasswordField : confirmPasswordField);
                 event.consume();
             } else if (!password.equals(confirm)) {
                 showError("Las contraseñas no coinciden.");
+                TableColumnSizing.shake(confirmPasswordField);
                 event.consume();
             } else if (!AuthService.isPasswordValid(password)) {
                 showError("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+                TableColumnSizing.shake(newPasswordField);
                 event.consume();
             }
         });

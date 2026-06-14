@@ -2,9 +2,13 @@ package org.gipsybuho.ui;
 
 import java.util.List;
 import javafx.animation.FadeTransition;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
 import javafx.animation.TranslateTransition;
 import javafx.application.Platform;
 import javafx.beans.value.ObservableValue;
+import javafx.scene.Node;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
@@ -84,6 +88,17 @@ final class TableColumnSizing {
                 tt.play();
             }
         }));
+    }
+
+    static void shake(Node node) {
+        new Timeline(
+            new KeyFrame(Duration.ZERO,       new KeyValue(node.translateXProperty(),  0)),
+            new KeyFrame(Duration.millis(70),  new KeyValue(node.translateXProperty(), -6)),
+            new KeyFrame(Duration.millis(140), new KeyValue(node.translateXProperty(),  6)),
+            new KeyFrame(Duration.millis(210), new KeyValue(node.translateXProperty(), -4)),
+            new KeyFrame(Duration.millis(280), new KeyValue(node.translateXProperty(),  4)),
+            new KeyFrame(Duration.millis(350), new KeyValue(node.translateXProperty(),  0))
+        ).play();
     }
 
     private static double estimate(String text) {

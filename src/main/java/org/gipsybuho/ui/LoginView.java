@@ -140,23 +140,23 @@ public class LoginView extends VBox {
                 msgRec.setText("Sin pregunta configurada. Contacta con el administrador."); event.consume(); return;
             }
             if (answer.isEmpty()) {
-                msgRec.setText("Introduce la respuesta."); event.consume(); return;
+                msgRec.setText("Introduce la respuesta."); TableColumnSizing.shake(answerField); event.consume(); return;
             }
             if (newPw.isEmpty() || confirm.isEmpty()) {
-                msgRec.setText("Introduce y confirma la nueva contraseña."); event.consume(); return;
+                msgRec.setText("Introduce y confirma la nueva contraseña."); TableColumnSizing.shake(newPw.isEmpty() ? newPwField : confirmPwField); event.consume(); return;
             }
             if (!newPw.equals(confirm)) {
-                msgRec.setText("Las contraseñas no coinciden."); event.consume(); return;
+                msgRec.setText("Las contraseñas no coinciden."); TableColumnSizing.shake(confirmPwField); event.consume(); return;
             }
             if (!AuthService.isPasswordValid(newPw)) {
-                msgRec.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres."); event.consume(); return;
+                msgRec.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres."); TableColumnSizing.shake(newPwField); event.consume(); return;
             }
             if (!authService.resetPasswordWithAnswer(selected.getUsername(), answer, newPw)) {
                 if (authService.isRecoveryTemporarilyBlocked(selected.getUsername())) {
                     msgRec.setText("Demasiados intentos. Espera " +
                         formatearEspera(authService.getRecoveryLockoutSecondsRemaining(selected.getUsername())) + ".");
                 } else {
-                    msgRec.setText("Respuesta incorrecta. Inténtalo de nuevo.");
+                    msgRec.setText("Respuesta incorrecta. Inténtalo de nuevo."); TableColumnSizing.shake(answerField);
                 }
                 event.consume();
             }
@@ -203,6 +203,7 @@ public class LoginView extends VBox {
 
         if (selected == null || password.isEmpty()) {
             msgLabel.setText("Selecciona usuario e introduce contraseña.");
+            TableColumnSizing.shake(passwordField);
             return;
         }
         authService.login(selected.getUsername(), password).ifPresentOrElse(
@@ -214,6 +215,7 @@ public class LoginView extends VBox {
                 } else {
                     msgLabel.setText("Contraseña incorrecta.");
                 }
+                TableColumnSizing.shake(passwordField);
                 passwordField.clear();
                 passwordField.requestFocus();
             }

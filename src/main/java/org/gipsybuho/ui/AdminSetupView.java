@@ -113,23 +113,28 @@ public class AdminSetupView extends VBox {
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
             msgLabel.setText("Todos los campos son obligatorios.");
+            TableColumnSizing.shake(username.isEmpty() ? usernameField : password.isEmpty() ? passwordField : confirmField);
             return;
         }
         if (!password.equals(confirm)) {
             msgLabel.setText("Las contraseñas no coinciden.");
+            TableColumnSizing.shake(confirmField);
             return;
         }
         if (!AuthService.isPasswordValid(password)) {
             msgLabel.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+            TableColumnSizing.shake(passwordField);
             return;
         }
         if (question == null || answer.isEmpty()) {
             msgLabel.setText("Selecciona una pregunta de seguridad y escribe la respuesta.");
+            TableColumnSizing.shake(answerField);
             return;
         }
         if (!authService.registerUser(username, password,
                 UserRole.ADMINISTRADOR, UserRole.ADMINISTRADOR.getPermissionsString())) {
             msgLabel.setText("El nombre de usuario ya existe o no se pudo crear.");
+            TableColumnSizing.shake(usernameField);
             return;
         }
         authService.login(username, password).ifPresent(user -> {
