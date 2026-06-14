@@ -36,7 +36,9 @@ Actualizar tras cada sprint cerrado.
   - Commit `051e778`
 
 - **Multi-IA:** Claude Code solo. Sin Gemini/Codex — cambios quirúrgicos sin incertidumbre arquitectónica. Sin auth/seguridad/BD. Validación local (compilación + tests) suficiente.
-- **PENDIENTE:** verificación visual de ítem 5 (shake visible al login incorrecto) e ítem 7 (puntos visibles en dashboard). Ejecutar `/run` para confirmar.
+- **Verificación visual:** patrón de puntos confirmado en PNG lossless (textura regular en grid, 5% opacidad dentro de spec). Shake no verificable por screenshot (animación).
+- **Fix Codex (commit `6abf2a2`):** TextField visible en modo "mostrar contraseña" no sacudía — binding `tf.translateXProperty().bind(pf.translateXProperty())` añadido a los 3 `wrapPasswordField()`. Detectado en revisión post-implementación. 142/142 tests verdes.
+- **Multi-IA:** Claude Code (implementación) + Codex (revisión + fix). `/security-review` + `/VibeSec` ejecutados. 0 vulnerabilidades.
 
 ### Qué se hizo en la sesión 2026-06-14 (Sprint UI-E ítems 1-3)
 
@@ -114,8 +116,8 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `051e778` |
-| Mensaje | `feat(ui): añadir patrón de puntos como fondo del dashboard` |
+| HEAD | `6abf2a2` |
+| Mensaje | `fix(ui): propagar shake al TextField visible en modo mostrar contraseña` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
