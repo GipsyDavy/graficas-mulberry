@@ -315,6 +315,12 @@
     -fx-border-width: 0 0 0 3;
 }
 
+.nav-pill {
+    -fx-background-color: derive(-c-accent, 80%);
+    -fx-background-radius: 6;
+    -fx-opacity: 0.18;
+}
+
 /* ── GRUPOS DE NAVEGACIÓN ────────────────────────────────── */
 .nav-group {
     -fx-padding: 8 0 2 0;

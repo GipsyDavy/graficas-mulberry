@@ -1,6 +1,7 @@
 package org.gipsybuho.ui;
 
 import javafx.application.Platform;
+import javafx.geometry.Bounds;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
@@ -70,6 +71,8 @@ public class MainView extends BorderPane {
     private VBox sidebar;
     private boolean sidebarCollapsed = false;
     private TextField tfBusqueda;
+    private Region navPill;
+    private StackPane navPillContainer;
     private final IAView iaView;
     private final User loggedInUser;
     private final AuthService authService;
@@ -136,6 +139,7 @@ public class MainView extends BorderPane {
             sidebarCollapsed = !sidebarCollapsed;
             if (sidebarCollapsed) {
                 sidebar.getStyleClass().add("sidebar-collapsed");
+                if (navPill != null) navPill.setVisible(false);
             } else {
                 sidebar.getStyleClass().remove("sidebar-collapsed");
             }
@@ -214,7 +218,19 @@ public class MainView extends BorderPane {
 
         tfBusqueda.textProperty().addListener((obs, old, q) -> filtrarNav(q, navMenu));
 
-        ScrollPane scroll = new ScrollPane(navMenu);
+        navPill = new Region();
+        navPill.getStyleClass().add("nav-pill");
+        navPill.setManaged(false);
+        navPill.setMouseTransparent(true);
+        navPill.setVisible(false);
+        navPill.setPrefHeight(36);
+
+        navPillContainer = new StackPane(navMenu);
+        navPillContainer.getChildren().add(0, navPill);
+        navPillContainer.setAlignment(Pos.TOP_LEFT);
+        navPill.prefWidthProperty().bind(navPillContainer.widthProperty());
+
+        ScrollPane scroll = new ScrollPane(navPillContainer);
         scroll.setFitToWidth(true);
         scroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         scroll.setVbarPolicy(ScrollPane.ScrollBarPolicy.AS_NEEDED);
@@ -458,6 +474,7 @@ public class MainView extends BorderPane {
                 sidebar.lookupAll(".nav-btn-pane")
                        .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
                 pane.getStyleClass().add("nav-btn-active");
+                moverPill(pane);
                 accionPrincipal.run();
             }
         });
@@ -496,6 +513,7 @@ public class MainView extends BorderPane {
             sidebar.lookupAll(".nav-btn-pane")
                    .forEach(n -> n.getStyleClass().remove("nav-btn-active"));
             pane.getStyleClass().add("nav-btn-active");
+            moverPill(pane);
             mostrarVista(factory.get(), titulo);
         });
         ctx.getItems().add(miPrincipal);
@@ -613,6 +631,31 @@ public class MainView extends BorderPane {
                     .anyMatch(l -> ((Label) l).getText().toLowerCase().contains(q));
                 node.setVisible(matches);
                 node.setManaged(matches);
+            }
+        });
+    }
+
+    private void moverPill(StackPane boton) {
+        if (navPill == null || navPillContainer == null) return;
+        Platform.runLater(() -> {
+            Bounds bScene = boton.localToScene(boton.getBoundsInLocal());
+            if (bScene == null) return;
+            Bounds bLocal = navPillContainer.sceneToLocal(bScene);
+            double targetY = bLocal.getMinY();
+            double h = boton.getHeight() > 0 ? boton.getHeight() : 36;
+            navPill.setPrefHeight(h);
+            if (!navPill.isVisible()) {
+                navPill.setTranslateY(targetY);
+                navPill.setVisible(true);
+                FadeTransition ft = new FadeTransition(Duration.millis(150), navPill);
+                ft.setFromValue(0);
+                ft.setToValue(1);
+                ft.play();
+            } else {
+                TranslateTransition tt = new TranslateTransition(Duration.millis(200), navPill);
+                tt.setInterpolator(Interpolator.EASE_BOTH);
+                tt.setToY(targetY);
+                tt.play();
             }
         });
     }
