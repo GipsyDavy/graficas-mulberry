@@ -64,6 +64,7 @@ public class EmpleadosView extends VBox {
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkMostrarBajas;
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     public EmpleadosView() {
         getStyleClass().add("content-view");
@@ -107,8 +108,9 @@ public class EmpleadosView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         txtBuscar.setTooltip(new Tooltip("Buscar por nombre, apellidos, NIF o email"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, txtBuscar, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, chkMostrarBajas, txtBuscar, lblContador, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -185,7 +187,9 @@ public class EmpleadosView extends VBox {
                 .filter(e -> contiene(e.getNombre(), q) || contiene(e.getApellidos(), q)
                           || contiene(e.getEmail(), q)   || contiene(e.getNif(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+            datos.setAll(lista);
+            lblContador.setText(lista.size() + " empleados");
+            dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

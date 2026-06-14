@@ -39,6 +39,7 @@ public class NominasView extends VBox {
     private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
     private TextField txtBuscar;
     private final NominaService nominaService = new NominaService();
+    private Label lblContador = new Label();
     private final ObservableList<Nomina> datos = FXCollections.observableArrayList();
     private final TableView<Nomina> tabla = new TableView<>(datos);
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
@@ -107,8 +108,9 @@ public class NominasView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         txtBuscar.setTooltip(new Tooltip("Buscar por nombre de empleado o período (ej: enero 2025)"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, lblContador, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -167,7 +169,9 @@ public class NominasView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(n -> contiene(n.getEmpleadoNombre(), q) || contiene(n.getPeriodo(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+            datos.setAll(lista);
+            lblContador.setText(lista.size() + " nóminas");
+            dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

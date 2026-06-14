@@ -62,6 +62,7 @@ public class FacturasView extends VBox {
         new DynamicColumnRuntime<>("facturas", "Facturas", COLUMNAS_BASE, tabla, datos, Factura::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     public FacturasView() {
         getStyleClass().add("content-view");
@@ -106,8 +107,9 @@ public class FacturasView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         txtBuscar.setTooltip(new Tooltip("Buscar por número de factura o nombre de cliente"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, lblContador, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -168,7 +170,9 @@ public class FacturasView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(f -> contiene(f.getNumero(), q) || contiene(f.getClienteNombre(), q) || contiene(f.getEstado(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+            datos.setAll(lista);
+            lblContador.setText(lista.size() + " facturas");
+            dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         }
         catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tabla.setDisable(false); }

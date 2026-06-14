@@ -60,6 +60,7 @@ public class AlbaranesView extends VBox {
         new DynamicColumnRuntime<>("albaranes", "Albaranes", COLUMNAS_BASE, tabla, datos, Albaran::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     public AlbaranesView() {
         getStyleClass().add("content-view");
@@ -101,8 +102,9 @@ public class AlbaranesView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         txtBuscar.setTooltip(new Tooltip("Buscar por número de albarán o nombre de cliente"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnFirmado, btnFacturar, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, lblContador, sp, btnNuevo, btnEditar, btnFirmado, btnFacturar, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -149,7 +151,9 @@ public class AlbaranesView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(a -> contiene(a.getNumero(), q) || contiene(a.getClienteNombre(), q) || contiene(a.getEstado(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+            datos.setAll(lista);
+            lblContador.setText(lista.size() + " albaranes");
+            dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

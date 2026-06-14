@@ -81,6 +81,7 @@ public class MaterialesView extends VBox {
     private ComboBox<String> cbCategoriaFiltro;
     private boolean updatingCategoriaFiltro;
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     // ── Consumo tab ───────────────────────────────────────────────────────────
     private final ObservableList<ConsumoMaterial> datosConsumo = FXCollections.observableArrayList();
@@ -166,8 +167,9 @@ public class MaterialesView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar el material en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, cbCategoriaFiltro, txtBuscar, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, chkSoloAlerta, cbCategoriaFiltro, txtBuscar, lblContador, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -250,6 +252,7 @@ public class MaterialesView extends VBox {
                 .filter(m -> contiene(m.getNombre(), q) || contiene(m.getReferencia(), q) || contiene(m.getProveedor(), q))
                 .toList();
             datos.setAll(lista);
+            lblContador.setText(lista.size() + " materiales");
             dynamicColumns.apply();
             TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }

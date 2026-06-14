@@ -67,6 +67,7 @@ public class PresupuestosView extends VBox {
         new DynamicColumnRuntime<>("presupuestos", "Presupuestos", COLUMNAS_BASE, tabla, datos, Presupuesto::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     public PresupuestosView() {
         getStyleClass().add("content-view");
@@ -110,8 +111,9 @@ public class PresupuestosView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         txtBuscar.setTooltip(new Tooltip("Buscar por número de presupuesto o nombre de cliente"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPedido, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, lblContador, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPedido, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -170,7 +172,9 @@ public class PresupuestosView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(p -> contiene(p.getNumero(), q) || contiene(p.getClienteNombre(), q) || contiene(p.getEstado(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+            datos.setAll(lista);
+            lblContador.setText(lista.size() + " presupuestos");
+            dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

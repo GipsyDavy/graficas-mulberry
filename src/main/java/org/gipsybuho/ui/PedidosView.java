@@ -59,6 +59,7 @@ public class PedidosView extends VBox {
     private final ProgressIndicator          cargando         = new ProgressIndicator();
     private String filtroPedidos = "todos";
     private TextField txtBusqueda;
+    private Label lblContador = new Label();
 
     // Sub-panel pagos del pedido seleccionado
     private final ObservableList<PagoPedido> datosPagosPedido = FXCollections.observableArrayList();
@@ -210,7 +211,8 @@ public class PedidosView extends VBox {
         btnBorrar.setTooltip(new Tooltip("Eliminar el pedido seleccionado"));
         btnPreview.setTooltip(new Tooltip("Previsualizar el pedido en PDF"));
 
-        HBox bar = new HBox(10, filtros, txtBusqueda, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
+        lblContador.getStyleClass().add("row-counter");
+        HBox bar = new HBox(10, filtros, txtBusqueda, lblContador, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -547,6 +549,7 @@ public class PedidosView extends VBox {
                     .toList();
             }
             datosPedidos.setAll(resultado);
+            lblContador.setText(resultado.size() + " pedidos");
             TableColumnSizing.animarFilas(tablaPedidos);
         } catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tablaPedidos.setDisable(false); }

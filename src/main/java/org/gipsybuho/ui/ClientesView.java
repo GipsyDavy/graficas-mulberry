@@ -46,6 +46,7 @@ public class ClientesView extends VBox {
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
     private final ProgressIndicator cargando = new ProgressIndicator();
+    private Label lblContador = new Label();
     private static final String TABLE_NAME = "clientes";
     private static final Set<String> COLUMNAS_IGNORADAS = Set.of("apellido");
 
@@ -123,9 +124,10 @@ public class ClientesView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar ficha del cliente en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        lblContador.getStyleClass().add("row-counter");
         Region spacer = new Region();
         HBox.setHgrow(spacer, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, lblContador, spacer, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -205,7 +207,11 @@ public class ClientesView extends VBox {
     private void cargar() {
         cargando.setVisible(true);
         tabla.setDisable(true);
-        try { datos.setAll(dao.findAll()); TableColumnSizing.animarFilas(tabla); }
+        try {
+            datos.setAll(dao.findAll());
+            lblContador.setText(datos.size() + " clientes");
+            TableColumnSizing.animarFilas(tabla);
+        }
         catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tabla.setDisable(false); }
     }
@@ -214,6 +220,7 @@ public class ClientesView extends VBox {
         try {
             if (texto.isBlank()) datos.setAll(dao.findAll());
             else datos.setAll(dao.search(texto));
+            lblContador.setText(datos.size() + " clientes");
         } catch (Exception e) { mostrarError(e); }
     }
 

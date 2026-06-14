@@ -57,6 +57,7 @@ public class TarifasView extends VBox {
     private ComboBox<String> cbTecnicaFiltro;
     private boolean updatingTecnicaFiltro;
     private TextField txtBuscar;
+    private Label lblContador = new Label();
 
     public TarifasView() {
         getStyleClass().add("content-view");
@@ -101,8 +102,9 @@ public class TarifasView extends VBox {
         btnExportar.setTooltip(new Tooltip("Exportar tarifas a PDF, Excel u otros formatos"));
         btnPreview.setTooltip(new Tooltip("Previsualizar la tarifa en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, cbTecnicaFiltro, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, cbTecnicaFiltro, txtBuscar, lblContador, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -174,6 +176,7 @@ public class TarifasView extends VBox {
                 .filter(t -> contiene(t.getNombre(), q) || contiene(t.getTecnica(), q) || contiene(t.getDescripcion(), q))
                 .toList();
             datos.setAll(lista);
+            lblContador.setText(lista.size() + " tarifas");
             dynamicColumns.apply();
             TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
