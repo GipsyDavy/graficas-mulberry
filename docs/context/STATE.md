@@ -162,8 +162,8 @@ Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0
 
 | Campo | Valor |
 |---|---|
-| HEAD | `64b493a` |
-| Mensaje | `docs: cerrar verificación UI-E ítem 3 y actualizar estado tabla mejoras` |
+| HEAD | `3fe8da5` |
+| Mensaje | `docs(state): cerrar P0 RELEASE-GATE — 10/11 PASS, sin bloqueantes` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -182,11 +182,16 @@ Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0
 
 ## Cola prioritaria
 
-1. **RELEASE-GATE MANUAL** (en curso — reanudar P0-07)
-2. Sprint UI-E ítem 6 — sliding pill (defer hasta cerrar RELEASE-GATE)
-3. INSTALLER-REPRO
-4. Sprint MIGRACION-COMPLEJA — CSVs pendientes (acción manual usuario)
-5. Refactor B2 (largo plazo — inyección de Connection en DAOs)
+1. **RELEASE-GATE MANUAL** (en curso — reanudar **P1**, 20 casos)
+2. **Backlog features detectadas en RELEASE-GATE** (implementar tras cerrar P1/P2):
+   - GAP-3: Cerrar sesión sin salir de la app (logout in-app) — P1
+   - GAP-1: Crear Pedido desde Presupuesto — P1
+   - GAP-2: Crear Factura desde Albarán — P1
+   - GAP-4: Cancelar lockout tras reset de contraseña — P2
+3. Sprint UI-E ítem 6 — sliding pill (defer hasta cerrar RELEASE-GATE)
+4. INSTALLER-REPRO
+5. Sprint MIGRACION-COMPLEJA — CSVs pendientes (acción manual usuario)
+6. Refactor B2 (largo plazo — inyección de Connection en DAOs)
 
 ---
 
