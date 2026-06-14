@@ -122,7 +122,7 @@ public class App extends Application {
         MusicService.setLoop(!"0".equals(DatabaseManager.getConfig("musica_loop")));
         boolean musicaAutoplay = "1".equals(DatabaseManager.getConfig("musica_autoplay"));
 
-        MainView mainView = new MainView(primaryStage, user, authService);
+        MainView mainView = new MainView(primaryStage, user, authService, this::showLogin);
         Scene mainAppScene = new Scene(mainView, 1280, 800);
         mainAppScene.getStylesheets().add(Objects.requireNonNull(
             getClass().getResource("/org/gipsybuho/styles.css")).toExternalForm());

@@ -74,12 +74,14 @@ public class MainView extends BorderPane {
     private final User loggedInUser;
     private final AuthService authService;
     private final Stage primaryStage;
+    private final Runnable onLogout;
     private String currentModuleId = "general";
 
-    public MainView(Stage stage, User loggedInUser, AuthService authService) {
+    public MainView(Stage stage, User loggedInUser, AuthService authService, Runnable onLogout) {
         this.primaryStage = stage;
         this.loggedInUser = loggedInUser;
         this.authService = authService;
+        this.onLogout = onLogout;
         this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
         ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "Ayuda"));
@@ -267,6 +269,23 @@ public class MainView extends BorderPane {
                 Platform.exit();
             }
         });
+
+        Button btnLogout = new Button();
+        btnLogout.setGraphic(Icons.logout());
+        btnLogout.getStyleClass().add("sidebar-footer-btn");
+        Tooltip.install(btnLogout, new Tooltip("Cerrar sesión"));
+        btnLogout.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
+        btnLogout.setOnAction(e -> {
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
+                "¿Deseas cerrar sesión?", ButtonType.YES, ButtonType.NO);
+            confirmacion.setTitle("Cerrar sesión");
+            confirmacion.setHeaderText(null);
+            confirmacion.initOwner(primaryStage);
+            confirmacion.showAndWait()
+                .filter(r -> r == ButtonType.YES)
+                .ifPresent(r -> onLogout.run());
+        });
+        footerIconos.getChildren().add(btnLogout);
 
         Button btnHelp = buildFooterBtn(Icons.help(), "Centro de ayuda",
             () -> mostrarVista(new HelpView(), "Ayuda"),
