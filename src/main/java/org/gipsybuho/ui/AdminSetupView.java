@@ -92,6 +92,7 @@ public class AdminSetupView extends VBox {
         tf.setVisible(false);
         tf.setManaged(false);
         tf.textProperty().bindBidirectional(pf.textProperty());
+        tf.translateXProperty().bind(pf.translateXProperty());
         showToggle.selectedProperty().addListener((obs, old, show) -> {
             pf.setVisible(!show);
             pf.setManaged(!show);
