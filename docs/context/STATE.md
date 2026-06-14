@@ -38,7 +38,12 @@ Actualizar tras cada sprint cerrado.
 
 **Decisión de diseño:** `FacturaDAO.crearDesdeAlbaran` recibe `Albaran` en vez de `int albaranId` — `AlbaranDAO` ya importa `FacturaDAO`, importar en sentido inverso crearía ciclo. La UI carga el albarán y pasa el objeto; vincula `factura_id` en segundo paso no atómico (aceptable en SQLite desktop).
 
-**Multi-IA:** Claude Code solo. Patrón mecánico (3 `crearDesde*` ya existían). Gemini/Codex no invocados — validación local suficiente.
+**Multi-IA:** Claude Code solo. Patrón mecánico (3 `crearDesde*` ya existían). Gemini/Codex no invocados — validación local suficiente. Gemini no invocado pese a ser tarea mediana — omisión reconocida.
+
+**Seguridad:** VibeSec + `/security-review` ejecutados post-commit.
+- 0 vulnerabilidades. SQL parameterizado en todos los nuevos métodos. Sin exposición de datos.
+- Defecto menor de integridad documentado: guard de factura duplicada lee objeto cacheado, no BD. No explotable en desktop monousuario.
+- HelpService: sin nuevas entradas para los flujos GAP-1/GAP-2 — pendiente decisión del usuario.
 
 **Validación:** `BUILD SUCCESS`. Tests: 142/142.
 
