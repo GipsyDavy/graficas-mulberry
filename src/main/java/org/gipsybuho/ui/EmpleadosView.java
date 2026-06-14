@@ -185,7 +185,7 @@ public class EmpleadosView extends VBox {
                 .filter(e -> contiene(e.getNombre(), q) || contiene(e.getApellidos(), q)
                           || contiene(e.getEmail(), q)   || contiene(e.getNif(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply();
+            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

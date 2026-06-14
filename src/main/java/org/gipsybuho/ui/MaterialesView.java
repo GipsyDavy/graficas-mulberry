@@ -251,6 +251,7 @@ public class MaterialesView extends VBox {
                 .toList();
             datos.setAll(lista);
             dynamicColumns.apply();
+            TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

@@ -175,6 +175,7 @@ public class TarifasView extends VBox {
                 .toList();
             datos.setAll(lista);
             dynamicColumns.apply();
+            TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

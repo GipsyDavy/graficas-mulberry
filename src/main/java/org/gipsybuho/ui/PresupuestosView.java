@@ -170,7 +170,7 @@ public class PresupuestosView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(p -> contiene(p.getNumero(), q) || contiene(p.getClienteNombre(), q) || contiene(p.getEstado(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply();
+            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

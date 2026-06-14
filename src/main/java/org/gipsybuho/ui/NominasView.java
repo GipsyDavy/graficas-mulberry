@@ -167,7 +167,7 @@ public class NominasView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(n -> contiene(n.getEmpleadoNombre(), q) || contiene(n.getPeriodo(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply();
+            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

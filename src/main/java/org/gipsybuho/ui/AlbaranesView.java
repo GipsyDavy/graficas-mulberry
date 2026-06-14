@@ -149,7 +149,7 @@ public class AlbaranesView extends VBox {
             if (!q.isBlank()) lista = lista.stream()
                 .filter(a -> contiene(a.getNumero(), q) || contiene(a.getClienteNombre(), q) || contiene(a.getEstado(), q))
                 .toList();
-            datos.setAll(lista); dynamicColumns.apply();
+            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
 

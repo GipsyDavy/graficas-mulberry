@@ -69,7 +69,6 @@ final class TableColumnSizing {
                 .filter(r -> !r.isEmpty())
                 .sorted(java.util.Comparator.comparingDouble(
                     r -> r.localToScene(r.getBoundsInLocal()).getMinY()))
-                .limit(10)
                 .toList();
             for (int i = 0; i < filas.size(); i++) {
                 TableRow<?> row = filas.get(i);
