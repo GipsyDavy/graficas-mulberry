@@ -636,5 +636,13 @@ public class NominasView extends VBox {
     }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s.trim()); } catch(Exception e){return def;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
-    private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
+    private void mostrarError(Exception e) {
+        String msg = e.getMessage();
+        if (msg != null && msg.contains("nominas.empleado_id, nominas.mes, nominas.anio")) {
+            msg = "Ya existe una nómina para este empleado en ese mes y año.";
+        } else if (msg != null && msg.contains("UNIQUE constraint failed")) {
+            msg = "Ya existe un registro con esos datos (clave duplicada).";
+        }
+        new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
+    }
 }
