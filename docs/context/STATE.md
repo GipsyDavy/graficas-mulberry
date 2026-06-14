@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-13
+**Última actualización:** 2026-06-14
 
 ---
 
@@ -20,6 +20,23 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-14 (Sprint UI-E ítems 5 y 7)
+
+- **UI-E ítem 5** (Shake en campos erróneos):
+  - Método estático `TableColumnSizing.shake(Node)` — 6 KeyFrames, 350ms, translateX -6/6/-4/4/0
+  - Aplicado en `LoginView.handleLogin()` (2 casos), `LoginView.showRecoveryDialog()` (4 casos), `AdminSetupView.handleCreate()` (5 casos), `UserManagementView.createUser()` (5 casos) y `changeSelectedPassword()` dialog (3 casos)
+  - Shake apunta al campo concreto que falla, no al mensaje de error
+  - Commit `38911b3` — 142/142 tests verdes. VibeSec: 0 vulnerabilidades.
+
+- **UI-E ítem 7** (Pattern de fondo dashboard):
+  - Canvas con grid de puntos 18px step, r=1.2px, opacity=0.05
+  - `managed=false`, `mouseTransparent=true` — no interfiere con layout ni interacción
+  - Se redibuja automáticamente al cambiar tamaño del panel
+  - Commit `051e778`
+
+- **Multi-IA:** Claude Code solo. Sin Gemini/Codex — cambios quirúrgicos sin incertidumbre arquitectónica. Sin auth/seguridad/BD. Validación local (compilación + tests) suficiente.
+- **PENDIENTE:** verificación visual de ítem 5 (shake visible al login incorrecto) e ítem 7 (puntos visibles en dashboard). Ejecutar `/run` para confirmar.
 
 ### Qué se hizo en la sesión 2026-06-14 (Sprint UI-E ítems 1-3)
 
@@ -70,13 +87,12 @@ Actualizar tras cada sprint cerrado.
 - **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
-1. **Verificar UI-E ítem 3** al inicio de sesión — navegar a Clientes/Facturas/Pedidos y confirmar que el efecto fade+slide es visible en todas las filas de arriba a abajo. Si no, ajustar params en `TableColumnSizing.animarFilas()`.
-2. **Sprint UI-E ítem 5** — Shake en campos erróneos: copiar KeyFrames de `VisualAssistantView.java` (método shake existente) a formularios cuando falla validación. Bajo esfuerzo, mínimo riesgo.
-3. **Sprint UI-E ítem 7** — Pattern de fondo en dashboard: grid de puntos/líneas a 4-6% opacidad. Solo CSS o Canvas.
-4. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta RELEASE-GATE. Toca `navBtnImpl` y coordenadas dentro de ScrollPane.
-5. **RELEASE-GATE MANUAL** — revisar antes de empaquetar.
-6. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
-7. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
+1. **Verificar visualmente** ítems 5 y 7 con `/run` — shake al login incorrecto, puntos visibles en dashboard.
+2. **Verificar UI-E ítem 3** — navegar a Clientes/Facturas/Pedidos, confirmar fade+slide visible en filas.
+3. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta RELEASE-GATE. Toca `navBtnImpl` y coordenadas dentro de ScrollPane.
+4. **RELEASE-GATE MANUAL** — revisar antes de empaquetar.
+5. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
+6. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -98,8 +114,8 @@ Actualizar tras cada sprint cerrado.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `3bd6e1e` |
-| Mensaje | `fix(ui): mejorar animación escalonada de filas en tablas` |
+| HEAD | `051e778` |
+| Mensaje | `feat(ui): añadir patrón de puntos como fondo del dashboard` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -108,7 +124,7 @@ Actualizar tras cada sprint cerrado.
 
 ## Sprint activo
 
-**Sprint UI-E** — ítems 1/2/3/4 cerrados. Pendiente: ítem 5 (shake), ítem 7 (pattern fondo), ítem 6 (sliding pill, defer). Ver `docs/ui/MEJORAS-VISUALES.md`.
+**Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill, defer hasta RELEASE-GATE). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
 **Sprint MIGRACION-COMPLEJA** — CSVs restantes aún pendientes de importación manual por el usuario. Ver `MIGRACION_HISTORICO.md`.
 
