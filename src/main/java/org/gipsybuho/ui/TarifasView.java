@@ -56,6 +56,7 @@ public class TarifasView extends VBox {
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private ComboBox<String> cbTecnicaFiltro;
     private boolean updatingTecnicaFiltro;
+    private TextField txtBuscar;
 
     public TarifasView() {
         getStyleClass().add("content-view");
@@ -82,6 +83,10 @@ public class TarifasView extends VBox {
         Button btnExportar   = btn("📤 Exportar", this::exportar);
         Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
         Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por nombre, técnica…");
+        txtBuscar.setPrefWidth(220);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         cbTecnicaFiltro = new ComboBox<>();
         cbTecnicaFiltro.setPrefWidth(150);
         cbTecnicaFiltro.setTooltip(new Tooltip("Filtrar tarifas por técnica"));
@@ -97,7 +102,7 @@ public class TarifasView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar la tarifa en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, cbTecnicaFiltro, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, cbTecnicaFiltro, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_RIGHT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -164,6 +169,10 @@ public class TarifasView extends VBox {
                     .filter(t -> tecnica.equals(t.getTecnica()))
                     .toList();
             }
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(t -> contiene(t.getNombre(), q) || contiene(t.getTecnica(), q) || contiene(t.getDescripcion(), q))
+                .toList();
             datos.setAll(lista);
             dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
@@ -577,6 +586,7 @@ public class TarifasView extends VBox {
     private Label lbl(String t) { return new Label(t); }
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private int parseInt(String s, int def) { try { return Integer.parseInt(s); } catch(Exception e){return def;} }
+    private boolean contiene(String texto, String q) { return texto != null && texto.toLowerCase().contains(q); }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) { new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait(); }
 }

@@ -80,6 +80,7 @@ public class MaterialesView extends VBox {
     private CheckBox chkSoloAlerta;
     private ComboBox<String> cbCategoriaFiltro;
     private boolean updatingCategoriaFiltro;
+    private TextField txtBuscar;
 
     // ── Consumo tab ───────────────────────────────────────────────────────────
     private final ObservableList<ConsumoMaterial> datosConsumo = FXCollections.observableArrayList();
@@ -141,6 +142,10 @@ public class MaterialesView extends VBox {
             if (!updatingCategoriaFiltro) cargar();
         });
 
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por nombre, referencia, proveedor…");
+        txtBuscar.setPrefWidth(240);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         Button btnNuevo    = btn("+ Nuevo",         this::nuevo);
         Button btnEditar   = btn("✏ Editar",         this::editar);
         Button btnBorrar   = btn("🗑 Borrar",        this::borrar);
@@ -162,7 +167,7 @@ public class MaterialesView extends VBox {
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkSoloAlerta, cbCategoriaFiltro, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, chkSoloAlerta, cbCategoriaFiltro, txtBuscar, sp, btnEntrada, btnSalida, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -240,6 +245,10 @@ public class MaterialesView extends VBox {
                     .filter(m -> categoria.equals(m.getCategoria()))
                     .toList();
             }
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(m -> contiene(m.getNombre(), q) || contiene(m.getReferencia(), q) || contiene(m.getProveedor(), q))
+                .toList();
             datos.setAll(lista);
             dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
@@ -1106,6 +1115,7 @@ public class MaterialesView extends VBox {
     private double parseDouble(String s) {
         try { return Double.parseDouble(s.replace(",", ".")); } catch (Exception e) { return 0; }
     }
+    private boolean contiene(String texto, String q) { return texto != null && texto.toLowerCase().contains(q); }
     private void alerta(String m)     { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
         String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
