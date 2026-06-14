@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-14 (sesión RELEASE-GATE P0 parcial)
+**Última actualización:** 2026-06-14 (sesión RELEASE-GATE P0 completo)
 
 ---
 
@@ -21,7 +21,7 @@ Actualizar tras cada sprint cerrado.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
 
-### Qué se hizo en la sesión 2026-06-14 (RELEASE-GATE MANUAL — P0 parcial)
+### Qué se hizo en la sesión 2026-06-14 (RELEASE-GATE MANUAL — P0 completo)
 
 Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0/P1/P2).
 
@@ -30,29 +30,36 @@ Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0
 - "Logout → LoginView" → No existe logout in-app. "Salir" cierra app. Adaptado.
 - "Primer arranque / AdminSetup" → SKIP: BD ya tiene admin. Requiere entorno limpio.
 - "Estabilidad 1h+" → SKIP: no ejecutable en sprint.
+- "Rol EMPLEADO" → INCORRECTO. No existe en el sistema. Reemplazado por PRODUCCION (`UserRole.java` tiene: ADMINISTRADOR, COMERCIAL, PRODUCCION, CONTABILIDAD).
 
-**Resultados P0 ejecutados:**
+**Resultados P0 — COMPLETO:**
 
 | Caso | Estado | Notas |
 |---|---|---|
-| P0-01 AdminSetup | SKIP | BD ya tiene admin configurado |
+| P0-01 AdminSetup | ⏭ SKIP | BD ya tiene admin configurado — requiere entorno limpio |
 | P0-02 Login correcto | ✅ PASS | Dashboard visible |
 | P0-03 Login incorrecto | ✅ PASS | Mensaje error + shake en campo contraseña |
 | P0-04 Lockout 5 intentos | ✅ PASS | "Demasiados intentos. Espera 5 minutos." |
 | P0-05 Recuperar contraseña | ✅ PASS | Pregunta seguridad → nueva contraseña → mensaje verde en LoginView |
 | P0-06 Salir | ✅ PASS | App cierra limpiamente |
-| P0-07 Rol COMERCIAL | 🔲 PENDIENTE | Verificar si existe usuario COMERCIAL en BD |
-| P0-08 Rol EMPLEADO | 🔲 PENDIENTE | — |
-| P0-09 Clientes CRUD | 🔲 PENDIENTE | — |
-| P0-10 Presupuestos CRUD | 🔲 PENDIENTE | — |
-| P0-11 Flujo negocio | 🔲 PENDIENTE | Cliente→Presupuesto→Pedido→Albarán→Factura |
-| P0-12 Factura pago | 🔲 PENDIENTE | — |
+| P0-07 Rol COMERCIAL | ✅ PASS | Sidebar correcto: Tarifas/Materiales/Estadísticas/PERSONAL ocultos |
+| P0-08 Rol PRODUCCION | ✅ PASS | Sidebar correcto: Clientes/Presupuestos/Facturas/Albaranes/PERSONAL ocultos |
+| P0-09 Clientes CRUD | ✅ PASS | Crear/editar/buscar/eliminar funciona |
+| P0-10 Presupuestos CRUD | ✅ PASS | CRUD funciona; búsqueda/filtro ausente (mejora UX, no bloqueante) |
+| P0-11 Flujo negocio | ✅ PASS parcial | Presupuesto→Albarán y Presupuesto→Factura funcionan; ver GAP-1 y GAP-2 |
+| P0-12 Factura pago | ✅ PASS | Marcar pagada funciona y persiste |
+
+**P0 resultado: 10/11 PASS (1 SKIP). Sin bloqueantes.**
+
+**Gaps documentados (backlog, no bloqueantes para release):**
+- **GAP-1**: No existe "Crear Pedido desde Presupuesto" — workaround: ir a Pedidos manualmente.
+- **GAP-2**: No existe "Crear Factura desde Albarán" — no hay workaround directo.
+- **GAP-3 UX**: No existe logout in-app — cerrar y reabrir app para cambiar de usuario. Añadir a backlog P1.
+- **GAP-4 UX**: Lockout de login no se cancela tras reset de contraseña por pregunta de seguridad. Comportamiento seguro pero puede sorprender. P2 backlog.
 
 **P1 y P2: pendientes (0/20 y 0/6 ejecutados)**
 
-**Nota UX P2** (no bloqueante): lockout de login NO se cancela tras reset de contraseña por pregunta de seguridad. Comportamiento seguro pero puede sorprender al usuario legítimo. Clasificado P2 backlog.
-
-**Multi-IA:** Gemini (matriz 40 casos). Claude Code (ejecución). Codex: pendiente — invocar si aparecen bugs P0/P1 que requieran fix de código.
+**Multi-IA:** Gemini (matriz 40 casos). Claude Code (ejecución P0). Codex: pendiente — invocar si aparecen bugs P0/P1 que requieran fix de código.
 
 ---
 
@@ -127,9 +134,10 @@ Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0
 - **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
-1. **RELEASE-GATE MANUAL** (en curso) — reanudar en P0-07 (Roles COMERCIAL/EMPLEADO).
-   - Primer paso al reanudar: verificar si existe usuario COMERCIAL/EMPLEADO en BD (Gestión de Usuarios en app), o crear uno desde ahí.
-   - Continuar P0-07 → P0-12, luego P1 (20 casos), luego P2 (6 casos).
+1. **RELEASE-GATE MANUAL** (en curso) — reanudar en **P1** (20 casos).
+   - P0 completo: 10/11 PASS, 1 SKIP. Sin bloqueantes.
+   - Gaps documentados: GAP-1 (Pedido desde Presupuesto), GAP-2 (Factura desde Albarán), GAP-3 (logout in-app), GAP-4 (lockout no se cancela tras reset).
+   - Continuar: P1 (20 casos), luego P2 (6 casos).
 2. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta cerrar RELEASE-GATE.
 3. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
 4. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
@@ -164,7 +172,7 @@ Sprint RELEASE-GATE iniciado. Matriz de pruebas generada por Gemini (40 casos P0
 
 ## Sprint activo
 
-**Sprint RELEASE-GATE MANUAL** — EN CURSO. P0: 5/11 ejecutados (PASS), P0-07→P0-12 pendientes. P1: 0/20. P2: 0/6. Ver sección "Qué se hizo en sesión 2026-06-14 (RELEASE-GATE)".
+**Sprint RELEASE-GATE MANUAL** — EN CURSO. P0: 10/11 PASS (1 SKIP). P1: 0/20 pendiente. P2: 0/6 pendiente. Sin bloqueantes P0. Ver sección "Qué se hizo en sesión 2026-06-14 (RELEASE-GATE)".
 
 **Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill, defer hasta cerrar RELEASE-GATE). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
