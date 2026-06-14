@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-14 (sesión Backlog GAPs — GAP-6/7/3 implementados)
+**Última actualización:** 2026-06-14 (sesión cierre — GAP-6 completo 7/7 módulos)
 
 ---
 
@@ -21,14 +21,40 @@ Actualizar tras cada sprint cerrado.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
 
-### Qué se hizo en la sesión 2026-06-14 (Backlog GAPs — GAP-6/7/3)
+### Qué se hizo en la sesión 2026-06-14 (Backlog GAPs — GAP-3/6/7 cerrados)
 
-- **GAP-6** (`04d9f25`) — Búsqueda en tiempo real (stream filter) en 5 módulos: Facturas, Albaranes, Presupuestos, Empleados, Nóminas. Patrón `TextField txtBuscar + textProperty().addListener + lista.stream().filter()` replicado de PedidosView.
-- **GAP-7** (`27c3d37`) — OllamaService: HTTP 404 → "modelo no instalado", 500 → "error interno", ConnectException → "Ollama no en ejecución", timed out → "tiempo agotado". Sin raw códigos al usuario.
-- **GAP-3** (`d1791e9`) — Logout in-app: nuevo icono LOGOUT en Icons.java. `Runnable onLogout` en constructor MainView. Botón en footer sidebar con confirmación → `App.showLogin()`. App no se cierra.
-- **VibeSec ejecutado**: 0 vulnerabilidades. Logout desktop: no hay tokens que revocar; reemplazar Scene + dejar caer referencia User es suficiente.
-- **Multi-IA**: Claude Code solo. Cambios quirúrgicos, bajo riesgo, sin incertidumbre arquitectónica. Codex/Gemini no invocados — validación local suficiente.
-- **Tests pendientes de ejecución en app** (usuario confirmará en la siguiente sesión).
+**Contexto:** continuación de RELEASE-GATE MANUAL (P0+P1+P2 completados sesión anterior). Esta sesión implementó todos los GAPs no bloqueantes de corto plazo identificados en el RELEASE-GATE.
+
+**Implementaciones:**
+
+- **GAP-6** (`04d9f25` + `1ca9d1e`) — Búsqueda en tiempo real (stream filter) en **7 módulos**:
+  - `04d9f25`: Facturas, Albaranes, Presupuestos, Empleados, Nóminas
+  - `1ca9d1e`: Materiales (nombre/referencia/proveedor), Tarifas (nombre/técnica/descripción)
+  - Patrón: `private TextField txtBuscar` + `textProperty().addListener` + `lista.stream().filter(contiene(...))` + helper `contiene(String, String)`
+  - Materiales ya tenía `chkSoloAlerta` + `cbCategoriaFiltro` — `txtBuscar` se aplica como tercer filtro en cadena en `cargar()`
+  - Tarifas ya tenía `cbTecnicaFiltro` — mismo patrón, tercer filtro en cadena
+
+- **GAP-7** (`27c3d37`) — `OllamaService.enviarConsulta()`:
+  - HTTP 404 → "Modelo '...' no instalado. Instálalo desde Gestión de modelos."
+  - HTTP 500 → "Ollama encontró un error interno. Reinicia Ollama e inténtalo de nuevo."
+  - HTTP otro → "Error de comunicación con Ollama (código N)."
+  - ConnectException/ConnectException → "Ollama no está en ejecución. Ábrelo o instálalo..."
+  - "timed out" → "Tiempo de espera agotado. Ollama tardó demasiado en responder."
+
+- **GAP-3** (`d1791e9`) — Logout in-app:
+  - `Icons.java`: constante `LOGOUT` (Material Design path) + método `logout()`
+  - `MainView.java`: campo `private final Runnable onLogout` + 4º param constructor `Runnable onLogout` + botón logout en `footerIconos` con diálogo confirmación → `onLogout.run()`
+  - `App.java`: `new MainView(primaryStage, user, authService, this::showLogin)` — `showLogin()` reemplaza Scene; User ref cae, sesión cerrada
+
+- **Fixes detectados en pruebas de usuario:**
+  - Materiales: usuario reportó que faltaba búsqueda (no estaba en `04d9f25`) → añadido en `1ca9d1e`
+  - Tarifas: mismo caso → añadido en `1ca9d1e`
+
+**VibeSec ejecutado (GAP-3 + GAP-7):** 0 vulnerabilidades. Logout desktop: no hay tokens persistentes que revocar; reemplazar Scene + GC de MainView es suficiente.
+
+**Multi-IA:** Claude Code solo. Cambios quirúrgicos, bajo riesgo. Codex/Gemini no invocados — validación local suficiente.
+
+**Validación final:** `BUILD SUCCESS`. Tests: 142/142 (sin tests nuevos — lógica UI pura). Usuario confirmó PASS en pruebas manuales de Materiales, Tarifas y logout.
 
 ---
 
@@ -176,13 +202,31 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 - **Sprint UI-E ítems 1-3**: pendientes (elevación CSS, KPI animados, shimmer). Ejecutar tras MIGRACION-COMPLEJA.
 
 ### Próximos pasos recomendados (en orden)
-1. **RELEASE-GATE MANUAL** (en curso) — reanudar en **P1** (20 casos).
-   - P0 completo: 10/11 PASS, 1 SKIP. Sin bloqueantes.
-   - Gaps documentados: GAP-1 (Pedido desde Presupuesto), GAP-2 (Factura desde Albarán), GAP-3 (logout in-app), GAP-4 (lockout no se cancela tras reset).
-   - Continuar: P1 (20 casos), luego P2 (6 casos).
-2. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta cerrar RELEASE-GATE.
-3. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
-4. **MIGRACION pendiente** — importar CSVs restantes: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje (acción manual del usuario).
+
+**PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
+
+HEAD: `1ca9d1e`. Rama: `master`. Tests: 142/142. App funcional, sin deuda técnica activa.
+
+Todos los sprints urgentes cerrados. Opciones para continuar:
+
+**Opción A — GAP-1 (Pedido desde Presupuesto):**
+- Funcionalidad nueva de flujo comercial. Requiere analizar modelos `Presupuesto` y `Pedido` en `src/main/java/org/gipsybuho/model/`.
+- Ver `PresupuestosView.java` y `PedidosView.java` para entender cómo se crea un Pedido hoy.
+- Acción: botón "→ Crear Pedido" en `PresupuestosView` que instancia el diálogo de nuevo Pedido pre-rellenado.
+- Multi-IA recomendado (Gemini planificación, Codex revisión).
+
+**Opción B — GAP-2 (Factura desde Albarán):**
+- Similar a GAP-1 pero Albarán → Factura. Analizar `AlbaranesView.java` y `FacturasView.java`.
+
+**Opción C — Sprint UI-F (animación filas):**
+- Pequeño, mecánico. Archivo: `src/main/java/org/gipsybuho/ui/TableColumnSizing.java`.
+- Quitar `.limit(10)` en `animarFilas()`. Extender hook `cargar()` a todos los módulos.
+- Un agente, bajo riesgo.
+
+**Opción D — Sprint UI-E ítem 6 (sliding pill sidebar):**
+- Ver `docs/ui/MEJORAS-VISUALES.md`. Toca `MainView.java` sidebar layout.
+
+Preguntar al usuario qué opción prioriza si no lo indica.
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -204,8 +248,8 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 | Campo | Valor |
 |---|---|
-| HEAD | `d1791e9` |
-| Mensaje | `feat(auth): añadir botón de cerrar sesión en el sidebar` |
+| HEAD | `1ca9d1e` |
+| Mensaje | `feat(ui): añadir búsqueda en Materiales y Tarifas` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -214,7 +258,9 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 ## Sprint activo
 
-**Sprint RELEASE-GATE MANUAL** — ✅ CERRADO. 35/37 PASS, 1 SKIP, 1 GAP no bloqueante. App lista para release.
+**Sprint RELEASE-GATE MANUAL** — ✅ CERRADO. 35/37 PASS, 1 SKIP.
+
+**Sprint Backlog GAPs** — ✅ CERRADO. GAP-3/6/7 implementados. GAP-1/2 pendientes (funcionalidad nueva, no bloqueante).
 
 **Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
@@ -224,20 +270,16 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 ## Cola prioritaria
 
-1. **Backlog RELEASE-GATE** (implementar en próximos sprints, por prioridad):
-   - ✅ GAP-3: Logout in-app — botón en footer sidebar (`d1791e9`)
-   - ✅ GAP-6: Búsqueda/filtro en Facturas, Albaranes, Presupuestos, Empleados, Nóminas (`04d9f25`)
-   - ✅ GAP-7: Mensajes IA user-friendly — 404/500/ConnectException/timeout (`27c3d37`)
-   - GAP-1: Crear Pedido desde Presupuesto (pendiente)
-   - GAP-2: Crear Factura desde Albarán (pendiente)
-   - GAP-4: Lockout post-reset (comportamiento seguro, documentado, sin acción)
-2. **Sprint UI-F** — animación filas: quitar `.limit(10)` + extender a todos los módulos
-3. **Sprint UI-E ítem 6** — sliding pill sidebar
-4. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis
-5. **MIGRACION-COMPLEJA** — CSVs pendientes (acción manual usuario)
-6. **GAP-5**: Módulo Compras a proveedor (largo plazo)
-7. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo)
-8. **Refactor B2** — inyección de Connection en DAOs (largo plazo)
+1. **GAP-1**: Crear Pedido directamente desde un Presupuesto existente (botón "Crear Pedido" en detalle/lista de Presupuestos → pre-rellenar datos del presupuesto seleccionado en diálogo de nuevo Pedido). Requiere análisis de modelo Presupuesto ↔ Pedido.
+2. **GAP-2**: Crear Factura directamente desde un Albarán existente (botón "Crear Factura" en Albaranes → pre-rellenar datos). Requiere análisis de modelo Albarán ↔ Factura.
+3. **Sprint UI-F** — animación filas: en `TableColumnSizing.animarFilas()` quitar `.limit(10)` para que afecte a todas las filas, no solo las primeras 10. Extender el hook a todos los módulos (actualmente solo Clientes, Facturas, Pedidos). Evaluar si la animación completa sigue siendo fluida con muchos registros.
+4. **Sprint UI-E ítem 6** — sliding pill sidebar (indicator visual de módulo activo). Ver `docs/ui/MEJORAS-VISUALES.md`.
+5. **INSTALLER-REPRO** — reproducir pipeline completo: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
+6. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
+7. **GAP-4**: Lockout post-reset — comportamiento seguro confirmado. Sin acción.
+8. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
+9. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+10. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
 
 ---
 
