@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-14 (sesión RELEASE-GATE COMPLETO — P0+P1+P2)
+**Última actualización:** 2026-06-14 (sesión Backlog GAPs — GAP-6/7/3 implementados)
 
 ---
 
@@ -20,6 +20,17 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-14 (Backlog GAPs — GAP-6/7/3)
+
+- **GAP-6** (`04d9f25`) — Búsqueda en tiempo real (stream filter) en 5 módulos: Facturas, Albaranes, Presupuestos, Empleados, Nóminas. Patrón `TextField txtBuscar + textProperty().addListener + lista.stream().filter()` replicado de PedidosView.
+- **GAP-7** (`27c3d37`) — OllamaService: HTTP 404 → "modelo no instalado", 500 → "error interno", ConnectException → "Ollama no en ejecución", timed out → "tiempo agotado". Sin raw códigos al usuario.
+- **GAP-3** (`d1791e9`) — Logout in-app: nuevo icono LOGOUT en Icons.java. `Runnable onLogout` en constructor MainView. Botón en footer sidebar con confirmación → `App.showLogin()`. App no se cierra.
+- **VibeSec ejecutado**: 0 vulnerabilidades. Logout desktop: no hay tokens que revocar; reemplazar Scene + dejar caer referencia User es suficiente.
+- **Multi-IA**: Claude Code solo. Cambios quirúrgicos, bajo riesgo, sin incertidumbre arquitectónica. Codex/Gemini no invocados — validación local suficiente.
+- **Tests pendientes de ejecución en app** (usuario confirmará en la siguiente sesión).
+
+---
 
 ### Qué se hizo en la sesión 2026-06-14 (RELEASE-GATE MANUAL — COMPLETO)
 
@@ -193,8 +204,8 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 | Campo | Valor |
 |---|---|
-| HEAD | `4b0f116` |
-| Mensaje | `fix(ollama): pasar ruta del instalador via variable de entorno` |
+| HEAD | `d1791e9` |
+| Mensaje | `feat(auth): añadir botón de cerrar sesión en el sidebar` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -214,11 +225,11 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 ## Cola prioritaria
 
 1. **Backlog RELEASE-GATE** (implementar en próximos sprints, por prioridad):
-   - GAP-3: Logout in-app sin cerrar app
-   - GAP-1: Crear Pedido desde Presupuesto
-   - GAP-2: Crear Factura desde Albarán
-   - GAP-6: Búsqueda/filtro en Facturas, Albaranes, Presupuestos, Empleados, Nóminas
-   - GAP-7: Mensajes IA user-friendly sin Ollama
+   - ✅ GAP-3: Logout in-app — botón en footer sidebar (`d1791e9`)
+   - ✅ GAP-6: Búsqueda/filtro en Facturas, Albaranes, Presupuestos, Empleados, Nóminas (`04d9f25`)
+   - ✅ GAP-7: Mensajes IA user-friendly — 404/500/ConnectException/timeout (`27c3d37`)
+   - GAP-1: Crear Pedido desde Presupuesto (pendiente)
+   - GAP-2: Crear Factura desde Albarán (pendiente)
    - GAP-4: Lockout post-reset (comportamiento seguro, documentado, sin acción)
 2. **Sprint UI-F** — animación filas: quitar `.limit(10)` + extender a todos los módulos
 3. **Sprint UI-E ítem 6** — sliding pill sidebar
