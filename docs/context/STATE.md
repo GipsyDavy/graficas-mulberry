@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — UI-F + UI-E ítem 6 + INSTALLER-REPRO cerrados)
+**Última actualización:** 2026-06-15 (sesión cierre — UI-F + UI-E ítem 6 + INSTALLER-REPRO + MIGRACION-COMPLEJA cerrados)
 
 ---
 
@@ -20,6 +20,32 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (MIGRACION-COMPLEJA cerrada)
+
+**Sprint MIGRACION-COMPLEJA** (`9b1d950`) — Importación de los 6 CSVs pendientes:
+
+Script: `scripts/importar_materiales.py` (nuevo). Bypass del wizard JavaFX; inserta directamente en SQLite con queries parametrizadas. SKIP_IF_EXISTS por `(nombre, proveedor)`. Soporta `--dry-run`.
+
+| CSV | Filas | Insertadas | Dups | Categoria |
+|---|---:|---:|---:|---|
+| `1_precios_papel_proveedor.csv` | 84 | 72 | 12 | papel proveedor |
+| `2_precios_papel_por_gramaje.csv` | 330 | 330 | 0 | papel gramaje |
+| `3_union_papelera_otros_productos.csv` | 34 | 34 | 0 | varios (SOBRES, PEGATINA...) |
+| `5a_material_tintas.csv` | 4 | 4 | 0 | tintas |
+| `5b_material_plastico.csv` | 17 | 17 | 0 | plastico |
+| `5c_material_otros_limpio.csv` | 5 | 5 | 0 | consumibles |
+| **TOTAL** | **474** | **462** | **12** | |
+
+Estado BD post-import: 477 materiales totales (15 son test data de sesiones previas — categoria `test pedidos`, IDs 112-126, no son materiales reales).
+
+Proveedores: UNION_PAPELERA (152), MRPAPEL (137), FEDRIGONI (133), CODIAL (18). Nota: "UNIÓN PAPELERA" (con tilde, 9 filas) y "UNION_PAPELERA" (sin tilde, 152) son la misma empresa — normalizar si es necesario.
+
+Multi-IA: Claude Code solo. BD local SQLite, sin red, sin auth, CSVs ya validados. Queries parametrizadas. VibeSec: 0 vulnerabilidades.
+
+**Datos de test pendientes de limpieza:** materiales IDs 112-126 (categoria `test pedidos`) no son reales. Pedir autorización del usuario antes de eliminar.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-15 (INSTALLER-REPRO cerrado)
 
@@ -316,16 +342,17 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 **Sprint UI-E** — ✅ CERRADO. Todos los ítems implementados (1/2/3/4/5/6/7).
 
-**Sprint MIGRACION-COMPLEJA** — CSVs restantes pendientes de importación manual. Ver `MIGRACION_HISTORICO.md`.
+**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales importados via `scripts/importar_materiales.py`.
 
 ---
 
 ## Cola prioritaria
 
-1. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
-2. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
-3. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-4. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+1. **Limpieza test data** — Eliminar materiales IDs 112-126 (categoria `test pedidos`, no son reales). Requiere autorización explícita del usuario.
+2. **Normalizar proveedor** — "UNIÓN PAPELERA" (9 filas) y "UNION_PAPELERA" (152 filas) son la misma empresa. UPDATE opcional.
+3. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
+4. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+5. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
 
 ---
 
