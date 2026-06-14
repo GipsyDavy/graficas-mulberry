@@ -10,9 +10,12 @@ import javafx.beans.property.SimpleIntegerProperty;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.Label;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.gipsybuho.dao.*;
 import org.gipsybuho.model.NotaCalendario;
@@ -39,6 +42,26 @@ public class DashboardView extends VBox {
         VBox avisos       = buildAvisosCalendario();
         getChildren().addAll(titulo, subtitulo, tarjetas, avisos);
         cargarDatos(tarjetas);
+
+        Canvas dotBg = new Canvas();
+        dotBg.setOpacity(0.05);
+        dotBg.setManaged(false);
+        dotBg.setMouseTransparent(true);
+        getChildren().add(0, dotBg);
+        widthProperty().addListener((o, ov, w) -> pintarPuntos(dotBg, w.doubleValue(), getHeight()));
+        heightProperty().addListener((o, ov, h) -> pintarPuntos(dotBg, getWidth(), h.doubleValue()));
+    }
+
+    private void pintarPuntos(Canvas c, double w, double h) {
+        c.setWidth(w);
+        c.setHeight(h);
+        GraphicsContext gc = c.getGraphicsContext2D();
+        gc.clearRect(0, 0, w, h);
+        gc.setFill(Color.color(0.3, 0.3, 0.3, 1.0));
+        double step = 18, r = 1.2;
+        for (double x = step; x < w; x += step)
+            for (double y = step; y < h; y += step)
+                gc.fillOval(x - r, y - r, r * 2, r * 2);
     }
 
     private FlowPane buildTarjetas() {
