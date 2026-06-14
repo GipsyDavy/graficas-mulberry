@@ -225,9 +225,9 @@ Orden de Sprint UI-E según prioridad conjunta Claude Code + Codex:
 | 2 | KPI números animados (Timeline) | ★★★★★ | Bajo | **HECHO** `96ef919` + `aa10dc4` — count-up con fix valor=0 |
 | 3 | Animación escalonada filas | ★★★★☆ | Bajo | **HECHO** `7d2ee82` + `3bd6e1e` — fade+slide 260ms, 45ms/fila, Clientes+Facturas+Pedidos |
 | 4 | **Slide+fade entre vistas** | ★★★★☆ | Bajo | **HECHO** `0bb8c8b` — 220ms puede subirse a 260ms si se quiere más suave |
-| 5 | Shake en campos erróneos | ★★★☆☆ | Mínimo | pendiente |
+| 5 | Shake en campos erróneos | ★★★☆☆ | Mínimo | **HECHO** `38911b3` + fix `6abf2a2` — LoginView, AdminSetupView, UserManagementView; binding translateX para modo mostrar contraseña |
 | 6 | Sliding pill sidebar | ★★★★★ | Medio | pendiente — defer hasta RELEASE-GATE |
-| 7 | Pattern de fondo dashboard | ★★★☆☆ | Mínimo | pendiente |
+| 7 | Pattern de fondo dashboard | ★★★☆☆ | Mínimo | **HECHO** `051e778` — Canvas dots 18px step, r=1.2px, opacity=0.05, managed=false |
 
 Para después de RELEASE-GATE + INSTALLER-REPRO (Sprint UI-F):
 

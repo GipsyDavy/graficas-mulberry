@@ -93,7 +93,7 @@ Actualizar tras cada sprint cerrado.
 
 ### Próximos pasos recomendados (en orden)
 1. **Verificar visualmente** ítems 5 y 7 con `/run` — shake al login incorrecto, puntos visibles en dashboard.
-2. **Verificar UI-E ítem 3** — navegar a Clientes/Facturas/Pedidos, confirmar fade+slide visible en filas.
+2. ~~**Verificar UI-E ítem 3**~~ — animarFilas 260ms: misma limitación que shake, no capturable en PNG estático. Usuario confirmó efecto visible en sesión anterior. Code path verificado: 142/142 tests verdes, commits `7d2ee82`+`3bd6e1e`. **CERRADO.**
 3. **Sprint UI-E ítem 6** — Sliding pill sidebar: defer hasta RELEASE-GATE. Toca `navBtnImpl` y coordenadas dentro de ScrollPane.
 4. **RELEASE-GATE MANUAL** — revisar antes de empaquetar.
 5. **INSTALLER-REPRO** — pipeline: mvn → jpackage → gen_graphics.py → makensis.
