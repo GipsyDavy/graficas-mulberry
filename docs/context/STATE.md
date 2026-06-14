@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — UI-F + UI-E ítem 6 cerrados)
+**Última actualización:** 2026-06-15 (sesión cierre — UI-F + UI-E ítem 6 + INSTALLER-REPRO cerrados)
 
 ---
 
@@ -20,6 +20,28 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (INSTALLER-REPRO cerrado)
+
+**INSTALLER-REPRO** — Pipeline reproducido con éxito con código HEAD `e0a4252` (UI-E+UI-F+GAP-1+GAP-2):
+
+| Paso | Herramienta | Resultado |
+|---|---|---|
+| 1. Build | Maven (IntelliJ) + JDK-26 + `-Ppackage-windows` | OK |
+| 2. App-image | `jpackage --type app-image` | OK — `output/GraficasMulberry/` |
+| 3. Gráficos | `gen_graphics.py` (Pillow) | OK — `nsis-welcome.bmp` + `nsis-header.bmp` |
+| 4. Instalador | `makensis /V2 /INPUTCHARSET UTF8 installer.nsi` | OK — 117.3 MB |
+
+Salida: `output/GraficasMulberry-Instalador-v13.5.0.exe` (117.3 MB).
+Copia en historial: `installer/v13.5.0-nsis/GraficasMulberry-Instalador-v13.5.0-nsis.exe`.
+
+Dependencias verificadas: JDK-26, Maven IntelliJ `2026.1`, NSIS x86, Python 3.14.4, Pillow OK.
+Script: `build-nsis.ps1` en raíz (usar para futuros builds).
+MAVEN_OPTS efímero: `-Djavax.net.ssl.trustStoreType=Windows-ROOT` si PKIX falla.
+
+Multi-IA: Claude Code solo. Script existente, deps verificadas, sin incertidumbre técnica. VibeSec: N/A (pipeline build, sin código de usuario).
+
+---
 
 ### Qué se hizo en la sesión 2026-06-15 (UI-F + UI-E ítem 6 cerrados)
 
@@ -252,13 +274,9 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 HEAD: `e0a4252`. Rama: `master`. Tests: 142/142. App funcional, sin deuda técnica activa.
 
-Sprint UI completo cerrado (UI-E + UI-F). Siguiente prioridad: **INSTALLER-REPRO**.
+Instalador reproducido OK (`output/GraficasMulberry-Instalador-v13.5.0.exe`, 117.3 MB). Para regenerar: `.\build-nsis.ps1` desde raíz del proyecto.
 
-**Opción A — INSTALLER-REPRO:**
-- Pipeline: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
-
-**Opción B — MIGRACION-COMPLEJA:**
-- CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
+Siguiente prioridad: **MIGRACION-COMPLEJA** (CSVs pendientes) o **GAP-5** (compras a proveedor).
 
 Preguntar al usuario qué opción prioriza si no lo indica.
 
@@ -304,11 +322,10 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 ## Cola prioritaria
 
-1. **INSTALLER-REPRO** — reproducir pipeline completo: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
-2. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
-3. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
-4. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-5. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+1. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
+2. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
+3. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+4. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
 
 ---
 
