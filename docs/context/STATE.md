@@ -298,13 +298,11 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 **PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
 
-HEAD: `e0a4252`. Rama: `master`. Tests: 142/142. App funcional, sin deuda técnica activa.
+HEAD: `78b35e2`. Rama: `master`. Tests: 142/142. App funcional. BD: 462 materiales reales.
 
-Instalador reproducido OK (`output/GraficasMulberry-Instalador-v13.5.0.exe`, 117.3 MB). Para regenerar: `.\build-nsis.ps1` desde raíz del proyecto.
+Todos los sprints principales cerrados. Cola: GAP-5 (largo plazo), GAP-8 (largo plazo), Refactor B2.
 
-Siguiente prioridad: **MIGRACION-COMPLEJA** (CSVs pendientes) o **GAP-5** (compras a proveedor).
-
-Preguntar al usuario qué opción prioriza si no lo indica.
+Preguntar al usuario qué prioriza si no lo indica.
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -342,17 +340,15 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 **Sprint UI-E** — ✅ CERRADO. Todos los ítems implementados (1/2/3/4/5/6/7).
 
-**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales importados via `scripts/importar_materiales.py`.
+**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
 
 ---
 
 ## Cola prioritaria
 
-1. **Limpieza test data** — Eliminar materiales IDs 112-126 (categoria `test pedidos`, no son reales). Requiere autorización explícita del usuario.
-2. **Normalizar proveedor** — "UNIÓN PAPELERA" (9 filas) y "UNION_PAPELERA" (152 filas) son la misma empresa. UPDATE opcional.
-3. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
-4. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-5. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+1. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
+2. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+3. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
 
 ---
 
