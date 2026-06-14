@@ -1,6 +1,7 @@
 package org.gipsybuho.dao;
 
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Factura;
 import org.gipsybuho.model.LineaFactura;
 
@@ -89,6 +90,42 @@ public class FacturaDAO {
             save(f);
             descontarMateriales(f);
             pDao.updateEstado(presupuestoId, "facturado");
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
+        return f;
+    }
+
+    public Factura crearDesdeAlbaran(Albaran albaran) throws SQLException {
+        Factura f = new Factura();
+        f.setClienteId(albaran.getClienteId());
+        f.setFecha(java.time.LocalDate.now().toString());
+        f.setFechaVencimiento(java.time.LocalDate.now().plusDays(30).toString());
+        f.setEstado("pendiente");
+        f.setFormaPago("Transferencia bancaria");
+        f.setIvaPorcentaje(21.0);
+
+        for (var la : albaran.getLineas()) {
+            LineaFactura lf = new LineaFactura();
+            lf.setDescripcion(la.getDescripcion());
+            lf.setCantidad(la.getCantidad());
+            lf.setPrecioUnit(0.0);
+            lf.setDescuento(0.0);
+            lf.setTotal(0.0);
+            f.getLineas().add(lf);
+        }
+        f.calcularTotales();
+
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            f.setNumero(org.gipsybuho.db.DatabaseManager.generarNumeroFactura());
+            save(f);
             if (!externalTx) conn.commit();
         } catch (SQLException e) {
             if (!externalTx) conn.rollback();

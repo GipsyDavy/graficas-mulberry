@@ -196,6 +196,15 @@ public class AlbaranDAO {
         }
     }
 
+    public void actualizarFacturaId(int albaranId, int facturaId) throws SQLException {
+        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+                "UPDATE albaranes SET factura_id=? WHERE id=?")) {
+            ps.setInt(1, facturaId);
+            ps.setInt(2, albaranId);
+            ps.executeUpdate();
+        }
+    }
+
     public void delete(int id) throws SQLException {
         try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
                 "DELETE FROM albaranes WHERE id=?")) {

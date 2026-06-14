@@ -2,11 +2,13 @@ package org.gipsybuho.dao;
 
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Pedido;
+import org.gipsybuho.model.LineaPresupuesto;
 
 import java.sql.*;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class PedidoDAO {
 
@@ -93,6 +95,40 @@ public class PedidoDAO {
         ps.setDouble(8, p.getImporteTotal());
         ps.setDouble(9, p.getIvaPorcentaje() > 0 ? p.getIvaPorcentaje() : 21.0);
         ps.setString(10, p.getNotas());
+    }
+
+    public Pedido crearDesdePresupuesto(int presupuestoId) throws SQLException {
+        PresupuestoDAO pDao = new PresupuestoDAO();
+        var presupuesto = pDao.findById(presupuestoId);
+        if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
+
+        Pedido p = new Pedido();
+        p.setClienteId(presupuesto.getClienteId());
+        p.setFecha(LocalDate.now());
+        p.setEstado("pendiente");
+        p.setImporteTotal(presupuesto.getTotal());
+        p.setIvaPorcentaje(presupuesto.getIvaPorcentaje() > 0 ? presupuesto.getIvaPorcentaje() : 21.0);
+        p.setNotas(presupuesto.getNotas());
+        String desc = presupuesto.getLineas().stream()
+            .map(LineaPresupuesto::getDescripcion)
+            .filter(d -> d != null && !d.isBlank())
+            .collect(Collectors.joining(", "));
+        p.setDescripcion(desc.isBlank() ? null : desc);
+
+        Connection conn = DatabaseManager.getConnection();
+        boolean externalTx = !conn.getAutoCommit();
+        if (!externalTx) conn.setAutoCommit(false);
+        try {
+            p.setNumero(DatabaseManager.generarNumeroPedido());
+            save(p);
+            if (!externalTx) conn.commit();
+        } catch (SQLException e) {
+            if (!externalTx) conn.rollback();
+            throw e;
+        } finally {
+            if (!externalTx) conn.setAutoCommit(true);
+        }
+        return p;
     }
 
     private Pedido map(ResultSet rs) throws SQLException {

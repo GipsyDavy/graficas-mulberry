@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
+import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Albaran;
@@ -78,6 +79,7 @@ public class AlbaranesView extends VBox {
         Button btnNuevo    = btn("+ Nuevo", this::nuevo);
         Button btnEditar   = btn("✏ Editar", this::editar);
         Button btnFirmado  = btn("✅ Marcar firmado", this::marcarFirmado);
+        Button btnFacturar = btn("🧾 Crear Factura", this::crearFactura);
         Button btnImportar = btn("📥 Importar", this::importar);
         Button btnExportar = btn("📤 Exportar", this::exportar);
         Button btnBorrar   = btn("🗑 Borrar", this::borrar);
@@ -86,6 +88,7 @@ public class AlbaranesView extends VBox {
         btnNuevo.setTooltip(new Tooltip("Crear un nuevo albarán de entrega"));
         btnEditar.setTooltip(new Tooltip("Editar el albarán seleccionado"));
         btnFirmado.setTooltip(new Tooltip("Marcar el albarán como firmado por el cliente"));
+        btnFacturar.setTooltip(new Tooltip("Generar factura desde este albarán (precios en 0, editar tras crear)"));
         btnImportar.setTooltip(new Tooltip("Importar albaranes desde CSV, Excel o JSON"));
         btnExportar.setTooltip(new Tooltip("Exportar albaranes a PDF, Excel u otros formatos"));
         btnBorrar.setTooltip(new Tooltip("Eliminar el albarán seleccionado"));
@@ -99,7 +102,7 @@ public class AlbaranesView extends VBox {
         txtBuscar.setTooltip(new Tooltip("Buscar por número de albarán o nombre de cliente"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnFirmado, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnFirmado, btnFacturar, btnImportar, btnExportar, btnBorrar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -184,6 +187,21 @@ public class AlbaranesView extends VBox {
         Albaran sel = tabla.getSelectionModel().getSelectedItem();
         if (sel == null) { alerta("Selecciona un albarán."); return; }
         try { dao.updateEstado(sel.getId(), "firmado"); cargar(); } catch (Exception e) { mostrarError(e); }
+    }
+
+    private void crearFactura() {
+        Albaran sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un albarán."); return; }
+        if (sel.getFacturaId() > 0) { alerta("Este albarán ya tiene una factura asociada (" + sel.getFacturaNumero() + ")."); return; }
+        try {
+            Albaran albaranCompleto = dao.findById(sel.getId());
+            org.gipsybuho.model.Factura f = new FacturaDAO().crearDesdeAlbaran(albaranCompleto);
+            dao.actualizarFacturaId(sel.getId(), f.getId());
+            cargar();
+            new Alert(Alert.AlertType.INFORMATION,
+                "Factura " + f.getNumero() + " creada correctamente.\nLos precios están en 0 — edítala para añadir los importes.",
+                ButtonType.OK).showAndWait();
+        } catch (Exception e) { mostrarError(e); }
     }
 
     private void borrar() {

@@ -14,6 +14,7 @@ import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
+import org.gipsybuho.dao.PedidoDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.dao.TarifaTramoDAO;
@@ -87,6 +88,7 @@ public class PresupuestosView extends VBox {
         Button btnBorrar   = btn("🗑 Borrar", this::borrar);
         Button btnImportar = btn("📥 Importar", this::importar);
         Button btnExportar = btn("📤 Exportar", this::exportar);
+        Button btnPedido   = btn("📦 Crear Pedido", this::crearPedido);
         Button btnAlbaran  = btn("📋 Crear Albarán", this::crearAlbaran);
         Button btnFacturar = btn("🧾 Crear Factura", this::crearFactura);
         Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
@@ -96,6 +98,7 @@ public class PresupuestosView extends VBox {
         btnBorrar.setTooltip(new Tooltip("Eliminar el presupuesto seleccionado"));
         btnImportar.setTooltip(new Tooltip("Importar presupuestos desde CSV, Excel o JSON"));
         btnExportar.setTooltip(new Tooltip("Exportar presupuestos a PDF, Excel u otros formatos"));
+        btnPedido.setTooltip(new Tooltip("Generar pedido de producción desde este presupuesto"));
         btnAlbaran.setTooltip(new Tooltip("Generar albarán de entrega desde este presupuesto"));
         btnFacturar.setTooltip(new Tooltip("Convertir el presupuesto en factura"));
         btnPreview.setTooltip(new Tooltip("Previsualizar el presupuesto en PDF"));
@@ -108,7 +111,7 @@ public class PresupuestosView extends VBox {
         txtBuscar.setTooltip(new Tooltip("Buscar por número de presupuesto o nombre de cliente"));
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnPedido, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -220,6 +223,23 @@ public class PresupuestosView extends VBox {
                 cargar();
             } catch (Exception e) { mostrarError(e); }
         });
+    }
+
+    private void crearPedido() {
+        Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
+        if (sel == null) { alerta("Selecciona un presupuesto."); return; }
+        if (!"aceptado".equals(sel.getEstado())) {
+            Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
+                "El presupuesto no está en estado 'aceptado'. ¿Crear pedido igualmente?",
+                ButtonType.YES, ButtonType.NO);
+            conf.setHeaderText(null);
+            if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
+        }
+        try {
+            new PedidoDAO().crearDesdePresupuesto(sel.getId());
+            cargar();
+            new Alert(Alert.AlertType.INFORMATION, "Pedido creado correctamente.", ButtonType.OK).showAndWait();
+        } catch (Exception e) { mostrarError(e); }
     }
 
     private void crearFactura() {
