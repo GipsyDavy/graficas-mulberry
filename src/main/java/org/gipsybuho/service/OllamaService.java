@@ -199,7 +199,12 @@ public class OllamaService {
                 HttpResponse<InputStream> response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
 
                 if (response.statusCode() != 200) {
-                    Platform.runLater(() -> onError.accept("Error Ollama: " + response.statusCode()));
+                    String msg = switch (response.statusCode()) {
+                        case 404 -> "Modelo '" + modeloActual + "' no instalado. Instálalo desde Gestión de modelos.";
+                        case 500 -> "Ollama encontró un error interno. Reinicia Ollama e inténtalo de nuevo.";
+                        default  -> "Error de comunicación con Ollama (código " + response.statusCode() + ").";
+                    };
+                    Platform.runLater(() -> onError.accept(msg));
                     return;
                 }
 
@@ -224,7 +229,13 @@ public class OllamaService {
                     }
                 }
             } catch (Exception e) {
-                Platform.runLater(() -> onError.accept("Fallo: " + e.getMessage()));
+                String msg = e.getMessage();
+                String friendly = (msg != null && (msg.contains("Connection refused") || msg.contains("ConnectException")))
+                    ? "Ollama no está en ejecución. Ábrelo o instálalo con el botón 'Instalar Ollama'."
+                    : (msg != null && msg.contains("timed out"))
+                        ? "Tiempo de espera agotado. Ollama tardó demasiado en responder."
+                        : "Error al conectar con Ollama: " + msg;
+                Platform.runLater(() -> onError.accept(friendly));
             }
         });
     }
