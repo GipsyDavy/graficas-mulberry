@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — UI-F + UI-E ítem 6 + INSTALLER-REPRO + MIGRACION-COMPLEJA cerrados)
+**Última actualización:** 2026-06-15 (sesión cierre — contador de filas en 9 módulos + MIGRACION-COMPLEJA + INSTALLER-REPRO + UI-F + UI-E cerrados)
 
 ---
 
@@ -20,6 +20,32 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (contador de filas en 9 módulos)
+
+**Sprint UI-COUNTER** (`d93dc76`) — `lblContador` en todos los módulos:
+
+Añadido `private Label lblContador = new Label()` como campo en los 9 módulos. Insertado en la toolbar HBox entre el campo de búsqueda y el spacer (`Region` de `HgrowPriority.ALWAYS`). Actualizado en cada carga/filtro tras `datos.setAll(lista)`.
+
+| Vista | Toolbar HBox | Texto contador |
+|---|---|---|
+| `MaterialesView` | `buildToolbarStock()` | `N materiales` |
+| `TarifasView` | `buildToolbar()` | `N tarifas` |
+| `ClientesView` | `buildToolbar()` | `N clientes` — actualiza en `cargar()` y en `buscar()` |
+| `FacturasView` | `buildToolbar()` | `N facturas` |
+| `PedidosView` | `buildToolbarPedidos()` | `N pedidos` |
+| `AlbaranesView` | `buildToolbar()` | `N albaranes` |
+| `PresupuestosView` | `buildToolbar()` | `N presupuestos` |
+| `EmpleadosView` | `buildToolbar()` | `N empleados` |
+| `NominasView` | `buildToolbar()` | `N nóminas` |
+
+CSS: `.row-counter` añadida en `styles.css` (`-fx-text-fill: -c-text-secondary; -fx-font-size: 11px`).
+
+ClientesView: caso especial — `txtBuscar` es variable local de `buildToolbar()` (no campo de clase); el contador se actualiza tanto en `cargar()` como en `buscar()` para reflejar el tamaño real de `datos` tras cada operación.
+
+Multi-IA: Claude Code solo. UI pura, mecánica, sin auth/BD/red. VibeSec: N/A. Tests: 142/142.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-15 (MIGRACION-COMPLEJA cerrada)
 
@@ -298,7 +324,7 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 **PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
 
-HEAD: `78b35e2`. Rama: `master`. Tests: 142/142. App funcional. BD: 462 materiales reales.
+HEAD: `d93dc76`. Rama: `master`. Tests: 142/142. App funcional. BD: 462 materiales reales.
 
 Todos los sprints principales cerrados. Cola: GAP-5 (largo plazo), GAP-8 (largo plazo), Refactor B2.
 
@@ -324,8 +350,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `e0a4252` |
-| Mensaje | `feat(ui): añadir pill animada en sidebar para ítem activo` |
+| HEAD | `d93dc76` |
+| Mensaje | `feat(ui): añadir contador de filas en los 9 módulos` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -339,6 +365,10 @@ Preguntar al usuario qué prioriza si no lo indica.
 **Sprint Backlog GAPs** — ✅ CERRADO. GAP-1/2/3/6/7 implementados. GAP-4 sin acción (comportamiento seguro). GAP-5/8 largo plazo.
 
 **Sprint UI-E** — ✅ CERRADO. Todos los ítems implementados (1/2/3/4/5/6/7).
+
+**Sprint UI-F** — ✅ CERRADO. Animación de filas extendida a los 9 módulos.
+
+**Sprint UI-COUNTER** — ✅ CERRADO. `lblContador` en los 9 módulos. HEAD `d93dc76`.
 
 **Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
 
@@ -364,6 +394,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
 | HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
+| Sprint UI-COUNTER | `d93dc76` | lblContador en los 9 módulos — texto muted entre buscador y spacer |
+| Sprint UI-F | `85152bd` | Animación de filas extendida a todos los módulos |
 | Sprint UI-E ítems 1-3 | `3bd6e1e` | CSS elevación + KPI animados + filas escalonadas (Clientes/Facturas/Pedidos) |
 | Sprint UI-E (slide+fade) | `0bb8c8b` | slide+fade en mostrarVista (220ms, EASE_OUT, +24px X) |
 | Sprint UI-A/B/C/D | varios | CSS variables, FadeTransition, IAView, skeleton+overlay |
