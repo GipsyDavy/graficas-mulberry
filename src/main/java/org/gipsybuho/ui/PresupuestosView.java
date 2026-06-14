@@ -65,6 +65,7 @@ public class PresupuestosView extends VBox {
     private final DynamicColumnRuntime<Presupuesto> dynamicColumns =
         new DynamicColumnRuntime<>("presupuestos", "Presupuestos", COLUMNAS_BASE, tabla, datos, Presupuesto::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
+    private TextField txtBuscar;
 
     public PresupuestosView() {
         getStyleClass().add("content-view");
@@ -100,9 +101,15 @@ public class PresupuestosView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar el presupuesto en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por número, cliente…");
+        txtBuscar.setPrefWidth(220);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
+        txtBuscar.setTooltip(new Tooltip("Buscar por número de presupuesto o nombre de cliente"));
+
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
-        bar.setAlignment(Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, txtBuscar, sp, btnNuevo, btnEditar, btnBorrar, btnImportar, btnExportar, btnAlbaran, btnFacturar, btnPreview, btnColumnas);
+        bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
     }
@@ -154,7 +161,18 @@ public class PresupuestosView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
+        try {
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            var lista = dao.findAll();
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(p -> contiene(p.getNumero(), q) || contiene(p.getClienteNombre(), q) || contiene(p.getEstado(), q))
+                .toList();
+            datos.setAll(lista); dynamicColumns.apply();
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private boolean contiene(String texto, String q) {
+        return texto != null && texto.toLowerCase().contains(q);
     }
 
     private void nuevo() {

@@ -37,6 +37,7 @@ public class NominasView extends VBox {
 
     private final NominaDAO dao = new NominaDAO();
     private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private TextField txtBuscar;
     private final NominaService nominaService = new NominaService();
     private final ObservableList<Nomina> datos = FXCollections.observableArrayList();
     private final TableView<Nomina> tabla = new TableView<>(datos);
@@ -100,9 +101,15 @@ public class NominasView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar la nómina seleccionada en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por empleado, período…");
+        txtBuscar.setPrefWidth(220);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
+        txtBuscar.setTooltip(new Tooltip("Buscar por nombre de empleado o período (ej: enero 2025)"));
+
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
-        bar.setAlignment(Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, txtBuscar, sp, btnNueva, btnEditar, btnBorrar, btnImportar, btnExportar, btnGenMes, btnPreview, btnColumnas);
+        bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
     }
@@ -154,7 +161,18 @@ public class NominasView extends VBox {
     }
 
     private void cargar() {
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); } catch (Exception e) { mostrarError(e); }
+        try {
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            var lista = dao.findAll();
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(n -> contiene(n.getEmpleadoNombre(), q) || contiene(n.getPeriodo(), q))
+                .toList();
+            datos.setAll(lista); dynamicColumns.apply();
+        } catch (Exception e) { mostrarError(e); }
+    }
+
+    private boolean contiene(String texto, String q) {
+        return texto != null && texto.toLowerCase().contains(q);
     }
 
     private void nueva() {

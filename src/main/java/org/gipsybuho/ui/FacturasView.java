@@ -61,6 +61,7 @@ public class FacturasView extends VBox {
     private final DynamicColumnRuntime<Factura> dynamicColumns =
         new DynamicColumnRuntime<>("facturas", "Facturas", COLUMNAS_BASE, tabla, datos, Factura::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
+    private TextField txtBuscar;
 
     public FacturasView() {
         getStyleClass().add("content-view");
@@ -99,9 +100,15 @@ public class FacturasView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar la factura en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por número, cliente…");
+        txtBuscar.setPrefWidth(220);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
+        txtBuscar.setTooltip(new Tooltip("Buscar por número de factura o nombre de cliente"));
+
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);
-        bar.setAlignment(Pos.CENTER_RIGHT);
+        HBox bar = new HBox(8, txtBuscar, sp, btnEditar, btnImportar, btnExportar, btnAlbaran, btnPagada, btnAnular, btnBorrar, btnPreview, btnColumnas);
+        bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
     }
@@ -155,9 +162,20 @@ public class FacturasView extends VBox {
     private void cargar() {
         cargando.setVisible(true);
         tabla.setDisable(true);
-        try { datos.setAll(dao.findAll()); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla); }
+        try {
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            var lista = dao.findAll();
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(f -> contiene(f.getNumero(), q) || contiene(f.getClienteNombre(), q) || contiene(f.getEstado(), q))
+                .toList();
+            datos.setAll(lista); dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
+        }
         catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tabla.setDisable(false); }
+    }
+
+    private boolean contiene(String texto, String q) {
+        return texto != null && texto.toLowerCase().contains(q);
     }
 
     private void editar() {

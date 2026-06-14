@@ -63,6 +63,7 @@ public class EmpleadosView extends VBox {
         new DynamicColumnRuntime<>("empleados", "Empleados", COLUMNAS_BASE, tabla, datos, Empleado::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkMostrarBajas;
+    private TextField txtBuscar;
 
     public EmpleadosView() {
         getStyleClass().add("content-view");
@@ -100,8 +101,14 @@ public class EmpleadosView extends VBox {
         btnPreview.setTooltip(new Tooltip("Previsualizar ficha del empleado en PDF"));
         btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
 
+        txtBuscar = new TextField();
+        txtBuscar.setPromptText("🔍  Buscar por nombre, NIF, email…");
+        txtBuscar.setPrefWidth(220);
+        txtBuscar.textProperty().addListener((o, a, b) -> cargar());
+        txtBuscar.setTooltip(new Tooltip("Buscar por nombre, apellidos, NIF o email"));
+
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
-        HBox bar = new HBox(8, chkMostrarBajas, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);
+        HBox bar = new HBox(8, chkMostrarBajas, txtBuscar, sp, btnReactivar, btnBaja, btnEditar, btnNuevo, btnImportar, btnExportar, btnPreview, btnColumnas);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.getStyleClass().add("command-bar");
         return bar;
@@ -171,12 +178,19 @@ public class EmpleadosView extends VBox {
 
     private void cargar() {
         try {
-            if (chkMostrarBajas != null && chkMostrarBajas.isSelected())
-                datos.setAll(dao.findAllIncluirBajas());
-            else
-                datos.setAll(dao.findAll());
-            dynamicColumns.apply();
+            var lista = (chkMostrarBajas != null && chkMostrarBajas.isSelected())
+                ? dao.findAllIncluirBajas() : dao.findAll();
+            String q = txtBuscar != null ? txtBuscar.getText().strip().toLowerCase() : "";
+            if (!q.isBlank()) lista = lista.stream()
+                .filter(e -> contiene(e.getNombre(), q) || contiene(e.getApellidos(), q)
+                          || contiene(e.getEmail(), q)   || contiene(e.getNif(), q))
+                .toList();
+            datos.setAll(lista); dynamicColumns.apply();
         } catch (Exception e) { mostrarError(e); }
+    }
+
+    private boolean contiene(String texto, String q) {
+        return texto != null && texto.toLowerCase().contains(q);
     }
 
     private void nuevo() {
