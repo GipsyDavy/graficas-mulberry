@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-14 (sesión cierre — GAP-6 completo 7/7 módulos)
+**Última actualización:** 2026-06-15 (sesión cierre — GAP-1 + GAP-2 cerrados)
 
 ---
 
@@ -20,6 +20,29 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (GAP-1 + GAP-2 cerrados)
+
+**Contexto:** flujo comercial completo Presupuesto → Pedido → Albarán → Factura. Los dos GAPs de funcionalidad nueva pendientes desde RELEASE-GATE.
+
+**Implementaciones:**
+
+- **GAP-1** (`5c2c3bf`) — Crear Pedido desde Presupuesto:
+  - `PedidoDAO.crearDesdePresupuesto(int presupuestoId)` — tx, numeración automática via `DatabaseManager.generarNumeroPedido()`, descripción construida concatenando las descripciones de las líneas del presupuesto.
+  - `PresupuestosView`: botón "📦 Crear Pedido" + método `crearPedido()`. Guarda diálogo de confirmación si estado ≠ "aceptado".
+
+- **GAP-2** (`5c2c3bf`) — Crear Factura desde Albarán:
+  - `FacturaDAO.crearDesdeAlbaran(Albaran albaran)` — recibe `Albaran` como parámetro (evita ciclo con `AlbaranDAO → FacturaDAO`). Crea `LineaFactura` con precio_unit=0; el usuario edita precios tras crear.
+  - `AlbaranDAO.actualizarFacturaId(int albaranId, int facturaId)` — vincula la factura creada al albarán.
+  - `AlbaranesView`: botón "🧾 Crear Factura" + método `crearFactura()`. Bloquea si el albarán ya tiene factura. Alerta informativa sobre precios en 0.
+
+**Decisión de diseño:** `FacturaDAO.crearDesdeAlbaran` recibe `Albaran` en vez de `int albaranId` — `AlbaranDAO` ya importa `FacturaDAO`, importar en sentido inverso crearía ciclo. La UI carga el albarán y pasa el objeto; vincula `factura_id` en segundo paso no atómico (aceptable en SQLite desktop).
+
+**Multi-IA:** Claude Code solo. Patrón mecánico (3 `crearDesde*` ya existían). Gemini/Codex no invocados — validación local suficiente.
+
+**Validación:** `BUILD SUCCESS`. Tests: 142/142.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-14 (Backlog GAPs — GAP-3/6/7 cerrados)
 
@@ -205,26 +228,20 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 **PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
 
-HEAD: `1ca9d1e`. Rama: `master`. Tests: 142/142. App funcional, sin deuda técnica activa.
+HEAD: `5c2c3bf`. Rama: `master`. Tests: 142/142. App funcional, sin deuda técnica activa.
 
-Todos los sprints urgentes cerrados. Opciones para continuar:
+Flujo comercial completo cerrado (GAP-1 + GAP-2). Opciones para continuar:
 
-**Opción A — GAP-1 (Pedido desde Presupuesto):**
-- Funcionalidad nueva de flujo comercial. Requiere analizar modelos `Presupuesto` y `Pedido` en `src/main/java/org/gipsybuho/model/`.
-- Ver `PresupuestosView.java` y `PedidosView.java` para entender cómo se crea un Pedido hoy.
-- Acción: botón "→ Crear Pedido" en `PresupuestosView` que instancia el diálogo de nuevo Pedido pre-rellenado.
-- Multi-IA recomendado (Gemini planificación, Codex revisión).
-
-**Opción B — GAP-2 (Factura desde Albarán):**
-- Similar a GAP-1 pero Albarán → Factura. Analizar `AlbaranesView.java` y `FacturasView.java`.
-
-**Opción C — Sprint UI-F (animación filas):**
+**Opción A — Sprint UI-F (animación filas):**
 - Pequeño, mecánico. Archivo: `src/main/java/org/gipsybuho/ui/TableColumnSizing.java`.
 - Quitar `.limit(10)` en `animarFilas()`. Extender hook `cargar()` a todos los módulos.
 - Un agente, bajo riesgo.
 
-**Opción D — Sprint UI-E ítem 6 (sliding pill sidebar):**
+**Opción B — Sprint UI-E ítem 6 (sliding pill sidebar):**
 - Ver `docs/ui/MEJORAS-VISUALES.md`. Toca `MainView.java` sidebar layout.
+
+**Opción C — INSTALLER-REPRO:**
+- Pipeline: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
 
 Preguntar al usuario qué opción prioriza si no lo indica.
 
@@ -248,8 +265,8 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `1ca9d1e` |
-| Mensaje | `feat(ui): añadir búsqueda en Materiales y Tarifas` |
+| HEAD | `5c2c3bf` |
+| Mensaje | `feat(flujo): añadir creación de Pedido desde Presupuesto y Factura desde Albarán` |
 | Rama | `master` |
 | Tests | 142/142 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -260,7 +277,7 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 **Sprint RELEASE-GATE MANUAL** — ✅ CERRADO. 35/37 PASS, 1 SKIP.
 
-**Sprint Backlog GAPs** — ✅ CERRADO. GAP-3/6/7 implementados. GAP-1/2 pendientes (funcionalidad nueva, no bloqueante).
+**Sprint Backlog GAPs** — ✅ CERRADO. GAP-1/2/3/6/7 implementados. GAP-4 sin acción (comportamiento seguro). GAP-5/8 largo plazo.
 
 **Sprint UI-E** — ítems 1/2/3/4/5/7 cerrados. Pendiente: ítem 6 (sliding pill). Ver `docs/ui/MEJORAS-VISUALES.md`.
 
@@ -270,16 +287,13 @@ Preguntar al usuario qué opción prioriza si no lo indica.
 
 ## Cola prioritaria
 
-1. **GAP-1**: Crear Pedido directamente desde un Presupuesto existente (botón "Crear Pedido" en detalle/lista de Presupuestos → pre-rellenar datos del presupuesto seleccionado en diálogo de nuevo Pedido). Requiere análisis de modelo Presupuesto ↔ Pedido.
-2. **GAP-2**: Crear Factura directamente desde un Albarán existente (botón "Crear Factura" en Albaranes → pre-rellenar datos). Requiere análisis de modelo Albarán ↔ Factura.
-3. **Sprint UI-F** — animación filas: en `TableColumnSizing.animarFilas()` quitar `.limit(10)` para que afecte a todas las filas, no solo las primeras 10. Extender el hook a todos los módulos (actualmente solo Clientes, Facturas, Pedidos). Evaluar si la animación completa sigue siendo fluida con muchos registros.
-4. **Sprint UI-E ítem 6** — sliding pill sidebar (indicator visual de módulo activo). Ver `docs/ui/MEJORAS-VISUALES.md`.
-5. **INSTALLER-REPRO** — reproducir pipeline completo: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
-6. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
-7. **GAP-4**: Lockout post-reset — comportamiento seguro confirmado. Sin acción.
-8. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
-9. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-10. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+1. **Sprint UI-F** — animación filas: en `TableColumnSizing.animarFilas()` quitar `.limit(10)` para que afecte a todas las filas, no solo las primeras 10. Extender el hook a todos los módulos (actualmente solo Clientes, Facturas, Pedidos).
+2. **Sprint UI-E ítem 6** — sliding pill sidebar (indicador visual de módulo activo). Ver `docs/ui/MEJORAS-VISUALES.md`.
+3. **INSTALLER-REPRO** — reproducir pipeline completo: mvn → jpackage → gen_graphics.py → makensis. Script `build-nsis.ps1` en raíz.
+4. **MIGRACION-COMPLEJA** — CSVs pendientes de importación manual: 5c limpio, 5a tintas, 5b plástico, 3_union_papelera, 2_precios_gramaje. Ver `MIGRACION_HISTORICO.md`.
+5. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
+6. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+7. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
 
 ---
 
