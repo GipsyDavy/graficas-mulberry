@@ -21,6 +21,7 @@ public final class UserPermissions {
     public static final String IMPORTAR_BACKUP  = "importar_backup";
     public static final String EXPORTAR_BACKUP  = "exportar_backup";
     public static final String CONFIGURACION    = "configuracion";
+    public static final String COMPRAS          = "compras";
 
     public static final Map<String, String> AVAILABLE = new LinkedHashMap<>();
 
@@ -41,6 +42,7 @@ public final class UserPermissions {
         AVAILABLE.put(IMPORTAR_BACKUP, "Importar Backup");
         AVAILABLE.put(EXPORTAR_BACKUP, "Exportar / Backup");
         AVAILABLE.put(CONFIGURACION,   "Configuración");
+        AVAILABLE.put(COMPRAS,         "Compras a proveedor");
     }
 
     private UserPermissions() {}

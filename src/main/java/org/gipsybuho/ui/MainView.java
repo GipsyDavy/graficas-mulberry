@@ -63,7 +63,8 @@ public class MainView extends BorderPane {
         Map.entry("Copia de seguridad",     "backups"),
         Map.entry("Exportar base de datos", "exportacion"),
         Map.entry("Configuración",          "configuracion"),
-        Map.entry("Gestión de usuarios",    "usuarios")
+        Map.entry("Gestión de usuarios",    "usuarios"),
+        Map.entry("Compras",                "compras")
     );
 
     private final StackPane contentArea = new StackPane();
@@ -197,11 +198,12 @@ public class MainView extends BorderPane {
                 navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "Tarifas",  TarifasView::new)
             ),
             navGrupo("COMERCIAL",
-                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(), "Presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),       "Pedidos",      PedidosView::new),
-                navBtn(UserPermissions.ALBARANES,    Icons.file(),       "Albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),    "Facturas",     FacturasView::new),
-                navBtn(UserPermissions.MATERIALES,   Icons.layers(),     "Materiales",   MaterialesView::new)
+                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(),  "Presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),        "Pedidos",      PedidosView::new),
+                navBtn(UserPermissions.ALBARANES,    Icons.file(),        "Albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),     "Facturas",     FacturasView::new),
+                navBtn(UserPermissions.MATERIALES,   Icons.layers(),      "Materiales",   MaterialesView::new),
+                navBtn(UserPermissions.COMPRAS,      Icons.shoppingBag(), "Compras",      ComprasProveedorView::new)
             ),
             navGrupo("PERSONAL",
                 navBtn(UserPermissions.EMPLEADOS, Icons.person(), "Empleados", EmpleadosView::new),

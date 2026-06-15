@@ -10,7 +10,7 @@ public enum UserRole {
         UserPermissions.TARIFAS, UserPermissions.MATERIALES, UserPermissions.EMPLEADOS,
         UserPermissions.NOMINAS, UserPermissions.ESTADISTICAS, UserPermissions.CALENDARIO,
         UserPermissions.IA, UserPermissions.IMPORTAR_BACKUP, UserPermissions.EXPORTAR_BACKUP,
-        UserPermissions.CONFIGURACION
+        UserPermissions.CONFIGURACION, UserPermissions.COMPRAS
     )),
     COMERCIAL("Comercial", Set.of(
         UserPermissions.DASHBOARD, UserPermissions.CLIENTES, UserPermissions.PRESUPUESTOS,
@@ -20,12 +20,12 @@ public enum UserRole {
     PRODUCCION("Producción", Set.of(
         UserPermissions.DASHBOARD, UserPermissions.PEDIDOS, UserPermissions.MATERIALES,
         UserPermissions.TARIFAS, UserPermissions.CALENDARIO, UserPermissions.IA,
-        UserPermissions.CONFIGURACION
+        UserPermissions.CONFIGURACION, UserPermissions.COMPRAS
     )),
     CONTABILIDAD("Contabilidad", Set.of(
         UserPermissions.DASHBOARD, UserPermissions.FACTURAS, UserPermissions.ALBARANES,
         UserPermissions.NOMINAS, UserPermissions.ESTADISTICAS, UserPermissions.IA,
-        UserPermissions.CONFIGURACION
+        UserPermissions.CONFIGURACION, UserPermissions.COMPRAS
     ));
 
     private final String label;

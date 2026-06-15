@@ -36,7 +36,8 @@ public final class Icons {
     public static final String COMPASS    = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5.5-2.5l7.51-3.49L17.5 6.5 9.99 9.99 6.5 17.5zm5.5-6.6c.61 0 1.1.49 1.1 1.1s-.49 1.1-1.1 1.1-1.1-.49-1.1-1.1.49-1.1 1.1-1.1z";
     public static final String CHEVRON_R  = "M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6-6-6z";
     public static final String HELP       = "M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z";
-    public static final String LOGOUT     = "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z";
+    public static final String LOGOUT        = "M17 7l-1.41 1.41L18.17 11H8v2h10.17l-2.58 2.58L17 17l5-5zM4 5h8V3H4c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h8v-2H4V5z";
+    public static final String SHOPPING_BAG  = "M18 6h-2c0-2.21-1.79-4-4-4S8 3.79 8 6H6c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm-6-2c1.1 0 2 .9 2 2h-4c0-1.1.9-2 2-2zm6 16H6V8h12v12z";
 
     // ── API pública — iconos de navegación (sidebar) ─────────────────────────
     public static StackPane home()       { return navIcon(HOME); }
@@ -58,7 +59,8 @@ public final class Icons {
     public static StackPane power()      { return navIcon(POWER); }
     public static StackPane compass()    { return navIcon(COMPASS); }
     public static StackPane help()       { return navIcon(HELP); }
-    public static StackPane logout()     { return navIcon(LOGOUT); }
+    public static StackPane logout()      { return navIcon(LOGOUT); }
+    public static StackPane shoppingBag() { return navIcon(SHOPPING_BAG); }
 
     /**
      * Flecha para los grupos de nav — rotar el StackPane devuelto 90°
