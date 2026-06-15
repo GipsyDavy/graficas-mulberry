@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — Sprint A hint bars + Sprint B PreferenceServiceTest — 146/146)
+**Última actualización:** 2026-06-15 (sesión cierre — GAP-5 Compras a Proveedor — 146/146)
 
 ---
 
@@ -20,6 +20,24 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (GAP-5 Compras a Proveedor)
+
+**Sprint GAP-5** (`d243cbe`) — Módulo Compras a Proveedor:
+
+`ComprasProveedorView.java` (nuevo) — vista standalone sobre `pagos_material` + `PagoMaterialDAO` ya existentes. Tabla con columnas: estado (dot color), material, proveedor, nº factura, fecha compra, importe, forma pago, vencimiento, días, notas. Filtros: Todos / Pendientes / Vencidos / Próximos / Pagados. Resumen de 3 KPIs (total pendiente, vencidos, próximos 7 días). CRUD completo: nueva compra, editar, marcar pagado (con DatePicker), eliminar. Hint bar de principiante + lblContador.
+
+`UserPermissions.COMPRAS = "compras"` — nuevo permiso. Asignado a ADMINISTRADOR, PRODUCCION, CONTABILIDAD (no COMERCIAL — mínimo privilegio por decisión Gemini).
+
+`Icons.SHOPPING_BAG` — nuevo icono SVG. Sidebar grupo COMERCIAL.
+
+Tab pagos en MaterialesView mantenido sin cambios (YAGNI). Ambas vistas comparten el mismo DAO/tabla sin conflicto.
+
+Pendiente menor: F1 no vinculado al módulo "compras" en HelpService — abre ayuda general.
+
+Multi-IA: Claude Code lidera. Gemini consultado (bloque IDE — decisión de roles, UX standalone, icono, agrupación sidebar). VibeSec: LIMPIO. Tests: 146/146 verdes.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-15 (Sprint A hint bars + Sprint B tests)
 
@@ -342,7 +360,7 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 **PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
 
-HEAD: `74910eb`. Rama: `master`. Tests: 146/146. App funcional. BD: 462 materiales reales.
+HEAD: `d243cbe`. Rama: `master`. Tests: 146/146. App funcional. BD: 462 materiales reales.
 
 Todos los sprints principales cerrados. Cola: GAP-5 (largo plazo), GAP-8 (largo plazo), Refactor B2.
 
@@ -368,8 +386,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `74910eb` |
-| Mensaje | `test(service): añadir PreferenceServiceTest con BD efímera` |
+| HEAD | `d243cbe` |
+| Mensaje | `feat(ui): añadir módulo Compras a Proveedor (GAP-5)` |
 | Rama | `master` |
 | Tests | 146/146 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -392,15 +410,17 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 **Sprint B (PreferenceServiceTest)** — ✅ CERRADO. 4 tests, BD efímera, reset singleton. HEAD `74910eb`.
 
+**Sprint GAP-5 (Compras a Proveedor)** — ✅ CERRADO. ComprasProveedorView standalone. Permiso COMPRAS en 3 roles. HEAD `d243cbe`.
+
 **Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
 
 ---
 
 ## Cola prioritaria
 
-1. **GAP-5**: Módulo Compras a proveedor (largo plazo — requiere nuevo módulo completo).
-2. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-3. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+1. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
+2. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
+3. **HelpService "compras"** — vincular F1 al módulo compras (pendiente menor).
 
 ---
 
@@ -416,6 +436,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
 | HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
+| Sprint GAP-5 (Compras a Proveedor) | `d243cbe` | ComprasProveedorView — permiso COMPRAS en ADMIN+PRODUCCION+CONTABILIDAD |
 | Sprint B (PreferenceServiceTest) | `74910eb` | 4 tests BD efímera — reset singleton por reflexión |
 | Sprint A (hint bars) | `cd91f15` | buildBeginnerHint() en Facturas, Pedidos, Materiales, Empleados |
 | Sprint UI-COUNTER | `d93dc76` | lblContador en los 9 módulos — texto muted entre buscador y spacer |
