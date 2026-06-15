@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — contador de filas en 9 módulos + MIGRACION-COMPLEJA + INSTALLER-REPRO + UI-F + UI-E cerrados)
+**Última actualización:** 2026-06-15 (sesión cierre — Sprint A hint bars + Sprint B PreferenceServiceTest — 146/146)
 
 ---
 
@@ -20,6 +20,24 @@ Actualizar tras cada sprint cerrado.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 5. `MIGRACION_HISTORICO.md` — procedimiento del sprint activo prioritario.
 6. `docs/ui/MEJORAS-VISUALES.md` — estado de Sprint UI-E, qué falta, qué evitar.
+
+### Qué se hizo en la sesión 2026-06-15 (Sprint A hint bars + Sprint B tests)
+
+**Sprint A** (`cd91f15`) — Hint bars en 4 módulos:
+
+Añadido `buildBeginnerHint()` en FacturasView, PedidosView, MaterialesView, EmpleadosView. Texto accionable por módulo + referencia a F1. Binding a `PreferenceService.beginnerModeProperty()` (visible+managed), sin impacto en layout cuando modo avanzado. CSS class `beginner-hint` ya existente en styles.css — sin tocar.
+
+**Sprint B** (`74910eb`) — PreferenceServiceTest:
+
+4 tests: `beginnerModeDefaulteaFalso`, `setBeginnerModePersiste`, `isFirstRunEsTrueEnPrimerArranque`, `markFirstRunCompletedMarcaComoCompletado`. Patrón: `@TempDir` + system property override + reset singleton por reflexión. Sin modificación de código de producción.
+
+VibeSec: LIMPIO — strings hardcodeados, sin entrada de usuario, sin SQL nuevo, sin auth. Aplicación de escritorio → XSS/CSRF/SSRF no aplican.
+
+Multi-IA: Claude Code lidera. Gemini disponible como soporte pero no invocado — tarea UI pura + test sin incertidumbre arquitectónica. Validación objetiva local suficiente.
+
+Tests: 142/142 → 146/146 tras Sprint B.
+
+---
 
 ### Qué se hizo en la sesión 2026-06-15 (contador de filas en 9 módulos)
 
@@ -324,7 +342,7 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 **PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
 
-HEAD: `d93dc76`. Rama: `master`. Tests: 142/142. App funcional. BD: 462 materiales reales.
+HEAD: `74910eb`. Rama: `master`. Tests: 146/146. App funcional. BD: 462 materiales reales.
 
 Todos los sprints principales cerrados. Cola: GAP-5 (largo plazo), GAP-8 (largo plazo), Refactor B2.
 
@@ -350,10 +368,10 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `d93dc76` |
-| Mensaje | `feat(ui): añadir contador de filas en los 9 módulos` |
+| HEAD | `74910eb` |
+| Mensaje | `test(service): añadir PreferenceServiceTest con BD efímera` |
 | Rama | `master` |
-| Tests | 142/142 verdes (`.\mvnw.cmd test`) |
+| Tests | 146/146 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
 
 ---
@@ -369,6 +387,10 @@ Preguntar al usuario qué prioriza si no lo indica.
 **Sprint UI-F** — ✅ CERRADO. Animación de filas extendida a los 9 módulos.
 
 **Sprint UI-COUNTER** — ✅ CERRADO. `lblContador` en los 9 módulos. HEAD `d93dc76`.
+
+**Sprint A (hint bars)** — ✅ CERRADO. `buildBeginnerHint()` en Facturas, Pedidos, Materiales, Empleados. HEAD `cd91f15`.
+
+**Sprint B (PreferenceServiceTest)** — ✅ CERRADO. 4 tests, BD efímera, reset singleton. HEAD `74910eb`.
 
 **Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
 
@@ -394,6 +416,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
 | HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
+| Sprint B (PreferenceServiceTest) | `74910eb` | 4 tests BD efímera — reset singleton por reflexión |
+| Sprint A (hint bars) | `cd91f15` | buildBeginnerHint() en Facturas, Pedidos, Materiales, Empleados |
 | Sprint UI-COUNTER | `d93dc76` | lblContador en los 9 módulos — texto muted entre buscador y spacer |
 | Sprint UI-F | `85152bd` | Animación de filas extendida a todos los módulos |
 | Sprint UI-E ítems 1-3 | `3bd6e1e` | CSS elevación + KPI animados + filas escalonadas (Clientes/Facturas/Pedidos) |
@@ -406,6 +430,4 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Deuda técnica conocida
 
-- Hint bars en Facturas, Pedidos, Materiales, Empleados (solo ClientesView tiene barra ahora)
-- Tests unitarios para `PreferenceService` (lectura/escritura con BD en memoria)
 - Refactor B2: inyección de Connection en DAOs (largo plazo)
