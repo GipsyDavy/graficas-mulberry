@@ -21,6 +21,7 @@ import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.importer.ImportResult;
 
@@ -75,10 +76,22 @@ public class FacturasView extends VBox {
         cargando.setMaxSize(48, 48);
         cargando.setVisible(false);
         StackPane tableStack = new StackPane(buildTabla(), cargando);
-        getChildren().addAll(titulo, buildToolbar(), tableStack);
+        Label hint = buildBeginnerHint();
+        getChildren().addAll(titulo, hint, buildToolbar(), tableStack);
         VBox.setVgrow(tableStack, Priority.ALWAYS);
         cargar();
         dynamicColumns.apply();
+    }
+
+    private Label buildBeginnerHint() {
+        Label hint = new Label("💡  Usa los botones para editar, marcar como pagada o anular una factura. Pulsa F1 para abrir la ayuda.");
+        hint.getStyleClass().add("beginner-hint");
+        hint.setWrapText(true);
+        hint.setMaxWidth(Double.MAX_VALUE);
+        PreferenceService prefs = PreferenceService.getInstance();
+        hint.visibleProperty().bind(prefs.beginnerModeProperty());
+        hint.managedProperty().bind(prefs.beginnerModeProperty());
+        return hint;
     }
 
     private HBox buildToolbar() {

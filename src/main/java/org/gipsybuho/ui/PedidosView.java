@@ -26,6 +26,7 @@ import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 
 import java.io.File;
@@ -96,10 +97,22 @@ public class PedidosView extends VBox {
         );
         VBox.setVgrow(tabs, Priority.ALWAYS);
 
-        getChildren().addAll(titulo, buildResumen(), tabs);
+        Label hint = buildBeginnerHint();
+        getChildren().addAll(titulo, hint, buildResumen(), tabs);
 
         cargarPedidos();
         cargarTodosPagos();
+    }
+
+    private Label buildBeginnerHint() {
+        Label hint = new Label("💡  Usa el botón \"Nuevo pedido\" para añadir un pedido de cliente. Pulsa F1 para abrir la ayuda.");
+        hint.getStyleClass().add("beginner-hint");
+        hint.setWrapText(true);
+        hint.setMaxWidth(Double.MAX_VALUE);
+        PreferenceService prefs = PreferenceService.getInstance();
+        hint.visibleProperty().bind(prefs.beginnerModeProperty());
+        hint.managedProperty().bind(prefs.beginnerModeProperty());
+        return hint;
     }
 
     // ═════════════════════════════════════════════════════════════════════════

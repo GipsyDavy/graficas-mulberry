@@ -17,6 +17,7 @@ import org.gipsybuho.service.ExportService;
 import org.gipsybuho.service.ImportService;
 import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
+import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.ToastService;
 
@@ -74,10 +75,22 @@ public class EmpleadosView extends VBox {
         Label titulo = new Label("Empleados");
         titulo.getStyleClass().add("view-title");
 
-        getChildren().addAll(titulo, buildToolbar(), buildTabla());
+        Label hint = buildBeginnerHint();
+        getChildren().addAll(titulo, hint, buildToolbar(), buildTabla());
         VBox.setVgrow(tabla, Priority.ALWAYS);
         cargar();
         dynamicColumns.apply();
+    }
+
+    private Label buildBeginnerHint() {
+        Label hint = new Label("💡  Usa el botón \"Nuevo\" para añadir un empleado. Pulsa F1 para abrir la ayuda.");
+        hint.getStyleClass().add("beginner-hint");
+        hint.setWrapText(true);
+        hint.setMaxWidth(Double.MAX_VALUE);
+        PreferenceService prefs = PreferenceService.getInstance();
+        hint.visibleProperty().bind(prefs.beginnerModeProperty());
+        hint.managedProperty().bind(prefs.beginnerModeProperty());
+        return hint;
     }
 
     private HBox buildToolbar() {
