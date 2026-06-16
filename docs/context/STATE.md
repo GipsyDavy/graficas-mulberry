@@ -19,65 +19,61 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-15
+### ESTADO AL CIERRE DE SESIÓN 2026-06-16
 
-**HEAD:** `7ae2a79` (docs help compras). Rama: `master`. Tests: **146/146 verdes**.
+**HEAD:** `8cdef34` (docs state cierre HelpService compras). Rama: `master`. Tests: **146/146 verdes**.
 
-**Sprints cerrados esta sesión (en orden):**
+**Sprint cerrado esta sesión:**
 
 | Commit | Sprint | Descripción |
 |---|---|---|
-| `cd91f15` | Sprint A — hint bars | `buildBeginnerHint()` en Facturas, Pedidos, Materiales, Empleados |
-| `74910eb` | Sprint B — PreferenceServiceTest | 4 tests BD efímera, reset singleton por reflexión |
-| `d243cbe` | GAP-5 — Compras a Proveedor | `ComprasProveedorView` standalone, permiso COMPRAS en 3 roles |
-| `98823a9` | docs | STATE.md actualizado |
+| `7ae2a79` | HelpService compras | 5 artículos HTML en `compras/` + entradas en `index.json` |
+| `8cdef34` | docs | STATE.md actualizado |
 
-**Arquitectura resultante — módulos activos en sidebar:**
+**Qué se hizo:**
+- Creados `src/main/resources/org/gipsybuho/help/compras/CMP-PS-1.html`, `CMP-PS-2.html`, `CMP-REF-1.html`, `CMP-FAQ-1.html`, `CMP-ERR-1.html`.
+- Añadidas 5 entradas en `index.json` con módulo `"compras"`.
+- F1 desde `ComprasProveedorView` ahora abre ayuda específica del módulo (antes abría ayuda general).
+- Sin tocar código Java. Sin Multi-IA. VibeSec: N/A (recursos estáticos).
+
+**Arquitectura actual — módulos activos en sidebar:**
 ```
 CLIENTES:   Clientes, Tarifas
-COMERCIAL:  Presupuestos, Pedidos, Albaranes, Facturas, Materiales, Compras ← NUEVO
+COMERCIAL:  Presupuestos, Pedidos, Albaranes, Facturas, Materiales, Compras
 PERSONAL:   Empleados, Nóminas
 ANALÍTICA:  Estadísticas, Calendario, Asistente
 ```
 
-**Permiso COMPRAS (nuevo):**
-- `UserPermissions.COMPRAS = "compras"` en `UserPermissions.java`
-- Roles que lo tienen: ADMINISTRADOR, PRODUCCION, CONTABILIDAD
-- Roles que NO lo tienen: COMERCIAL (decisión deliberada — mínimo privilegio)
-- Ojo: usuarios existentes en BD NO reciben el permiso automáticamente si tienen permisos personalizados guardados en `usuarios.permissions`. Solo afecta a los permisos por defecto al crear usuarios nuevos. Si hay usuarios PRODUCCION o CONTABILIDAD ya creados, el admin debe reasignar permisos manualmente desde Gestión de Usuarios.
+**Patrón de vistas — hint bars:**
+- Tienen `buildBeginnerHint()`: ClientesView, FacturasView, PedidosView, MaterialesView, EmpleadosView, ComprasProveedorView.
+- NO tienen hint bar todavía: TarifasView, AlbaranesView, PresupuestosView, NominasView, EstadisticasView, CalendarioView.
+- Patrón: `hint.visibleProperty().bind(PreferenceService.getInstance().beginnerModeProperty())` + `managedProperty().bind(...)`.
 
-**Patrón de vistas — estado actual:**
-- Todas las vistas tienen `buildBeginnerHint()` excepto: TarifasView, AlbaranesView, PresupuestosView, NominasView, EstadisticasView, CalendarioView. Las 4 vistas de Sprint A + ClientesView ya lo tienen.
-- `ComprasProveedorView` tiene hint bar.
-- Patrón hint bar: `hint.visibleProperty().bind(PreferenceService.getInstance().beginnerModeProperty())` + `managedProperty().bind(...)`.
-
-**Pendiente menor — HelpService "compras":**
-- F1 en `ComprasProveedorView` abre ayuda general (no hay artículo específico para "compras").
-- Para vincularlo: añadir entrada en `HelpService` con módulo `"compras"` y registrar en `TITULO_A_MODULO` (MainView ya tiene `Map.entry("Compras", "compras")`).
-- Prioridad baja — no bloquea nada.
+**Permiso COMPRAS:**
+- `UserPermissions.COMPRAS = "compras"` → ADMINISTRADOR, PRODUCCION, CONTABILIDAD.
+- COMERCIAL NO tiene permiso (mínimo privilegio — decisión Gemini).
+- Usuarios existentes con permisos personalizados en BD NO reciben COMPRAS automáticamente. Admin debe reasignar desde Gestión de Usuarios si es necesario.
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `98823a9`. Tests: 146/146. App funcional.
+**HEAD:** `8cdef34`. Tests: 146/146. App funcional. Cola despejada de pendientes menores.
 
 **Cola prioritaria (en orden recomendado):**
-1. ~~**HelpService "compras"**~~ — ✅ CERRADO (`7ae2a79`).
-2. **GAP-8** — soporte multiidioma ES/EN/CA. Tarea grande, requiere Gemini ANTES.
-3. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (todos los DAOs). Requiere Gemini ANTES.
+1. **GAP-8** — soporte multiidioma ES/EN/CA. Tarea grande. Requiere bloque Gemini ANTES para arquitectura i18n (ResourceBundle vs properties, granularidad, hot-swap).
+2. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (afecta todos los DAOs). Requiere bloque Gemini ANTES.
 
-**Comando de verificación al inicio:**
+**Comando de verificación al inicio de sesión:**
 ```powershell
 cd "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
 .\mvnw.cmd test   # debe dar 146/146 BUILD SUCCESS
 git log --oneline -5
 ```
 
-**Archivos clave de este sprint para referencia:**
-- `src/main/java/org/gipsybuho/ui/ComprasProveedorView.java` — nuevo módulo completo
-- `src/main/java/org/gipsybuho/model/UserPermissions.java` — constante COMPRAS
-- `src/main/java/org/gipsybuho/model/UserRole.java` — COMPRAS en 3 roles
-- `src/main/java/org/gipsybuho/ui/Icons.java` — SHOPPING_BAG path
-- `src/test/java/org/gipsybuho/service/PreferenceServiceTest.java` — patrón test con BD efímera
+**Archivos clave del sistema de ayuda (para referencia al siguiente agente):**
+- `src/main/resources/org/gipsybuho/help/index.json` — índice de todos los artículos.
+- `src/main/resources/org/gipsybuho/help/compras/` — 5 artículos nuevos de esta sesión.
+- `src/main/java/org/gipsybuho/service/HelpService.java` — lee `index.json` + sirve por módulo.
+- `src/main/java/org/gipsybuho/ui/MainView.java` línea ~48 — `TITULO_A_MODULO` mapea título de vista → módulo de ayuda.
 
 ### Decisiones tomadas esta sesión que el próximo agente debe respetar
 - COMERCIAL no tiene permiso COMPRAS — decisión deliberada por mínimo privilegio (Gemini).
