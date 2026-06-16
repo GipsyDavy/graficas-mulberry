@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.service.LanguageManager;
 import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
@@ -362,6 +363,7 @@ public class ConfiguracionView extends VBox {
         contenido.setPadding(new Insets(20));
 
         contenido.getChildren().addAll(
+            buildPanelIdioma(),
             buildPanelExperiencia(),
             buildPanelFacturacion(),
             buildPanelRecordatorios()
@@ -371,6 +373,62 @@ public class ConfiguracionView extends VBox {
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         return scroll;
+    }
+
+    private VBox buildPanelIdioma() {
+        record Idioma(String codigo, String nombre) {}
+        List<Idioma> idiomas = List.of(
+            new Idioma("es", "Español"),
+            new Idioma("en", "English"),
+            new Idioma("ca", "Català"),
+            new Idioma("eu", "Euskera"),
+            new Idioma("gl", "Galego"),
+            new Idioma("fr", "Français")
+        );
+
+        Label titulo = new Label("Idioma de la aplicación");
+        titulo.getStyleClass().add("config-section-title");
+        Label desc = new Label("Selecciona el idioma de la interfaz. El cambio requiere reiniciar la aplicación.");
+        desc.getStyleClass().add("config-section-desc");
+
+        ComboBox<Idioma> cbIdioma = new ComboBox<>();
+        cbIdioma.getItems().addAll(idiomas);
+        cbIdioma.setCellFactory(lv -> new ListCell<>() {
+            @Override protected void updateItem(Idioma item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.nombre());
+            }
+        });
+        cbIdioma.setButtonCell(new ListCell<>() {
+            @Override protected void updateItem(Idioma item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : item.nombre());
+            }
+        });
+        cbIdioma.setPrefWidth(220);
+
+        String idiomaActual = LanguageManager.getInstance().getIdioma();
+        idiomas.stream().filter(i -> i.codigo().equals(idiomaActual)).findFirst()
+            .ifPresent(cbIdioma::setValue);
+
+        Label lblAviso = new Label("⚠  " + LanguageManager.t("config.idioma.reinicio"));
+        lblAviso.getStyleClass().add("config-section-desc");
+        lblAviso.setWrapText(true);
+        lblAviso.setVisible(false);
+        lblAviso.setManaged(false);
+
+        cbIdioma.valueProperty().addListener((obs, ov, nv) -> {
+            if (nv != null && !nv.codigo().equals(idiomaActual)) {
+                LanguageManager.getInstance().setIdioma(nv.codigo());
+                lblAviso.setVisible(true);
+                lblAviso.setManaged(true);
+            }
+        });
+
+        VBox panel = new VBox(8, titulo, desc, cbIdioma, lblAviso);
+        panel.getStyleClass().add("config-section");
+        panel.setPadding(new Insets(16));
+        return panel;
     }
 
     private VBox buildPanelExperiencia() {
