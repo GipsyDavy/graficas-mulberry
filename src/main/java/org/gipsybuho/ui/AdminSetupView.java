@@ -13,6 +13,9 @@ import org.gipsybuho.service.AuthService;
 
 import java.util.function.Consumer;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 public class AdminSetupView extends VBox {
 
     private final AuthService authService;
@@ -35,45 +38,45 @@ public class AdminSetupView extends VBox {
         setSpacing(16);
         setPadding(new Insets(48));
 
-        Label title = new Label("Bienvenido a Gráficas Mulberry");
+        Label title = new Label(t("admin.titulo"));
         title.getStyleClass().add("view-title");
 
-        Label subtitle = new Label("Crea el usuario administrador para comenzar.");
+        Label subtitle = new Label(t("admin.subtitulo"));
         subtitle.getStyleClass().add("view-subtitle");
 
-        usernameField.setPromptText("Nombre de usuario");
+        usernameField.setPromptText(t("admin.prompt.usuario"));
         usernameField.setMaxWidth(260);
-        passwordField.setPromptText("Contraseña (mín. " + AuthService.MIN_PASSWORD_LENGTH + " caracteres)");
+        passwordField.setPromptText(tf("login.prompt.contrasena_min", AuthService.MIN_PASSWORD_LENGTH));
         passwordField.setMaxWidth(260);
-        confirmField.setPromptText("Confirmar contraseña");
+        confirmField.setPromptText(t("common.prompt.confirmar_contrasena"));
         confirmField.setMaxWidth(260);
         confirmField.setOnAction(e -> handleCreate());
 
-        CheckBox showPw = new CheckBox("Mostrar contraseña");
+        CheckBox showPw = new CheckBox(t("common.chk.mostrar_contrasena"));
 
         GridPane grid = new GridPane();
         grid.setHgap(12);
         grid.setVgap(10);
         grid.setAlignment(Pos.CENTER);
-        grid.add(new Label("Usuario:"),    0, 0);
-        grid.add(usernameField,            1, 0);
-        grid.add(new Label("Contraseña:"), 0, 1);
+        grid.add(new Label(t("common.label.usuario")),    0, 0);
+        grid.add(usernameField,                            1, 0);
+        grid.add(new Label(t("common.label.contrasena")), 0, 1);
         grid.add(wrapPasswordField(passwordField, showPw), 1, 1);
-        grid.add(new Label("Confirmar:"),  0, 2);
+        grid.add(new Label(t("common.label.confirmar")),  0, 2);
         grid.add(wrapPasswordField(confirmField,  showPw), 1, 2);
 
         questionCombo.setItems(FXCollections.observableArrayList(AuthService.SECURITY_QUESTIONS));
         questionCombo.getSelectionModel().selectFirst();
         questionCombo.setMaxWidth(Double.MAX_VALUE);
-        answerField.setPromptText("Tu respuesta");
+        answerField.setPromptText(t("common.prompt.respuesta"));
         answerField.setMaxWidth(260);
 
-        grid.add(new Label("Pregunta seg.:"), 0, 3);
+        grid.add(new Label(t("common.label.pregunta_seg")), 0, 3);
         grid.add(questionCombo, 1, 3);
-        grid.add(new Label("Respuesta:"), 0, 4);
+        grid.add(new Label(t("common.label.respuesta")), 0, 4);
         grid.add(answerField, 1, 4);
 
-        Button btn = new Button("Crear administrador");
+        Button btn = new Button(t("admin.btn.crear"));
         btn.setDefaultButton(true);
         btn.setPrefWidth(220);
         btn.setOnAction(e -> handleCreate());
@@ -84,22 +87,22 @@ public class AdminSetupView extends VBox {
     }
 
     private static StackPane wrapPasswordField(PasswordField pf, CheckBox showToggle) {
-        TextField tf = new TextField();
-        tf.setPromptText(pf.getPromptText());
-        tf.setMaxWidth(pf.getMaxWidth());
-        tf.setOnAction(pf.getOnAction());
-        tf.disableProperty().bind(pf.disableProperty());
-        tf.setVisible(false);
-        tf.setManaged(false);
-        tf.textProperty().bindBidirectional(pf.textProperty());
-        tf.translateXProperty().bind(pf.translateXProperty());
+        TextField tfVisible = new TextField();
+        tfVisible.setPromptText(pf.getPromptText());
+        tfVisible.setMaxWidth(pf.getMaxWidth());
+        tfVisible.setOnAction(pf.getOnAction());
+        tfVisible.disableProperty().bind(pf.disableProperty());
+        tfVisible.setVisible(false);
+        tfVisible.setManaged(false);
+        tfVisible.textProperty().bindBidirectional(pf.textProperty());
+        tfVisible.translateXProperty().bind(pf.translateXProperty());
         showToggle.selectedProperty().addListener((obs, old, show) -> {
             pf.setVisible(!show);
             pf.setManaged(!show);
-            tf.setVisible(show);
-            tf.setManaged(show);
+            tfVisible.setVisible(show);
+            tfVisible.setManaged(show);
         });
-        StackPane stack = new StackPane(pf, tf);
+        StackPane stack = new StackPane(pf, tfVisible);
         stack.setMaxWidth(pf.getMaxWidth());
         return stack;
     }
@@ -113,28 +116,28 @@ public class AdminSetupView extends VBox {
         String answer   = answerField.getText().trim();
 
         if (username.isEmpty() || password.isEmpty() || confirm.isEmpty()) {
-            msgLabel.setText("Todos los campos son obligatorios.");
+            msgLabel.setText(t("admin.error.campos_obligatorios"));
             TableColumnSizing.shake(username.isEmpty() ? usernameField : password.isEmpty() ? passwordField : confirmField);
             return;
         }
         if (!password.equals(confirm)) {
-            msgLabel.setText("Las contraseñas no coinciden.");
+            msgLabel.setText(t("common.error.contrasenas_no_coinciden"));
             TableColumnSizing.shake(confirmField);
             return;
         }
         if (!AuthService.isPasswordValid(password)) {
-            msgLabel.setText("La contraseña debe tener al menos " + AuthService.MIN_PASSWORD_LENGTH + " caracteres.");
+            msgLabel.setText(tf("common.error.contrasena_min", AuthService.MIN_PASSWORD_LENGTH));
             TableColumnSizing.shake(passwordField);
             return;
         }
         if (question == null || answer.isEmpty()) {
-            msgLabel.setText("Selecciona una pregunta de seguridad y escribe la respuesta.");
+            msgLabel.setText(t("admin.error.pregunta_respuesta"));
             TableColumnSizing.shake(answerField);
             return;
         }
         if (!authService.registerUser(username, password,
                 UserRole.ADMINISTRADOR, UserRole.ADMINISTRADOR.getPermissionsString())) {
-            msgLabel.setText("El nombre de usuario ya existe o no se pudo crear.");
+            msgLabel.setText(t("admin.error.usuario_existe"));
             TableColumnSizing.shake(usernameField);
             return;
         }
