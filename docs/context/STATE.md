@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-15 (sesión cierre — GAP-5 Compras a Proveedor — 146/146)
+**Última actualización:** 2026-06-16 (sesión cierre — HelpService compras — 146/146)
 
 ---
 
@@ -21,7 +21,7 @@ Actualizar tras cada sprint cerrado.
 
 ### ESTADO AL CIERRE DE SESIÓN 2026-06-15
 
-**HEAD:** `98823a9` (docs STATE.md cierre GAP-5). Rama: `master`. Tests: **146/146 verdes**.
+**HEAD:** `7ae2a79` (docs help compras). Rama: `master`. Tests: **146/146 verdes**.
 
 **Sprints cerrados esta sesión (en orden):**
 
@@ -61,7 +61,7 @@ ANALÍTICA:  Estadísticas, Calendario, Asistente
 **HEAD:** `98823a9`. Tests: 146/146. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **HelpService "compras"** — menor, 30 min, un solo archivo. No requiere Multi-IA.
+1. ~~**HelpService "compras"**~~ — ✅ CERRADO (`7ae2a79`).
 2. **GAP-8** — soporte multiidioma ES/EN/CA. Tarea grande, requiere Gemini ANTES.
 3. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (todos los DAOs). Requiere Gemini ANTES.
 
@@ -475,15 +475,16 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 **Sprint GAP-5 (Compras a Proveedor)** — ✅ CERRADO. ComprasProveedorView standalone. Permiso COMPRAS en 3 roles. HEAD `d243cbe`.
 
+**Sprint HelpService compras** — ✅ CERRADO. 5 artículos HTML en `compras/`. F1 vinculado al módulo. HEAD `7ae2a79`.
+
 **Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
 
 ---
 
 ## Cola prioritaria
 
-1. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo).
-2. **Refactor B2** — inyección de Connection en DAOs (largo plazo).
-3. **HelpService "compras"** — vincular F1 al módulo compras (pendiente menor).
+1. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo). Requiere Gemini ANTES.
+2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
 
 ---
 
