@@ -21,7 +21,7 @@ Actualizar tras cada sprint cerrado.
 
 ### ESTADO AL CIERRE DE SESIÓN 2026-06-16
 
-**HEAD:** `8cdef34` (docs state cierre HelpService compras). Rama: `master`. Tests: **146/146 verdes**.
+**HEAD:** `1947fbc` (feat i18n Sprint i18n-0). Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprint cerrado esta sesión:**
 
@@ -59,8 +59,8 @@ ANALÍTICA:  Estadísticas, Calendario, Asistente
 **HEAD:** `8cdef34`. Tests: 146/146. App funcional. Cola despejada de pendientes menores.
 
 **Cola prioritaria (en orden recomendado):**
-1. **GAP-8** — soporte multiidioma ES/EN/CA. Tarea grande. Requiere bloque Gemini ANTES para arquitectura i18n (ResourceBundle vs properties, granularidad, hot-swap).
-2. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (afecta todos los DAOs). Requiere bloque Gemini ANTES.
+1. **Sprint i18n-1+** — migración de strings de UI módulo a módulo (LoginView primero). `import static LanguageManager.t` + reemplazar literales. Un módulo por sprint.
+2. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (afecta todos los DAOs). Requiere Gemini ANTES.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
