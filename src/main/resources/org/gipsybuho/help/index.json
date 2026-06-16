@@ -97,5 +97,11 @@
 
   {"id":"CFG-PS-1","module":"configuracion","category":"PS","title":"Cómo cambiar el tema visual de la aplicación","tags":["tema","visual","configuración","color","oscuro","claro","mulberry"],"path":"configuracion/CFG-PS-1.html","priority":1},
   {"id":"CFG-REF-1","module":"configuracion","category":"REF","title":"Temas disponibles en Gráficas Mulberry","tags":["tema","mulberry","oscuro","claro","corporativo","minimalista","color"],"path":"configuracion/CFG-REF-1.html","priority":2},
-  {"id":"CFG-FAQ-1","module":"configuracion","category":"FAQ","title":"¿La configuración se aplica a todos los usuarios o solo al mío?","tags":["configuración","usuario","personal","global","tema","ajustes"],"path":"configuracion/CFG-FAQ-1.html","priority":3}
+  {"id":"CFG-FAQ-1","module":"configuracion","category":"FAQ","title":"¿La configuración se aplica a todos los usuarios o solo al mío?","tags":["configuración","usuario","personal","global","tema","ajustes"],"path":"configuracion/CFG-FAQ-1.html","priority":3},
+
+  {"id":"CMP-PS-1","module":"compras","category":"PS","title":"Cómo registrar una compra a proveedor","tags":["compra","proveedor","registrar","nueva","factura","importe","forma pago"],"path":"compras/CMP-PS-1.html","priority":1},
+  {"id":"CMP-PS-2","module":"compras","category":"PS","title":"Cómo marcar una compra como pagada","tags":["compra","pagar","pagada","marcar","fecha pago","proveedor"],"path":"compras/CMP-PS-2.html","priority":2},
+  {"id":"CMP-REF-1","module":"compras","category":"REF","title":"Estados de compra y campos del formulario","tags":["compra","estado","pendiente","pagado","vencido","campos","formulario","proveedor","importe","forma pago"],"path":"compras/CMP-REF-1.html","priority":3},
+  {"id":"CMP-FAQ-1","module":"compras","category":"FAQ","title":"Preguntas frecuentes sobre compras a proveedor","tags":["compra","proveedor","FAQ","diferencia","pedido","pago","filtro","vencimiento"],"path":"compras/CMP-FAQ-1.html","priority":4},
+  {"id":"CMP-ERR-1","module":"compras","category":"ERR","title":"Error al guardar una compra: campos obligatorios","tags":["compra","error","obligatorio","guardar","material","proveedor","importe","fecha"],"path":"compras/CMP-ERR-1.html","priority":5}
 ]

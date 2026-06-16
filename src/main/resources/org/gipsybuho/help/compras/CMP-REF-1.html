@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
+<title>Estados de compra y campos del formulario</title>
+<meta name="module" content="compras"><meta name="category" content="REF">
+<meta name="tags" content="compra,estado,pendiente,pagado,vencido,campos,formulario,proveedor,importe,forma pago"></head>
+<body>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Compras a proveedor</p>
+<h1>Estados de compra y campos del formulario</h1>
+<h2>Estados posibles</h2>
+<ul>
+  <li><strong>Pendiente</strong> — compra registrada, pago no realizado aún.</li>
+  <li><strong>Vencido</strong> — la fecha de vencimiento ha pasado y el pago sigue sin realizarse.</li>
+  <li><strong>Próximo</strong> — el vencimiento ocurre en los próximos 7 días.</li>
+  <li><strong>Pagado</strong> — el pago se ha registrado con fecha de pago.</li>
+</ul>
+<h2>Campos del formulario</h2>
+<ul>
+  <li><strong>Material *</strong> — material comprado (obligatorio).</li>
+  <li><strong>Proveedor *</strong> — nombre del proveedor (obligatorio).</li>
+  <li><strong>Nº Factura proveedor</strong> — número de factura que envía el proveedor.</li>
+  <li><strong>Fecha compra *</strong> — fecha en que se realizó el pedido (obligatoria).</li>
+  <li><strong>Importe *</strong> — importe total de la compra en euros (obligatorio).</li>
+  <li><strong>Forma de pago</strong> — Transferencia, Contado, Domiciliación, Cheque o Pagaré.</li>
+  <li><strong>Vencimiento</strong> — fecha límite de pago acordada con el proveedor.</li>
+  <li><strong>Notas</strong> — observaciones internas sobre la compra.</li>
+</ul>
+<h2>Panel de resumen</h2>
+<p>La parte superior del módulo muestra tres indicadores:</p>
+<ul>
+  <li><strong>Total pendiente</strong> — suma de importes de compras en estado Pendiente o Vencido.</li>
+  <li><strong>Vencidos</strong> — importe pendiente cuyo plazo ya ha expirado.</li>
+  <li><strong>Próximos 7 días</strong> — importe que vence en la semana siguiente.</li>
+</ul>
+</body></html>
