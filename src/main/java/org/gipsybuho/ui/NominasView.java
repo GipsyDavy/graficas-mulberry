@@ -21,6 +21,8 @@ import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -73,9 +75,9 @@ public class NominasView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Nóminas");
+        Label titulo = new Label(t("nominas.titulo"));
         titulo.getStyleClass().add("view-title");
-        Label sub = new Label("Gestión de nóminas según legislación española — SS 2024");
+        Label sub = new Label(t("nominas.subtitulo"));
         sub.getStyleClass().add("view-subtitle");
 
         getChildren().addAll(titulo, sub, buildToolbar(), buildTabla());
@@ -85,28 +87,28 @@ public class NominasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNueva    = btn("+ Nueva nómina", this::nueva);
-        Button btnEditar   = btn("✏ Editar", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
-        Button btnImportar = btn("📥 Importar", this::importar);
-        Button btnExportar = btn("📤 Exportar", this::exportar);
-        Button btnGenMes    = btn("⚡ Generar mes para todos", this::generarMesCompleto);
-        Button btnPreview   = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas  = btn("⚙ Columnas", dynamicColumns::configure);
-        btnNueva.setTooltip(new Tooltip("Crear una nueva nómina"));
-        btnEditar.setTooltip(new Tooltip("Editar la nómina seleccionada"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar la nómina seleccionada"));
-        btnImportar.setTooltip(new Tooltip("Importar nóminas desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar nóminas a PDF, Excel u otros formatos"));
-        btnGenMes.setTooltip(new Tooltip("Generar automáticamente las nóminas del mes para todos los empleados"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar la nómina seleccionada en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNueva    = btn(t("nominas.btn.nueva"),        this::nueva);
+        Button btnEditar   = btn(t("nominas.btn.editar"),       this::editar);
+        Button btnBorrar   = btn(t("nominas.btn.borrar"),       this::borrar);
+        Button btnImportar = btn(t("nominas.btn.importar"),     this::importar);
+        Button btnExportar = btn(t("nominas.btn.exportar"),     this::exportar);
+        Button btnGenMes   = btn(t("nominas.btn.generar_mes"),  this::generarMesCompleto);
+        Button btnPreview  = btn(t("nominas.btn.previsualizar"), this::previsualizar);
+        Button btnColumnas = btn(t("nominas.btn.columnas"),     dynamicColumns::configure);
+        btnNueva.setTooltip(new Tooltip(t("nominas.btn.nueva.tip")));
+        btnEditar.setTooltip(new Tooltip(t("nominas.btn.editar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("nominas.btn.borrar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("nominas.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("nominas.btn.exportar.tip")));
+        btnGenMes.setTooltip(new Tooltip(t("nominas.btn.generar_mes.tip")));
+        btnPreview.setTooltip(new Tooltip(t("nominas.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("nominas.btn.columnas.tip")));
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por empleado, período…");
+        txtBuscar.setPromptText(t("nominas.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip("Buscar por nombre de empleado o período (ej: enero 2025)"));
+        txtBuscar.setTooltip(new Tooltip(t("nominas.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -121,7 +123,7 @@ public class NominasView extends VBox {
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<Nomina, Double> colNeto = new TableColumn<>("Neto");
+        TableColumn<Nomina, Double> colNeto = new TableColumn<>(t("nominas.col.neto"));
         colNeto.setCellValueFactory(new PropertyValueFactory<>("neto"));
         colNeto.setUserData("neto");
         colNeto.setCellFactory(c -> new TableCell<>() {
@@ -132,7 +134,7 @@ public class NominasView extends VBox {
             }
         });
 
-        TableColumn<Nomina, Double> colBruto = new TableColumn<>("Bruto");
+        TableColumn<Nomina, Double> colBruto = new TableColumn<>(t("nominas.col.bruto"));
         colBruto.setCellValueFactory(new PropertyValueFactory<>("totalBruto"));
         colBruto.setUserData("total_bruto");
         colBruto.setCellFactory(c -> new TableCell<>() {
@@ -142,7 +144,7 @@ public class NominasView extends VBox {
             }
         });
 
-        TableColumn<Nomina, Double> colCosteEmp = new TableColumn<>("Coste empresa");
+        TableColumn<Nomina, Double> colCosteEmp = new TableColumn<>(t("nominas.col.coste_empresa"));
         colCosteEmp.setCellValueFactory(new PropertyValueFactory<>("costeTotalEmpresa"));
         colCosteEmp.setUserData("coste_total_empresa");
         colCosteEmp.setCellFactory(c -> new TableCell<>() {
@@ -154,11 +156,11 @@ public class NominasView extends VBox {
         });
 
         tabla.getColumns().addAll(
-            col("Empleado", "empleadoNombre", 180),
-            col("Período", "periodo", 130),
+            col(t("nominas.col.empleado"), "empleadoNombre", 180),
+            col(t("nominas.col.periodo"), "periodo", 130),
             colBruto, colNeto, colCosteEmp
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay nóminas registradas todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("nominas.placeholder")));
         return tabla;
     }
 
@@ -170,7 +172,7 @@ public class NominasView extends VBox {
                 .filter(n -> contiene(n.getEmpleadoNombre(), q) || contiene(n.getPeriodo(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " nóminas");
+            lblContador.setText(tf("nominas.contador", lista.size()));
             dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
@@ -182,7 +184,7 @@ public class NominasView extends VBox {
     private void nueva() {
         try {
             List<Empleado> empleados = empleadoDAO.findAll();
-            if (empleados.isEmpty()) { alerta("Añade empleados antes de crear nóminas."); return; }
+            if (empleados.isEmpty()) { alerta(t("nominas.nueva.sin_empleados")); return; }
             dialogoNomina(null, empleados).ifPresent(n -> {
                 try { dao.save(n); dynamicColumns.saveFormFields(n, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); }
             });
@@ -191,7 +193,7 @@ public class NominasView extends VBox {
 
     private void editar() {
         Nomina sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una nómina para editar."); return; }
+        if (sel == null) { alerta(t("nominas.editar.sin_seleccion")); return; }
         try {
             List<Empleado> empleados = empleadoDAO.findAll();
             Nomina n = dao.findById(sel.getId());
@@ -203,10 +205,10 @@ public class NominasView extends VBox {
 
     private void borrar() {
         List<Nomina> seleccionadas = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionadas.isEmpty()) { alerta("Selecciona una o varias nóminas para borrar."); return; }
+        if (seleccionadas.isEmpty()) { alerta(t("nominas.borrar.sin_seleccion")); return; }
         String mensaje = seleccionadas.size() == 1
-            ? "¿Eliminar la nómina de " + seleccionadas.get(0).getEmpleadoNombre() + " - " + seleccionadas.get(0).getPeriodo() + "?"
-            : "¿Eliminar " + seleccionadas.size() + " nóminas seleccionadas?";
+            ? tf("nominas.borrar.confirmar.uno", seleccionadas.get(0).getEmpleadoNombre(), seleccionadas.get(0).getPeriodo())
+            : tf("nominas.borrar.confirmar.varios", seleccionadas.size());
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
             mensaje,
             ButtonType.YES, ButtonType.NO);
@@ -223,15 +225,15 @@ public class NominasView extends VBox {
         LocalDate hoy = LocalDate.now();
         // Pedir mes/año
         Dialog<int[]> dlg = new Dialog<>();
-        dlg.setTitle("Generar nóminas del mes");
+        dlg.setTitle(t("nominas.generar_mes.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
         ComboBox<String> fMes = new ComboBox<>(FXCollections.observableArrayList(Nomina.MESES));
         fMes.setValue(Nomina.MESES[hoy.getMonthValue() - 1]);
         TextField fAnio = new TextField(String.valueOf(hoy.getYear()));
-        grid.addRow(0, new Label("Mes:"), fMes);
-        grid.addRow(1, new Label("Año:"), fAnio);
+        grid.addRow(0, new Label(t("nominas.generar_mes.campo_mes")), fMes);
+        grid.addRow(1, new Label(t("nominas.generar_mes.campo_anio")), fAnio);
         dlg.getDialogPane().setContent(grid);
         dlg.setResultConverter(bt -> bt == ButtonType.OK ?
             new int[]{java.util.Arrays.asList(Nomina.MESES).indexOf(fMes.getValue()) + 1,
@@ -248,7 +250,7 @@ public class NominasView extends VBox {
                     } catch (Exception ex) { /* ya existe este mes */ }
                 }
                 cargar();
-                new Alert(Alert.AlertType.INFORMATION, "Se generaron " + creadas + " nóminas.", ButtonType.OK).showAndWait();
+                new Alert(Alert.AlertType.INFORMATION, tf("nominas.generar_mes.resultado", creadas), ButtonType.OK).showAndWait();
             } catch (Exception e) { mostrarError(e); }
         });
     }
@@ -258,7 +260,7 @@ public class NominasView extends VBox {
         LocalDate hoy = LocalDate.now();
 
         Dialog<Nomina> dlg = new Dialog<>();
-        dlg.setTitle(esNueva ? "Nueva nómina" : "Editar nómina");
+        dlg.setTitle(esNueva ? t("nominas.dialogo.nueva") : t("nominas.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(600);
 
@@ -340,21 +342,21 @@ public class NominasView extends VBox {
             tf.textProperty().addListener((o,a,b) -> recalc.run());
 
         int r = 0;
-        grid.addRow(r++, new Label("Empleado *"), fEmp);
-        grid.addRow(r++, new Label("Mes"), fMes, new Label("Año"), fAnio);
+        grid.addRow(r++, new Label(t("nominas.campo.empleado")), fEmp);
+        grid.addRow(r++, new Label(t("nominas.campo.mes")), fMes, new Label(t("nominas.campo.anio")), fAnio);
         grid.add(new Separator(), 0, r++, 4, 1);
-        grid.addRow(r++, new Label("Salario base (€)"), fSalBase, new Label("IRPF (%)"), fIrpf);
-        grid.addRow(r++, new Label("Complementos (€)"), fComplementos, new Label("No salarial (€)"), fNoSalarial);
-        grid.addRow(r++, new Label("H. extra normales"), fHorasN, new Label("Precio/hora (€)"), fPrecioHN);
-        grid.addRow(r++, new Label("H. extra festivas"), fHorasF, new Label("Precio/hora (€)"), fPrecioHF);
+        grid.addRow(r++, new Label(t("nominas.campo.salario_base")), fSalBase, new Label(t("nominas.campo.irpf")), fIrpf);
+        grid.addRow(r++, new Label(t("nominas.campo.complementos")), fComplementos, new Label(t("nominas.campo.no_salarial")), fNoSalarial);
+        grid.addRow(r++, new Label(t("nominas.campo.horas_extra_normales")), fHorasN, new Label(t("nominas.campo.precio_hora")), fPrecioHN);
+        grid.addRow(r++, new Label(t("nominas.campo.horas_extra_festivas")), fHorasF, new Label(t("nominas.campo.precio_hora")), fPrecioHF);
         grid.add(new Separator(), 0, r++, 4, 1);
 
         VBox resumen = new VBox(4,
-            row2("Total bruto:", lblBruto),
-            row2("S.S. trabajador:", lblSS),
-            row2("IRPF:", lblIRPF),
-            row2("LÍQUIDO NETO:", lblNeto),
-            row2("Coste empresa:", lblCoste)
+            row2(t("nominas.resumen.total_bruto"), lblBruto),
+            row2(t("nominas.resumen.ss_trabajador"), lblSS),
+            row2(t("nominas.resumen.irpf"), lblIRPF),
+            row2(t("nominas.resumen.neto"), lblNeto),
+            row2(t("nominas.resumen.coste_empresa"), lblCoste)
         );
         resumen.setPadding(new Insets(8));
         resumen.setStyle("-fx-background-color:#F5F5F5; -fx-border-radius:4; -fx-background-radius:4;");
@@ -390,10 +392,10 @@ public class NominasView extends VBox {
 
     private void importar() {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar nóminas");
+        fc.setTitle(t("nominas.importar.titulo"));
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            new FileChooser.ExtensionFilter(t("nominas.importar.filtro"), "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+            new FileChooser.ExtensionFilter(t("nominas.importar.todos_archivos"), "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
@@ -439,18 +441,18 @@ public class NominasView extends VBox {
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("nominas.importar.completada", r.duracion().toMillis() / 1000.0)).append(System.lineSeparator());
+        sb.append(tf("nominas.importar.filas_importadas", r.filasImportadas())).append(System.lineSeparator());
+        sb.append(tf("nominas.importar.filas_actualizadas", r.filasActualizadas())).append(System.lineSeparator());
+        sb.append(tf("nominas.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("nominas.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("nominas.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("nominas.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -459,20 +461,13 @@ public class NominasView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de nóminas como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con la estructura y los datos de la tabla nóminas.", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Datos de todas las nóminas en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de nóminas como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de nóminas en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"),        "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("nominas.export.csv.desc"),        "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("nominas.export.sql.desc"),        "sql"},
+            {"json",   t("export.fmt.json.label"),   t("nominas.export.json.desc"),       "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("nominas.export.pdf.desc"),        "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("nominas.export.word.desc"),       "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("nominas.export.excel.desc"),      "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -497,18 +492,18 @@ public class NominasView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar nóminas");
+        dlg.setTitle(t("nominas.exportar.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -521,11 +516,11 @@ public class NominasView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Nominas_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Nóminas", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("nominas.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -571,8 +566,8 @@ public class NominasView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -606,7 +601,7 @@ public class NominasView extends VBox {
     private void previsualizar() {
         List<Nomina> sel = new ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Nomina> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("nominas.previsualizar.sin_seleccion")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -617,11 +612,11 @@ public class NominasView extends VBox {
                     Empleado emp = empleadoDAO.findById(n.getEmpleadoId());
                     Path pdfPath = new PDFService().generarNomina(n, emp);
                     pdfBytes = Files.readAllBytes(pdfPath);
-                    tituloVentana = "Previsualización — Nómina " + n.getEmpleadoNombre() + " " + n.getPeriodo();
+                    tituloVentana = tf("nominas.previsualizar.titulo.uno", n.getEmpleadoNombre(), n.getPeriodo());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarNominas(lista);
-                    tituloVentana = "Previsualización — Nóminas (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("nominas.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -661,9 +656,9 @@ public class NominasView extends VBox {
     private void mostrarError(Exception e) {
         String msg = e.getMessage();
         if (msg != null && msg.contains("nominas.empleado_id, nominas.mes, nominas.anio")) {
-            msg = "Ya existe una nómina para este empleado en ese mes y año.";
+            msg = t("nominas.error.duplicado_nomina");
         } else if (msg != null && msg.contains("UNIQUE constraint failed")) {
-            msg = "Ya existe un registro con esos datos (clave duplicada).";
+            msg = t("nominas.error.duplicado_generico");
         }
         new Alert(Alert.AlertType.ERROR, msg, ButtonType.OK).showAndWait();
     }
