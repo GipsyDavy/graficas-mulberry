@@ -26,6 +26,8 @@ import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.ToastService;
 import org.gipsybuho.util.TypedValueFormatter;
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 
 import java.io.File;
 import java.nio.file.Files;
@@ -74,7 +76,7 @@ public class ClientesView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Clientes");
+        Label titulo = new Label(t("clientes.titulo"));
         titulo.getStyleClass().add("view-title");
 
         cargando.setMaxSize(48, 48);
@@ -90,7 +92,7 @@ public class ClientesView extends VBox {
     // ── Beginner hint ─────────────────────────────────────────────────────────
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Usa el botón \"Nuevo\" para añadir un cliente. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("clientes.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -104,25 +106,25 @@ public class ClientesView extends VBox {
 
     private HBox buildToolbar() {
         TextField txtBuscar = new TextField();
-        txtBuscar.setPromptText("Buscar por nombre, apellido, NIF o email…");
+        txtBuscar.setPromptText(t("clientes.buscar.prompt"));
         txtBuscar.setPrefWidth(280);
         txtBuscar.textProperty().addListener((o, a, b) -> buscar(b));
 
-        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
-        Button btnEditar   = btn("✏ Editar", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
-        Button btnImportar = btn("📥 Importar", this::importar);
-        Button btnExportar = btn("📤 Exportar", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas = btn("⚙ Columnas", this::configurarColumnas);
-        txtBuscar.setTooltip(new Tooltip("Filtrar por nombre, apellido, NIF o email"));
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo cliente"));
-        btnEditar.setTooltip(new Tooltip("Editar el cliente seleccionado"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar el cliente seleccionado"));
-        btnImportar.setTooltip(new Tooltip("Importar clientes desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar clientes a PDF, Excel, Word u otros formatos"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar ficha del cliente en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNuevo    = btn(t("clientes.btn.nuevo"),        this::nuevo);
+        Button btnEditar   = btn(t("clientes.btn.editar"),       this::editar);
+        Button btnBorrar   = btn(t("clientes.btn.borrar"),       this::borrar);
+        Button btnImportar = btn(t("clientes.btn.importar"),     this::importar);
+        Button btnExportar = btn(t("clientes.btn.exportar"),     this::exportar);
+        Button btnPreview  = btn(t("clientes.btn.previsualizar"),this::previsualizar);
+        Button btnColumnas = btn(t("clientes.btn.columnas"),     this::configurarColumnas);
+        txtBuscar.setTooltip(new Tooltip(t("clientes.buscar.tooltip")));
+        btnNuevo.setTooltip(new Tooltip(t("clientes.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("clientes.btn.editar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("clientes.btn.borrar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("clientes.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("clientes.btn.exportar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("clientes.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("clientes.btn.columnas.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region spacer = new Region();
@@ -142,15 +144,15 @@ public class ClientesView extends VBox {
         tabla.setEditable(true);
         tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
         tabla.getColumns().addAll(
-            col("Nombre",    "nombre",    160),
-            col("Apellidos", "apellidos", 160),
-            col("Tipo",      "tipo",       80),
-            col("NIF/CIF",   "nif",       100),
-            col("Teléfono",  "telefono",  110),
-            col("Email",     "email",     180),
-            col("Ciudad",    "ciudad",    120)
+            col(t("clientes.campo.nombre"),    "nombre",    160),
+            col(t("clientes.campo.apellidos"), "apellidos", 160),
+            col(t("clientes.campo.tipo"),      "tipo",       80),
+            col(t("clientes.campo.nif"),       "nif",       100),
+            col(t("clientes.campo.telefono"),  "telefono",  110),
+            col(t("clientes.campo.email"),     "email",     180),
+            col(t("clientes.campo.ciudad"),    "ciudad",    120)
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay clientes registrados todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("clientes.tabla.vacio")));
         return tabla;
     }
 
@@ -187,7 +189,7 @@ public class ClientesView extends VBox {
                     try {
                         String normalized = TypedValueFormatter.tryNormalizeForStorage(config.dataType(), event.getNewValue())
                             .orElseThrow(() -> new IllegalArgumentException(
-                                "Valor no válido para " + config.label() + ": " + event.getNewValue()));
+                                tf("clientes.col.edit.error", config.label(), event.getNewValue())));
                         cliente.setExtra(colKey, normalized);
                         dao.save(cliente);
                         tabla.refresh();
@@ -209,7 +211,7 @@ public class ClientesView extends VBox {
         tabla.setDisable(true);
         try {
             datos.setAll(dao.findAll());
-            lblContador.setText(datos.size() + " clientes");
+            lblContador.setText(tf("clientes.contador", datos.size()));
             TableColumnSizing.animarFilas(tabla);
         }
         catch (Exception e) { mostrarError(e); }
@@ -220,7 +222,7 @@ public class ClientesView extends VBox {
         try {
             if (texto.isBlank()) datos.setAll(dao.findAll());
             else datos.setAll(dao.search(texto));
-            lblContador.setText(datos.size() + " clientes");
+            lblContador.setText(tf("clientes.contador", datos.size()));
         } catch (Exception e) { mostrarError(e); }
     }
 
@@ -232,7 +234,7 @@ public class ClientesView extends VBox {
 
     private void editar() {
         Cliente sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un cliente para editar."); return; }
+        if (sel == null) { alerta(t("clientes.editar.sin_seleccion")); return; }
         dialogo(sel).ifPresent(c -> {
             try { dao.save(c); cargar(); } catch (Exception e) { mostrarError(e); }
         });
@@ -240,13 +242,13 @@ public class ClientesView extends VBox {
 
     private void borrar() {
         List<Cliente> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios clientes para borrar."); return; }
+        if (seleccionados.isEmpty()) { alerta(t("clientes.borrar.sin_seleccion")); return; }
         String mensaje = seleccionados.size() == 1
-            ? "¿Eliminar el cliente \"" + seleccionados.get(0).getNombre() + "\"?"
-            : "¿Eliminar " + seleccionados.size() + " clientes seleccionados?";
+            ? tf("clientes.borrar.confirmar.uno",    seleccionados.get(0).getNombre())
+            : tf("clientes.borrar.confirmar.varios", seleccionados.size());
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
             mensaje, ButtonType.YES, ButtonType.NO);
-        conf.setTitle("Confirmar"); conf.setHeaderText(null);
+        conf.setTitle(t("clientes.borrar.confirmar.titulo")); conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try {
                 for (Cliente cliente : seleccionados) dao.delete(cliente.getId());
@@ -259,7 +261,7 @@ public class ClientesView extends VBox {
         try {
             List<String> stylesheets = getScene() != null ? getScene().getStylesheets() : List.of();
             boolean changed = new ColumnConfiguratorDialog(
-                TABLE_NAME, "Clientes", COLUMNAS_BASE, COLUMNAS_IGNORADAS, stylesheets).show();
+                TABLE_NAME, t("clientes.titulo"), COLUMNAS_BASE, COLUMNAS_IGNORADAS, stylesheets).show();
             if (changed) {
                 actualizarColumnasDinamicas();
                 cargar();
@@ -271,7 +273,7 @@ public class ClientesView extends VBox {
 
     private Optional<Cliente> dialogo(Cliente c) {
         Dialog<Cliente> dlg = new Dialog<>();
-        dlg.setTitle(c.getId() == 0 ? "Nuevo cliente" : "Editar cliente");
+        dlg.setTitle(c.getId() == 0 ? t("clientes.dialogo.nuevo") : t("clientes.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().getStylesheets().addAll(getScene() != null ? getScene().getStylesheets() : List.of());
         dlg.getDialogPane().setPrefWidth(520);
@@ -279,16 +281,16 @@ public class ClientesView extends VBox {
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
 
-        TextField fNombre    = tf(c.getNombre());
-        TextField fApellido  = tf(c.getApellidos());
+        TextField fNombre    = txf(c.getNombre());
+        TextField fApellido  = txf(c.getApellidos());
         ComboBox<String> fTipo = new ComboBox<>(FXCollections.observableArrayList("empresa", "particular"));
         fTipo.setValue(c.getTipo() != null ? c.getTipo() : "empresa");
-        TextField fNif       = tf(c.getNif());
-        TextField fDireccion = tf(c.getDireccion());
-        TextField fCiudad    = tf(c.getCiudad() != null ? c.getCiudad() : "Almería");
-        TextField fCp        = tf(c.getCp());
-        TextField fTelefono  = tf(c.getTelefono());
-        TextField fEmail     = tf(c.getEmail());
+        TextField fNif       = txf(c.getNif());
+        TextField fDireccion = txf(c.getDireccion());
+        TextField fCiudad    = txf(c.getCiudad() != null ? c.getCiudad() : "Almería");
+        TextField fCp        = txf(c.getCp());
+        TextField fTelefono  = txf(c.getTelefono());
+        TextField fEmail     = txf(c.getEmail());
         TextArea  fNotas     = new TextArea(nvl(c.getNotas()));
         fNotas.setPrefRowCount(3);
         Map<String, TextField> extraFields = new LinkedHashMap<>();
@@ -296,12 +298,12 @@ public class ClientesView extends VBox {
         Map<String, String> extraTypes = new LinkedHashMap<>();
 
         int r = 0;
-        grid.addRow(r++, lbl("Nombre *"), fNombre, lbl("Apellidos"), fApellido);
-        grid.addRow(r++, lbl("Tipo"), fTipo, lbl("NIF/CIF"), fNif);
-        grid.addRow(r++, lbl("Teléfono"), fTelefono, lbl("Email"), fEmail);
-        grid.addRow(r++, lbl("Ciudad"), fCiudad, lbl("C.P."), fCp);
-        grid.add(lbl("Dirección"), 0, r); grid.add(fDireccion, 1, r, 3, 1); r++;
-        grid.add(lbl("Notas"), 0, r);     grid.add(fNotas,     1, r, 3, 1);
+        grid.addRow(r++, lbl(t("clientes.campo.nombre")),    fNombre,    lbl(t("clientes.campo.apellidos")), fApellido);
+        grid.addRow(r++, lbl(t("clientes.campo.tipo")),      fTipo,      lbl(t("clientes.campo.nif")),       fNif);
+        grid.addRow(r++, lbl(t("clientes.campo.telefono")),  fTelefono,  lbl(t("clientes.campo.email")),     fEmail);
+        grid.addRow(r++, lbl(t("clientes.campo.ciudad")),    fCiudad,    lbl(t("clientes.campo.cp")),        fCp);
+        grid.add(lbl(t("clientes.campo.direccion")), 0, r); grid.add(fDireccion, 1, r, 3, 1); r++;
+        grid.add(lbl(t("clientes.campo.notas")),     0, r); grid.add(fNotas,     1, r, 3, 1);
         r++;
 
         try {
@@ -309,7 +311,7 @@ public class ClientesView extends VBox {
             if (!extras.isEmpty()) {
                 Separator separator = new Separator();
                 grid.add(separator, 0, r++, 4, 1);
-                grid.add(lbl("Datos adicionales"), 0, r++, 4, 1);
+                grid.add(lbl(t("clientes.campo.datos_adicionales")), 0, r++, 4, 1);
                 for (ColumnConfig config : extras) {
                     String colName = config.columnName();
                     String type = config.dataType() != null ? config.dataType() : "TEXTO";
@@ -321,7 +323,7 @@ public class ClientesView extends VBox {
                         extraControls.put(colName, dp);
                         grid.add(dp, 1, r, 3, 1);
                     } else {
-                        TextField field = tf(TypedValueFormatter.normalizeForStorage(type, c.getExtra(colName)));
+                        TextField field = txf(TypedValueFormatter.normalizeForStorage(type, c.getExtra(colName)));
                         extraFields.put(colName, field);
                         extraControls.put(colName, field);
                         grid.add(field, 1, r, 3, 1);
@@ -376,7 +378,7 @@ public class ClientesView extends VBox {
             ? new java.util.ArrayList<>(getScene().getStylesheets())
             : List.of();
         ModuloWindowManager.abrirEnVentana(
-            "Importación de clientes",
+            t("clientes.importar.titulo"),
             () -> new ImportView(ImportService.TipoEntidad.CLIENTES, () -> {
                 cargar();
                 actualizarColumnasDinamicas();
@@ -398,7 +400,7 @@ public class ClientesView extends VBox {
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("clientes.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -409,20 +411,13 @@ public class ClientesView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-             "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-             "Tabla de clientes como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-             "Script SQL con la estructura y los datos de la tabla clientes.", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-             "Datos de todos los clientes en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-             "Listado de clientes como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-             "Tabla de clientes en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-             "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"), "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("clientes.export.csv.desc"),   "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("clientes.export.sql.desc"),   "sql"},
+            {"json",   t("export.fmt.json.label"),   t("clientes.export.json.desc"),  "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("clientes.export.pdf.desc"),   "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("clientes.export.word.desc"),  "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("clientes.export.excel.desc"), "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -447,18 +442,18 @@ public class ClientesView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblTitulo = new Label("Selecciona el formato de exportación:");
+        Label lblTitulo = new Label(t("export.dialog.instruccion"));
         lblTitulo.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblTitulo, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar clientes");
+        dlg.setTitle(t("clientes.export.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -471,7 +466,7 @@ public class ClientesView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Clientes_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
@@ -518,8 +513,8 @@ public class ClientesView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -539,7 +534,7 @@ public class ClientesView extends VBox {
     private void previsualizar() {
         List<Cliente> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Cliente> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("clientes.previsualizar.vacio")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -549,11 +544,11 @@ public class ClientesView extends VBox {
                     Cliente c = lista.get(0);
                     Path pdfPath = new PDFService().generarFichaCliente(c);
                     pdfBytes = Files.readAllBytes(pdfPath);
-                    tituloVentana = "Previsualización — Cliente " + c.getNombreCompleto();
+                    tituloVentana = tf("clientes.previsualizar.titulo.uno", c.getNombreCompleto());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarClientes(lista);
-                    tituloVentana = "Previsualización — Clientes (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("clientes.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -589,15 +584,15 @@ public class ClientesView extends VBox {
         return b;
     }
 
-    private TextField tf(String valor) { return new TextField(nvl(valor)); }
+    private TextField txf(String valor) { return new TextField(nvl(valor)); }
     private Label lbl(String t) { return new Label(t); }
     private String nvl(String s) { return s != null ? s : ""; }
     private void alerta(String msg) { new Alert(Alert.AlertType.INFORMATION, msg, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
-        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        String msg = e.getMessage() != null ? e.getMessage() : t("common.error.desconocido");
         javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
         if (w != null && msg.contains("UNIQUE constraint failed")) {
-            ToastService.error(w, "NIF ya registrado en otro cliente.", "CLI-ERR-1");
+            ToastService.error(w, t("clientes.error.nif_duplicado"), "CLI-ERR-1");
         } else {
             new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
         }
