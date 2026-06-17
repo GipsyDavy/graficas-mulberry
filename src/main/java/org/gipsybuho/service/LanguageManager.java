@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.Locale;
 import java.util.MissingResourceException;
@@ -39,6 +40,11 @@ public final class LanguageManager {
         } catch (MissingResourceException e) {
             return "[" + key + "]";
         }
+    }
+
+    /** Shorthand con formato: import static ...LanguageManager.tf */
+    public static String tf(String key, Object... args) {
+        return MessageFormat.format(t(key), args);
     }
 
     public String getIdioma() {

@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-16 (sesión cierre — HelpService compras — 146/146)
+**Última actualización:** 2026-06-17 (sesión cierre — Sprint i18n-3 — 151/151)
 
 ---
 
@@ -19,64 +19,76 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-16
+### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-3)
 
-**HEAD:** `1947fbc` (feat i18n Sprint i18n-0). Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `ver git log --oneline -1` (este commit cierra i18n-3). Rama: `master`. Tests: **151/151 verdes**.
 
-**Sprint cerrado esta sesión:**
+**Sprints cerrados esta sesión:**
 
-| Commit | Sprint | Descripción |
-|---|---|---|
-| `7ae2a79` | HelpService compras | 5 artículos HTML en `compras/` + entradas en `index.json` |
-| `8cdef34` | docs | STATE.md actualizado |
+| Sprint | Descripción |
+|---|---|
+| i18n-3 | MainView migrada — sidebar, footer, tooltips, diálogos, asistente visual (~60 claves nav.* + main.*) |
 
-**Qué se hizo:**
-- Creados `src/main/resources/org/gipsybuho/help/compras/CMP-PS-1.html`, `CMP-PS-2.html`, `CMP-REF-1.html`, `CMP-FAQ-1.html`, `CMP-ERR-1.html`.
-- Añadidas 5 entradas en `index.json` con módulo `"compras"`.
-- F1 desde `ComprasProveedorView` ahora abre ayuda específica del módulo (antes abría ayuda general).
-- Sin tocar código Java. Sin Multi-IA. VibeSec: N/A (recursos estáticos).
+**Estado del sistema i18n al cierre:**
 
-**Arquitectura actual — módulos activos en sidebar:**
+- `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
+- `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-3: `messages_{es,en,ca,eu,gl,fr}.properties`.
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, **`MainView`**.
+- Vistas pendientes de migrar: módulos (ClientesView, FacturasView, PedidosView, AlbaranesView, PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.).
+
+**Decisión arquitectónica crítica de i18n-3 (respetar en sprints futuros):**
+
+`TITULO_A_MODULO` usa **claves i18n** como keys del mapa (p.ej. `"nav.clientes"`, no `"Clientes"`). Esto es obligatorio: si el mapa usara strings traducidos, la lookup fallaría en idiomas distintos del español. Todos los callers de `mostrarVista()` pasan la clave i18n, no el texto traducido. Dentro de `mostrarVista()` se llama `t(titulo)` para el asistente visual y los títulos de ventana popup.
+
+**Claves i18n ya definidas en los bundles (resumen acumulado):**
+- `lang.*` — nombres de idiomas (6 claves)
+- `config.idioma.*` — panel selector de idioma (3)
+- `common.*` — labels/prompts/errores comunes (8)
+- `login.*` — LoginView (9) + `login.recovery.*` (7)
+- `admin.*` — AdminSetupView (6)
+- `config.*` — ConfiguracionView completa (~95 claves)
+- `nav.*` — módulos sidebar + grupos + tooltips (~35 claves)
+- `main.*` — footer, búsqueda, sesión, menú ctx, diálogos, asistente (~25 claves)
+
+**Patrón de migración establecido (repetir en i18n-4+):**
+```java
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+// Luego: new Label("Texto") → new Label(t("clave"))
+//        new Button("Texto") → new Button(t("clave"))
+//        mostrarToast("Texto") → mostrarToast(t("clave"))
+//        "Texto " + var → tf("clave.con.{0}", var)
 ```
-CLIENTES:   Clientes, Tarifas
-COMERCIAL:  Presupuestos, Pedidos, Albaranes, Facturas, Materiales, Compras
-PERSONAL:   Empleados, Nóminas
-ANALÍTICA:  Estadísticas, Calendario, Asistente
-```
-
-**Patrón de vistas — hint bars:**
-- Tienen `buildBeginnerHint()`: ClientesView, FacturasView, PedidosView, MaterialesView, EmpleadosView, ComprasProveedorView.
-- NO tienen hint bar todavía: TarifasView, AlbaranesView, PresupuestosView, NominasView, EstadisticasView, CalendarioView.
-- Patrón: `hint.visibleProperty().bind(PreferenceService.getInstance().beginnerModeProperty())` + `managedProperty().bind(...)`.
-
-**Permiso COMPRAS:**
-- `UserPermissions.COMPRAS = "compras"` → ADMINISTRADOR, PRODUCCION, CONTABILIDAD.
-- COMERCIAL NO tiene permiso (mínimo privilegio — decisión Gemini).
-- Usuarios existentes con permisos personalizados en BD NO reciben COMPRAS automáticamente. Admin debe reasignar desde Gestión de Usuarios si es necesario.
+**ATENCIÓN naming conflict:** si la vista tiene `TextField tf` o loop var `Tema t` / similar, renombrar a `field`/`tema` para evitar shadowing con `import static tf` / `t`.
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `8cdef34`. Tests: 146/146. App funcional. Cola despejada de pendientes menores.
+**HEAD:** `ver git log --oneline -1`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-1+** — migración de strings de UI módulo a módulo (LoginView primero). `import static LanguageManager.t` + reemplazar literales. Un módulo por sprint.
-2. **Refactor B2** — inyección de Connection en DAOs. Tarea grande, riesgo alto (afecta todos los DAOs). Requiere Gemini ANTES.
+1. **Sprint i18n-4** — migrar vistas de módulo. Candidatos por impacto: `ClientesView`, `FacturasView`, `PedidosView`. Un módulo por sprint. Mismo patrón que i18n-1/i18n-2/i18n-3.
+   - Antes de empezar: añadir claves al bundle `messages_es.properties` (base), traducir en los otros 5, luego migrar la vista Java.
+2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
 cd "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
-.\mvnw.cmd test   # debe dar 146/146 BUILD SUCCESS
+.\mvnw.cmd test   # debe dar 151/151 BUILD SUCCESS
 git log --oneline -5
 ```
 
-**Archivos clave del sistema de ayuda (para referencia al siguiente agente):**
-- `src/main/resources/org/gipsybuho/help/index.json` — índice de todos los artículos.
-- `src/main/resources/org/gipsybuho/help/compras/` — 5 artículos nuevos de esta sesión.
-- `src/main/java/org/gipsybuho/service/HelpService.java` — lee `index.json` + sirve por módulo.
-- `src/main/java/org/gipsybuho/ui/MainView.java` línea ~48 — `TITULO_A_MODULO` mapea título de vista → módulo de ayuda.
+**Archivos clave del sistema i18n (para referencia al siguiente agente):**
+- `src/main/java/org/gipsybuho/service/LanguageManager.java` — singleton, `t()`, `tf()`, fallback ES, UTF-8.
+- `src/main/resources/org/gipsybuho/i18n/messages_es.properties` — bundle base (fuente de verdad de claves).
+- `src/main/resources/org/gipsybuho/i18n/messages_{en,ca,eu,gl,fr}.properties` — traducciones.
+- `src/test/java/org/gipsybuho/service/LanguageManagerTest.java` — 5 tests.
 
 ### Decisiones tomadas esta sesión que el próximo agente debe respetar
-- COMERCIAL no tiene permiso COMPRAS — decisión deliberada por mínimo privilegio (Gemini).
+- Hot-swap de idioma NO implementado — requiere reinicio de app. Decisión intencional (complejidad vs. beneficio).
+- French apostrophes: `''` solo en strings con `{0}` usados via `tf()`. Strings sin `{0}` usan `'` literal.
+- `TamanoFuente.key` guarda claves i18n (no labels) y `t(ts.key())` se llama en tiempo de build, no en clase-load. Intencional para correcta resolución de idioma activo.
+- COMERCIAL no tiene permiso COMPRAS — decisión deliberada por mínimo privilegio (Gemini, sesión anterior).
 - Tab pagos en MaterialesView NO se toca — ambas vistas coexisten sobre el mismo DAO.
 - Singleton `PreferenceService` se resetea en tests via reflexión — no modificar código de producción para test isolation.
 
@@ -445,41 +457,41 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `d243cbe` |
-| Mensaje | `feat(ui): añadir módulo Compras a Proveedor (GAP-5)` |
+| HEAD | commit i18n-3 (ver `git log --oneline -1`) |
+| Mensaje | `feat(i18n): migrar MainView a LanguageManager — Sprint i18n-3` |
 | Rama | `master` |
-| Tests | 146/146 verdes (`.\mvnw.cmd test`) |
+| Tests | 151/151 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
 
 ---
 
 ## Sprint activo
 
+**Sprint i18n-3** — ✅ CERRADO. MainView migrada (~60 claves nav.* + main.*). TITULO_A_MODULO fix. tf() formal. 151/151.
+
+**Sprint i18n-2** — ✅ CERRADO. ConfiguracionView migrada. 6 bundles completos. HEAD `6957681`.
+
+**Sprint i18n-1** — ✅ CERRADO. LoginView + AdminSetupView migrados. Bundles eu/gl/fr ~40 claves. HEAD `a035fe8`.
+
+**Sprint i18n-0** — ✅ CERRADO. Infraestructura LanguageManager + 6 bundles base. HEAD `1947fbc`.
+
 **Sprint RELEASE-GATE MANUAL** — ✅ CERRADO. 35/37 PASS, 1 SKIP.
 
-**Sprint Backlog GAPs** — ✅ CERRADO. GAP-1/2/3/6/7 implementados. GAP-4 sin acción (comportamiento seguro). GAP-5/8 largo plazo.
+**Sprint Backlog GAPs** — ✅ CERRADO. GAP-1/2/3/6/7 implementados.
 
-**Sprint UI-E** — ✅ CERRADO. Todos los ítems implementados (1/2/3/4/5/6/7).
+**Sprint UI-E/F** — ✅ CERRADO. Animaciones, pill sidebar, contadores.
 
-**Sprint UI-F** — ✅ CERRADO. Animación de filas extendida a los 9 módulos.
+**Sprint GAP-5 (Compras a Proveedor)** — ✅ CERRADO. ComprasProveedorView. HEAD `d243cbe`.
 
-**Sprint UI-COUNTER** — ✅ CERRADO. `lblContador` en los 9 módulos. HEAD `d93dc76`.
+**Sprint HelpService compras** — ✅ CERRADO. 5 artículos HTML. F1 vinculado. HEAD `7ae2a79`.
 
-**Sprint A (hint bars)** — ✅ CERRADO. `buildBeginnerHint()` en Facturas, Pedidos, Materiales, Empleados. HEAD `cd91f15`.
-
-**Sprint B (PreferenceServiceTest)** — ✅ CERRADO. 4 tests, BD efímera, reset singleton. HEAD `74910eb`.
-
-**Sprint GAP-5 (Compras a Proveedor)** — ✅ CERRADO. ComprasProveedorView standalone. Permiso COMPRAS en 3 roles. HEAD `d243cbe`.
-
-**Sprint HelpService compras** — ✅ CERRADO. 5 artículos HTML en `compras/`. F1 vinculado al módulo. HEAD `7ae2a79`.
-
-**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD. Test data eliminada. UNION_PAPELERA normalizado.
+**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD.
 
 ---
 
 ## Cola prioritaria
 
-1. **GAP-8**: Soporte multiidioma EN/CA/GL/EU (largo plazo). Requiere Gemini ANTES.
+1. **Sprint i18n-4** — migrar vistas de módulo (ClientesView, FacturasView, PedidosView…). Mismo patrón que i18n-3.
 2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
 
 ---
@@ -488,27 +500,27 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-3 | commit i18n-3 | MainView: sidebar, footer, tooltips, diálogos, asistente (~60 claves); TITULO_A_MODULO fix; tf() formal |
+| i18n-2 | `6957681` | ConfiguracionView: ~80 literales → t()/tf(); bundles eu/gl/fr config.* |
+| i18n-1 | `a035fe8` | LoginView + AdminSetupView migrados; bundles eu/gl/fr ~40 claves |
+| i18n-0 | `1947fbc` | LanguageManager + 6 bundles base; ConfiguracionView.buildPanelIdioma() |
+| HelpService compras | `7ae2a79` | 5 artículos HTML compras/; F1 vinculado al módulo |
 | SECURITY-2026-06-13 | `6268479` | Auditoría + remediación completa SEC-01..10 + NEW-01..03 |
 | HELP-5 | `610a0f2` | PreferenceService, OnboardingDialog, modo principiante, hint bar |
 | HELP-4-FIX | `4117cdf` | DDL UNIQUE constraints, factorías estáticas HelpView, tests |
-| HELP-4 | — | ToastService con enlace artículo; HelpView inline en MainView |
 | HELP-3 | `67f7d4e` | F1 contextual por módulo |
 | HELP-2 | `47e46dc` | HelpService + HelpView JavaFX |
 | HELP-1 | `65588cf` | 81 artículos HTML offline |
-| HELP-0 | `39d060e` | HELP-SPEC.md — spec completa del sistema de ayuda |
-| Sprint GAP-5 (Compras a Proveedor) | `d243cbe` | ComprasProveedorView — permiso COMPRAS en ADMIN+PRODUCCION+CONTABILIDAD |
-| Sprint B (PreferenceServiceTest) | `74910eb` | 4 tests BD efímera — reset singleton por reflexión |
-| Sprint A (hint bars) | `cd91f15` | buildBeginnerHint() en Facturas, Pedidos, Materiales, Empleados |
-| Sprint UI-COUNTER | `d93dc76` | lblContador en los 9 módulos — texto muted entre buscador y spacer |
+| Sprint GAP-5 | `d243cbe` | ComprasProveedorView — permiso COMPRAS en ADMIN+PRODUCCION+CONTABILIDAD |
+| Sprint B | `74910eb` | 4 tests BD efímera — reset singleton por reflexión |
+| Sprint A | `cd91f15` | buildBeginnerHint() en Facturas, Pedidos, Materiales, Empleados |
+| Sprint UI-COUNTER | `d93dc76` | lblContador en los 9 módulos |
 | Sprint UI-F | `85152bd` | Animación de filas extendida a todos los módulos |
-| Sprint UI-E ítems 1-3 | `3bd6e1e` | CSS elevación + KPI animados + filas escalonadas (Clientes/Facturas/Pedidos) |
-| Sprint UI-E (slide+fade) | `0bb8c8b` | slide+fade en mostrarVista (220ms, EASE_OUT, +24px X) |
-| Sprint UI-A/B/C/D | varios | CSS variables, FadeTransition, IAView, skeleton+overlay |
-| Sprint SEC | — | 5 fixes seguridad P0/P1 |
-| Sprint COD | — | Dead code eliminado |
+| Sprint UI-E | `3bd6e1e` | CSS elevación + KPI animados + filas escalonadas + pill sidebar |
 
 ---
 
 ## Deuda técnica conocida
 
+- i18n: vistas de módulo pendientes de migrar (ClientesView, FacturasView, PedidosView, AlbaranesView, PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView)
 - Refactor B2: inyección de Connection en DAOs (largo plazo)

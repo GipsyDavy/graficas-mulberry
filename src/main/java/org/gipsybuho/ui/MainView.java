@@ -42,29 +42,32 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Supplier;
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 
 public class MainView extends BorderPane {
 
     private static final Map<String, String> TITULO_A_MODULO = Map.ofEntries(
-        Map.entry("Inicio",                 "general"),
-        Map.entry("Panel principal",        "general"),
-        Map.entry("Clientes",               "clientes"),
-        Map.entry("Tarifas",                "tarifas"),
-        Map.entry("Presupuestos",           "presupuestos"),
-        Map.entry("Pedidos",                "pedidos"),
-        Map.entry("Albaranes",              "albaranes"),
-        Map.entry("Facturas",               "facturas"),
-        Map.entry("Materiales",             "materiales"),
-        Map.entry("Empleados",              "empleados"),
-        Map.entry("Nóminas",                "nominas"),
-        Map.entry("Estadísticas",           "estadisticas"),
-        Map.entry("Calendario",             "calendario"),
-        Map.entry("Asistente IA",           "ia"),
-        Map.entry("Copia de seguridad",     "backups"),
-        Map.entry("Exportar base de datos", "exportacion"),
-        Map.entry("Configuración",          "configuracion"),
-        Map.entry("Gestión de usuarios",    "usuarios"),
-        Map.entry("Compras",                "compras")
+        Map.entry("nav.inicio",               "general"),
+        Map.entry("nav.panel",                "general"),
+        Map.entry("nav.clientes",             "clientes"),
+        Map.entry("nav.tarifas",              "tarifas"),
+        Map.entry("nav.presupuestos",         "presupuestos"),
+        Map.entry("nav.pedidos",              "pedidos"),
+        Map.entry("nav.albaranes",            "albaranes"),
+        Map.entry("nav.facturas",             "facturas"),
+        Map.entry("nav.materiales",           "materiales"),
+        Map.entry("nav.compras",              "compras"),
+        Map.entry("nav.empleados",            "empleados"),
+        Map.entry("nav.nominas",              "nominas"),
+        Map.entry("nav.estadisticas",         "estadisticas"),
+        Map.entry("nav.calendario",           "calendario"),
+        Map.entry("nav.asistente",            "ia"),
+        Map.entry("main.footer.backup",       "backups"),
+        Map.entry("main.footer.exportar",     "exportacion"),
+        Map.entry("main.footer.configuracion","configuracion"),
+        Map.entry("main.footer.usuarios",     "usuarios"),
+        Map.entry("nav.ayuda",                "general")
     );
 
     private final StackPane contentArea = new StackPane();
@@ -88,7 +91,7 @@ public class MainView extends BorderPane {
         this.onLogout = onLogout;
         this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
-        ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "Ayuda"));
+        ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "nav.ayuda"));
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
         getStyleClass().add("main-view");
@@ -98,14 +101,14 @@ public class MainView extends BorderPane {
                 e.consume();
             }
             if (e.getCode() == KeyCode.F1) {
-                mostrarVista(HelpView.forModule(currentModuleId), "Ayuda");
+                mostrarVista(HelpView.forModule(currentModuleId), "nav.ayuda");
                 e.consume();
             }
         });
         if (loggedInUser.hasPermission(UserPermissions.DASHBOARD)) {
-            mostrarVista(new DashboardView(), "Panel principal");
+            mostrarVista(new DashboardView(), "nav.panel");
         } else {
-            mostrarVista(accesoLimitado(), "Inicio");
+            mostrarVista(accesoLimitado(), "nav.inicio");
         }
     }
 
@@ -135,7 +138,7 @@ public class MainView extends BorderPane {
         Button btnCollapse = new Button();
         btnCollapse.setGraphic(collapseArrow);
         btnCollapse.getStyleClass().add("sidebar-collapse-btn");
-        Tooltip.install(btnCollapse, new Tooltip("Colapsar / expandir la barra lateral"));
+        Tooltip.install(btnCollapse, new Tooltip(t("main.sidebar.colapsar")));
         btnCollapse.setOnAction(e -> {
             sidebarCollapsed = !sidebarCollapsed;
             if (sidebarCollapsed) {
@@ -162,9 +165,9 @@ public class MainView extends BorderPane {
         sidebar.getChildren().add(userInfoLabel);
 
         String lastLoginText = loggedInUser.getLastLogin() == null
-            ? "Primera sesión"
-            : "Última sesión: " + loggedInUser.getLastLogin()
-                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"));
+            ? t("main.sesion.primera")
+            : tf("main.sesion.ultima", loggedInUser.getLastLogin()
+                .format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         Label lastLoginLabel = new Label(lastLoginText);
         lastLoginLabel.getStyleClass().add("sidebar-version");
         VBox.setMargin(lastLoginLabel, new Insets(2, 0, 0, 12));
@@ -178,9 +181,9 @@ public class MainView extends BorderPane {
 
         // Buscador de módulos (Ctrl+K)
         tfBusqueda = new TextField();
-        tfBusqueda.setPromptText("Buscar módulo… (Esc para cerrar)");
+        tfBusqueda.setPromptText(t("main.search.prompt"));
         tfBusqueda.getStyleClass().add("sidebar-search");
-        tfBusqueda.setTooltip(new Tooltip("Buscar módulo · Esc para cerrar (Ctrl+K)"));
+        tfBusqueda.setTooltip(new Tooltip(t("main.search.tooltip")));
         tfBusqueda.setVisible(false);
         tfBusqueda.setManaged(false);
         tfBusqueda.setOnKeyPressed(e -> {
@@ -191,29 +194,29 @@ public class MainView extends BorderPane {
         // ── Botones de navegación dentro de ScrollPane ───────────────────
         VBox navMenu = new VBox();
         addIfPermiso(navMenu, UserPermissions.DASHBOARD,
-            navBtn(Icons.home(), "Inicio", DashboardView::new));
+            navBtn(Icons.home(), "nav.inicio", DashboardView::new));
         navMenu.getChildren().addAll(
-            navGrupo("CLIENTES",
-                navBtn(UserPermissions.CLIENTES, Icons.users(), "Clientes", ClientesView::new),
-                navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "Tarifas",  TarifasView::new)
+            navGrupo(t("nav.grupo.clientes"),
+                navBtn(UserPermissions.CLIENTES, Icons.users(), "nav.clientes", ClientesView::new),
+                navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "nav.tarifas",  TarifasView::new)
             ),
-            navGrupo("COMERCIAL",
-                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(),  "Presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),        "Pedidos",      PedidosView::new),
-                navBtn(UserPermissions.ALBARANES,    Icons.file(),        "Albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),     "Facturas",     FacturasView::new),
-                navBtn(UserPermissions.MATERIALES,   Icons.layers(),      "Materiales",   MaterialesView::new),
-                navBtn(UserPermissions.COMPRAS,      Icons.shoppingBag(), "Compras",      ComprasProveedorView::new)
+            navGrupo(t("nav.grupo.comercial"),
+                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(),  "nav.presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),        "nav.pedidos",      PedidosView::new),
+                navBtn(UserPermissions.ALBARANES,    Icons.file(),        "nav.albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),     "nav.facturas",     FacturasView::new),
+                navBtn(UserPermissions.MATERIALES,   Icons.layers(),      "nav.materiales",   MaterialesView::new),
+                navBtn(UserPermissions.COMPRAS,      Icons.shoppingBag(), "nav.compras",      ComprasProveedorView::new)
             ),
-            navGrupo("PERSONAL",
-                navBtn(UserPermissions.EMPLEADOS, Icons.person(), "Empleados", EmpleadosView::new),
-                navBtn(UserPermissions.NOMINAS,   Icons.work(),   "Nóminas",   NominasView::new)
+            navGrupo(t("nav.grupo.personal"),
+                navBtn(UserPermissions.EMPLEADOS, Icons.person(), "nav.empleados", EmpleadosView::new),
+                navBtn(UserPermissions.NOMINAS,   Icons.work(),   "nav.nominas",   NominasView::new)
             ),
-            navGrupo("ANALÍTICA",
-                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(), "Estadísticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "Calendario",   CalendarioView::new),
-                navBtn(UserPermissions.IA, Icons.robot(), "Asistente",
-                    () -> mostrarVista(iaView, "Asistente IA"),
+            navGrupo(t("nav.grupo.analitica"),
+                navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(), "nav.estadisticas", EstadisticasView::new),
+                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "nav.calendario",   CalendarioView::new),
+                navBtn(UserPermissions.IA, Icons.robot(), "nav.asistente",
+                    () -> mostrarVista(iaView, "nav.asistente"),
                     IAView::new)
             )
         );
@@ -251,36 +254,36 @@ public class MainView extends BorderPane {
         footerIconos.setAlignment(Pos.CENTER_LEFT);
 
         if (loggedInUser.hasPermission(UserPermissions.IMPORTAR_BACKUP)) {
-            Button btnBackup = buildFooterBtn(Icons.download(), "Copia de seguridad",
-                () -> mostrarVista(new ImportBackupView(), "Copia de seguridad"),
+            Button btnBackup = buildFooterBtn(Icons.download(), "main.footer.backup",
+                () -> mostrarVista(new ImportBackupView(), "main.footer.backup"),
                 ImportBackupView::new);
             footerIconos.getChildren().add(btnBackup);
         }
         if (loggedInUser.hasPermission(UserPermissions.EXPORTAR_BACKUP)) {
-            Button btnExport = buildFooterBtn(Icons.upload(), "Exportar base de datos",
-                () -> mostrarVista(new ExportView(), "Exportar base de datos"),
+            Button btnExport = buildFooterBtn(Icons.upload(), "main.footer.exportar",
+                () -> mostrarVista(new ExportView(), "main.footer.exportar"),
                 ExportView::new);
             footerIconos.getChildren().add(btnExport);
         }
         if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
-            Button btnConfig = buildFooterBtn(Icons.settings(), "Configuración",
-                () -> mostrarVista(new ConfiguracionView(visualAssistant), "Configuración"),
+            Button btnConfig = buildFooterBtn(Icons.settings(), "main.footer.configuracion",
+                () -> mostrarVista(new ConfiguracionView(visualAssistant), "main.footer.configuracion"),
                 () -> new ConfiguracionView(visualAssistant));
             footerIconos.getChildren().add(btnConfig);
         }
         if (loggedInUser.isAdmin()) {
-            Button btnUsers = buildFooterBtn(Icons.users(), "Gestión de usuarios",
-                () -> mostrarVista(new UserManagementView(authService, loggedInUser), "Gestión de usuarios"),
+            Button btnUsers = buildFooterBtn(Icons.users(), "main.footer.usuarios",
+                () -> mostrarVista(new UserManagementView(authService, loggedInUser), "main.footer.usuarios"),
                 () -> new UserManagementView(authService, loggedInUser));
             footerIconos.getChildren().add(btnUsers);
         }
 
-        Button btnCerrarApp = new Button("Salir");
+        Button btnCerrarApp = new Button(t("main.footer.salir"));
         btnCerrarApp.setGraphic(Icons.power());
         btnCerrarApp.setGraphicTextGap(8);
         btnCerrarApp.getStyleClass().add("sidebar-exit-btn");
         btnCerrarApp.setMaxWidth(Double.MAX_VALUE);
-        btnCerrarApp.setTooltip(new Tooltip("Cerrar la aplicación"));
+        btnCerrarApp.setTooltip(new Tooltip(t("main.footer.salir.tooltip")));
         btnCerrarApp.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
         btnCerrarApp.setOnAction(e -> {
             if (confirmarSalida()) {
@@ -291,12 +294,12 @@ public class MainView extends BorderPane {
         Button btnLogout = new Button();
         btnLogout.setGraphic(Icons.logout());
         btnLogout.getStyleClass().add("sidebar-footer-btn");
-        Tooltip.install(btnLogout, new Tooltip("Cerrar sesión"));
+        Tooltip.install(btnLogout, new Tooltip(t("main.footer.logout.tooltip")));
         btnLogout.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
         btnLogout.setOnAction(e -> {
             Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
-                "¿Deseas cerrar sesión?", ButtonType.YES, ButtonType.NO);
-            confirmacion.setTitle("Cerrar sesión");
+                t("main.dialogo.logout.pregunta"), ButtonType.YES, ButtonType.NO);
+            confirmacion.setTitle(t("main.dialogo.logout.titulo"));
             confirmacion.setHeaderText(null);
             confirmacion.initOwner(primaryStage);
             confirmacion.showAndWait()
@@ -305,8 +308,8 @@ public class MainView extends BorderPane {
         });
         footerIconos.getChildren().add(btnLogout);
 
-        Button btnHelp = buildFooterBtn(Icons.help(), "Centro de ayuda",
-            () -> mostrarVista(new HelpView(), "Ayuda"),
+        Button btnHelp = buildFooterBtn(Icons.help(), "main.footer.ayuda",
+            () -> mostrarVista(new HelpView(), "nav.ayuda"),
             HelpView::new);
         footerIconos.getChildren().add(btnHelp);
 
@@ -315,7 +318,7 @@ public class MainView extends BorderPane {
         }
         sidebar.getChildren().add(btnCerrarApp);
 
-        Label version = new Label(AppConstants.APP_VERSION + " · Almería, España");
+        Label version = new Label(AppConstants.APP_VERSION + " · " + t("main.version.lugar"));
         version.getStyleClass().add("sidebar-version");
         VBox.setMargin(version, new Insets(0, 0, 8, 0));
         sidebar.getChildren().add(version);
@@ -328,7 +331,7 @@ public class MainView extends BorderPane {
         Button btn = new Button();
         btn.setGraphic(icon);
         btn.getStyleClass().add("sidebar-footer-btn");
-        Tooltip tip = new Tooltip(tooltipText + "\n\nClic derecho → Abrir en ventana aparte");
+        Tooltip tip = new Tooltip(t(tooltipText) + t("main.footer.popup.suffix"));
         tip.setStyle("-fx-font-size:11;");
         Tooltip.install(btn, tip);
         btn.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
@@ -337,13 +340,13 @@ public class MainView extends BorderPane {
             accion.run();
         });
         ContextMenu ctx = new ContextMenu();
-        MenuItem miVentana = new MenuItem("🪟  Abrir en ventana aparte");
+        MenuItem miVentana = new MenuItem(t("main.ctx.abrir_ventana"));
         miVentana.setStyle("-fx-font-weight: bold;");
         miVentana.setOnAction(e -> {
             SoundService.play(SoundService.Sound.WINDOW_OPEN);
             List<String> css = getScene() != null
                 ? new ArrayList<>(getScene().getStylesheets()) : List.of();
-            ModuloWindowManager.abrirEnVentana(tooltipText, popupFactory, css,
+            ModuloWindowManager.abrirEnVentana(t(tooltipText), popupFactory, css,
                 visualAssistant::instalarAyudaAutomatica);
         });
         ctx.getItems().add(miVentana);
@@ -352,7 +355,7 @@ public class MainView extends BorderPane {
     }
 
     private void actualizarBotonAsistente(Label label) {
-        label.setText(visualAssistant.isActivo() ? "Desactivar asistente" : "Activar asistente");
+        label.setText(visualAssistant.isActivo() ? t("main.asistente.desactivar") : t("main.asistente.activar"));
     }
 
     private StackPane buildBotonAsistenteVisual() {
@@ -378,11 +381,11 @@ public class MainView extends BorderPane {
     public boolean confirmarSalida() {
         Alert confirmacion = new Alert(
             Alert.AlertType.CONFIRMATION,
-            "¿Deseas cerrar la aplicación?",
+            t("main.dialogo.salir.pregunta"),
             ButtonType.YES,
             ButtonType.NO
         );
-        confirmacion.setTitle("Salir");
+        confirmacion.setTitle(t("main.dialogo.salir.titulo"));
         confirmacion.setHeaderText(null);
         if (getScene() != null) {
             confirmacion.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -412,7 +415,7 @@ public class MainView extends BorderPane {
     }
 
     private javafx.scene.Parent accesoLimitado() {
-        Label label = new Label("No tienes módulos asignados. Contacta con el administrador.");
+        Label label = new Label(t("main.acceso_limitado"));
         label.getStyleClass().add("view-title");
         javafx.scene.layout.StackPane pane = new javafx.scene.layout.StackPane(label);
         pane.setPadding(new Insets(24));
@@ -436,7 +439,7 @@ public class MainView extends BorderPane {
 
     private StackPane navBtnImpl(Node icon, String texto, Runnable accionPrincipal,
                                   Supplier<javafx.scene.Parent> popupFactory, String titulo) {
-        Label lbl = new Label(texto);
+        Label lbl = new Label(t(texto));
         if (icon != null) {
             lbl.setGraphic(icon);
             lbl.setGraphicTextGap(10);
@@ -449,23 +452,24 @@ public class MainView extends BorderPane {
         pane.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
         String tipDesc = switch (texto) {
-            case "Inicio"       -> "Panel de resumen: actividad, facturas y stock";
-            case "Clientes"     -> "Gestionar clientes de la empresa";
-            case "Tarifas"      -> "Precios y técnicas de impresión";
-            case "Presupuestos" -> "Crear y gestionar presupuestos";
-            case "Pedidos"      -> "Control de pedidos y pagos";
-            case "Albaranes"    -> "Albaranes de entrega";
-            case "Facturas"     -> "Facturación y cobros";
-            case "Materiales"   -> "Stock de materiales y proveedores";
-            case "Empleados"    -> "Datos y gestión de empleados";
-            case "Nóminas"      -> "Nóminas mensuales del personal";
-            case "Estadísticas" -> "Gráficos e informes de actividad";
-            case "Calendario"   -> "Agenda y recordatorios";
-            case "Importación"  -> "Importación asistida de datos con mapeo y modo expandido";
-            case "Asistente"    -> "Asistente IA (requiere Ollama)";
-            default             -> texto;
+            case "nav.inicio"       -> t("nav.tooltip.inicio");
+            case "nav.clientes"     -> t("nav.tooltip.clientes");
+            case "nav.tarifas"      -> t("nav.tooltip.tarifas");
+            case "nav.presupuestos" -> t("nav.tooltip.presupuestos");
+            case "nav.pedidos"      -> t("nav.tooltip.pedidos");
+            case "nav.albaranes"    -> t("nav.tooltip.albaranes");
+            case "nav.facturas"     -> t("nav.tooltip.facturas");
+            case "nav.materiales"   -> t("nav.tooltip.materiales");
+            case "nav.compras"      -> t("nav.tooltip.compras");
+            case "nav.empleados"    -> t("nav.tooltip.empleados");
+            case "nav.nominas"      -> t("nav.tooltip.nominas");
+            case "nav.estadisticas" -> t("nav.tooltip.estadisticas");
+            case "nav.calendario"   -> t("nav.tooltip.calendario");
+            case "nav.importacion"  -> t("nav.tooltip.importacion");
+            case "nav.asistente"    -> t("nav.tooltip.asistente");
+            default                 -> t(texto);
         };
-        Tooltip tip = new Tooltip(tipDesc + "\n\nClic derecho → Abrir en ventana aparte");
+        Tooltip tip = new Tooltip(tipDesc + t("main.footer.popup.suffix"));
         tip.setStyle("-fx-font-size:11;");
         Tooltip.install(pane, tip);
 
@@ -494,22 +498,22 @@ public class MainView extends BorderPane {
         ContextMenu ctx = new ContextMenu();
 
         // Elemento principal
-        MenuItem miVentana = new MenuItem("🪟  Abrir en ventana aparte");
+        MenuItem miVentana = new MenuItem(t("main.ctx.abrir_ventana"));
         miVentana.setStyle("-fx-font-weight: bold;");
         miVentana.setOnAction(e -> {
             SoundService.play(SoundService.Sound.WINDOW_OPEN);
-            visualAssistant.decir("Ventana emergente: este módulo se abre separado para que puedas trabajar sin perder la pantalla actual.");
+            visualAssistant.decir(t("main.asistente.ventana"));
             List<String> css = getScene() != null
                 ? new ArrayList<>(getScene().getStylesheets())
                 : List.of();
-            ModuloWindowManager.abrirEnVentana(titulo, factory, css, visualAssistant::instalarAyudaAutomatica);
+            ModuloWindowManager.abrirEnVentana(t(titulo), factory, css, visualAssistant::instalarAyudaAutomatica);
         });
 
         ctx.getItems().add(miVentana);
         ctx.getItems().add(new SeparatorMenuItem());
 
         // Elemento secundario: abrir en área principal y marcar activo
-        MenuItem miPrincipal = new MenuItem("↩  Abrir en área principal");
+        MenuItem miPrincipal = new MenuItem(t("main.ctx.abrir_principal"));
         miPrincipal.setOnAction(e -> {
             SoundService.play(SoundService.Sound.NAVIGATE);
             sidebar.lookupAll(".nav-btn-pane")
@@ -575,8 +579,8 @@ public class MainView extends BorderPane {
                     ftGroup.play();
                 }
                 visualAssistant.decir(expand
-                    ? "Grupo " + titulo + ": aquí tienes los módulos relacionados con esta área."
-                    : "Grupo " + titulo + " contraído.");
+                    ? tf("main.asistente.grupo.expandir", titulo)
+                    : tf("main.asistente.grupo.contraer", titulo));
             }
         });
 
@@ -682,7 +686,7 @@ public class MainView extends BorderPane {
             visualAssistant.instalarAyudaAutomatica(parent);
         }
         SoundService.play(SoundService.Sound.WINDOW_OPEN);
-        visualAssistant.decirModulo(titulo);
+        visualAssistant.decirModulo(t(titulo));
     }
 
 }
