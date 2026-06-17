@@ -38,6 +38,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 
 public class AlbaranesView extends VBox {
 
@@ -67,7 +69,7 @@ public class AlbaranesView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Albaranes");
+        Label titulo = new Label(t("albaranes.titulo"));
         titulo.getStyleClass().add("view-title");
 
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
@@ -77,30 +79,30 @@ public class AlbaranesView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
-        Button btnEditar   = btn("✏ Editar", this::editar);
-        Button btnFirmado  = btn("✅ Marcar firmado", this::marcarFirmado);
-        Button btnFacturar = btn("🧾 Crear Factura", this::crearFactura);
-        Button btnImportar = btn("📥 Importar", this::importar);
-        Button btnExportar = btn("📤 Exportar", this::exportar);
-        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo albarán de entrega"));
-        btnEditar.setTooltip(new Tooltip("Editar el albarán seleccionado"));
-        btnFirmado.setTooltip(new Tooltip("Marcar el albarán como firmado por el cliente"));
-        btnFacturar.setTooltip(new Tooltip("Generar factura desde este albarán (precios en 0, editar tras crear)"));
-        btnImportar.setTooltip(new Tooltip("Importar albaranes desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar albaranes a PDF, Excel u otros formatos"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar el albarán seleccionado"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar el albarán en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNuevo    = btn(t("albaranes.btn.nuevo"),          this::nuevo);
+        Button btnEditar   = btn(t("albaranes.btn.editar"),          this::editar);
+        Button btnFirmado  = btn(t("albaranes.btn.marcar_firmado"),  this::marcarFirmado);
+        Button btnFacturar = btn(t("albaranes.btn.crear_factura"),   this::crearFactura);
+        Button btnImportar = btn(t("albaranes.btn.importar"),        this::importar);
+        Button btnExportar = btn(t("albaranes.btn.exportar"),        this::exportar);
+        Button btnBorrar   = btn(t("albaranes.btn.borrar"),          this::borrar);
+        Button btnPreview    = btn(t("albaranes.btn.previsualizar"), this::previsualizar);
+        Button btnColumnas   = btn(t("albaranes.btn.columnas"),      dynamicColumns::configure);
+        btnNuevo.setTooltip(new Tooltip(t("albaranes.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("albaranes.btn.editar.tip")));
+        btnFirmado.setTooltip(new Tooltip(t("albaranes.btn.marcar_firmado.tip")));
+        btnFacturar.setTooltip(new Tooltip(t("albaranes.btn.crear_factura.tip")));
+        btnImportar.setTooltip(new Tooltip(t("albaranes.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("albaranes.btn.exportar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("albaranes.btn.borrar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("albaranes.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("albaranes.btn.columnas.tip")));
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por número, cliente…");
+        txtBuscar.setPromptText(t("albaranes.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip("Buscar por número de albarán o nombre de cliente"));
+        txtBuscar.setTooltip(new Tooltip(t("albaranes.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -115,7 +117,7 @@ public class AlbaranesView extends VBox {
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<Albaran, String> colEstado = new TableColumn<>("Estado");
+        TableColumn<Albaran, String> colEstado = new TableColumn<>(t("albaranes.tabla.col.estado"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
@@ -133,14 +135,14 @@ public class AlbaranesView extends VBox {
         });
 
         tabla.getColumns().addAll(
-            col("Número",      "numero",         140),
-            col("Cliente",     "clienteNombre",  200),
-            col("Fecha",       "fecha",          100),
-            col("Factura ref.", "facturaNumero",  130),
-            col("Pedido ref.", "pedidoNumero",   130),
+            col(t("albaranes.tabla.col.numero"),      "numero",        140),
+            col(t("albaranes.tabla.col.cliente"),     "clienteNombre", 200),
+            col(t("albaranes.tabla.col.fecha"),       "fecha",         100),
+            col(t("albaranes.tabla.col.factura_ref"), "facturaNumero", 130),
+            col(t("albaranes.tabla.col.pedido_ref"),  "pedidoNumero",  130),
             colEstado
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay albaranes registrados todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("albaranes.tabla.vacio")));
         return tabla;
     }
 
@@ -152,7 +154,7 @@ public class AlbaranesView extends VBox {
                 .filter(a -> contiene(a.getNumero(), q) || contiene(a.getClienteNombre(), q) || contiene(a.getEstado(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " albaranes");
+            lblContador.setText(tf("albaranes.contador", lista.size()));
             dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
@@ -164,7 +166,7 @@ public class AlbaranesView extends VBox {
     private void nuevo() {
         try {
             List<Cliente> clientes = clienteDAO.findAll();
-            if (clientes.isEmpty()) { alerta("Añade al menos un cliente antes de crear un albarán."); return; }
+            if (clientes.isEmpty()) { alerta(t("albaranes.nuevo.sin_cliente")); return; }
             Albaran a = new Albaran();
             a.setNumero(DatabaseManager.generarNumeroAlbaran());
             a.setFecha(LocalDate.now().toString());
@@ -177,7 +179,7 @@ public class AlbaranesView extends VBox {
 
     private void editar() {
         Albaran sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un albarán para editar."); return; }
+        if (sel == null) { alerta(t("albaranes.editar.sin_seleccion")); return; }
         try {
             Albaran a = dao.findById(sel.getId());
             List<Cliente> clientes = clienteDAO.findAll();
@@ -189,31 +191,31 @@ public class AlbaranesView extends VBox {
 
     private void marcarFirmado() {
         Albaran sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un albarán."); return; }
+        if (sel == null) { alerta(t("albaranes.sin_seleccion")); return; }
         try { dao.updateEstado(sel.getId(), "firmado"); cargar(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void crearFactura() {
         Albaran sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un albarán."); return; }
-        if (sel.getFacturaId() > 0) { alerta("Este albarán ya tiene una factura asociada (" + sel.getFacturaNumero() + ")."); return; }
+        if (sel == null) { alerta(t("albaranes.sin_seleccion")); return; }
+        if (sel.getFacturaId() > 0) { alerta(tf("albaranes.crear_factura.ya_asociada", sel.getFacturaNumero())); return; }
         try {
             Albaran albaranCompleto = dao.findById(sel.getId());
             org.gipsybuho.model.Factura f = new FacturaDAO().crearDesdeAlbaran(albaranCompleto);
             dao.actualizarFacturaId(sel.getId(), f.getId());
             cargar();
             new Alert(Alert.AlertType.INFORMATION,
-                "Factura " + f.getNumero() + " creada correctamente.\nLos precios están en 0 — edítala para añadir los importes.",
+                tf("albaranes.crear_factura.exito", f.getNumero()),
                 ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
     }
 
     private void borrar() {
         List<Albaran> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios albaranes para borrar."); return; }
+        if (seleccionados.isEmpty()) { alerta(t("albaranes.borrar.sin_seleccion")); return; }
         String mensaje = seleccionados.size() == 1
-            ? "¿Eliminar el albarán " + seleccionados.get(0).getNumero() + "?"
-            : "¿Eliminar " + seleccionados.size() + " albaranes seleccionados?";
+            ? tf("albaranes.borrar.confirmar.uno",    seleccionados.get(0).getNumero())
+            : tf("albaranes.borrar.confirmar.varios", seleccionados.size());
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
             mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
@@ -227,7 +229,7 @@ public class AlbaranesView extends VBox {
 
     private Optional<Albaran> dialogoAlbaran(Albaran a, List<Cliente> clientes) {
         Dialog<Albaran> dlg = new Dialog<>();
-        dlg.setTitle(a.getId() == 0 ? "Nuevo albarán" : "Editar albarán " + a.getNumero());
+        dlg.setTitle(a.getId() == 0 ? t("albaranes.dialogo.nuevo") : tf("albaranes.dialogo.editar", a.getNumero()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(800);
         dlg.getDialogPane().setPrefHeight(580);
@@ -242,28 +244,28 @@ public class AlbaranesView extends VBox {
         clientes.stream().filter(c -> c.getId() == a.getClienteId()).findFirst().ifPresent(fCliente::setValue);
         if (fCliente.getValue() == null && !clientes.isEmpty()) fCliente.setValue(clientes.get(0));
 
-        TextField fNumero = tf(a.getNumero()); fNumero.setEditable(false);
-        TextField fFecha  = tf(a.getFecha());
+        TextField fNumero = txf(a.getNumero()); fNumero.setEditable(false);
+        TextField fFecha  = txf(a.getFecha());
         ComboBox<String> fEstado = new ComboBox<>(FXCollections.observableArrayList("pendiente","entregado","firmado"));
         fEstado.setValue(a.getEstado() != null ? a.getEstado() : "pendiente");
         TextArea fObs = new TextArea(nvl(a.getObservaciones())); fObs.setPrefRowCount(3);
 
-        gGeneral.addRow(0, lbl("Número"), fNumero, lbl("Estado"), fEstado);
-        gGeneral.addRow(1, lbl("Cliente *"), fCliente, lbl("Fecha entrega"), fFecha);
-        gGeneral.add(lbl("Observaciones"), 0, 2); gGeneral.add(fObs, 1, 2, 3, 1);
+        gGeneral.addRow(0, lbl(t("albaranes.campo.numero")), fNumero, lbl(t("albaranes.campo.estado")), fEstado);
+        gGeneral.addRow(1, lbl(t("albaranes.campo.cliente")), fCliente, lbl(t("albaranes.campo.fecha")), fFecha);
+        gGeneral.add(lbl(t("albaranes.campo.observaciones")), 0, 2); gGeneral.add(fObs, 1, 2, 3, 1);
         dialogExtraFields = new LinkedHashMap<>();
         dynamicColumns.addFormFields(gGeneral, 3, a, dialogExtraFields);
-        tabs.getTabs().add(new Tab("Datos generales", gGeneral));
+        tabs.getTabs().add(new Tab(t("albaranes.tab.datos"), gGeneral));
 
         // Tab 2: Líneas
         ObservableList<LineaAlbaran> lineas = FXCollections.observableArrayList(a.getLineas());
-        tabs.getTabs().add(new Tab("Artículos", buildTablaLineas(lineas)));
+        tabs.getTabs().add(new Tab(t("albaranes.tab.articulos"), buildTablaLineas(lineas)));
 
         dlg.getDialogPane().setContent(tabs);
 
         dlg.setResultConverter(bt -> {
             if (bt != ButtonType.OK) return null;
-            if (fCliente.getValue() == null) { alerta("Selecciona un cliente."); return null; }
+            if (fCliente.getValue() == null) { alerta(t("albaranes.validacion.cliente")); return null; }
             a.setClienteId(fCliente.getValue().getId());
             a.setClienteNombre(fCliente.getValue().getNombreCompleto());
             a.setFecha(fFecha.getText().trim());
@@ -279,10 +281,10 @@ public class AlbaranesView extends VBox {
         VBox box = new VBox(8);
         box.setPadding(new Insets(12));
 
-        TableView<LineaAlbaran> t = new TableView<>(lineas);
-        t.setPrefHeight(300);
+        TableView<LineaAlbaran> tLineas = new TableView<>(lineas);
+        tLineas.setPrefHeight(300);
 
-        TableColumn<LineaAlbaran, String> cDesc = new TableColumn<>("Descripción");
+        TableColumn<LineaAlbaran, String> cDesc = new TableColumn<>(t("albaranes.linea.col.descripcion"));
         cDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cDesc.setPrefWidth(400);
         cDesc.setCellFactory(c -> new TableCell<>() {
@@ -292,11 +294,11 @@ public class AlbaranesView extends VBox {
             }
         });
 
-        TableColumn<LineaAlbaran, Integer> cCant = new TableColumn<>("Cantidad");
+        TableColumn<LineaAlbaran, Integer> cCant = new TableColumn<>(t("albaranes.linea.col.cantidad"));
         cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
         cCant.setPrefWidth(80);
 
-        TableColumn<LineaAlbaran, String> cUnid = new TableColumn<>("Unidad");
+        TableColumn<LineaAlbaran, String> cUnid = new TableColumn<>(t("albaranes.linea.col.unidad"));
         cUnid.setCellValueFactory(new PropertyValueFactory<>("unidad"));
         cUnid.setPrefWidth(80);
         cUnid.setCellFactory(c -> new TableCell<>() {
@@ -306,21 +308,21 @@ public class AlbaranesView extends VBox {
             }
         });
 
-        t.getColumns().addAll(cDesc, cCant, cUnid);
+        tLineas.getColumns().addAll(cDesc, cCant, cUnid);
 
         HBox buttons = new HBox(8);
-        Button btnAdd      = btn("+ Añadir", () -> dialogoLinea(null, lineas));
-        Button btnStock    = btn("📦 Desde stock", () -> dialogoDesdeStock(lineas));
-        Button btnEdit     = btn("✏ Editar", () -> {
-            LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
+        Button btnAdd      = btn(t("albaranes.linea.btn.anadir"),      () -> dialogoLinea(null, lineas));
+        Button btnStock    = btn(t("albaranes.linea.btn.desde_stock"), () -> dialogoDesdeStock(lineas));
+        Button btnEdit     = btn(t("albaranes.linea.btn.editar"),      () -> {
+            LineaAlbaran sel = tLineas.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLinea(sel, lineas);
         });
-        Button btnDel      = btn("🗑 Quitar", () -> {
-            LineaAlbaran sel = t.getSelectionModel().getSelectedItem();
+        Button btnDel      = btn(t("albaranes.linea.btn.quitar"),      () -> {
+            LineaAlbaran sel = tLineas.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
         buttons.getChildren().addAll(btnAdd, btnStock, btnEdit, btnDel);
-        box.getChildren().addAll(t, buttons);
+        box.getChildren().addAll(tLineas, buttons);
         return box;
     }
 
@@ -330,7 +332,7 @@ public class AlbaranesView extends VBox {
         LineaAlbaran l = linea;
 
         Dialog<LineaAlbaran> dlg = new Dialog<>();
-        dlg.setTitle(esNueva ? "Nuevo artículo" : "Editar artículo");
+        dlg.setTitle(esNueva ? t("albaranes.linea.dialogo.nuevo") : t("albaranes.linea.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -338,15 +340,15 @@ public class AlbaranesView extends VBox {
 
         boolean esMaterial = esDescripcionMaterial(l.getDescripcion());
         TextArea fDesc = new TextArea(descripcionVisible(nvl(l.getDescripcion()))); fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
-        TextField fCant = tf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
+        TextField fCant = txf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
         ComboBox<String> fUnidad = new ComboBox<>(FXCollections.observableArrayList(
             "ud", "m²", "m", "kg", "L", "caja", "pack", "rollo"));
         fUnidad.setEditable(true);
         fUnidad.setValue("__material__".equals(l.getUnidad()) ? "ud" : (l.getUnidad() != null ? l.getUnidad() : "ud"));
 
-        grid.addRow(0, lbl("Descripción *"), fDesc);
+        grid.addRow(0, lbl(t("albaranes.linea.campo.descripcion")), fDesc);
         GridPane.setColumnSpan(fDesc, 3);
-        grid.addRow(1, lbl("Cantidad"), fCant, lbl("Unidad"), fUnidad);
+        grid.addRow(1, lbl(t("albaranes.linea.campo.cantidad")), fCant, lbl(t("albaranes.linea.campo.unidad")), fUnidad);
         dlg.getDialogPane().setContent(grid);
 
         dlg.setResultConverter(bt -> {
@@ -366,26 +368,25 @@ public class AlbaranesView extends VBox {
         List<Material> materiales;
         try { materiales = new MaterialDAO().findAll(); }
         catch (Exception e) { mostrarError(e); return; }
-        if (materiales.isEmpty()) { alerta("No hay materiales registrados en el stock."); return; }
+        if (materiales.isEmpty()) { alerta(t("albaranes.stock.sin_materiales")); return; }
 
         Dialog<LineaAlbaran> dlg = new Dialog<>();
-        dlg.setTitle("Añadir material del stock al albarán");
+        dlg.setTitle(t("albaranes.stock.dialogo.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(12); grid.setPadding(new Insets(16));
 
         ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
-        cbMat.setPromptText("Seleccionar material del stock...");
+        cbMat.setPromptText(t("albaranes.stock.dialogo.prompt"));
         cbMat.setPrefWidth(340);
 
-        Label lblInfo = new Label("Selecciona un material para ver su disponibilidad");
+        Label lblInfo = new Label(t("albaranes.stock.info.inicial"));
         lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
 
         cbMat.setOnAction(e -> {
             Material m = cbMat.getValue();
-            if (m != null) lblInfo.setText(String.format(
-                "Stock disponible: %.2f %s  |  Categoría: %s",
+            if (m != null) lblInfo.setText(tf("albaranes.stock.info",
                 m.getStockActual(),
                 m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
                 m.getCategoria() != null ? m.getCategoria() : "-"));
@@ -395,9 +396,9 @@ public class AlbaranesView extends VBox {
         spCant.setEditable(true);
         spCant.setPrefWidth(100);
 
-        grid.addRow(0, lbl("Material:"), cbMat);
+        grid.addRow(0, lbl(t("albaranes.stock.campo.material")), cbMat);
         grid.add(lblInfo, 1, 1);
-        grid.addRow(2, lbl("Cantidad:"), spCant);
+        grid.addRow(2, lbl(t("albaranes.stock.campo.cantidad")), spCant);
 
         dlg.getDialogPane().setContent(grid);
         dlg.setResultConverter(bt -> {
@@ -424,10 +425,10 @@ public class AlbaranesView extends VBox {
 
     private void importar() {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar albaranes");
+        fc.setTitle(t("albaranes.importar.titulo"));
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            new FileChooser.ExtensionFilter(t("albaranes.importar.filtro"), "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+            new FileChooser.ExtensionFilter(t("albaranes.importar.todos_archivos"), "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
@@ -473,18 +474,18 @@ public class AlbaranesView extends VBox {
 
     private void mostrarResultadoImportacion(ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("albaranes.importar.completada", r.duracion().toMillis() / 1000.0)).append(System.lineSeparator());
+        sb.append(tf("albaranes.importar.filas_importadas", r.filasImportadas())).append(System.lineSeparator());
+        sb.append(tf("albaranes.importar.filas_actualizadas", r.filasActualizadas())).append(System.lineSeparator());
+        sb.append(tf("albaranes.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("albaranes.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("albaranes.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("albaranes.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -493,20 +494,13 @@ public class AlbaranesView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de albaranes como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con albaranes y sus líneas (tabla completa).", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Albaranes y líneas en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de albaranes como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de albaranes en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"),       "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("albaranes.export.csv.desc"),    "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("albaranes.export.sql.desc"),    "sql"},
+            {"json",   t("export.fmt.json.label"),   t("albaranes.export.json.desc"),   "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("albaranes.export.pdf.desc"),    "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("albaranes.export.word.desc"),   "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("albaranes.export.excel.desc"),  "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -531,18 +525,18 @@ public class AlbaranesView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar albaranes");
+        dlg.setTitle(t("albaranes.export.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -555,11 +549,11 @@ public class AlbaranesView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Albaranes_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Albaranes", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("albaranes.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -605,8 +599,8 @@ public class AlbaranesView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -624,7 +618,7 @@ public class AlbaranesView extends VBox {
     private void previsualizar() {
         List<Albaran> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Albaran> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("albaranes.previsualizar.vacio")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -638,12 +632,12 @@ public class AlbaranesView extends VBox {
                     pdfBytes = Files.readAllBytes(pdfPath);
                     Path pdfImpresionPath = pdfService.generarAlbaran(a, c, false);
                     pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
-                    tituloVentana = "Previsualización — Albarán " + a.getNumero();
+                    tituloVentana = tf("albaranes.previsualizar.titulo.uno", a.getNumero());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarAlbaranes(lista);
                     pdfImpresionBytes = pdfBytes;
-                    tituloVentana = "Previsualización — Albaranes (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("albaranes.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final byte[] bytesImpresion = pdfImpresionBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -668,7 +662,7 @@ public class AlbaranesView extends VBox {
         b.setOnAction(e -> r.run()); return b;
     }
 
-    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
     private String toDbColumn(String campo) {
         return switch (campo) {
