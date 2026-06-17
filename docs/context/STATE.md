@@ -21,7 +21,7 @@ Actualizar tras cada sprint cerrado.
 
 ### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-3)
 
-**HEAD:** `ver git log --oneline -1` (este commit cierra i18n-3). Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `71177b4`. Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
@@ -64,7 +64,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `ver git log --oneline -1`. Tests: 151/151. App funcional.
+**HEAD:** `71177b4`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
 1. **Sprint i18n-4** — migrar vistas de módulo. Candidatos por impacto: `ClientesView`, `FacturasView`, `PedidosView`. Un módulo por sprint. Mismo patrón que i18n-1/i18n-2/i18n-3.
@@ -457,7 +457,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | commit i18n-3 (ver `git log --oneline -1`) |
+| HEAD | `71177b4` |
 | Mensaje | `feat(i18n): migrar MainView a LanguageManager — Sprint i18n-3` |
 | Rama | `master` |
 | Tests | 151/151 verdes (`.\mvnw.cmd test`) |
@@ -467,7 +467,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Sprint activo
 
-**Sprint i18n-3** — ✅ CERRADO. MainView migrada (~60 claves nav.* + main.*). TITULO_A_MODULO fix. tf() formal. 151/151.
+**Sprint i18n-3** — ✅ CERRADO. MainView migrada (~60 claves nav.* + main.*). TITULO_A_MODULO fix. tf() formal. HEAD `71177b4`. 151/151.
 
 **Sprint i18n-2** — ✅ CERRADO. ConfiguracionView migrada. 6 bundles completos. HEAD `6957681`.
 
@@ -500,7 +500,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
-| i18n-3 | commit i18n-3 | MainView: sidebar, footer, tooltips, diálogos, asistente (~60 claves); TITULO_A_MODULO fix; tf() formal |
+| i18n-3 | `71177b4` | MainView: sidebar, footer, tooltips, diálogos, asistente (~60 claves); TITULO_A_MODULO fix; tf() formal |
 | i18n-2 | `6957681` | ConfiguracionView: ~80 literales → t()/tf(); bundles eu/gl/fr config.* |
 | i18n-1 | `a035fe8` | LoginView + AdminSetupView migrados; bundles eu/gl/fr ~40 claves |
 | i18n-0 | `1947fbc` | LanguageManager + 6 bundles base; ConfiguracionView.buildPanelIdioma() |
