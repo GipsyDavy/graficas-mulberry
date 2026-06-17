@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-17 (sesión cierre — Sprint i18n-3 — 151/151)
+**Última actualización:** 2026-06-17 (sesión cierre — Sprint i18n-4 — 151/151)
 
 ---
 
@@ -19,37 +19,49 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-3)
+### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-4)
 
-**HEAD:** `71177b4`. Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `0bd3d1b`. Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
 | Sprint | Descripción |
 |---|---|
 | i18n-3 | MainView migrada — sidebar, footer, tooltips, diálogos, asistente visual (~60 claves nav.* + main.*) |
+| i18n-4 | DashboardView + ClientesView migradas — KPIs, avisos, toolbar, tabla, diálogo edición, importación, exportación, previsualización, errores (~90 claves dash.*/clientes.*/export.*) |
 
 **Estado del sistema i18n al cierre:**
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-3: `messages_{es,en,ca,eu,gl,fr}.properties`.
-- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, **`MainView`**.
-- Vistas pendientes de migrar: módulos (ClientesView, FacturasView, PedidosView, AlbaranesView, PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.).
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-4: `messages_{es,en,ca,eu,gl,fr}.properties`.
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, **`DashboardView`**, **`ClientesView`**.
+- Vistas pendientes de migrar: FacturasView, PedidosView, AlbaranesView, PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.
 
 **Decisión arquitectónica crítica de i18n-3 (respetar en sprints futuros):**
 
 `TITULO_A_MODULO` usa **claves i18n** como keys del mapa (p.ej. `"nav.clientes"`, no `"Clientes"`). Esto es obligatorio: si el mapa usara strings traducidos, la lookup fallaría en idiomas distintos del español. Todos los callers de `mostrarVista()` pasan la clave i18n, no el texto traducido. Dentro de `mostrarVista()` se llama `t(titulo)` para el asistente visual y los títulos de ventana popup.
 
+**Decisiones de i18n-4 (respetar en sprints futuros):**
+
+- `COLUMNAS_BASE` static map en ClientesView **NO migrado** — los valores son labels almacenados en BD (en español). La sobrescritura via `actualizarColumnasDinamicas()` / `columnConfigDAO.visibleLabels()` ocurre inmediatamente y prevalece sobre los headers del `col()` call. Migrar `col()` headers es correcto semánticamente (future-friendly) pero los headers visibles en runtime son los de BD.
+- Valores del ComboBox `"empresa"` / `"particular"` **NO traducidos** — se almacenan en BD como strings españoles. Traducirlos rompería datos existentes.
+- `mostrarResultadoImportacion()` es **dead code** (nunca llamado) — migración mínima aplicada (solo título del Alert).
+- Claves `export.fmt.*` son **compartidas entre módulos** (prefix `export.fmt`, no `clientes.export.fmt`). Las descripciones específicas de módulo usan `clientes.export.<fmt>.desc`.
+- Naming conflict `tf`: si la vista tiene `private TextField tf(...)`, renombrar a `txf()` antes de añadir `import static LanguageManager.tf`. Aplicado en ClientesView.
+
 **Claves i18n ya definidas en los bundles (resumen acumulado):**
 - `lang.*` — nombres de idiomas (6 claves)
 - `config.idioma.*` — panel selector de idioma (3)
-- `common.*` — labels/prompts/errores comunes (8)
+- `common.*` — labels/prompts/errores comunes (9)
 - `login.*` — LoginView (9) + `login.recovery.*` (7)
 - `admin.*` — AdminSetupView (6)
 - `config.*` — ConfiguracionView completa (~95 claves)
 - `nav.*` — módulos sidebar + grupos + tooltips (~35 claves)
 - `main.*` — footer, búsqueda, sesión, menú ctx, diálogos, asistente (~25 claves)
+- `dash.*` — DashboardView: KPIs, avisos, badges (~21 claves)
+- `export.*` — diálogo exportación + formatos compartidos (~13 claves)
+- `clientes.*` — ClientesView completa (~53 claves)
 
 **Patrón de migración establecido (repetir en i18n-4+):**
 ```java
@@ -64,10 +76,10 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `71177b4`. Tests: 151/151. App funcional.
+**HEAD:** `0bd3d1b`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-4** — migrar vistas de módulo. Candidatos por impacto: `ClientesView`, `FacturasView`, `PedidosView`. Un módulo por sprint. Mismo patrón que i18n-1/i18n-2/i18n-3.
+1. **Sprint i18n-5** — migrar vistas de módulo. Candidatos por impacto: `FacturasView`, `PedidosView`. Un módulo por sprint. Mismo patrón que i18n-4.
    - Antes de empezar: añadir claves al bundle `messages_es.properties` (base), traducir en los otros 5, luego migrar la vista Java.
 2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 
