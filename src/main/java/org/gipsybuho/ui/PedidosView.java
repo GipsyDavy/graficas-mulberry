@@ -41,6 +41,9 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 public class PedidosView extends VBox {
 
     private static final String[] FORMAS_PAGO = {
@@ -86,14 +89,14 @@ public class PedidosView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Gestión de Pedidos");
+        Label titulo = new Label(t("pedidos.titulo"));
         titulo.getStyleClass().add("view-title");
 
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
         tabs.getTabs().addAll(
-            new Tab("📋  Pedidos",           buildTabPedidos()),
-            new Tab("💳  Control de pagos",  buildTabControlPagos())
+            new Tab(t("pedidos.tab.pedidos"),       buildTabPedidos()),
+            new Tab(t("pedidos.tab.control_pagos"), buildTabControlPagos())
         );
         VBox.setVgrow(tabs, Priority.ALWAYS);
 
@@ -105,7 +108,7 @@ public class PedidosView extends VBox {
     }
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Usa el botón \"Nuevo pedido\" para añadir un pedido de cliente. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("pedidos.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -122,11 +125,11 @@ public class PedidosView extends VBox {
     private HBox buildResumen() {
         HBox row = new HBox(10);
         row.getChildren().addAll(
-            tarjeta("📋  Activos",            lblActivos,   "#4C9BE8"),
-            tarjeta("💶  Total facturado",     lblTotal,     "#8E44AD"),
-            tarjeta("✅  Cobrado",             lblCobrado,   "#27AE60"),
-            tarjeta("⏳  Pendiente de cobro",  lblPendiente, "#F39C12"),
-            tarjeta("🔴  Pagos vencidos",      lblVencidos,  "#E74C3C")
+            tarjeta(t("pedidos.resumen.activos"),          lblActivos,   "#4C9BE8"),
+            tarjeta(t("pedidos.resumen.total_facturado"),  lblTotal,     "#8E44AD"),
+            tarjeta(t("pedidos.resumen.cobrado"),          lblCobrado,   "#27AE60"),
+            tarjeta(t("pedidos.resumen.pendiente_cobro"),  lblPendiente, "#F39C12"),
+            tarjeta(t("pedidos.resumen.pagos_vencidos"),   lblVencidos,  "#E74C3C")
         );
         return row;
     }
@@ -192,37 +195,37 @@ public class PedidosView extends VBox {
 
     private HBox buildToolbarPedidos() {
         ToggleGroup tg = new ToggleGroup();
-        ToggleButton bTodos     = filtroBtn("Todos",      tg, () -> { filtroPedidos = "todos";      cargarPedidos(); });
-        ToggleButton bPend      = filtroBtn("Pendientes", tg, () -> { filtroPedidos = "pendiente";  cargarPedidos(); });
-        ToggleButton bProceso   = filtroBtn("En proceso", tg, () -> { filtroPedidos = "en_proceso"; cargarPedidos(); });
-        ToggleButton bListo     = filtroBtn("Listos",     tg, () -> { filtroPedidos = "listo";      cargarPedidos(); });
-        ToggleButton bEntregado = filtroBtn("Entregados", tg, () -> { filtroPedidos = "entregado";  cargarPedidos(); });
+        ToggleButton bTodos     = filtroBtn(t("pedidos.filtro.todos"),      tg, () -> { filtroPedidos = "todos";      cargarPedidos(); });
+        ToggleButton bPend      = filtroBtn(t("pedidos.filtro.pendientes"), tg, () -> { filtroPedidos = "pendiente";  cargarPedidos(); });
+        ToggleButton bProceso   = filtroBtn(t("pedidos.filtro.en_proceso"), tg, () -> { filtroPedidos = "en_proceso"; cargarPedidos(); });
+        ToggleButton bListo     = filtroBtn(t("pedidos.filtro.listos"),     tg, () -> { filtroPedidos = "listo";      cargarPedidos(); });
+        ToggleButton bEntregado = filtroBtn(t("pedidos.filtro.entregados"), tg, () -> { filtroPedidos = "entregado";  cargarPedidos(); });
         bTodos.setSelected(true);
 
         HBox filtros = new HBox(2, bTodos, bPend, bProceso, bListo, bEntregado);
         filtros.setStyle("-fx-background-color:-c-tab-bg;-fx-background-radius:5;-fx-padding:3;");
 
         txtBusqueda = new TextField();
-        txtBusqueda.setPromptText("🔍  Buscar cliente, nº pedido…");
+        txtBusqueda.setPromptText(t("pedidos.buscar.prompt"));
         txtBusqueda.setPrefWidth(220);
         txtBusqueda.textProperty().addListener((o, a, b) -> cargarPedidos());
 
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo    = btn("+ Nuevo pedido", this::nuevoPedido);
-        Button btnEditar   = btn("✏ Editar",       this::editarPedido);
-        Button btnImportar = btn("📥 Importar",    this::importar);
-        Button btnExportar = btn("📤 Exportar",    this::exportar);
-        Button btnBorrar     = btn("🗑 Eliminar",     this::eliminarPedido);
-        Button btnPreview    = btn("👁 Previsualizar",this::previsualizar);
-        txtBusqueda.setTooltip(new Tooltip("Buscar por cliente o número de pedido"));
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo pedido"));
-        btnEditar.setTooltip(new Tooltip("Editar el pedido seleccionado"));
-        btnImportar.setTooltip(new Tooltip("Importar pedidos desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar pedidos a PDF, Excel u otros formatos"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar el pedido seleccionado"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar el pedido en PDF"));
+        Button btnNuevo    = btn(t("pedidos.btn.nuevo"),         this::nuevoPedido);
+        Button btnEditar   = btn(t("pedidos.btn.editar"),        this::editarPedido);
+        Button btnImportar = btn(t("pedidos.btn.importar"),      this::importar);
+        Button btnExportar = btn(t("pedidos.btn.exportar"),      this::exportar);
+        Button btnBorrar   = btn(t("pedidos.btn.eliminar"),      this::eliminarPedido);
+        Button btnPreview  = btn(t("pedidos.btn.previsualizar"), this::previsualizar);
+        txtBusqueda.setTooltip(new Tooltip(t("pedidos.buscar.tooltip")));
+        btnNuevo.setTooltip(new Tooltip(t("pedidos.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("pedidos.btn.editar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("pedidos.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("pedidos.btn.exportar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("pedidos.btn.eliminar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("pedidos.btn.previsualizar.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         HBox bar = new HBox(10, filtros, txtBusqueda, lblContador, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
@@ -258,11 +261,11 @@ public class PedidosView extends VBox {
             }
         });
 
-        TableColumn<Pedido, String> colNum = colPed("Nº Pedido", "numero", 115);
+        TableColumn<Pedido, String> colNum = colPed(t("pedidos.tabla.col.numero"), "numero", 115);
 
-        TableColumn<Pedido, String> colCli = colPed("Cliente", "clienteNombre", 155);
+        TableColumn<Pedido, String> colCli = colPed(t("pedidos.tabla.col.cliente"), "clienteNombre", 155);
 
-        TableColumn<Pedido, LocalDate> colFecha = new TableColumn<>("Fecha");
+        TableColumn<Pedido, LocalDate> colFecha = new TableColumn<>(t("pedidos.tabla.col.fecha"));
         colFecha.setCellValueFactory(new PropertyValueFactory<>("fecha"));
         colFecha.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -272,7 +275,7 @@ public class PedidosView extends VBox {
         });
         colFecha.setPrefWidth(88);
 
-        TableColumn<Pedido, LocalDate> colEntrega = new TableColumn<>("Entrega");
+        TableColumn<Pedido, LocalDate> colEntrega = new TableColumn<>(t("pedidos.tabla.col.entrega"));
         colEntrega.setCellValueFactory(new PropertyValueFactory<>("fechaEntregaPrevista"));
         colEntrega.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -289,9 +292,9 @@ public class PedidosView extends VBox {
         });
         colEntrega.setPrefWidth(88);
 
-        TableColumn<Pedido, String> colDesc = colPed("Descripción", "descripcion", 170);
+        TableColumn<Pedido, String> colDesc = colPed(t("pedidos.tabla.col.descripcion"), "descripcion", 170);
 
-        TableColumn<Pedido, Double> colTotal = new TableColumn<>("Total");
+        TableColumn<Pedido, Double> colTotal = new TableColumn<>(t("pedidos.tabla.col.total"));
         colTotal.setCellValueFactory(new PropertyValueFactory<>("importeTotal"));
         colTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -301,7 +304,7 @@ public class PedidosView extends VBox {
         });
         colTotal.setPrefWidth(90);
 
-        TableColumn<Pedido, Double> colCobrado = new TableColumn<>("Cobrado");
+        TableColumn<Pedido, Double> colCobrado = new TableColumn<>(t("pedidos.tabla.col.cobrado"));
         colCobrado.setCellValueFactory(new PropertyValueFactory<>("importePagado"));
         colCobrado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -313,7 +316,7 @@ public class PedidosView extends VBox {
         });
         colCobrado.setPrefWidth(90);
 
-        TableColumn<Pedido, Void> colPend = new TableColumn<>("Pendiente");
+        TableColumn<Pedido, Void> colPend = new TableColumn<>(t("pedidos.tabla.col.pendiente"));
         colPend.setPrefWidth(90);
         colPend.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Void v, boolean empty) {
@@ -326,13 +329,13 @@ public class PedidosView extends VBox {
             }
         });
 
-        TableColumn<Pedido, Integer> colVenc = new TableColumn<>("Vencidos");
+        TableColumn<Pedido, Integer> colVenc = new TableColumn<>(t("pedidos.tabla.col.vencidos"));
         colVenc.setCellValueFactory(new PropertyValueFactory<>("pagosVencidos"));
         colVenc.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Integer v, boolean empty) {
                 super.updateItem(v, empty);
                 if (empty || v == null) { setText(null); setStyle(""); return; }
-                setText(v > 0 ? v + " pago(s)" : "—");
+                setText(v > 0 ? tf("pedidos.tabla.col.vencidos_badge", v) : "—");
                 setStyle(v > 0 ? "-fx-text-fill:#E74C3C;-fx-font-weight:bold;" : "");
             }
         });
@@ -340,19 +343,17 @@ public class PedidosView extends VBox {
 
         tablaPedidos.getColumns().addAll(
             colEst, colNum, colCli, colFecha, colEntrega, colDesc, colTotal, colCobrado, colPend, colVenc);
-        tablaPedidos.setPlaceholder(Icons.emptyState("No hay pedidos registrados todavía"));
+        tablaPedidos.setPlaceholder(Icons.emptyState(t("pedidos.tabla.vacio")));
 
         // Al seleccionar un pedido, cargar sus pagos en el panel inferior
         tablaPedidos.getSelectionModel().selectedItemProperty().addListener((o, a, sel) -> {
             if (sel != null) {
                 lblPedidoSeleccionado.setText(
-                    "Pagos del pedido: " + sel.getNumero() + "  —  " + sel.getClienteNombre()
-                    + "   (Total: " + String.format("%.2f", sel.getImporteTotal())
-                    + " €  |  Cobrado: " + String.format("%.2f", sel.getImportePagado())
-                    + " €  |  Pendiente: " + String.format("%.2f", sel.getImportePendiente()) + " €)");
+                    tf("pedidos.pagos.header", sel.getNumero(), sel.getClienteNombre(),
+                       sel.getImporteTotal(), sel.getImportePagado(), sel.getImportePendiente()));
                 cargarPagosDePedido(sel.getId());
             } else {
-                lblPedidoSeleccionado.setText("Selecciona un pedido para ver sus pagos");
+                lblPedidoSeleccionado.setText(t("pedidos.pagos.sin_seleccion"));
                 datosPagosPedido.clear();
             }
         });
@@ -370,13 +371,13 @@ public class PedidosView extends VBox {
         VBox box = new VBox(8);
         box.setPadding(new Insets(8, 4, 4, 4));
 
-        lblPedidoSeleccionado = new Label("Selecciona un pedido para ver sus pagos");
+        lblPedidoSeleccionado = new Label(t("pedidos.pagos.sin_seleccion"));
         lblPedidoSeleccionado.setStyle("-fx-font-weight:bold;-fx-font-size:12px;");
 
-        Button btnAnadir     = btn("+ Añadir pago",   this::anadirPago);
-        Button btnFraccionar = btn("⚡ Fraccionar",    this::fraccionarPago);
-        Button btnMarcar     = btn("✓ Marcar cobrado", this::marcarPagoPedido);
-        Button btnEliminar   = btn("🗑 Eliminar",       this::eliminarPagoPedido);
+        Button btnAnadir     = btn(t("pedidos.pago.btn.anadir"),          this::anadirPago);
+        Button btnFraccionar = btn(t("pedidos.pago.btn.fraccionar"),      this::fraccionarPago);
+        Button btnMarcar     = btn(t("pedidos.pago.btn.marcar_cobrado"),  this::marcarPagoPedido);
+        Button btnEliminar   = btn(t("pedidos.pago.btn.eliminar"),        this::eliminarPagoPedido);
 
         HBox toolbar = new HBox(8, btnAnadir, btnFraccionar, btnMarcar, btnEliminar);
         toolbar.setAlignment(Pos.CENTER_LEFT);
@@ -391,7 +392,7 @@ public class PedidosView extends VBox {
     private void buildTablaPagosPedido() {
         tablaPagosPedido.getStyleClass().add("data-table");
         tablaPagosPedido.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tablaPagosPedido.setPlaceholder(new Label("Sin pagos registrados para este pedido"));
+        tablaPagosPedido.setPlaceholder(new Label(t("pedidos.pagos.pedido.vacio")));
         tablaPagosPedido.getColumns().addAll(columnasPago(false));
         tablaPagosPedido.setRowFactory(tv -> {
             TableRow<PagoPedido> row = new TableRow<>();
@@ -411,7 +412,7 @@ public class PedidosView extends VBox {
 
         tablaTodosPagos.getStyleClass().add("data-table");
         tablaTodosPagos.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        tablaTodosPagos.setPlaceholder(new Label("No hay pagos registrados"));
+        tablaTodosPagos.setPlaceholder(new Label(t("pedidos.pagos.todos.vacio")));
         tablaTodosPagos.getColumns().addAll(columnasPago(true));
         VBox.setVgrow(tablaTodosPagos, Priority.ALWAYS);
         tablaTodosPagos.setRowFactory(tv -> {
@@ -420,8 +421,8 @@ public class PedidosView extends VBox {
             return row;
         });
 
-        Button btnMarcar   = btn("✓ Marcar cobrado", () -> marcarPagoDesdeTabla(tablaTodosPagos));
-        Button btnEliminar = btn("🗑 Eliminar",       () -> eliminarPagoDesdeTabla(tablaTodosPagos));
+        Button btnMarcar   = btn(t("pedidos.pago.btn.marcar_cobrado"), () -> marcarPagoDesdeTabla(tablaTodosPagos));
+        Button btnEliminar = btn(t("pedidos.pago.btn.eliminar"),      () -> eliminarPagoDesdeTabla(tablaTodosPagos));
         HBox acciones = new HBox(8, btnMarcar, btnEliminar);
 
         box.getChildren().addAll(tablaTodosPagos, acciones);
@@ -430,11 +431,11 @@ public class PedidosView extends VBox {
 
     private HBox buildToolbarTodosPagos() {
         ToggleGroup tg = new ToggleGroup();
-        ToggleButton bTodos   = filtroBtn("Todos",       tg, () -> { filtroTodosPagos = "todos";     cargarTodosPagos(); });
-        ToggleButton bPend    = filtroBtn("Pendientes",  tg, () -> { filtroTodosPagos = "pendiente"; cargarTodosPagos(); });
-        ToggleButton bVenc    = filtroBtn("Vencidos",    tg, () -> { filtroTodosPagos = "vencido";   cargarTodosPagos(); });
-        ToggleButton bProx    = filtroBtn("Próximos",    tg, () -> { filtroTodosPagos = "proximo";   cargarTodosPagos(); });
-        ToggleButton bPagado  = filtroBtn("Cobrados",    tg, () -> { filtroTodosPagos = "pagado";    cargarTodosPagos(); });
+        ToggleButton bTodos   = filtroBtn(t("pedidos.filtro.todos"),      tg, () -> { filtroTodosPagos = "todos";     cargarTodosPagos(); });
+        ToggleButton bPend    = filtroBtn(t("pedidos.filtro.pendientes"), tg, () -> { filtroTodosPagos = "pendiente"; cargarTodosPagos(); });
+        ToggleButton bVenc    = filtroBtn(t("pedidos.filtro.vencidos"),   tg, () -> { filtroTodosPagos = "vencido";   cargarTodosPagos(); });
+        ToggleButton bProx    = filtroBtn(t("pedidos.filtro.proximos"),   tg, () -> { filtroTodosPagos = "proximo";   cargarTodosPagos(); });
+        ToggleButton bPagado  = filtroBtn(t("pedidos.filtro.cobrados"),   tg, () -> { filtroTodosPagos = "pagado";    cargarTodosPagos(); });
         bTodos.setSelected(true);
 
         HBox filtros = new HBox(2, bTodos, bPend, bVenc, bProx, bPagado);
@@ -462,10 +463,10 @@ public class PedidosView extends VBox {
                 Circle dot = new Circle(7);
                 Tooltip tip = new Tooltip();
                 switch (p.getEstadoEfectivo()) {
-                    case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText("Cobrado"); }
-                    case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText("Vencido"); }
-                    case "proximo" -> { dot.setFill(Color.web("#E67E22")); tip.setText("Próximo a vencer"); }
-                    default        -> { dot.setFill(Color.web("#4C9BE8")); tip.setText("Pendiente"); }
+                    case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("pedidos.pago.estado.cobrado")); }
+                    case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("pedidos.pago.estado.vencido")); }
+                    case "proximo" -> { dot.setFill(Color.web("#E67E22")); tip.setText(t("pedidos.pago.estado.proximo")); }
+                    default        -> { dot.setFill(Color.web("#4C9BE8")); tip.setText(t("pedidos.pago.estado.pendiente")); }
                 }
                 Tooltip.install(dot, tip);
                 setGraphic(dot); setText(null);
@@ -474,15 +475,15 @@ public class PedidosView extends VBox {
         cols.add(colEst);
 
         if (conPedidoCliente) {
-            TableColumn<PagoPedido, String> colPed = colPago("Pedido",  "pedidoNumero",  110);
-            TableColumn<PagoPedido, String> colCli = colPago("Cliente", "clienteNombre", 140);
+            TableColumn<PagoPedido, String> colPed = colPago(t("pedidos.tabla.col.numero"),  "pedidoNumero",  110);
+            TableColumn<PagoPedido, String> colCli = colPago(t("pedidos.tabla.col.cliente"), "clienteNombre", 140);
             cols.add(colPed);
             cols.add(colCli);
         }
 
-        cols.add(colPago("Concepto", "concepto", 145));
+        cols.add(colPago(t("pedidos.pago.col.concepto"), "concepto", 145));
 
-        TableColumn<PagoPedido, Double> colImp = new TableColumn<>("Importe");
+        TableColumn<PagoPedido, Double> colImp = new TableColumn<>(t("pedidos.pago.col.importe"));
         colImp.setCellValueFactory(new PropertyValueFactory<>("importe"));
         colImp.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -493,7 +494,7 @@ public class PedidosView extends VBox {
         colImp.setPrefWidth(88);
         cols.add(colImp);
 
-        TableColumn<PagoPedido, LocalDate> colFv = new TableColumn<>("Vencimiento");
+        TableColumn<PagoPedido, LocalDate> colFv = new TableColumn<>(t("pedidos.pago.col.vencimiento"));
         colFv.setCellValueFactory(new PropertyValueFactory<>("fechaVencimiento"));
         colFv.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -512,7 +513,7 @@ public class PedidosView extends VBox {
         colFv.setPrefWidth(100);
         cols.add(colFv);
 
-        TableColumn<PagoPedido, Void> colDias = new TableColumn<>("Días");
+        TableColumn<PagoPedido, Void> colDias = new TableColumn<>(t("pedidos.pago.col.dias"));
         colDias.setPrefWidth(70);
         colDias.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Void v, boolean empty) {
@@ -520,7 +521,7 @@ public class PedidosView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setText(null); setStyle(""); return; }
                 PagoPedido p = getTableRow().getItem();
                 switch (p.getEstadoEfectivo()) {
-                    case "pagado"  -> { setText("COBRADO"); setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;"); }
+                    case "pagado"  -> { setText(t("pedidos.pago.estado.cobrado_label")); setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;"); }
                     case "vencido" -> { setText(p.getDiasRestantes() + "d"); setStyle("-fx-text-fill:#E74C3C;-fx-font-weight:bold;"); }
                     case "proximo" -> { setText("+" + p.getDiasRestantes() + "d"); setStyle("-fx-text-fill:#E67E22;-fx-font-weight:bold;"); }
                     default        -> { setText("+" + p.getDiasRestantes() + "d"); setStyle(""); }
@@ -529,8 +530,8 @@ public class PedidosView extends VBox {
         });
         cols.add(colDias);
 
-        cols.add(colPago("Forma pago", "formaPago", 130));
-        cols.add(colPago("Notas", "notas", 120));
+        cols.add(colPago(t("pedidos.pago.col.forma_pago"), "formaPago", 130));
+        cols.add(colPago(t("pedidos.pago.col.notas"),      "notas",     120));
 
         return cols;
     }
@@ -562,7 +563,7 @@ public class PedidosView extends VBox {
                     .toList();
             }
             datosPedidos.setAll(resultado);
-            lblContador.setText(resultado.size() + " pedidos");
+            lblContador.setText(tf("pedidos.contador", resultado.size()));
             TableColumnSizing.animarFilas(tablaPedidos);
         } catch (Exception e) { mostrarError(e); }
         finally { cargando.setVisible(false); tablaPedidos.setDisable(false); }
@@ -608,7 +609,7 @@ public class PedidosView extends VBox {
 
     private void editarPedido() {
         Pedido sel = tablaPedidos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pedido para editar."); return; }
+        if (sel == null) { alerta(t("pedidos.editar.sin_seleccion")); return; }
         dialogoPedido(sel).ifPresent(p -> {
             try { pedidoDao.save(p); cargarPedidos(); } catch (Exception e) { mostrarError(e); }
         });
@@ -616,16 +617,15 @@ public class PedidosView extends VBox {
 
     private void eliminarPedido() {
         List<Pedido> seleccionados = new ArrayList<>(tablaPedidos.getSelectionModel().getSelectedItems());
-        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios pedidos para eliminar."); return; }
+        if (seleccionados.isEmpty()) { alerta(t("pedidos.eliminar.sin_seleccion")); return; }
         String mensaje = seleccionados.size() == 1
-            ? "¿Eliminar el pedido " + seleccionados.get(0).getNumero() + " de " + seleccionados.get(0).getClienteNombre()
-                + "?\nSe eliminarán también todos sus pagos."
-            : "¿Eliminar " + seleccionados.size() + " pedidos seleccionados?\nSe eliminarán también todos sus pagos.";
+            ? tf("pedidos.eliminar.confirmar.uno",    seleccionados.get(0).getNumero(), seleccionados.get(0).getClienteNombre())
+            : tf("pedidos.eliminar.confirmar.varios", seleccionados.size());
         conf(mensaje, () -> {
             try {
                 for (Pedido pedido : seleccionados) pedidoDao.delete(pedido.getId());
                 datosPagosPedido.clear();
-                lblPedidoSeleccionado.setText("Selecciona un pedido para ver sus pagos");
+                lblPedidoSeleccionado.setText(t("pedidos.pagos.sin_seleccion"));
                 cargarPedidos();
                 cargarTodosPagos();
             } catch (Exception e) { mostrarError(e); }
@@ -638,7 +638,7 @@ public class PedidosView extends VBox {
 
     private void importar() {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar pedidos");
+        fc.setTitle(t("pedidos.importar.titulo"));
         fc.getExtensionFilters().addAll(
             new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
             new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
@@ -698,7 +698,7 @@ public class PedidosView extends VBox {
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("pedidos.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -711,20 +711,13 @@ public class PedidosView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de pedidos como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con la estructura y los datos de la tabla pedidos.", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Datos de todos los pedidos en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de pedidos como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de pedidos en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"),    "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("pedidos.export.csv.desc"),   "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("pedidos.export.sql.desc"),   "sql"},
+            {"json",   t("export.fmt.json.label"),   t("pedidos.export.json.desc"),  "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("pedidos.export.pdf.desc"),   "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("pedidos.export.word.desc"),  "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("pedidos.export.excel.desc"), "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -749,18 +742,18 @@ public class PedidosView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar pedidos");
+        dlg.setTitle(t("pedidos.export.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -773,7 +766,7 @@ public class PedidosView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Pedidos_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
@@ -823,8 +816,8 @@ public class PedidosView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -845,7 +838,7 @@ public class PedidosView extends VBox {
 
     private void anadirPago() {
         Pedido sel = tablaPedidos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona primero un pedido."); return; }
+        if (sel == null) { alerta(t("pedidos.pago.sin_pedido")); return; }
         PagoPedido nuevo = new PagoPedido();
         nuevo.setPedidoId(sel.getId());
         nuevo.setConcepto("Pago " + (datosPagosPedido.size() + 1));
@@ -863,7 +856,7 @@ public class PedidosView extends VBox {
     private void editarPagoPedido() {
         Pedido selPed = tablaPedidos.getSelectionModel().getSelectedItem();
         PagoPedido sel = tablaPagosPedido.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago para editar."); return; }
+        if (sel == null) { alerta(t("pedidos.pago.sin_seleccion")); return; }
         dialogoPago(sel, selPed).ifPresent(p -> {
             try { pagoDao.save(p); recargarPagos(selPed != null ? selPed.getId() : sel.getPedidoId()); }
             catch (Exception e) { mostrarError(e); }
@@ -872,7 +865,7 @@ public class PedidosView extends VBox {
 
     private void fraccionarPago() {
         Pedido sel = tablaPedidos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona primero un pedido."); return; }
+        if (sel == null) { alerta(t("pedidos.pago.sin_pedido")); return; }
         dialogoFraccionar(sel).ifPresent(lista -> {
             try {
                 for (PagoPedido p : lista) pagoDao.save(p);
@@ -892,18 +885,18 @@ public class PedidosView extends VBox {
 
     private void marcarPagoDesdeTabla(TableView<PagoPedido> tabla) {
         PagoPedido sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago."); return; }
-        if ("pagado".equals(sel.getEstado())) { alerta("Este pago ya está marcado como cobrado."); return; }
+        if (sel == null) { alerta(t("pedidos.pago.sin_seleccion")); return; }
+        if ("pagado".equals(sel.getEstado())) { alerta(t("pedidos.pago.ya_cobrado")); return; }
 
         Dialog<LocalDate> dlg = new Dialog<>();
-        dlg.setTitle("Confirmar cobro");
-        dlg.setHeaderText(sel.getConcepto() + "  —  " + String.format("%.2f €", sel.getImporte()));
+        dlg.setTitle(t("pedidos.pago.confirmar_cobro.titulo"));
+        dlg.setHeaderText(tf("pedidos.pago.confirmar_cobro.header", sel.getConcepto(), sel.getImporte()));
         DatePicker dp = new DatePicker(LocalDate.now());
-        VBox content = new VBox(8, new Label("Fecha en que se recibió el pago:"), dp);
+        VBox content = new VBox(8, new Label(t("pedidos.pago.confirmar_cobro.label")), dp);
         content.setPadding(new Insets(14));
         dlg.getDialogPane().setContent(content);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("✓ Confirmar cobro");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("pedidos.pago.btn.confirmar_cobro"));
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.setResultConverter(bt -> bt == ButtonType.OK ? dp.getValue() : null);
         dlg.showAndWait().ifPresent(fecha -> {
@@ -919,9 +912,8 @@ public class PedidosView extends VBox {
 
     private void eliminarPagoDesdeTabla(TableView<PagoPedido> tabla) {
         PagoPedido sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago para eliminar."); return; }
-        conf("¿Eliminar el pago \"" + sel.getConcepto() + "\" ("
-            + String.format("%.2f €", sel.getImporte()) + ")?", () -> {
+        if (sel == null) { alerta(t("pedidos.pago.sin_seleccion")); return; }
+        conf(tf("pedidos.pago.eliminar.confirmar", sel.getConcepto(), sel.getImporte()), () -> {
             try {
                 pagoDao.delete(sel.getId());
                 Pedido pedSel = tablaPedidos.getSelectionModel().getSelectedItem();
@@ -938,7 +930,7 @@ public class PedidosView extends VBox {
 
     private Optional<Pedido> dialogoPedido(Pedido p) {
         Dialog<Pedido> dlg = new Dialog<>();
-        dlg.setTitle(p.getId() == 0 ? "Nuevo pedido" : "Editar pedido");
+        dlg.setTitle(p.getId() == 0 ? t("pedidos.dialogo.nuevo") : t("pedidos.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(520);
 
@@ -954,7 +946,7 @@ public class PedidosView extends VBox {
         if (p.getClienteId() > 0)
             clientes.stream().filter(c -> c.getId() == p.getClienteId()).findFirst().ifPresent(cbCliente::setValue);
 
-        TextField  tfNumero   = tf(p.getNumero());
+        TextField  tfNumero   = txf(p.getNumero());
         DatePicker dpFecha    = new DatePicker(p.getFecha() != null ? p.getFecha() : LocalDate.now());
         DatePicker dpEntrega  = new DatePicker(p.getFechaEntregaPrevista());
         DatePicker dpReal     = new DatePicker(p.getFechaEntregaReal());
@@ -966,11 +958,11 @@ public class PedidosView extends VBox {
             @Override public String toString(String s)   {
                 if (s == null) return "";
                 return switch (s) {
-                    case "en_proceso" -> "En proceso";
-                    case "listo"      -> "Listo";
-                    case "entregado"  -> "Entregado";
-                    case "cancelado"  -> "Cancelado";
-                    default           -> "Pendiente";
+                    case "en_proceso" -> t("pedidos.estado.en_proceso");
+                    case "listo"      -> t("pedidos.estado.listo");
+                    case "entregado"  -> t("pedidos.estado.entregado");
+                    case "cancelado"  -> t("pedidos.estado.cancelado");
+                    default           -> t("pedidos.estado.pendiente");
                 };
             }
             @Override public String fromString(String s) { return null; }
@@ -978,33 +970,33 @@ public class PedidosView extends VBox {
         cbEstado.setValue(p.getEstado() != null ? p.getEstado() : "pendiente");
         cbEstado.setMaxWidth(Double.MAX_VALUE);
 
-        TextField tfDesc    = tf(p.getDescripcion());
-        TextField tfImporte = tf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
-        TextField tfIVA     = tf(p.getIvaPorcentaje() > 0 ? String.valueOf((int) p.getIvaPorcentaje()) : "21");
+        TextField tfDesc    = txf(p.getDescripcion());
+        TextField tfImporte = txf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
+        TextField tfIVA     = txf(p.getIvaPorcentaje() > 0 ? String.valueOf((int) p.getIvaPorcentaje()) : "21");
         TextArea  taNotas   = new TextArea(p.getNotas() != null ? p.getNotas() : "");
         taNotas.setPrefRowCount(2); taNotas.setWrapText(true);
 
         GridPane grid = formGrid();
         int r = 0;
-        grid.addRow(r++, lbl("Cliente *"),            cbCliente);
-        grid.addRow(r++, lbl("Nº Pedido *"),           tfNumero);
-        grid.addRow(r++, lbl("Fecha pedido"),          dpFecha);
-        grid.addRow(r++, lbl("Entrega prevista"),      dpEntrega);
-        grid.addRow(r++, lbl("Entrega real"),          dpReal);
-        grid.addRow(r++, lbl("Estado"),                cbEstado);
-        grid.addRow(r++, lbl("Descripción"),           tfDesc);
-        grid.addRow(r++, lbl("Importe total (€) *"),   tfImporte);
-        grid.addRow(r++, lbl("IVA (%)"),               tfIVA);
-        grid.addRow(r,   lbl("Notas"),                 taNotas);
+        grid.addRow(r++, lbl(t("pedidos.campo.cliente")),         cbCliente);
+        grid.addRow(r++, lbl(t("pedidos.campo.numero")),          tfNumero);
+        grid.addRow(r++, lbl(t("pedidos.campo.fecha_pedido")),    dpFecha);
+        grid.addRow(r++, lbl(t("pedidos.campo.entrega_prevista")),dpEntrega);
+        grid.addRow(r++, lbl(t("pedidos.campo.entrega_real")),    dpReal);
+        grid.addRow(r++, lbl(t("pedidos.campo.estado")),          cbEstado);
+        grid.addRow(r++, lbl(t("pedidos.campo.descripcion")),     tfDesc);
+        grid.addRow(r++, lbl(t("pedidos.campo.importe_total")),   tfImporte);
+        grid.addRow(r++, lbl(t("pedidos.campo.iva")),             tfIVA);
+        grid.addRow(r,   lbl(t("pedidos.campo.notas")),           taNotas);
 
         dlg.getDialogPane().setContent(grid);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
 
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            if (cbCliente.getValue() == null)           { alerta("Selecciona un cliente."); ev.consume(); return; }
-            if (tfNumero.getText().isBlank())            { alerta("El nº de pedido es obligatorio."); ev.consume(); return; }
-            if (parseDouble(tfImporte.getText()) <= 0)  { alerta("El importe total debe ser mayor que 0."); ev.consume(); }
+            if (cbCliente.getValue() == null)           { alerta(t("pedidos.validacion.cliente")); ev.consume(); return; }
+            if (tfNumero.getText().isBlank())            { alerta(t("pedidos.validacion.numero")); ev.consume(); return; }
+            if (parseDouble(tfImporte.getText()) <= 0)  { alerta(t("pedidos.validacion.importe")); ev.consume(); }
         });
 
         dlg.setResultConverter(bt -> {
@@ -1028,15 +1020,15 @@ public class PedidosView extends VBox {
 
     private Optional<PagoPedido> dialogoPago(PagoPedido p, Pedido pedido) {
         Dialog<PagoPedido> dlg = new Dialog<>();
-        dlg.setTitle(p.getId() == 0 ? "Añadir pago" : "Editar pago");
+        dlg.setTitle(p.getId() == 0 ? t("pedidos.pago.dialogo.nuevo") : t("pedidos.pago.dialogo.editar"));
         if (pedido != null)
-            dlg.setHeaderText("Pedido " + pedido.getNumero() + "  —  " + pedido.getClienteNombre()
-                + "  (Pendiente: " + String.format("%.2f €", pedido.getImportePendiente()) + ")");
+            dlg.setHeaderText(tf("pedidos.pago.dialogo.header",
+                pedido.getNumero(), pedido.getClienteNombre(), pedido.getImportePendiente()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(460);
 
-        TextField tfConcepto = tf(p.getConcepto() != null ? p.getConcepto() : "");
-        TextField tfImporte  = tf(p.getImporte() > 0 ? String.format("%.2f", p.getImporte()) : "");
+        TextField tfConcepto = txf(p.getConcepto() != null ? p.getConcepto() : "");
+        TextField tfImporte  = txf(p.getImporte() > 0 ? String.format("%.2f", p.getImporte()) : "");
         DatePicker dpEmision = new DatePicker(p.getFechaEmision() != null ? p.getFechaEmision() : LocalDate.now());
         DatePicker dpVenc    = new DatePicker(p.getFechaVencimiento() != null ? p.getFechaVencimiento() : LocalDate.now().plusDays(30));
         dpEmision.setMaxWidth(Double.MAX_VALUE);
@@ -1051,21 +1043,21 @@ public class PedidosView extends VBox {
 
         GridPane grid = formGrid();
         int r = 0;
-        grid.addRow(r++, lbl("Concepto *"),    tfConcepto);
-        grid.addRow(r++, lbl("Importe (€) *"), tfImporte);
-        grid.addRow(r++, lbl("Fecha emisión"), dpEmision);
-        grid.addRow(r++, lbl("Vencimiento *"), dpVenc);
-        grid.addRow(r++, lbl("Forma de pago"), cbForma);
-        grid.addRow(r,   lbl("Notas"),         taNotas);
+        grid.addRow(r++, lbl(t("pedidos.pago.campo.concepto")),     tfConcepto);
+        grid.addRow(r++, lbl(t("pedidos.pago.campo.importe")),      tfImporte);
+        grid.addRow(r++, lbl(t("pedidos.pago.campo.fecha_emision")),dpEmision);
+        grid.addRow(r++, lbl(t("pedidos.pago.campo.vencimiento")),  dpVenc);
+        grid.addRow(r++, lbl(t("pedidos.pago.campo.forma_pago")),   cbForma);
+        grid.addRow(r,   lbl(t("pedidos.pago.campo.notas")),        taNotas);
 
         dlg.getDialogPane().setContent(grid);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
 
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            if (tfConcepto.getText().isBlank())         { alerta("El concepto es obligatorio."); ev.consume(); return; }
-            if (parseDouble(tfImporte.getText()) <= 0)  { alerta("El importe debe ser mayor que 0."); ev.consume(); return; }
-            if (dpVenc.getValue() == null)              { alerta("La fecha de vencimiento es obligatoria."); ev.consume(); }
+            if (tfConcepto.getText().isBlank())         { alerta(t("pedidos.pago.validacion.concepto")); ev.consume(); return; }
+            if (parseDouble(tfImporte.getText()) <= 0)  { alerta(t("pedidos.pago.validacion.importe")); ev.consume(); return; }
+            if (dpVenc.getValue() == null)              { alerta(t("pedidos.pago.validacion.vencimiento")); ev.consume(); }
         });
 
         dlg.setResultConverter(bt -> {
@@ -1085,15 +1077,15 @@ public class PedidosView extends VBox {
 
     private Optional<List<PagoPedido>> dialogoFraccionar(Pedido pedido) {
         Dialog<List<PagoPedido>> dlg = new Dialog<>();
-        dlg.setTitle("Fraccionar pago");
-        dlg.setHeaderText("Pedido: " + pedido.getNumero() + "  —  " + pedido.getClienteNombre()
-            + "\nTotal: " + String.format("%.2f €", pedido.getImporteTotal())
-            + "  |  Pendiente de cobro: " + String.format("%.2f €", pedido.getImportePendiente()));
+        dlg.setTitle(t("pedidos.fraccionar.titulo"));
+        dlg.setHeaderText(tf("pedidos.fraccionar.header",
+            pedido.getNumero(), pedido.getClienteNombre(),
+            pedido.getImporteTotal(), pedido.getImportePendiente()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(480);
 
-        TextField tfImporteTotal = tf(String.format("%.2f", pedido.getImportePendiente()));
-        tfImporteTotal.setPromptText("Importe a fraccionar");
+        TextField tfImporteTotal = txf(String.format("%.2f", pedido.getImportePendiente()));
+        tfImporteTotal.setPromptText(t("pedidos.fraccionar.prompt"));
 
         Spinner<Integer> spPlazos = new Spinner<>(2, 24, 2);
         spPlazos.setEditable(true);
@@ -1119,7 +1111,7 @@ public class PedidosView extends VBox {
                 int plazos = spPlazos.getValue();
                 double total = parseDouble(tfImporteTotal.getText());
                 if (total > 0 && plazos > 0)
-                    lblPreview.setText(plazos + " pagos de " + String.format("%.2f €", total / plazos) + " cada uno");
+                    lblPreview.setText(tf("pedidos.fraccionar.preview", plazos, total / plazos));
             } catch (Exception ignored) {}
         };
         spPlazos.valueProperty().addListener((o, a, b) -> preview.run());
@@ -1128,11 +1120,11 @@ public class PedidosView extends VBox {
 
         GridPane grid = formGrid();
         int r = 0;
-        grid.addRow(r++, lbl("Importe a fraccionar (€)"), tfImporteTotal);
-        grid.addRow(r++, lbl("Número de plazos"),          spPlazos);
-        grid.addRow(r++, lbl("Primer vencimiento"),        dpPrimero);
-        grid.addRow(r++, lbl("Periodicidad"),              cbPeriodo);
-        grid.addRow(r++, lbl("Forma de pago"),             cbForma);
+        grid.addRow(r++, lbl(t("pedidos.fraccionar.campo.importe")),           tfImporteTotal);
+        grid.addRow(r++, lbl(t("pedidos.fraccionar.campo.plazos")),            spPlazos);
+        grid.addRow(r++, lbl(t("pedidos.fraccionar.campo.primer_vencimiento")),dpPrimero);
+        grid.addRow(r++, lbl(t("pedidos.fraccionar.campo.periodicidad")),      cbPeriodo);
+        grid.addRow(r++, lbl(t("pedidos.fraccionar.campo.forma_pago")),        cbForma);
         grid.add(lblPreview, 1, r);
 
         dlg.getDialogPane().setContent(grid);
@@ -1140,8 +1132,8 @@ public class PedidosView extends VBox {
 
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            if (dpPrimero.getValue() == null)            { alerta("Selecciona la fecha del primer vencimiento."); ev.consume(); return; }
-            if (parseDouble(tfImporteTotal.getText()) <= 0) { alerta("El importe debe ser mayor que 0."); ev.consume(); }
+            if (dpPrimero.getValue() == null)            { alerta(t("pedidos.fraccionar.validacion.fecha")); ev.consume(); return; }
+            if (parseDouble(tfImporteTotal.getText()) <= 0) { alerta(t("pedidos.pago.validacion.importe")); ev.consume(); }
         });
 
         dlg.setResultConverter(bt -> {
@@ -1160,7 +1152,7 @@ public class PedidosView extends VBox {
             for (int i = 1; i <= plazos; i++) {
                 PagoPedido pp = new PagoPedido();
                 pp.setPedidoId(pedido.getId());
-                pp.setConcepto("Plazo " + i + "/" + plazos);
+                pp.setConcepto(tf("pedidos.fraccionar.plazo", i, plazos));
                 // Último plazo absorbe el residuo de redondeo
                 double imp = (i == plazos) ? Math.round((total - porPlazo * (plazos - 1)) * 100.0) / 100.0 : porPlazo;
                 pp.setImporte(imp);
@@ -1224,7 +1216,7 @@ public class PedidosView extends VBox {
     private void previsualizar() {
         List<Pedido> sel = new ArrayList<>(tablaPedidos.getSelectionModel().getSelectedItems());
         List<Pedido> lista = sel.isEmpty() ? new ArrayList<>(datosPedidos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("pedidos.previsualizar.vacio")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -1235,11 +1227,11 @@ public class PedidosView extends VBox {
                     Cliente c = clienteDao.findById(p.getClienteId());
                     Path pdfPath = new PDFService().generarPedido(p, c);
                     pdfBytes = Files.readAllBytes(pdfPath);
-                    tituloVentana = "Previsualización — Pedido " + p.getNumero();
+                    tituloVentana = tf("pedidos.previsualizar.titulo.uno", p.getNumero());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarPedidos(lista);
-                    tituloVentana = "Previsualización — Pedidos (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("pedidos.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -1271,7 +1263,7 @@ public class PedidosView extends VBox {
         a.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> accion.run());
     }
 
-    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label     lbl(String t){ return new Label(t); }
 
     private double parseDouble(String s) {
@@ -1280,6 +1272,7 @@ public class PedidosView extends VBox {
 
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
-        new Alert(Alert.AlertType.ERROR, "Error: " + e.getMessage(), ButtonType.OK).showAndWait();
+        String msg = e.getMessage() != null ? e.getMessage() : t("common.error.desconocido");
+        new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
     }
 }
