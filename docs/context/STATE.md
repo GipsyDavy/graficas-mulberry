@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-17 (sesión cierre — Sprint i18n-6 — 151/151)
+**Última actualización:** 2026-06-17 (sesión cierre — Sprint i18n-7 — 151/151)
 
 ---
 
@@ -19,9 +19,9 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-6)
+### ESTADO AL CIERRE DE SESIÓN 2026-06-17 (Sprint i18n-7)
 
-**HEAD:** `a130c65`. Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `2e80fbd`. Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
@@ -31,14 +31,15 @@ Actualizar tras cada sprint cerrado.
 | i18n-4 | DashboardView + ClientesView migradas — KPIs, avisos, toolbar, tabla, diálogo edición, importación, exportación, previsualización, errores (~90 claves dash.*/clientes.*/export.*) |
 | i18n-5 | FacturasView migrada — toolbar, tabla, diálogos (edición+líneas+materiales), albaranes, exportación, previsualización (~75 claves facturas.*) |
 | i18n-6 | PedidosView migrada — resumen KPIs, tabs, filtros, toolbar, tablas pedidos+pagos, diálogos (edición+pago+fraccionar), importación, exportación, previsualización (~128 claves pedidos.*) |
+| i18n-7 | AlbaranesView migrada — toolbar, tabla, diálogos (edición+artículos+stock), importación, exportación, previsualización, rename txf+tLineas (~84 claves albaranes.*) |
 
 **Estado del sistema i18n al cierre:**
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-6: `messages_{es,en,ca,eu,gl,fr}.properties`.
-- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, **`PedidosView`**.
-- Vistas pendientes de migrar: AlbaranesView, PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-7: `messages_{es,en,ca,eu,gl,fr}.properties`.
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, **`AlbaranesView`**.
+- Vistas pendientes de migrar: PresupuestosView, NominasView, EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.
 
 **Decisión arquitectónica crítica de i18n-3 (respetar en sprints futuros):**
 
@@ -66,6 +67,7 @@ Actualizar tras cada sprint cerrado.
 - `clientes.*` — ClientesView completa (~53 claves)
 - `facturas.*` — FacturasView completa (~75 claves)
 - `pedidos.*` — PedidosView completa (~128 claves)
+- `albaranes.*` — AlbaranesView completa (~84 claves)
 
 **Patrón de migración establecido (repetir en i18n-4+):**
 ```java
@@ -80,11 +82,11 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `a130c65`. Tests: 151/151. App funcional.
+**HEAD:** `2e80fbd`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-7** — migrar `AlbaranesView`. Mismo patrón que i18n-5/i18n-6.
-   - Antes de empezar: añadir claves `albaranes.*` al bundle `messages_es.properties` (base), traducir en los otros 5, luego migrar la vista Java.
+1. **Sprint i18n-8** — migrar `PresupuestosView`. Mismo patrón que i18n-5/i18n-6/i18n-7.
+   - Antes de empezar: añadir claves `presupuestos.*` al bundle `messages_es.properties` (base), traducir en los otros 5, luego migrar la vista Java.
 2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 
 **Comando de verificación al inicio de sesión:**
