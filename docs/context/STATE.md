@@ -39,7 +39,7 @@ Actualizar tras cada sprint cerrado.
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-8: `messages_{es,en,ca,eu,gl,fr}.properties`.
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-9: `messages_{es,en,ca,eu,gl,fr}.properties`.
 - Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, **`NominasView`**.
 - Vistas pendientes de migrar: EmpleadosView, MaterialesView, TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.
 
@@ -86,10 +86,10 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `75e68e3`. Tests: 151/151. App funcional.
+**HEAD:** `cb15d0a`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-10** — migrar `EmpleadosView` (siguiente vista con más strings). Mismo patrón.
+1. **Sprint i18n-10** — migrar `EmpleadosView`. Mismo patrón. Ver checklist abajo.
 2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 
 **Comando de verificación al inicio de sesión:**
@@ -99,19 +99,131 @@ cd "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
 git log --oneline -5
 ```
 
-**Archivos clave del sistema i18n (para referencia al siguiente agente):**
+**Archivos clave del sistema i18n:**
 - `src/main/java/org/gipsybuho/service/LanguageManager.java` — singleton, `t()`, `tf()`, fallback ES, UTF-8.
 - `src/main/resources/org/gipsybuho/i18n/messages_es.properties` — bundle base (fuente de verdad de claves).
 - `src/main/resources/org/gipsybuho/i18n/messages_{en,ca,eu,gl,fr}.properties` — traducciones.
 - `src/test/java/org/gipsybuho/service/LanguageManagerTest.java` — 5 tests.
 
-### Decisiones tomadas esta sesión que el próximo agente debe respetar
-- Hot-swap de idioma NO implementado — requiere reinicio de app. Decisión intencional (complejidad vs. beneficio).
-- French apostrophes: `''` solo en strings con `{0}` usados via `tf()`. Strings sin `{0}` usan `'` literal.
-- `TamanoFuente.key` guarda claves i18n (no labels) y `t(ts.key())` se llama en tiempo de build, no en clase-load. Intencional para correcta resolución de idioma activo.
-- COMERCIAL no tiene permiso COMPRAS — decisión deliberada por mínimo privilegio (Gemini, sesión anterior).
-- Tab pagos en MaterialesView NO se toca — ambas vistas coexisten sobre el mismo DAO.
-- Singleton `PreferenceService` se resetea en tests via reflexión — no modificar código de producción para test isolation.
+---
+
+### CHECKLIST SPRINT i18n-10 — EmpleadosView
+
+**Paso 0 — antes de tocar el archivo:**
+```powershell
+.\mvnw.cmd test   # verificar 151/151
+git log --oneline -5   # verificar HEAD cb15d0a
+```
+
+**Paso 1 — Buscar conflictos de nombres en EmpleadosView:**
+```bash
+# ¿Tiene método privado llamado tf() o t()?
+grep -n "private.*\btf\b\|private.*\bt\b" src/main/java/org/gipsybuho/ui/EmpleadosView.java
+# ¿Tiene variable local TableView<X> t o similar?
+grep -n "\bTableView.*\bt\b\|\bEmpleado\b t " src/main/java/org/gipsybuho/ui/EmpleadosView.java
+# ¿Tiene loop for (TextField tf : ...)?
+grep -n "for.*TextField tf" src/main/java/org/gipsybuho/ui/EmpleadosView.java
+```
+- Si hay `private ... tf(...)` → renombrar a `txf(...)` + actualizar call sites ANTES de añadir imports.
+- Si hay `TableView<X> t` o `Empleado t` → renombrar a nombre descriptivo ANTES de añadir imports.
+- Si hay `for (TextField tf : ...)` sin llamada a `tf()` dentro → NO renombrar (safe shadowing).
+
+**Paso 2 — Añadir imports al bloque de imports existente:**
+```java
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+```
+
+**Paso 3 — Migrar strings en orden top-down:**
+- Constructor / init: `new Label("...")`, `new Label("...")` subtítulo
+- `buildToolbar()`: btn labels, tooltips, txtBuscar promptText+tooltip
+- `buildTabla()`: `new TableColumn<>("...")`, `tabla.setPlaceholder(...)`
+- `cargar()`: `lblContador.setText(... + " empleados")` → `tf("empleados.contador", n)`
+- `nueva()`, `editar()`, `borrar()`: alertas, confirmaciones
+- `dialogoEmpleado()`: títulos, labels de campo, ComboBox items si son display-only
+- `importar()`: FileChooser title y filtros
+- `mostrarResultadoImportacion()`: String.format → tf()
+- `exportar()`: formatos array usando claves compartidas export.fmt.* + empleados-específicas
+- `lanzarExportacion()`: fc.setTitle → `tf("export.dialog.guardar", fmt[1])`, ok.setTitle → `t("export.exito.titulo")`, ok content → `tf("export.exito.mensaje", destino)`
+- `previsualizar()`: alerta vacío, tituloVentana
+- `mostrarError()`: mensajes UNIQUE constraint
+
+**Paso 4 — Claves compartidas ya existentes (NO redefinir):**
+```
+export.dialog.instruccion   = "Selecciona el formato de exportación:"
+export.dialog.btn           = "Exportar →"
+export.dialog.guardar       = "Guardar exportación — {0}"   ← tf()
+export.exito.titulo         = "Exportación completada"
+export.exito.mensaje        = "Exportación completada:\n{0}"  ← tf()
+export.fmt.sqlite.label     + export.fmt.sqlite.desc
+export.fmt.csv.label / sql / json / pdf / word / excel .label
+common.error.desconocido    = "Error desconocido"
+```
+Las descripciones específicas de módulo → `empleados.export.<fmt>.desc`.
+
+**Paso 5 — Bundles (6 archivos):**
+Añadir bloque `# ── Empleados ──` al final de cada bundle, después de la última clave de `nominas.*`.
+- ES: todas las claves nuevas.
+- EN: inglés.
+- CA: apostrofes dobles (`''`) SOLO en valores de claves tf() (las que tienen `{0}`). Claves t()-only usan `'` simple.
+- EU: euskera.
+- GL: gallego.
+- FR: apostrofes dobles (`''`) SOLO en valores de claves tf(). Claves t()-only usan `'` simple.
+
+**Paso 6 — Validar:**
+```powershell
+.\mvnw.cmd clean compile   # verde
+.\mvnw.cmd test            # 151/151 (o más si se añaden tests)
+```
+
+**Paso 7 — VibeSec → Commit:**
+- Invocar `/VibeSec` al cerrar sprint.
+- Commit: `feat(i18n): migrar EmpleadosView a LanguageManager — Sprint i18n-10`
+- Commit docs: `docs(state): cerrar Sprint i18n-10 — EmpleadosView + N claves — 151/151`
+
+---
+
+### Reglas i18n consolidadas (todas las sesiones)
+
+**Naming conflicts — prioridad al resolver antes de añadir imports:**
+1. `private TextField tf(String v)` → renombrar a `txf()` + actualizar todos los call sites.
+2. `TableView<X> t` local var → renombrar a nombre descriptivo (ej: `tLineas`).
+3. `Tipo t` en lambda → renombrar a nombre descriptivo (ej: `tarifa`).
+4. `for (TextField tf : ...)` sin llamada a `tf()` dentro → NO renombrar.
+5. Params `btn(String t, ...)`, `lbl(String t)`, `col(String t, ...)` → NO renombrar (no colisionan).
+
+**Regla apostrofes MessageFormat:**
+- Clave usada via `tf(key, ...)` (tiene `{0}`, `{1}`, etc.) → `'` se dobla a `''` en CA y FR.
+- Clave usada solo via `t(key)` (sin `{}`) → `'` permanece simple en todos los idiomas.
+- EN, ES, EU, GL: sin apostrofes problemáticos en general (inglés usa comillas tipográficas o reformula).
+
+**Patrón numérico en tf():**
+- Double: `{0,number,0.00}` para euros. `{0,number,0.0}` para segundos.
+- Int/String: `{0}` sin formato.
+
+**Claves compartidas export — nombres EXACTOS en los bundles:**
+```
+export.dialog.instruccion   (t)
+export.dialog.btn           (t)
+export.dialog.guardar       (tf — arg: nombre del formato)
+export.exito.titulo         (t)
+export.exito.mensaje        (tf — arg: ruta destino)
+export.fmt.sqlite/csv/sql/json/pdf/word/excel .label   (t, compartidos)
+export.fmt.sqlite.desc      (t, compartido — descripción SQLite genérica)
+```
+Las `export.fmt.<fmt>.desc` de cada módulo son **específicas**: `empleados.export.csv.desc`, etc.
+
+**No traducir:**
+- Valores de ComboBox/enums almacenados en BD (ej: estado `"borrador"`, tipo `"empresa"`).
+- `COLUMNAS_BASE` static map — valores son claves BD, no UI.
+- DB column names, field keys, lógica interna.
+
+### Decisiones consolidadas (todas las sesiones)
+- Hot-swap de idioma NO implementado — requiere reinicio. Intencional.
+- `TamanoFuente.key` guarda claves i18n (no labels) — `t(ts.key())` se llama en build time.
+- COMERCIAL no tiene permiso COMPRAS — mínimo privilegio (Gemini).
+- Tab pagos en MaterialesView NO se toca — coexiste con ComprasProveedorView sobre mismo DAO.
+- `PreferenceService` singleton se resetea en tests via reflexión — no tocar código producción.
 
 ### Qué se hizo en la sesión 2026-06-15 (GAP-5 Compras a Proveedor)
 
