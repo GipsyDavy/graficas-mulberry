@@ -41,6 +41,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 
 public class PresupuestosView extends VBox {
 
@@ -74,7 +76,7 @@ public class PresupuestosView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Presupuestos");
+        Label titulo = new Label(t("presupuestos.titulo"));
         titulo.getStyleClass().add("view-title");
 
         getChildren().addAll(titulo, buildToolbar(), buildTabla());
@@ -84,32 +86,32 @@ public class PresupuestosView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnNuevo    = btn("+ Nuevo", this::nuevo);
-        Button btnEditar   = btn("✏ Editar", this::editar);
-        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
-        Button btnImportar = btn("📥 Importar", this::importar);
-        Button btnExportar = btn("📤 Exportar", this::exportar);
-        Button btnPedido   = btn("📦 Crear Pedido", this::crearPedido);
-        Button btnAlbaran  = btn("📋 Crear Albarán", this::crearAlbaran);
-        Button btnFacturar = btn("🧾 Crear Factura", this::crearFactura);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo presupuesto"));
-        btnEditar.setTooltip(new Tooltip("Editar el presupuesto seleccionado"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar el presupuesto seleccionado"));
-        btnImportar.setTooltip(new Tooltip("Importar presupuestos desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar presupuestos a PDF, Excel u otros formatos"));
-        btnPedido.setTooltip(new Tooltip("Generar pedido de producción desde este presupuesto"));
-        btnAlbaran.setTooltip(new Tooltip("Generar albarán de entrega desde este presupuesto"));
-        btnFacturar.setTooltip(new Tooltip("Convertir el presupuesto en factura"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar el presupuesto en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNuevo    = btn(t("presupuestos.btn.nuevo"),    this::nuevo);
+        Button btnEditar   = btn(t("presupuestos.btn.editar"),   this::editar);
+        Button btnBorrar   = btn(t("presupuestos.btn.borrar"),   this::borrar);
+        Button btnImportar = btn(t("presupuestos.btn.importar"), this::importar);
+        Button btnExportar = btn(t("presupuestos.btn.exportar"), this::exportar);
+        Button btnPedido   = btn(t("presupuestos.btn.crear_pedido"),  this::crearPedido);
+        Button btnAlbaran  = btn(t("presupuestos.btn.crear_albaran"), this::crearAlbaran);
+        Button btnFacturar = btn(t("presupuestos.btn.crear_factura"), this::crearFactura);
+        Button btnPreview  = btn(t("presupuestos.btn.previsualizar"), this::previsualizar);
+        Button btnColumnas = btn(t("presupuestos.btn.columnas"), dynamicColumns::configure);
+        btnNuevo.setTooltip(new Tooltip(t("presupuestos.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("presupuestos.btn.editar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("presupuestos.btn.borrar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("presupuestos.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("presupuestos.btn.exportar.tip")));
+        btnPedido.setTooltip(new Tooltip(t("presupuestos.btn.crear_pedido.tip")));
+        btnAlbaran.setTooltip(new Tooltip(t("presupuestos.btn.crear_albaran.tip")));
+        btnFacturar.setTooltip(new Tooltip(t("presupuestos.btn.crear_factura.tip")));
+        btnPreview.setTooltip(new Tooltip(t("presupuestos.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("presupuestos.btn.columnas.tip")));
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por número, cliente…");
+        txtBuscar.setPromptText(t("presupuestos.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip("Buscar por número de presupuesto o nombre de cliente"));
+        txtBuscar.setTooltip(new Tooltip(t("presupuestos.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -124,7 +126,7 @@ public class PresupuestosView extends VBox {
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<Presupuesto, String> colEstado = new TableColumn<>("Estado");
+        TableColumn<Presupuesto, String> colEstado = new TableColumn<>(t("presupuestos.tabla.col.estado"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
@@ -143,7 +145,7 @@ public class PresupuestosView extends VBox {
             }
         });
 
-        TableColumn<Presupuesto, Double> colTotal = new TableColumn<>("Total");
+        TableColumn<Presupuesto, Double> colTotal = new TableColumn<>(t("presupuestos.tabla.col.total"));
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         colTotal.setUserData("total");
         colTotal.setCellFactory(c -> new TableCell<>() {
@@ -154,14 +156,14 @@ public class PresupuestosView extends VBox {
         });
 
         tabla.getColumns().addAll(
-            col("Número", "numero", 140),
-            col("Cliente", "clienteNombre", 200),
-            col("Fecha", "fecha", 100),
-            col("Validez", "fechaValidez", 100),
+            col(t("presupuestos.tabla.col.numero"),  "numero",        140),
+            col(t("presupuestos.tabla.col.cliente"), "clienteNombre", 200),
+            col(t("presupuestos.tabla.col.fecha"),   "fecha",         100),
+            col(t("presupuestos.tabla.col.validez"), "fechaValidez",  100),
             colEstado,
             colTotal
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay presupuestos registrados todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("presupuestos.tabla.vacio")));
         return tabla;
     }
 
@@ -173,7 +175,7 @@ public class PresupuestosView extends VBox {
                 .filter(p -> contiene(p.getNumero(), q) || contiene(p.getClienteNombre(), q) || contiene(p.getEstado(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " presupuestos");
+            lblContador.setText(tf("presupuestos.contador", lista.size()));
             dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
@@ -185,7 +187,7 @@ public class PresupuestosView extends VBox {
     private void nuevo() {
         try {
             List<Cliente> clientes = clienteDAO.findAll();
-            if (clientes.isEmpty()) { alerta("Añade al menos un cliente antes de crear un presupuesto."); return; }
+            if (clientes.isEmpty()) { alerta(t("presupuestos.nuevo.sin_cliente")); return; }
             Presupuesto p = new Presupuesto();
             p.setNumero(DatabaseManager.generarNumeroPresupuesto());
             p.setFecha(LocalDate.now().toString());
@@ -202,7 +204,7 @@ public class PresupuestosView extends VBox {
 
     private void editar() {
         Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto para editar."); return; }
+        if (sel == null) { alerta(t("presupuestos.editar.sin_seleccion")); return; }
         try {
             Presupuesto p = dao.findById(sel.getId());
             List<Cliente> clientes = clienteDAO.findAll();
@@ -214,10 +216,10 @@ public class PresupuestosView extends VBox {
 
     private void borrar() {
         List<Presupuesto> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios presupuestos para borrar."); return; }
+        if (seleccionados.isEmpty()) { alerta(t("presupuestos.borrar.sin_seleccion")); return; }
         String mensaje = seleccionados.size() == 1
-            ? "¿Eliminar el presupuesto " + seleccionados.get(0).getNumero() + "?"
-            : "¿Eliminar " + seleccionados.size() + " presupuestos seleccionados?";
+            ? tf("presupuestos.borrar.confirmar.uno",   seleccionados.get(0).getNumero())
+            : tf("presupuestos.borrar.confirmar.varios", seleccionados.size());
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
             mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
@@ -231,10 +233,10 @@ public class PresupuestosView extends VBox {
 
     private void crearPedido() {
         Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto."); return; }
+        if (sel == null) { alerta(t("presupuestos.sin_seleccion")); return; }
         if (!"aceptado".equals(sel.getEstado())) {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "El presupuesto no está en estado 'aceptado'. ¿Crear pedido igualmente?",
+                t("presupuestos.crear_pedido.confirmar_no_aceptado"),
                 ButtonType.YES, ButtonType.NO);
             conf.setHeaderText(null);
             if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
@@ -242,17 +244,17 @@ public class PresupuestosView extends VBox {
         try {
             new PedidoDAO().crearDesdePresupuesto(sel.getId());
             cargar();
-            new Alert(Alert.AlertType.INFORMATION, "Pedido creado correctamente.", ButtonType.OK).showAndWait();
+            new Alert(Alert.AlertType.INFORMATION, t("presupuestos.crear_pedido.exito"), ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
     }
 
     private void crearFactura() {
         Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto."); return; }
-        if ("facturado".equals(sel.getEstado())) { alerta("Este presupuesto ya está facturado."); return; }
+        if (sel == null) { alerta(t("presupuestos.sin_seleccion")); return; }
+        if ("facturado".equals(sel.getEstado())) { alerta(t("presupuestos.crear_factura.ya_facturado")); return; }
         if (!"aceptado".equals(sel.getEstado())) {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "El presupuesto no está en estado 'aceptado'. ¿Crear factura igualmente?",
+                t("presupuestos.crear_factura.confirmar_no_aceptado"),
                 ButtonType.YES, ButtonType.NO);
             conf.setHeaderText(null);
             if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
@@ -260,16 +262,16 @@ public class PresupuestosView extends VBox {
         try {
             new FacturaDAO().crearDesdePresupuesto(sel.getId());
             cargar();
-            new Alert(Alert.AlertType.INFORMATION, "Factura creada correctamente.", ButtonType.OK).showAndWait();
+            new Alert(Alert.AlertType.INFORMATION, t("presupuestos.crear_factura.exito"), ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
     }
 
     private void crearAlbaran() {
         Presupuesto sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un presupuesto."); return; }
+        if (sel == null) { alerta(t("presupuestos.sin_seleccion")); return; }
         if (!"aceptado".equals(sel.getEstado())) {
             Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-                "El presupuesto no está en estado 'aceptado'. ¿Crear albarán igualmente?",
+                t("presupuestos.crear_albaran.confirmar_no_aceptado"),
                 ButtonType.YES, ButtonType.NO);
             conf.setHeaderText(null);
             if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
@@ -277,13 +279,13 @@ public class PresupuestosView extends VBox {
         try {
             new AlbaranDAO().crearDesdePresupuesto(sel.getId());
             cargar();
-            new Alert(Alert.AlertType.INFORMATION, "Albarán creado correctamente.", ButtonType.OK).showAndWait();
+            new Alert(Alert.AlertType.INFORMATION, t("presupuestos.crear_albaran.exito"), ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
     }
 
     private Optional<Presupuesto> dialogoPresupuesto(Presupuesto p, List<Cliente> clientes) {
         Dialog<Presupuesto> dlg = new Dialog<>();
-        dlg.setTitle(p.getId() == 0 ? "Nuevo presupuesto" : "Editar presupuesto " + p.getNumero());
+        dlg.setTitle(p.getId() == 0 ? t("presupuestos.dialogo.nuevo") : tf("presupuestos.dialogo.editar", p.getNumero()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(800);
         dlg.getDialogPane().setPrefHeight(600);
@@ -299,25 +301,25 @@ public class PresupuestosView extends VBox {
         clientes.stream().filter(c -> c.getId() == p.getClienteId()).findFirst().ifPresent(fCliente::setValue);
         if (fCliente.getValue() == null && !clientes.isEmpty()) fCliente.setValue(clientes.get(0));
 
-        TextField fNumero    = tf(p.getNumero());
+        TextField fNumero    = txf(p.getNumero());
         fNumero.setEditable(false);
-        TextField fFecha     = tf(p.getFecha());
-        TextField fValidez   = tf(p.getFechaValidez());
+        TextField fFecha     = txf(p.getFecha());
+        TextField fValidez   = txf(p.getFechaValidez());
         ComboBox<String> fEstado = new ComboBox<>(FXCollections.observableArrayList(
             "borrador","enviado","aceptado","rechazado"));
         fEstado.setValue(p.getEstado());
-        TextField fIva       = tf(String.valueOf(p.getIvaPorcentaje()));
+        TextField fIva       = txf(String.valueOf(p.getIvaPorcentaje()));
         TextArea fNotas      = new TextArea(nvl(p.getNotas())); fNotas.setPrefRowCount(3);
         TextArea fCondiciones = new TextArea(nvl(p.getCondiciones())); fCondiciones.setPrefRowCount(3);
 
-        gGeneral.addRow(0, lbl("Número"), fNumero, lbl("Estado"), fEstado);
-        gGeneral.addRow(1, lbl("Cliente *"), fCliente, lbl("IVA (%)"), fIva);
-        gGeneral.addRow(2, lbl("Fecha"), fFecha, lbl("Validez hasta"), fValidez);
-        gGeneral.add(lbl("Notas"), 0, 3); gGeneral.add(fNotas, 1, 3, 3, 1);
-        gGeneral.add(lbl("Condiciones"), 0, 4); gGeneral.add(fCondiciones, 1, 4, 3, 1);
+        gGeneral.addRow(0, lbl(t("presupuestos.campo.numero")),    fNumero,  lbl(t("presupuestos.campo.estado")),  fEstado);
+        gGeneral.addRow(1, lbl(t("presupuestos.campo.cliente")),   fCliente, lbl(t("presupuestos.campo.iva")),    fIva);
+        gGeneral.addRow(2, lbl(t("presupuestos.campo.fecha")),     fFecha,   lbl(t("presupuestos.campo.validez")), fValidez);
+        gGeneral.add(lbl(t("presupuestos.campo.notas")),       0, 3); gGeneral.add(fNotas,       1, 3, 3, 1);
+        gGeneral.add(lbl(t("presupuestos.campo.condiciones")), 0, 4); gGeneral.add(fCondiciones, 1, 4, 3, 1);
         dialogExtraFields = new LinkedHashMap<>();
         dynamicColumns.addFormFields(gGeneral, 5, p, dialogExtraFields);
-        tabs.getTabs().add(new Tab("Datos generales", gGeneral));
+        tabs.getTabs().add(new Tab(t("presupuestos.tab.datos"), gGeneral));
 
         // Tab 2: Servicios / Técnicas (líneas de trabajo)
         ObservableList<LineaPresupuesto> lineasServ = FXCollections.observableArrayList(
@@ -327,14 +329,14 @@ public class PresupuestosView extends VBox {
         ObservableList<LineaPresupuesto> lineasMat = FXCollections.observableArrayList(
             p.getLineas().stream().filter(l -> "📦 Material".equals(l.getTecnica())).toList());
 
-        tabs.getTabs().add(new Tab("Servicios / Técnicas", buildTablaLineas(lineasServ)));
-        tabs.getTabs().add(new Tab("📦 Materiales del stock", buildTabMateriales(lineasMat)));
+        tabs.getTabs().add(new Tab(t("presupuestos.tab.servicios"), buildTablaLineas(lineasServ)));
+        tabs.getTabs().add(new Tab(t("presupuestos.tab.materiales"), buildTabMateriales(lineasMat)));
 
         dlg.getDialogPane().setContent(tabs);
 
         dlg.setResultConverter(bt -> {
             if (bt != ButtonType.OK) return null;
-            if (fCliente.getValue() == null) { alerta("Selecciona un cliente."); return null; }
+            if (fCliente.getValue() == null) { alerta(t("presupuestos.validacion.cliente")); return null; }
             p.setClienteId(fCliente.getValue().getId());
             p.setClienteNombre(fCliente.getValue().getNombreCompleto());
             p.setFecha(fFecha.getText().trim());
@@ -356,23 +358,23 @@ public class PresupuestosView extends VBox {
         VBox box = new VBox(8);
         box.setPadding(new Insets(12));
 
-        TableView<LineaPresupuesto> t = new TableView<>(lineas);
-        t.setEditable(true);
-        t.setPrefHeight(280);
+        TableView<LineaPresupuesto> tLineas = new TableView<>(lineas);
+        tLineas.setEditable(true);
+        tLineas.setPrefHeight(280);
 
-        TableColumn<LineaPresupuesto,String> cDesc = new TableColumn<>("Descripción");
+        TableColumn<LineaPresupuesto,String> cDesc = new TableColumn<>(t("presupuestos.linea.col.descripcion"));
         cDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion"));
         cDesc.setPrefWidth(250);
 
-        TableColumn<LineaPresupuesto,String> cTec = new TableColumn<>("Técnica");
+        TableColumn<LineaPresupuesto,String> cTec = new TableColumn<>(t("presupuestos.linea.col.tecnica"));
         cTec.setCellValueFactory(new PropertyValueFactory<>("tecnica"));
         cTec.setPrefWidth(100);
 
-        TableColumn<LineaPresupuesto,Integer> cCant = new TableColumn<>("Cant.");
+        TableColumn<LineaPresupuesto,Integer> cCant = new TableColumn<>(t("presupuestos.linea.col.cantidad"));
         cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad"));
         cCant.setPrefWidth(60);
 
-        TableColumn<LineaPresupuesto,Double> cPrecio = new TableColumn<>("Precio ud.");
+        TableColumn<LineaPresupuesto,Double> cPrecio = new TableColumn<>(t("presupuestos.linea.col.precio_ud"));
         cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
         cPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -382,7 +384,7 @@ public class PresupuestosView extends VBox {
         });
         cPrecio.setPrefWidth(90);
 
-        TableColumn<LineaPresupuesto,Double> cDto = new TableColumn<>("Dto.");
+        TableColumn<LineaPresupuesto,Double> cDto = new TableColumn<>(t("presupuestos.linea.col.descuento"));
         cDto.setCellValueFactory(new PropertyValueFactory<>("descuento"));
         cDto.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -392,7 +394,7 @@ public class PresupuestosView extends VBox {
         });
         cDto.setPrefWidth(60);
 
-        TableColumn<LineaPresupuesto,Double> cTotal = new TableColumn<>("Total");
+        TableColumn<LineaPresupuesto,Double> cTotal = new TableColumn<>(t("presupuestos.linea.col.total"));
         cTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         cTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -402,21 +404,21 @@ public class PresupuestosView extends VBox {
         });
         cTotal.setPrefWidth(90);
 
-        t.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cDto, cTotal);
+        tLineas.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cDto, cTotal);
 
         HBox buttons = new HBox(8);
-        Button btnAdd = btn("+ Añadir línea", () -> dialogoLinea(null, lineas));
-        Button btnEdit = btn("✏ Editar", () -> {
-            LineaPresupuesto sel = t.getSelectionModel().getSelectedItem();
+        Button btnAdd = btn(t("presupuestos.linea.btn.anadir"), () -> dialogoLinea(null, lineas));
+        Button btnEdit = btn(t("presupuestos.linea.btn.editar"), () -> {
+            LineaPresupuesto sel = tLineas.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLinea(sel, lineas);
         });
-        Button btnDel = btn("🗑 Quitar", () -> {
-            LineaPresupuesto sel = t.getSelectionModel().getSelectedItem();
+        Button btnDel = btn(t("presupuestos.linea.btn.quitar"), () -> {
+            LineaPresupuesto sel = tLineas.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
         buttons.getChildren().addAll(btnAdd, btnEdit, btnDel);
 
-        box.getChildren().addAll(t, buttons);
+        box.getChildren().addAll(tLineas, buttons);
         return box;
     }
 
@@ -426,41 +428,41 @@ public class PresupuestosView extends VBox {
         LineaPresupuesto l = linea;
 
         Dialog<LineaPresupuesto> dlg = new Dialog<>();
-        dlg.setTitle(esNueva ? "Nueva línea" : "Editar línea");
+        dlg.setTitle(esNueva ? t("presupuestos.linea.dialogo.nuevo") : t("presupuestos.linea.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
 
         TextArea fDesc   = new TextArea(nvl(l.getDescripcion())); fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
-        TextField fTec   = tf(l.getTecnica());
-        TextField fCant  = tf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
-        TextField fPrecio = tf(l.getPrecioUnit() > 0 ? String.valueOf(l.getPrecioUnit()) : "");
-        TextField fDto   = tf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
+        TextField fTec   = txf(l.getTecnica());
+        TextField fCant  = txf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
+        TextField fPrecio = txf(l.getPrecioUnit() > 0 ? String.valueOf(l.getPrecioUnit()) : "");
+        TextField fDto   = txf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
 
         // Botón para insertar desde tarifa
         try {
             List<Tarifa> tarifas = new TarifaDAO().findAll();
             ComboBox<Tarifa> cbTarifa = new ComboBox<>(FXCollections.observableArrayList(tarifas));
-            cbTarifa.setPromptText("Seleccionar tarifa...");
+            cbTarifa.setPromptText(t("presupuestos.linea.tarifa.prompt"));
             cbTarifa.setOnAction(e -> {
-                Tarifa t = cbTarifa.getValue();
-                if (t == null) return;
-                if (t.isUsaTiempo()) {
-                    aplicarTarifaTiempo(t, fDesc, fTec, fPrecio);
+                Tarifa tarifa = cbTarifa.getValue();
+                if (tarifa == null) return;
+                if (tarifa.isUsaTiempo()) {
+                    aplicarTarifaTiempo(tarifa, fDesc, fTec, fPrecio);
                 } else {
-                    if (fDesc.getText().isBlank()) fDesc.setText(t.getNombre() + (t.getDescripcion() != null ? " - " + t.getDescripcion() : ""));
-                    fTec.setText(t.getTecnica());
-                    fPrecio.setText(String.valueOf(t.getPrecioUnit()));
+                    if (fDesc.getText().isBlank()) fDesc.setText(tarifa.getNombre() + (tarifa.getDescripcion() != null ? " - " + tarifa.getDescripcion() : ""));
+                    fTec.setText(tarifa.getTecnica());
+                    fPrecio.setText(String.valueOf(tarifa.getPrecioUnit()));
                 }
             });
-            grid.add(lbl("Tarifa:"), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
+            grid.add(lbl(t("presupuestos.linea.campo.tarifa")), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
         } catch (Exception ignored) {}
 
-        grid.addRow(1, lbl("Descripción *"), fDesc);
+        grid.addRow(1, lbl(t("presupuestos.linea.campo.descripcion")), fDesc);
         GridPane.setColumnSpan(fDesc, 3);
-        grid.addRow(2, lbl("Técnica"), fTec, lbl("Cantidad"), fCant);
-        grid.addRow(3, lbl("Precio ud. (€)"), fPrecio, lbl("Descuento (%)"), fDto);
+        grid.addRow(2, lbl(t("presupuestos.linea.campo.tecnica")),   fTec,    lbl(t("presupuestos.linea.campo.cantidad")),  fCant);
+        grid.addRow(3, lbl(t("presupuestos.linea.campo.precio_ud")), fPrecio, lbl(t("presupuestos.linea.campo.descuento")), fDto);
 
         dlg.getDialogPane().setContent(grid);
 
@@ -483,7 +485,7 @@ public class PresupuestosView extends VBox {
     private void aplicarTarifaTiempo(Tarifa tarifaBase,
                                       TextArea fDesc, TextField fTec, TextField fPrecio) {
         Dialog<Integer> dlg = new Dialog<>();
-        dlg.setTitle("Tiempo de ejecución — " + tarifaBase.getNombre());
+        dlg.setTitle(tf("presupuestos.tarifa.tiempo.titulo", tarifaBase.getNombre()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (tabla.getScene() != null)
             dlg.getDialogPane().getStylesheets()
@@ -495,7 +497,7 @@ public class PresupuestosView extends VBox {
 
         GridPane g = new GridPane();
         g.setHgap(10); g.setVgap(10); g.setPadding(new Insets(16));
-        g.addRow(0, new Label("Minutos reales de ejecución:"), spMinutos);
+        g.addRow(0, new Label(t("presupuestos.tarifa.tiempo.label_minutos")), spMinutos);
         dlg.getDialogPane().setContent(g);
         dlg.setResultConverter(bt -> bt == ButtonType.OK ? spMinutos.getValue() : null);
 
@@ -513,8 +515,7 @@ public class PresupuestosView extends VBox {
                         .orElse(null));
                 if (tramoUsado == null) {
                     new Alert(Alert.AlertType.WARNING,
-                        "No existe tramo para " + redondeado + " min ni superior.\n"
-                        + "Revisa los tramos de esta tarifa.", ButtonType.OK)
+                        tf("presupuestos.tarifa.tiempo.sin_tramo", redondeado), ButtonType.OK)
                         .showAndWait();
                     return;
                 }
@@ -527,7 +528,7 @@ public class PresupuestosView extends VBox {
                 fPrecio.setText(String.format("%.2f", tramoUsado.getPrecioTiempo()));
             } catch (Exception ex) {
                 new Alert(Alert.AlertType.ERROR,
-                    "Error al cargar tramos: " + ex.getMessage(), ButtonType.OK)
+                    tf("presupuestos.tarifa.tiempo.error_tramos", ex.getMessage()), ButtonType.OK)
                     .showAndWait();
             }
         });
@@ -540,17 +541,17 @@ public class PresupuestosView extends VBox {
         // Tabla de materiales seleccionados
         TableView<LineaPresupuesto> tablaMat = new TableView<>(lineasMat);
         tablaMat.setPrefHeight(200);
-        tablaMat.setPlaceholder(new Label("No hay materiales añadidos al presupuesto"));
+        tablaMat.setPlaceholder(new Label(t("presupuestos.mat.vacio")));
 
-        TableColumn<LineaPresupuesto, String> cNom = new TableColumn<>("Material");
+        TableColumn<LineaPresupuesto, String> cNom = new TableColumn<>(t("presupuestos.mat.col.material"));
         cNom.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("descripcion"));
         cNom.setPrefWidth(260);
 
-        TableColumn<LineaPresupuesto, Integer> cCant = new TableColumn<>("Cantidad");
+        TableColumn<LineaPresupuesto, Integer> cCant = new TableColumn<>(t("presupuestos.mat.col.cantidad"));
         cCant.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("cantidad"));
         cCant.setPrefWidth(80);
 
-        TableColumn<LineaPresupuesto, Double> cPrecio = new TableColumn<>("Precio ud.");
+        TableColumn<LineaPresupuesto, Double> cPrecio = new TableColumn<>(t("presupuestos.mat.col.precio_ud"));
         cPrecio.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("precioUnit"));
         cPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -560,7 +561,7 @@ public class PresupuestosView extends VBox {
         });
         cPrecio.setPrefWidth(100);
 
-        TableColumn<LineaPresupuesto, Double> cTotal = new TableColumn<>("Total");
+        TableColumn<LineaPresupuesto, Double> cTotal = new TableColumn<>(t("presupuestos.mat.col.total"));
         cTotal.setCellValueFactory(new javafx.scene.control.cell.PropertyValueFactory<>("total"));
         cTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -573,7 +574,7 @@ public class PresupuestosView extends VBox {
         tablaMat.getColumns().addAll(cNom, cCant, cPrecio, cTotal);
 
         // Selector de material del stock
-        Label lblPicker = new Label("Añadir material del stock:");
+        Label lblPicker = new Label(t("presupuestos.mat.anadir_titulo"));
         lblPicker.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
         List<Material> materiales;
@@ -581,10 +582,10 @@ public class PresupuestosView extends VBox {
         catch (Exception e) { materiales = new java.util.ArrayList<>(); }
 
         ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
-        cbMat.setPromptText("Seleccionar material...");
+        cbMat.setPromptText(t("presupuestos.mat.selector.prompt"));
         cbMat.setPrefWidth(290);
 
-        Label lblInfo = new Label("Selecciona un material para ver disponibilidad y precio");
+        Label lblInfo = new Label(t("presupuestos.mat.info.inicial"));
         lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
 
         Spinner<Integer> spCant = new Spinner<>(1, 999999, 1);
@@ -593,20 +594,19 @@ public class PresupuestosView extends VBox {
 
         cbMat.setOnAction(e -> {
             Material m = cbMat.getValue();
-            if (m != null) lblInfo.setText(String.format(
-                "Stock disponible: %.2f %s  |  Precio unitario: %.2f €/ud.",
+            if (m != null) lblInfo.setText(tf("presupuestos.mat.info",
                 m.getStockActual(),
                 m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
                 m.getPrecioUnidad()));
         });
 
-        Button btnAnadir = new Button("➕ Añadir al presupuesto");
+        Button btnAnadir = new Button(t("presupuestos.mat.btn.anadir"));
         btnAnadir.setStyle(
             "-fx-background-color:#27AE60; -fx-text-fill:white; " +
             "-fx-font-weight:bold; -fx-padding:6 16; -fx-background-radius:4;");
         btnAnadir.setOnAction(e -> {
             Material m = cbMat.getValue();
-            if (m == null) { alerta("Selecciona un material del desplegable."); return; }
+            if (m == null) { alerta(t("presupuestos.mat.sin_material")); return; }
             LineaPresupuesto lm = new LineaPresupuesto();
             lm.setDescripcion(m.getNombre() +
                 (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
@@ -618,22 +618,22 @@ public class PresupuestosView extends VBox {
             lineasMat.add(lm);
         });
 
-        Button btnQuitar = btn("🗑 Quitar seleccionado", () -> {
+        Button btnQuitar = btn(t("presupuestos.mat.btn.quitar"), () -> {
             LineaPresupuesto sel = tablaMat.getSelectionModel().getSelectedItem();
             if (sel != null) lineasMat.remove(sel);
         });
 
-        Label lblTotalMat = new Label("Total materiales: 0.00 €");
+        Label lblTotalMat = new Label(tf("presupuestos.mat.total", 0.0));
         lblTotalMat.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
         lineasMat.addListener((javafx.collections.ListChangeListener<LineaPresupuesto>) c -> {
             double tot = lineasMat.stream().mapToDouble(LineaPresupuesto::getTotal).sum();
-            lblTotalMat.setText(String.format("Total materiales: %.2f €", tot));
+            lblTotalMat.setText(tf("presupuestos.mat.total", tot));
         });
         // Calcular total inicial si ya había líneas
         double totInicial = lineasMat.stream().mapToDouble(LineaPresupuesto::getTotal).sum();
-        lblTotalMat.setText(String.format("Total materiales: %.2f €", totInicial));
+        lblTotalMat.setText(tf("presupuestos.mat.total", totInicial));
 
-        HBox pickerRow = new HBox(8, cbMat, new Label("Cantidad:"), spCant, btnAnadir);
+        HBox pickerRow = new HBox(8, cbMat, new Label(t("presupuestos.mat.campo.cantidad")), spCant, btnAnadir);
         pickerRow.setAlignment(javafx.geometry.Pos.CENTER_LEFT);
 
         box.getChildren().addAll(
@@ -657,10 +657,10 @@ public class PresupuestosView extends VBox {
 
     private void importar() {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar presupuestos");
+        fc.setTitle(t("presupuestos.importar.titulo"));
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            new FileChooser.ExtensionFilter(t("presupuestos.importar.filtro"), "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+            new FileChooser.ExtensionFilter(t("presupuestos.importar.todos_archivos"), "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
@@ -706,18 +706,21 @@ public class PresupuestosView extends VBox {
 
     private void mostrarResultadoImportacion(ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("presupuestos.importar.completada", r.duracion().toMillis() / 1000.0))
+          .append(System.lineSeparator());
+        sb.append(tf("presupuestos.importar.filas_importadas",  r.filasImportadas()))
+          .append(System.lineSeparator());
+        sb.append(tf("presupuestos.importar.filas_actualizadas", r.filasActualizadas()))
+          .append(System.lineSeparator());
+        sb.append(tf("presupuestos.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("presupuestos.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("presupuestos.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("presupuestos.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -726,20 +729,13 @@ public class PresupuestosView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de presupuestos como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con presupuestos y sus líneas (tabla completa).", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Presupuestos y líneas en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de presupuestos como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de presupuestos en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"),            "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("presupuestos.export.csv.desc"),      "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("presupuestos.export.sql.desc"),      "sql"},
+            {"json",   t("export.fmt.json.label"),   t("presupuestos.export.json.desc"),     "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("presupuestos.export.pdf.desc"),      "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("presupuestos.export.word.desc"),     "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("presupuestos.export.excel.desc"),    "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -764,18 +760,18 @@ public class PresupuestosView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar presupuestos");
+        dlg.setTitle(t("presupuestos.export.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -788,11 +784,11 @@ public class PresupuestosView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Presupuestos_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Presupuestos", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("presupuestos.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -813,7 +809,7 @@ public class PresupuestosView extends VBox {
         if (presupuestosAExportar.isEmpty()) {
             Platform.runLater(() -> {
                 setDisable(false);
-                alerta("No hay registros para exportar.");
+                alerta(t("presupuestos.export.sin_registros"));
             });
             return;
         }
@@ -855,8 +851,8 @@ public class PresupuestosView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -874,11 +870,11 @@ public class PresupuestosView extends VBox {
     private void previsualizar() {
         List<Presupuesto> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         if (seleccionados.isEmpty()) {
-            alerta("No hay presupuestos seleccionados para previsualizar. Se previsualizarán todos los registros.");
+            alerta(t("presupuestos.previsualizar.sin_seleccion"));
             seleccionados.addAll(datos); // Si no hay selección, previsualizar todos
         }
         if (seleccionados.isEmpty()) { // Si aún después de añadir todos, sigue vacío
-            alerta("No hay registros para previsualizar.");
+            alerta(t("presupuestos.previsualizar.vacio"));
             return;
         }
 
@@ -909,7 +905,7 @@ public class PresupuestosView extends VBox {
                     pdfBytes = Files.readAllBytes(pdfPath);
                     Path pdfImpresionPath = pdfService.generarPresupuesto(presupuestoSeleccionado, clienteAsociado, false);
                     pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
-                    tituloVentana = "Previsualización — Presupuesto " + presupuestoSeleccionado.getNumero();
+                    tituloVentana = tf("presupuestos.previsualizar.titulo.uno", presupuestoSeleccionado.getNumero());
 
                     // Opcional: eliminar el archivo temporal después de leerlo
                     Files.deleteIfExists(pdfPath);
@@ -918,7 +914,7 @@ public class PresupuestosView extends VBox {
                     // Previsualizar un listado de múltiples presupuestos
                     pdfBytes = PdfPreviewService.previsualizarPresupuestos(seleccionados);
                     pdfImpresionBytes = pdfBytes;
-                    tituloVentana = "Previsualización — Presupuestos (" + seleccionados.size() + " registro(s))";
+                    tituloVentana = tf("presupuestos.previsualizar.titulo.varios", seleccionados.size());
                 }
 
                 final byte[] finalPdfBytes = pdfBytes;
@@ -948,7 +944,7 @@ public class PresupuestosView extends VBox {
         b.setOnAction(e -> r.run()); return b;
     }
 
-    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
     private String toDbColumn(String campo) {
         return switch (campo) {
@@ -963,10 +959,10 @@ public class PresupuestosView extends VBox {
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
         SoundService.play(SoundService.Sound.ERROR);
-        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        String msg = e.getMessage() != null ? e.getMessage() : t("common.error.desconocido");
         javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
         if (w != null && msg.contains("UNIQUE constraint failed")) {
-            ToastService.error(w, "Número de presupuesto ya existente.", "PRE-ERR-1");
+            ToastService.error(w, t("presupuestos.error.numero_duplicado"), "PRE-ERR-1");
         } else {
             new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
         }
