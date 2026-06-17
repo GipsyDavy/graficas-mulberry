@@ -35,6 +35,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
 
 public class FacturasView extends VBox {
 
@@ -70,7 +72,7 @@ public class FacturasView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Facturas");
+        Label titulo = new Label(t("facturas.titulo"));
         titulo.getStyleClass().add("view-title");
 
         cargando.setMaxSize(48, 48);
@@ -84,7 +86,7 @@ public class FacturasView extends VBox {
     }
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Usa los botones para editar, marcar como pagada o anular una factura. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("facturas.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -95,30 +97,30 @@ public class FacturasView extends VBox {
     }
 
     private HBox buildToolbar() {
-        Button btnEditar   = btn("✏ Editar", this::editar);
-        Button btnImportar = btn("📥 Importar", this::importar);
-        Button btnExportar = btn("📤 Exportar", this::exportar);
-        Button btnAlbaran  = btn("📋 Crear Albarán", this::crearAlbaran);
-        Button btnPagada   = btn("✅ Marcar pagada", this::marcarPagada);
-        Button btnAnular   = btn("❌ Anular", this::anular);
-        Button btnBorrar   = btn("🗑 Borrar", this::borrar);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
-        btnEditar.setTooltip(new Tooltip("Editar la factura seleccionada"));
-        btnImportar.setTooltip(new Tooltip("Importar facturas desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar facturas a PDF, Excel, Word u otros formatos"));
-        btnAlbaran.setTooltip(new Tooltip("Crear albarán de entrega para la factura seleccionada"));
-        btnPagada.setTooltip(new Tooltip("Marcar la factura seleccionada como pagada"));
-        btnAnular.setTooltip(new Tooltip("Anular la factura seleccionada"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar permanentemente la factura seleccionada"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar la factura en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnEditar   = btn(t("facturas.btn.editar"),         this::editar);
+        Button btnImportar = btn(t("facturas.btn.importar"),        this::importar);
+        Button btnExportar = btn(t("facturas.btn.exportar"),        this::exportar);
+        Button btnAlbaran  = btn(t("facturas.btn.albaran"),         this::crearAlbaran);
+        Button btnPagada   = btn(t("facturas.btn.marcar_pagada"),   this::marcarPagada);
+        Button btnAnular   = btn(t("facturas.btn.anular"),          this::anular);
+        Button btnBorrar   = btn(t("facturas.btn.borrar"),          this::borrar);
+        Button btnPreview  = btn(t("facturas.btn.previsualizar"),   this::previsualizar);
+        Button btnColumnas = btn(t("facturas.btn.columnas"),        dynamicColumns::configure);
+        btnEditar.setTooltip(new Tooltip(t("facturas.btn.editar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("facturas.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("facturas.btn.exportar.tip")));
+        btnAlbaran.setTooltip(new Tooltip(t("facturas.btn.albaran.tip")));
+        btnPagada.setTooltip(new Tooltip(t("facturas.btn.marcar_pagada.tip")));
+        btnAnular.setTooltip(new Tooltip(t("facturas.btn.anular.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("facturas.btn.borrar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("facturas.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("facturas.btn.columnas.tip")));
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por número, cliente…");
+        txtBuscar.setPromptText(t("facturas.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip("Buscar por número de factura o nombre de cliente"));
+        txtBuscar.setTooltip(new Tooltip(t("facturas.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -133,7 +135,7 @@ public class FacturasView extends VBox {
         tabla.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         tabla.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
-        TableColumn<Factura, String> colEstado = new TableColumn<>("Estado");
+        TableColumn<Factura, String> colEstado = new TableColumn<>(t("facturas.campo.estado"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("estado"));
         colEstado.setUserData("estado");
         colEstado.setCellFactory(c -> new TableCell<>() {
@@ -151,7 +153,7 @@ public class FacturasView extends VBox {
             }
         });
 
-        TableColumn<Factura, Double> colTotal = new TableColumn<>("Total");
+        TableColumn<Factura, Double> colTotal = new TableColumn<>(t("facturas.campo.total"));
         colTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         colTotal.setUserData("total");
         colTotal.setCellFactory(c -> new TableCell<>() {
@@ -162,15 +164,15 @@ public class FacturasView extends VBox {
         });
 
         tabla.getColumns().addAll(
-            col("Número", "numero", 140),
-            col("Cliente", "clienteNombre", 200),
-            col("Fecha", "fecha", 100),
-            col("Vencimiento", "fechaVencimiento", 110),
-            col("Forma de pago", "formaPago", 150),
+            col(t("facturas.campo.numero"),     "numero",          140),
+            col(t("facturas.campo.cliente"),    "clienteNombre",   200),
+            col(t("facturas.campo.fecha"),      "fecha",           100),
+            col(t("facturas.campo.vencimiento"),"fechaVencimiento",110),
+            col(t("facturas.campo.forma_pago"), "formaPago",       150),
             colEstado,
             colTotal
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay facturas registradas todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("facturas.tabla.vacio")));
         return tabla;
     }
 
@@ -184,7 +186,7 @@ public class FacturasView extends VBox {
                 .filter(f -> contiene(f.getNumero(), q) || contiene(f.getClienteNombre(), q) || contiene(f.getEstado(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " facturas");
+            lblContador.setText(tf("facturas.contador", lista.size()));
             dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         }
         catch (Exception e) { mostrarError(e); }
@@ -197,7 +199,7 @@ public class FacturasView extends VBox {
 
     private void editar() {
         Factura sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una factura para editar."); return; }
+        if (sel == null) { alerta(t("facturas.editar.sin_seleccion")); return; }
         try {
             Factura f = dao.findById(sel.getId());
             dialogoFactura(f).ifPresent(actualizada -> {
@@ -208,7 +210,7 @@ public class FacturasView extends VBox {
 
     private Optional<Factura> dialogoFactura(Factura f) {
         Dialog<Factura> dlg = new Dialog<>();
-        dlg.setTitle("Editar factura " + f.getNumero());
+        dlg.setTitle(tf("facturas.dialogo.editar", f.getNumero()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(820);
         dlg.getDialogPane().setPrefHeight(600);
@@ -220,9 +222,9 @@ public class FacturasView extends VBox {
         GridPane gDatos = new GridPane();
         gDatos.setHgap(10); gDatos.setVgap(10); gDatos.setPadding(new Insets(16));
 
-        TextField fNumero = tf(f.getNumero()); fNumero.setEditable(false);
-        TextField fFecha = tf(f.getFecha());
-        TextField fVto = tf(f.getFechaVencimiento());
+        TextField fNumero = txf(f.getNumero()); fNumero.setEditable(false);
+        TextField fFecha = txf(f.getFecha());
+        TextField fVto = txf(f.getFechaVencimiento());
         ComboBox<String> fFormaPago = new ComboBox<>(FXCollections.observableArrayList(
             "Transferencia bancaria", "Efectivo", "Tarjeta", "Cheque", "Domiciliación bancaria"));
         fFormaPago.setEditable(true);
@@ -230,16 +232,16 @@ public class FacturasView extends VBox {
         ComboBox<String> fEstado = new ComboBox<>(FXCollections.observableArrayList(
             "pendiente", "pagada", "vencida", "anulada"));
         fEstado.setValue(f.getEstado());
-        TextField fIva = tf(String.valueOf(f.getIvaPorcentaje()));
+        TextField fIva = txf(String.valueOf(f.getIvaPorcentaje()));
         TextArea fNotas = new TextArea(f.getNotas() != null ? f.getNotas() : ""); fNotas.setPrefRowCount(3);
 
-        gDatos.addRow(0, lbl("Número"),       fNumero,    lbl("Estado"),      fEstado);
-        gDatos.addRow(1, lbl("Fecha"),         fFecha,     lbl("Vencimiento"), fVto);
-        gDatos.addRow(2, lbl("Forma de pago"), fFormaPago, lbl("IVA (%)"),     fIva);
-        gDatos.add(lbl("Notas"), 0, 3); gDatos.add(fNotas, 1, 3, 3, 1);
+        gDatos.addRow(0, lbl(t("facturas.campo.numero")),     fNumero,    lbl(t("facturas.campo.estado")),      fEstado);
+        gDatos.addRow(1, lbl(t("facturas.campo.fecha")),      fFecha,     lbl(t("facturas.campo.vencimiento")), fVto);
+        gDatos.addRow(2, lbl(t("facturas.campo.forma_pago")), fFormaPago, lbl(t("facturas.campo.iva")),         fIva);
+        gDatos.add(lbl(t("facturas.campo.notas")), 0, 3); gDatos.add(fNotas, 1, 3, 3, 1);
         dialogExtraFields = new LinkedHashMap<>();
         dynamicColumns.addFormFields(gDatos, 4, f, dialogExtraFields);
-        tabs.getTabs().add(new Tab("Datos generales", gDatos));
+        tabs.getTabs().add(new Tab(t("facturas.tab.general"), gDatos));
 
         // Tab 2 — Servicios / Técnicas
         ObservableList<LineaFactura> lineasServ = FXCollections.observableArrayList(
@@ -249,8 +251,8 @@ public class FacturasView extends VBox {
         ObservableList<LineaFactura> lineasMat = FXCollections.observableArrayList(
             f.getLineas().stream().filter(l -> "📦 Material".equals(l.getTecnica())).toList());
 
-        tabs.getTabs().add(new Tab("Servicios / Técnicas",    buildTablaLineasFactura(lineasServ)));
-        tabs.getTabs().add(new Tab("📦 Materiales del stock", buildTabMaterialesFactura(lineasMat)));
+        tabs.getTabs().add(new Tab(t("facturas.tab.servicios"),  buildTablaLineasFactura(lineasServ)));
+        tabs.getTabs().add(new Tab(t("facturas.tab.materiales"), buildTabMaterialesFactura(lineasMat)));
 
         dlg.getDialogPane().setContent(tabs);
 
@@ -278,15 +280,15 @@ public class FacturasView extends VBox {
         TableView<LineaFactura> t = new TableView<>(lineas);
         t.setEditable(true);
         t.setPrefHeight(280);
-        t.setPlaceholder(new Label("No hay servicios en esta factura"));
+        t.setPlaceholder(new Label(t("facturas.servicios.vacio")));
 
-        TableColumn<LineaFactura, String> cDesc = new TableColumn<>("Descripción");
+        TableColumn<LineaFactura, String> cDesc = new TableColumn<>(t("facturas.linea.descripcion"));
         cDesc.setCellValueFactory(new PropertyValueFactory<>("descripcion")); cDesc.setPrefWidth(250);
-        TableColumn<LineaFactura, String> cTec = new TableColumn<>("Técnica");
+        TableColumn<LineaFactura, String> cTec = new TableColumn<>(t("facturas.linea.tecnica"));
         cTec.setCellValueFactory(new PropertyValueFactory<>("tecnica")); cTec.setPrefWidth(100);
-        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>("Cant.");
+        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>(t("facturas.linea.cantidad_corto"));
         cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad")); cCant.setPrefWidth(60);
-        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>("Precio ud.");
+        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>(t("facturas.linea.precio_ud"));
         cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
         cPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -295,7 +297,7 @@ public class FacturasView extends VBox {
             }
         });
         cPrecio.setPrefWidth(90);
-        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>("Total");
+        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>(t("facturas.campo.total"));
         cTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         cTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -307,12 +309,12 @@ public class FacturasView extends VBox {
 
         t.getColumns().addAll(cDesc, cTec, cCant, cPrecio, cTotal);
 
-        Button btnAdd  = btn("+ Añadir", () -> dialogoLineaFactura(null, lineas, t));
-        Button btnEdit = btn("✏ Editar", () -> {
+        Button btnAdd  = btn(t("facturas.btn.anadir"), () -> dialogoLineaFactura(null, lineas, t));
+        Button btnEdit = btn(t("facturas.btn.editar"), () -> {
             LineaFactura sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) dialogoLineaFactura(sel, lineas, t);
         });
-        Button btnDel  = btn("🗑 Quitar", () -> {
+        Button btnDel  = btn(t("facturas.btn.quitar"), () -> {
             LineaFactura sel = t.getSelectionModel().getSelectedItem();
             if (sel != null) lineas.remove(sel);
         });
@@ -328,7 +330,7 @@ public class FacturasView extends VBox {
         LineaFactura l = linea;
 
         Dialog<LineaFactura> dlg = new Dialog<>();
-        dlg.setTitle(esNueva ? "Nueva línea de servicio" : "Editar línea");
+        dlg.setTitle(esNueva ? t("facturas.linea.nueva") : t("facturas.linea.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
 
         GridPane grid = new GridPane();
@@ -336,15 +338,15 @@ public class FacturasView extends VBox {
 
         TextArea fDesc = new TextArea(l.getDescripcion() != null ? l.getDescripcion() : "");
         fDesc.setPrefRowCount(3); fDesc.setPrefWidth(300);
-        TextField fTec   = tf(l.getTecnica());
-        TextField fCant  = tf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
-        TextField fPrecio = tf(l.getPrecioUnit() > 0 ? String.valueOf(l.getPrecioUnit()) : "");
-        TextField fDto   = tf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
+        TextField fTec   = txf(l.getTecnica());
+        TextField fCant  = txf(l.getCantidad() > 0 ? String.valueOf(l.getCantidad()) : "1");
+        TextField fPrecio = txf(l.getPrecioUnit() > 0 ? String.valueOf(l.getPrecioUnit()) : "");
+        TextField fDto   = txf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
 
         try {
             List<Tarifa> tarifas = new TarifaDAO().findAll();
             ComboBox<Tarifa> cbTarifa = new ComboBox<>(FXCollections.observableArrayList(tarifas));
-            cbTarifa.setPromptText("Seleccionar tarifa...");
+            cbTarifa.setPromptText(t("facturas.tarifa.prompt"));
             cbTarifa.setOnAction(e -> {
                 Tarifa tar = cbTarifa.getValue();
                 if (tar != null) {
@@ -354,13 +356,13 @@ public class FacturasView extends VBox {
                     fPrecio.setText(String.valueOf(tar.getPrecioUnit()));
                 }
             });
-            grid.add(lbl("Tarifa:"), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
+            grid.add(lbl(t("facturas.campo.tarifa")), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
         } catch (Exception ignored) {}
 
-        grid.addRow(1, lbl("Descripción *"), fDesc);
+        grid.addRow(1, lbl(t("facturas.linea.descripcion")), fDesc);
         GridPane.setColumnSpan(fDesc, 3);
-        grid.addRow(2, lbl("Técnica"), fTec, lbl("Cantidad"), fCant);
-        grid.addRow(3, lbl("Precio ud. (€)"), fPrecio, lbl("Descuento (%)"), fDto);
+        grid.addRow(2, lbl(t("facturas.linea.tecnica")), fTec, lbl(t("facturas.campo.cantidad")), fCant);
+        grid.addRow(3, lbl(t("facturas.linea.precio_ud_eur")), fPrecio, lbl(t("facturas.linea.descuento")), fDto);
 
         dlg.getDialogPane().setContent(grid);
         dlg.setResultConverter(bt -> {
@@ -386,13 +388,13 @@ public class FacturasView extends VBox {
 
         TableView<LineaFactura> tablaMat = new TableView<>(lineasMat);
         tablaMat.setPrefHeight(200);
-        tablaMat.setPlaceholder(new Label("No hay materiales añadidos a esta factura"));
+        tablaMat.setPlaceholder(new Label(t("facturas.materiales.vacio")));
 
-        TableColumn<LineaFactura, String> cNom = new TableColumn<>("Material");
+        TableColumn<LineaFactura, String> cNom = new TableColumn<>(t("facturas.campo.material"));
         cNom.setCellValueFactory(new PropertyValueFactory<>("descripcion")); cNom.setPrefWidth(260);
-        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>("Cantidad");
+        TableColumn<LineaFactura, Integer> cCant = new TableColumn<>(t("facturas.campo.cantidad"));
         cCant.setCellValueFactory(new PropertyValueFactory<>("cantidad")); cCant.setPrefWidth(80);
-        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>("Precio ud.");
+        TableColumn<LineaFactura, Double> cPrecio = new TableColumn<>(t("facturas.linea.precio_ud"));
         cPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnit"));
         cPrecio.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -401,7 +403,7 @@ public class FacturasView extends VBox {
             }
         });
         cPrecio.setPrefWidth(100);
-        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>("Total");
+        TableColumn<LineaFactura, Double> cTotal = new TableColumn<>(t("facturas.campo.total"));
         cTotal.setCellValueFactory(new PropertyValueFactory<>("total"));
         cTotal.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -413,7 +415,7 @@ public class FacturasView extends VBox {
 
         tablaMat.getColumns().addAll(cNom, cCant, cPrecio, cTotal);
 
-        Label lblPicker = new Label("Añadir material del stock:");
+        Label lblPicker = new Label(t("facturas.materiales.picker.titulo"));
         lblPicker.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
         List<Material> materiales;
@@ -421,10 +423,10 @@ public class FacturasView extends VBox {
         catch (Exception e) { materiales = new java.util.ArrayList<>(); }
 
         ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));
-        cbMat.setPromptText("Seleccionar material...");
+        cbMat.setPromptText(t("facturas.materiales.picker.prompt"));
         cbMat.setPrefWidth(290);
 
-        Label lblInfo = new Label("Selecciona un material para ver disponibilidad y precio");
+        Label lblInfo = new Label(t("facturas.materiales.picker.info"));
         lblInfo.setStyle("-fx-text-fill:#888; -fx-font-size:11px;");
 
         Spinner<Integer> spCant = new Spinner<>(1, 999999, 1);
@@ -433,20 +435,20 @@ public class FacturasView extends VBox {
 
         cbMat.setOnAction(e -> {
             Material m = cbMat.getValue();
-            if (m != null) lblInfo.setText(String.format(
-                "Stock disponible: %.2f %s  |  Precio unitario: %.2f €/ud.",
-                m.getStockActual(),
-                m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud",
-                m.getPrecioUnidad()));
+            if (m != null) {
+                String und = m.getUnidad() != null && !m.getUnidad().isBlank() ? m.getUnidad() : "ud";
+                lblInfo.setText(tf("facturas.materiales.picker.stock_info",
+                    m.getStockActual(), und, m.getPrecioUnidad()));
+            }
         });
 
-        Button btnAnadir = new Button("➕ Añadir a la factura");
+        Button btnAnadir = new Button(t("facturas.materiales.picker.btn_anadir"));
         btnAnadir.setStyle(
             "-fx-background-color:#27AE60; -fx-text-fill:white; " +
             "-fx-font-weight:bold; -fx-padding:6 16; -fx-background-radius:4;");
         btnAnadir.setOnAction(e -> {
             Material m = cbMat.getValue();
-            if (m == null) { alerta("Selecciona un material del desplegable."); return; }
+            if (m == null) { alerta(t("facturas.materiales.picker.sin_seleccion")); return; }
             LineaFactura lf = new LineaFactura();
             lf.setDescripcion(m.getNombre() +
                 (m.getReferencia() != null && !m.getReferencia().isBlank() ? " [" + m.getReferencia() + "]" : ""));
@@ -458,21 +460,21 @@ public class FacturasView extends VBox {
             lineasMat.add(lf);
         });
 
-        Button btnQuitar = btn("🗑 Quitar", () -> {
+        Button btnQuitar = btn(t("facturas.btn.quitar"), () -> {
             LineaFactura sel = tablaMat.getSelectionModel().getSelectedItem();
             if (sel != null) lineasMat.remove(sel);
         });
 
-        Label lblTotal = new Label("Total materiales: 0.00 €");
+        Label lblTotal = new Label(tf("facturas.materiales.total", 0.0));
         lblTotal.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
         lineasMat.addListener((javafx.collections.ListChangeListener<LineaFactura>) c -> {
             double tot = lineasMat.stream().mapToDouble(LineaFactura::getTotal).sum();
-            lblTotal.setText(String.format("Total materiales: %.2f €", tot));
+            lblTotal.setText(tf("facturas.materiales.total", tot));
         });
         double totInicial = lineasMat.stream().mapToDouble(LineaFactura::getTotal).sum();
-        lblTotal.setText(String.format("Total materiales: %.2f €", totInicial));
+        lblTotal.setText(tf("facturas.materiales.total", totInicial));
 
-        HBox pickerRow = new HBox(8, cbMat, new Label("Cantidad:"), spCant, btnAnadir);
+        HBox pickerRow = new HBox(8, cbMat, new Label(t("facturas.campo.cantidad") + ":"), spCant, btnAnadir);
         pickerRow.setAlignment(Pos.CENTER_LEFT);
 
         box.getChildren().addAll(
@@ -487,17 +489,17 @@ public class FacturasView extends VBox {
 
     private void crearAlbaran() {
         Factura sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una factura."); return; }
-        if ("anulada".equals(sel.getEstado())) { alerta("No se puede crear un albarán para una factura anulada."); return; }
+        if (sel == null) { alerta(t("facturas.sin_seleccion")); return; }
+        if ("anulada".equals(sel.getEstado())) { alerta(t("facturas.albaran.anulada")); return; }
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Crear albarán de entrega para la factura " + sel.getNumero() + "?",
+            tf("facturas.albaran.confirmar", sel.getNumero()),
             ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try {
                 var albaran = new AlbaranDAO().crearDesdeFactura(sel.getId());
                 new Alert(Alert.AlertType.INFORMATION,
-                    "Albarán " + albaran.getNumero() + " creado correctamente.\nPuedes verlo en la sección Albaranes.",
+                    tf("facturas.albaran.creado", albaran.getNumero()),
                     ButtonType.OK).showAndWait();
             } catch (Exception e) { mostrarError(e); }
         });
@@ -505,15 +507,15 @@ public class FacturasView extends VBox {
 
     private void marcarPagada() {
         Factura sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una factura."); return; }
+        if (sel == null) { alerta(t("facturas.sin_seleccion")); return; }
         try { dao.updateEstado(sel.getId(), "pagada"); cargar(); } catch (Exception e) { mostrarError(e); }
     }
 
     private void anular() {
         Factura sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una factura."); return; }
+        if (sel == null) { alerta(t("facturas.sin_seleccion")); return; }
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Anular la factura " + sel.getNumero() + "?", ButtonType.YES, ButtonType.NO);
+            tf("facturas.anular.confirmar", sel.getNumero()), ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try { dao.updateEstado(sel.getId(), "anulada"); cargar(); } catch (Exception e) { mostrarError(e); }
@@ -522,10 +524,10 @@ public class FacturasView extends VBox {
 
     private void borrar() {
         List<Factura> seleccionadas = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionadas.isEmpty()) { alerta("Selecciona una o varias facturas."); return; }
+        if (seleccionadas.isEmpty()) { alerta(t("facturas.borrar.sin_seleccion")); return; }
         String mensaje = seleccionadas.size() == 1
-            ? "¿Eliminar permanentemente la factura " + seleccionadas.get(0).getNumero() + "?"
-            : "¿Eliminar permanentemente " + seleccionadas.size() + " facturas seleccionadas?";
+            ? tf("facturas.borrar.confirmar.uno",    seleccionadas.get(0).getNumero())
+            : tf("facturas.borrar.confirmar.varios", seleccionadas.size());
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
             mensaje, ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
@@ -547,7 +549,7 @@ public class FacturasView extends VBox {
 
     private void importar() {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Importar facturas");
+        fc.setTitle(t("facturas.importar.titulo"));
         fc.getExtensionFilters().addAll(
             new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
             new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
@@ -607,7 +609,7 @@ public class FacturasView extends VBox {
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("facturas.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -616,20 +618,13 @@ public class FacturasView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de facturas como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con facturas y sus líneas (tabla completa).", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Facturas y líneas en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de facturas como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de facturas en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"),         "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("facturas.export.csv.desc"),        "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("facturas.export.sql.desc"),        "sql"},
+            {"json",   t("export.fmt.json.label"),   t("facturas.export.json.desc"),       "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("facturas.export.pdf.desc"),        "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("facturas.export.word.desc"),       "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("facturas.export.excel.desc"),      "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -654,18 +649,18 @@ public class FacturasView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar facturas");
+        dlg.setTitle(t("facturas.export.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -678,7 +673,7 @@ public class FacturasView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
         fc.setInitialFileName("Facturas_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
@@ -697,7 +692,7 @@ public class FacturasView extends VBox {
         List<Factura> facturasAExportar = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         if (facturasAExportar.isEmpty()) facturasAExportar.addAll(datos);
         if (facturasAExportar.isEmpty()) {
-            Platform.runLater(() -> { setDisable(false); alerta("No hay registros para exportar."); });
+            Platform.runLater(() -> { setDisable(false); alerta(t("facturas.export.sin_registros")); });
             return;
         }
         final List<Factura> listaFinal = facturasAExportar;
@@ -737,8 +732,8 @@ public class FacturasView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -756,7 +751,7 @@ public class FacturasView extends VBox {
     private void previsualizar() {
         List<Factura> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Factura> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("facturas.previsualizar.vacio")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -777,12 +772,12 @@ public class FacturasView extends VBox {
                     pdfBytes = Files.readAllBytes(pdfPath);
                     Path pdfImpresionPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, false);
                     pdfImpresionBytes = Files.readAllBytes(pdfImpresionPath);
-                    tituloVentana = "Previsualización — Factura " + facturaSeleccionada.getNumero();
+                    tituloVentana = tf("facturas.previsualizar.titulo.uno", facturaSeleccionada.getNumero());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarFacturas(lista);
                     pdfImpresionBytes = pdfBytes;
-                    tituloVentana = "Previsualización — Facturas (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("facturas.previsualizar.titulo.varios", lista.size());
                 }
 
                 final byte[] finalPdfBytes = pdfBytes;
@@ -810,7 +805,7 @@ public class FacturasView extends VBox {
         b.setOnAction(e -> r.run()); return b;
     }
 
-    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
     private String toDbColumn(String campo) {
         return switch (campo) {
