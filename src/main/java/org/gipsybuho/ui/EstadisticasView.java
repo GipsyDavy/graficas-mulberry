@@ -12,6 +12,9 @@ import org.gipsybuho.service.PDFService;
 import org.gipsybuho.service.PdfPreviewService;
 import org.gipsybuho.service.SoundService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 import java.awt.Desktop;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -48,10 +51,10 @@ public class EstadisticasView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Estadísticas y Análisis");
+        Label titulo = new Label(t("estadisticas.titulo"));
         titulo.getStyleClass().add("view-title");
 
-        Label sub = new Label("Análisis visual de ingresos, gastos, materiales, clientes y producción");
+        Label sub = new Label(t("estadisticas.subtitulo"));
         sub.getStyleClass().add("view-subtitle");
 
         TabPane tabs = buildTabs();
@@ -77,15 +80,15 @@ public class EstadisticasView extends VBox {
             }
         });
 
-        btnExportarPDF = new Button("📄  Exportar PDF");
+        btnExportarPDF = new Button(t("estadisticas.btn.exportar_pdf"));
         btnExportarPDF.getStyleClass().add("btn-toolbar");
         btnExportarPDF.setOnAction(e -> exportarPDF());
 
-        Button btnPreview = new Button("👁  Previsualizar");
+        Button btnPreview = new Button(t("estadisticas.btn.previsualizar"));
         btnPreview.getStyleClass().addAll("btn-toolbar", "btn-toolbar-active");
         btnPreview.setOnAction(e -> previsualizar());
 
-        HBox bar = new HBox(10, new Label("Año:"), cbAnio, btnExportarPDF, btnPreview);
+        HBox bar = new HBox(10, new Label(t("estadisticas.anio_label")), cbAnio, btnExportarPDF, btnPreview);
         bar.setAlignment(Pos.CENTER_LEFT);
         bar.setPadding(new Insets(6, 10, 6, 10));
         bar.getStyleClass().add("command-bar");
@@ -116,10 +119,10 @@ public class EstadisticasView extends VBox {
         TabPane tabs = new TabPane();
         tabs.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
-        Tab tFin  = tab("💰  Financiero",  areaFinanciero);
-        Tab tMat  = tab("📦  Materiales",  areaMateriales);
-        Tab tCli  = tab("👥  Clientes",    areaClientes);
-        Tab tPro  = tab("🏭  Producción",  areaProduccion);
+        Tab tFin  = tab(t("estadisticas.tab.financiero"),  areaFinanciero);
+        Tab tMat  = tab(t("estadisticas.tab.materiales"),  areaMateriales);
+        Tab tCli  = tab(t("estadisticas.tab.clientes"),    areaClientes);
+        Tab tPro  = tab(t("estadisticas.tab.produccion"),  areaProduccion);
 
         tabs.getTabs().addAll(tFin, tMat, tCli, tPro);
 
@@ -176,36 +179,36 @@ public class EstadisticasView extends VBox {
         Platform.runLater(() -> {
             // ── KPI cards ────────────────────────────────────────────────────
             HBox kpis = new HBox(12,
-                kpi("Ingresos " + a,       fmt(totIng)     + " €", COLOR_INGRESOS),
-                kpi("Gastos materiales",   fmt(totGMat)    + " €", COLOR_GASTOS),
-                kpi("Gastos nóminas",      fmt(totNom)     + " €", COLOR_NOMINAS),
-                kpi("Beneficio estimado",  fmt(beneficio)  + " €", beneficio >= 0 ? COLOR_AZUL : COLOR_GASTOS)
+                kpi(tf("estadisticas.kpi.ingresos", a),  fmt(totIng)     + " €", COLOR_INGRESOS),
+                kpi(t("estadisticas.kpi.gastos_materiales"), fmt(totGMat)    + " €", COLOR_GASTOS),
+                kpi(t("estadisticas.kpi.gastos_nominas"),    fmt(totNom)     + " €", COLOR_NOMINAS),
+                kpi(t("estadisticas.kpi.beneficio"),         fmt(beneficio)  + " €", beneficio >= 0 ? COLOR_AZUL : COLOR_GASTOS)
             );
             kpis.getChildren().forEach(c -> HBox.setHgrow(c, Priority.ALWAYS));
 
             // ── Gráfica de barras ingresos vs gastos por mes ─────────────────
-            BarChart<String, Number> barMes = barChart("Ingresos vs Gastos por mes (" + a + ")", false,
-                serie("Ingresos",    ingresos,  COLOR_INGRESOS),
-                serie("Mat. compras", gastosMat, COLOR_GASTOS),
-                serie("Nóminas",     gastosNom, COLOR_NOMINAS)
+            BarChart<String, Number> barMes = barChart(tf("estadisticas.chart.ingresos_gastos_mes", a), false,
+                serie(t("estadisticas.serie.ingresos"),     ingresos,  COLOR_INGRESOS),
+                serie(t("estadisticas.serie.mat_compras"),  gastosMat, COLOR_GASTOS),
+                serie(t("estadisticas.serie.nominas"),      gastosNom, COLOR_NOMINAS)
             );
             barMes.setPrefHeight(300);
             barMes.setStyle("CHART_COLOR_1:" + COLOR_INGRESOS + "; CHART_COLOR_2:" + COLOR_GASTOS + "; CHART_COLOR_3:" + COLOR_NOMINAS + ";");
 
             // ── LineChart facturación acumulada ───────────────────────────────
             LineChart<String, Number> lineAcum = lineChart(
-                "Facturación acumulada (" + a + ")",
-                serie("Acumulado", acumulada, COLOR_PRIMARIO));
+                tf("estadisticas.chart.facturacion_acumulada", a),
+                serie(t("estadisticas.serie.acumulado"), acumulada, COLOR_PRIMARIO));
             lineAcum.setPrefHeight(240);
             lineAcum.setStyle("CHART_COLOR_1:" + COLOR_PRIMARIO + ";");
 
             // ── PieChart estado facturas ──────────────────────────────────────
-            PieChart pieFacturas = pieChart("Estado de facturas", estFacturas,
+            PieChart pieFacturas = pieChart(t("estadisticas.chart.estado_facturas"), estFacturas,
                 "#27AE60","#E74C3C","#E67E22","#95A5A6","#3498DB");
             pieFacturas.setPrefHeight(260);
 
             // ── PieChart estado presupuestos ──────────────────────────────────
-            PieChart piePresup = pieChart("Estado de presupuestos", estPresup,
+            PieChart piePresup = pieChart(t("estadisticas.chart.estado_presupuestos"), estPresup,
                 "#27AE60","#4C9BE8","#F39C12","#E74C3C","#9B59B6");
             piePresup.setPrefHeight(260);
 
@@ -231,20 +234,20 @@ public class EstadisticasView extends VBox {
         Platform.runLater(() -> {
             // ── BarChart top 10 más consumidos ────────────────────────────────
             BarChart<String, Number> barUso = barChart(
-                "Top 10 materiales más consumidos (unidades de salida)", false,
-                serie("Consumo", masUsados, COLOR_PRIMARIO));
+                t("estadisticas.chart.materiales_top10"), false,
+                serie(t("estadisticas.serie.consumo"), masUsados, COLOR_PRIMARIO));
             barUso.setPrefHeight(300);
             barUso.setStyle("CHART_COLOR_1:" + COLOR_PRIMARIO + ";");
 
             // ── PieChart por categoría ────────────────────────────────────────
-            PieChart pieCat = pieChart("Materiales por categoría", porCategoria,
+            PieChart pieCat = pieChart(t("estadisticas.chart.materiales_categoria"), porCategoria,
                 "#6B2D5E","#4C9BE8","#27AE60","#F39C12","#E74C3C","#9B59B6");
             pieCat.setPrefHeight(280);
 
             // ── BarChart stock actual ─────────────────────────────────────────
             BarChart<String, Number> barStock = barChart(
-                "Stock actual de materiales (top 12)", false,
-                serie("Stock", stock, COLOR_AZUL));
+                t("estadisticas.chart.stock_actual"), false,
+                serie(t("estadisticas.serie.stock"), stock, COLOR_AZUL));
             barStock.setPrefHeight(280);
             barStock.setStyle("CHART_COLOR_1:" + COLOR_AZUL + ";");
 
@@ -272,21 +275,21 @@ public class EstadisticasView extends VBox {
         Platform.runLater(() -> {
             // ── KPI ───────────────────────────────────────────────────────────
             HBox kpis = new HBox(12,
-                kpi("Total clientes",          String.valueOf(totalAcum),  COLOR_PRIMARIO),
-                kpi("Nuevos en " + a,          String.valueOf(nuevosAnio), COLOR_AZUL),
-                kpi("Tipo más habitual",        primeraClave(porTipo),      "#9B59B6")
+                kpi(t("estadisticas.kpi.total_clientes"),  String.valueOf(totalAcum),  COLOR_PRIMARIO),
+                kpi(tf("estadisticas.kpi.nuevos_en", a),   String.valueOf(nuevosAnio), COLOR_AZUL),
+                kpi(t("estadisticas.kpi.tipo_habitual"),   primeraClave(porTipo),      "#9B59B6")
             );
             kpis.getChildren().forEach(c -> HBox.setHgrow(c, Priority.ALWAYS));
 
             // ── LineChart nuevos por mes ──────────────────────────────────────
             LineChart<String, Number> linea = lineChart(
-                "Nuevos clientes por mes (" + a + ")",
-                serie("Nuevos clientes", porMes, COLOR_AZUL));
+                tf("estadisticas.chart.nuevos_clientes_mes", a),
+                serie(t("estadisticas.serie.nuevos_clientes"), porMes, COLOR_AZUL));
             linea.setPrefHeight(260);
             linea.setStyle("CHART_COLOR_1:" + COLOR_AZUL + ";");
 
             // ── PieChart tipo ─────────────────────────────────────────────────
-            PieChart pieTipo = pieChart("Clientes por tipo", porTipo,
+            PieChart pieTipo = pieChart(t("estadisticas.chart.clientes_tipo"), porTipo,
                 COLOR_PRIMARIO, COLOR_AZUL, "#27AE60");
             pieTipo.setPrefHeight(260);
 
@@ -295,8 +298,8 @@ public class EstadisticasView extends VBox {
 
             // ── BarChart top clientes ─────────────────────────────────────────
             BarChart<String, Number> barTop = barChart(
-                "Top 8 clientes por facturación (€)", false,
-                serie("Facturación €", topClients, COLOR_PRIMARIO));
+                t("estadisticas.chart.top_clientes"), false,
+                serie(t("estadisticas.serie.facturacion"), topClients, COLOR_PRIMARIO));
             barTop.setPrefHeight(280);
             barTop.setStyle("CHART_COLOR_1:" + COLOR_PRIMARIO + ";");
 
@@ -317,12 +320,12 @@ public class EstadisticasView extends VBox {
 
         Platform.runLater(() -> {
             // ── PieChart técnicas por ingresos ────────────────────────────────
-            PieChart pieTecIngr = pieChart("Ingresos por técnica (€)", tecIngr,
+            PieChart pieTecIngr = pieChart(t("estadisticas.chart.ingresos_tecnica"), tecIngr,
                 COLOR_PRIMARIO, COLOR_AZUL, COLOR_INGRESOS, COLOR_NOMINAS, COLOR_GASTOS, "#9B59B6","#1ABC9C","#E67E22");
             pieTecIngr.setPrefHeight(300);
 
             // ── PieChart pedidos por estado ───────────────────────────────────
-            PieChart piePedidos = pieChart("Pedidos por estado", pedEstado,
+            PieChart piePedidos = pieChart(t("estadisticas.chart.pedidos_estado"), pedEstado,
                 "#F39C12","#4C9BE8","#27AE60","#9B59B6","#E74C3C");
             piePedidos.setPrefHeight(300);
 
@@ -332,15 +335,15 @@ public class EstadisticasView extends VBox {
 
             // ── BarChart técnicas por ingresos ────────────────────────────────
             BarChart<String, Number> barIngr = barChart(
-                "Ingresos por técnica (€)", false,
-                serie("Ingresos €", tecIngr, COLOR_PRIMARIO));
+                t("estadisticas.chart.ingresos_tecnica"), false,
+                serie(t("estadisticas.serie.ingresos_eur"), tecIngr, COLOR_PRIMARIO));
             barIngr.setPrefHeight(260);
             barIngr.setStyle("CHART_COLOR_1:" + COLOR_PRIMARIO + ";");
 
             // ── BarChart técnicas por volumen ─────────────────────────────────
             BarChart<String, Number> barVol = barChart(
-                "Volumen de líneas por técnica (uds.)", false,
-                serie("Líneas", tecVol, COLOR_AZUL));
+                t("estadisticas.chart.volumen_tecnica"), false,
+                serie(t("estadisticas.serie.lineas"), tecVol, COLOR_AZUL));
             barVol.setPrefHeight(260);
             barVol.setStyle("CHART_COLOR_1:" + COLOR_AZUL + ";");
 
@@ -398,7 +401,7 @@ public class EstadisticasView extends VBox {
         for (Map.Entry<String, Double> e : datos.entrySet()) {
             if (e.getValue() > 0) slices.add(new PieChart.Data(e.getKey(), e.getValue()));
         }
-        if (slices.isEmpty()) slices.add(new PieChart.Data("Sin datos", 1));
+        if (slices.isEmpty()) slices.add(new PieChart.Data(t("estadisticas.pie.sin_datos"), 1));
         chart.getData().addAll(slices);
 
         // Colorear slices después de que el scene construya los nodos
@@ -466,12 +469,12 @@ public class EstadisticasView extends VBox {
                 byte[] pdf = PdfPreviewService.previsualizarEstadisticas(a);
                 Platform.runLater(() -> {
                     setDisable(false);
-                    PdfPreviewWindow.mostrar(pdf, "Previsualización — Estadísticas " + a);
+                    PdfPreviewWindow.mostrar(pdf, tf("estadisticas.preview.titulo", a));
                 });
             } catch (Exception ex) {
                 Platform.runLater(() -> {
                     setDisable(false);
-                    new Alert(Alert.AlertType.ERROR, "Error: " + ex.getMessage(), ButtonType.OK).showAndWait();
+                    new Alert(Alert.AlertType.ERROR, tf("estadisticas.error.previsualizar", ex.getMessage()), ButtonType.OK).showAndWait();
                 });
             }
         });
@@ -479,7 +482,7 @@ public class EstadisticasView extends VBox {
 
     private void exportarPDF() {
         btnExportarPDF.setDisable(true);
-        btnExportarPDF.setText("Generando…");
+        btnExportarPDF.setText(t("estadisticas.export.generando"));
         SoundService.play(SoundService.Sound.START);
         int a = anio;
         Thread.ofVirtual().start(() -> {
@@ -488,12 +491,12 @@ public class EstadisticasView extends VBox {
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     btnExportarPDF.setDisable(false);
-                    btnExportarPDF.setText("📄  Exportar PDF");
+                    btnExportarPDF.setText(t("estadisticas.btn.exportar_pdf"));
                     Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                    alert.setTitle("PDF generado");
-                    alert.setHeaderText("Informe de estadísticas exportado");
-                    alert.setContentText("Guardado en:\n" + path.toAbsolutePath());
-                    ButtonType btnAbrir = new ButtonType("Abrir archivo");
+                    alert.setTitle(t("estadisticas.export.exito.titulo"));
+                    alert.setHeaderText(t("estadisticas.export.exito.header"));
+                    alert.setContentText(tf("estadisticas.export.exito.contenido", path.toAbsolutePath()));
+                    ButtonType btnAbrir = new ButtonType(t("estadisticas.export.btn_abrir"));
                     alert.getButtonTypes().setAll(btnAbrir, ButtonType.OK);
                     alert.showAndWait().ifPresent(bt -> {
                         if (bt == btnAbrir && Desktop.isDesktopSupported()) {
@@ -506,10 +509,10 @@ public class EstadisticasView extends VBox {
                 Platform.runLater(() -> {
                     SoundService.play(SoundService.Sound.ERROR);
                     btnExportarPDF.setDisable(false);
-                    btnExportarPDF.setText("📄  Exportar PDF");
+                    btnExportarPDF.setText(t("estadisticas.btn.exportar_pdf"));
                     Alert err = new Alert(Alert.AlertType.ERROR);
-                    err.setTitle("Error al generar PDF");
-                    err.setHeaderText("No se pudo generar el informe");
+                    err.setTitle(t("estadisticas.export.error.titulo"));
+                    err.setHeaderText(t("estadisticas.export.error.header"));
                     err.setContentText(ex.getMessage());
                     err.showAndWait();
                 });
