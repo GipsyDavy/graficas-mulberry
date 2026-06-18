@@ -28,6 +28,9 @@ import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.ToastService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -76,7 +79,7 @@ public class MaterialesView extends VBox {
         COLUMNAS_BASE.put("updated_at", "Actualizado");
     }
     private final DynamicColumnRuntime<Material> dynamicColumns =
-        new DynamicColumnRuntime<>("materiales", "Materiales", COLUMNAS_BASE, tabla, datos, Material::getId);
+        new DynamicColumnRuntime<>("materiales", t("nav.materiales"), COLUMNAS_BASE, tabla, datos, Material::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkSoloAlerta;
     private ComboBox<String> cbCategoriaFiltro;
@@ -105,7 +108,7 @@ public class MaterialesView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Control de Materiales");
+        Label titulo = new Label(t("materiales.titulo"));
         titulo.getStyleClass().add("view-title");
 
         TabPane tabs = new TabPane();
@@ -116,9 +119,9 @@ public class MaterialesView extends VBox {
         VBox.setVgrow(stockBox, Priority.ALWAYS);
 
         tabs.getTabs().addAll(
-            new Tab("📦  Stock",              stockBox),
-            new Tab("⚙  Consumo por técnica", buildTabConsumo()),
-            new Tab("💳  Pagos",              buildTabPagos())
+            new Tab(t("materiales.tab.stock"),   stockBox),
+            new Tab(t("materiales.tab.consumo"), buildTabConsumo()),
+            new Tab(t("materiales.tab.pagos"),   buildTabPagos())
         );
 
         VBox.setVgrow(tabs, Priority.ALWAYS);
@@ -132,7 +135,7 @@ public class MaterialesView extends VBox {
     }
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Usa el botón \"Nuevo\" para añadir un material al stock. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("materiales.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -147,38 +150,38 @@ public class MaterialesView extends VBox {
     // ═════════════════════════════════════════════════════════════════════════
 
     private HBox buildToolbarStock() {
-        chkSoloAlerta = new CheckBox("Solo materiales con stock bajo");
+        chkSoloAlerta = new CheckBox(t("materiales.chk.solo_alerta"));
         chkSoloAlerta.setOnAction(e -> cargar());
         cbCategoriaFiltro = new ComboBox<>();
         cbCategoriaFiltro.setPrefWidth(150);
-        cbCategoriaFiltro.setTooltip(new Tooltip("Filtrar materiales por categoría"));
+        cbCategoriaFiltro.setTooltip(new Tooltip(t("materiales.filtro.categoria.tip")));
         cbCategoriaFiltro.setOnAction(e -> {
             if (!updatingCategoriaFiltro) cargar();
         });
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por nombre, referencia, proveedor…");
+        txtBuscar.setPromptText(t("materiales.buscar.prompt"));
         txtBuscar.setPrefWidth(240);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        Button btnNuevo    = btn("+ Nuevo",         this::nuevo);
-        Button btnEditar   = btn("✏ Editar",         this::editar);
-        Button btnBorrar   = btn("🗑 Borrar",        this::borrar);
-        Button btnEntrada  = btn("📥 Entrada",       this::ajustarEntrada);
-        Button btnSalida   = btn("📤 Salida",        this::ajustarSalida);
-        Button btnImportar = btn("📂 Importar",      this::importar);
-        Button btnExportar   = btn("📤 Exportar",      this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas",       dynamicColumns::configure);
-        chkSoloAlerta.setTooltip(new Tooltip("Filtrar solo materiales con stock por debajo del mínimo"));
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo material o producto"));
-        btnEditar.setTooltip(new Tooltip("Editar el material seleccionado"));
-        btnBorrar.setTooltip(new Tooltip("Eliminar el material seleccionado"));
-        btnEntrada.setTooltip(new Tooltip("Registrar entrada de stock para el material seleccionado"));
-        btnSalida.setTooltip(new Tooltip("Registrar salida de stock para el material seleccionado"));
-        btnImportar.setTooltip(new Tooltip("Importar materiales desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar materiales a PDF, Excel u otros formatos"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar el material en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNuevo    = btn(t("materiales.btn.nuevo"),         this::nuevo);
+        Button btnEditar   = btn(t("materiales.btn.editar"),        this::editar);
+        Button btnBorrar   = btn(t("materiales.btn.borrar"),        this::borrar);
+        Button btnEntrada  = btn(t("materiales.btn.entrada"),       this::ajustarEntrada);
+        Button btnSalida   = btn(t("materiales.btn.salida"),        this::ajustarSalida);
+        Button btnImportar = btn(t("materiales.btn.importar"),      this::importar);
+        Button btnExportar   = btn(t("materiales.btn.exportar"),      this::exportar);
+        Button btnPreview    = btn(t("materiales.btn.previsualizar"), this::previsualizar);
+        Button btnColumnas   = btn(t("materiales.btn.columnas"),      dynamicColumns::configure);
+        chkSoloAlerta.setTooltip(new Tooltip(t("materiales.chk.solo_alerta.tip")));
+        btnNuevo.setTooltip(new Tooltip(t("materiales.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("materiales.btn.editar.tip")));
+        btnBorrar.setTooltip(new Tooltip(t("materiales.btn.borrar.tip")));
+        btnEntrada.setTooltip(new Tooltip(t("materiales.btn.entrada.tip")));
+        btnSalida.setTooltip(new Tooltip(t("materiales.btn.salida.tip")));
+        btnImportar.setTooltip(new Tooltip(t("materiales.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("materiales.btn.exportar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("materiales.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("materiales.btn.columnas.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -206,7 +209,7 @@ public class MaterialesView extends VBox {
             }
         });
 
-        TableColumn<Material, Double> colStock = new TableColumn<>("Stock actual");
+        TableColumn<Material, Double> colStock = new TableColumn<>(t("materiales.col.stock_actual"));
         colStock.setCellValueFactory(new PropertyValueFactory<>("stockActual"));
         colStock.setUserData("stock_actual");
         colStock.setCellFactory(c -> new TableCell<>() {
@@ -219,7 +222,7 @@ public class MaterialesView extends VBox {
             }
         });
 
-        TableColumn<Material, Double> colMin = new TableColumn<>("Stock mín.");
+        TableColumn<Material, Double> colMin = new TableColumn<>(t("materiales.col.stock_minimo"));
         colMin.setCellValueFactory(new PropertyValueFactory<>("stockMinimo"));
         colMin.setUserData("stock_minimo");
         colMin.setCellFactory(c -> new TableCell<>() {
@@ -230,7 +233,7 @@ public class MaterialesView extends VBox {
             }
         });
 
-        TableColumn<Material, Double> colPrecio = new TableColumn<>("Precio/ud.");
+        TableColumn<Material, Double> colPrecio = new TableColumn<>(t("materiales.col.precio_unidad"));
         colPrecio.setCellValueFactory(new PropertyValueFactory<>("precioUnidad"));
         colPrecio.setUserData("precio_unidad");
         colPrecio.setCellFactory(c -> new TableCell<>() {
@@ -241,10 +244,10 @@ public class MaterialesView extends VBox {
         });
 
         tabla.getColumns().addAll(colEstado,
-            col("Nombre", "nombre", 200), col("Referencia", "referencia", 100),
-            col("Categoría", "categoria", 100), colStock, colMin, colPrecio,
-            col("Proveedor", "proveedor", 140));
-        tabla.setPlaceholder(Icons.emptyState("No hay materiales registrados todavía"));
+            col(t("materiales.col.nombre"), "nombre", 200), col(t("materiales.col.referencia"), "referencia", 100),
+            col(t("materiales.col.categoria"), "categoria", 100), colStock, colMin, colPrecio,
+            col(t("materiales.col.proveedor"), "proveedor", 140));
+        tabla.setPlaceholder(Icons.emptyState(t("materiales.tabla.vacia")));
         return tabla;
     }
 
@@ -254,7 +257,7 @@ public class MaterialesView extends VBox {
                 ? dao.findBajoStock() : dao.findAll();
             actualizarFiltroCategorias(lista);
             if (cbCategoriaFiltro != null && cbCategoriaFiltro.getValue() != null
-                    && !"Todos".equals(cbCategoriaFiltro.getValue())) {
+                    && !t("materiales.filtro.todos").equals(cbCategoriaFiltro.getValue())) {
                 String categoria = cbCategoriaFiltro.getValue();
                 lista = lista.stream()
                     .filter(m -> categoria.equals(m.getCategoria()))
@@ -265,7 +268,7 @@ public class MaterialesView extends VBox {
                 .filter(m -> contiene(m.getNombre(), q) || contiene(m.getReferencia(), q) || contiene(m.getProveedor(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " materiales");
+            lblContador.setText(tf("materiales.contador", lista.size()));
             dynamicColumns.apply();
             TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
@@ -280,25 +283,25 @@ public class MaterialesView extends VBox {
             .distinct()
             .sorted(String.CASE_INSENSITIVE_ORDER)
             .toList());
-        categorias.add(0, "Todos");
+        categorias.add(0, t("materiales.filtro.todos"));
         updatingCategoriaFiltro = true;
         cbCategoriaFiltro.setItems(FXCollections.observableArrayList(categorias));
-        cbCategoriaFiltro.setValue(categorias.contains(selected) ? selected : "Todos");
+        cbCategoriaFiltro.setValue(categorias.contains(selected) ? selected : t("materiales.filtro.todos"));
         updatingCategoriaFiltro = false;
     }
 
     private void nuevo()   { dialogo(new Material()).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } }); }
     private void editar()  {
         Material sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un material para editar."); return; }
+        if (sel == null) { alerta(t("materiales.alerta.sin_seleccion_editar")); return; }
         dialogo(sel).ifPresent(m -> { try { dao.save(m); dynamicColumns.saveFormFields(m, dialogExtraFields); cargar(); } catch (Exception e) { mostrarError(e); } });
     }
     private void borrar() {
         List<Material> seleccionados = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
-        if (seleccionados.isEmpty()) { alerta("Selecciona uno o varios materiales para borrar."); return; }
+        if (seleccionados.isEmpty()) { alerta(t("materiales.alerta.sin_seleccion_borrar")); return; }
         String mensaje = seleccionados.size() == 1
-            ? "¿Eliminar el material \"" + seleccionados.get(0).getNombre() + "\"?"
-            : "¿Eliminar " + seleccionados.size() + " materiales seleccionados?";
+            ? tf("materiales.borrar.confirmar.uno", seleccionados.get(0).getNombre())
+            : tf("materiales.borrar.confirmar.varios", seleccionados.size());
         conf(mensaje, () -> {
             try {
                 for (Material material : seleccionados) dao.delete(material.getId());
@@ -311,41 +314,41 @@ public class MaterialesView extends VBox {
 
     private void ajustarStock(String tipo) {
         Material sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un material."); return; }
+        if (sel == null) { alerta(t("materiales.alerta.sin_seleccion")); return; }
         TextInputDialog dlg = new TextInputDialog("1");
-        dlg.setTitle(tipo.equals("entrada") ? "Entrada de stock" : "Salida de stock");
-        dlg.setHeaderText("Material: " + sel.getNombre() + "\nStock actual: " + sel.getStockActual() + " " + sel.getUnidad());
-        dlg.setContentText("Cantidad (" + sel.getUnidad() + "):");
+        dlg.setTitle(tipo.equals("entrada") ? t("materiales.entrada.titulo") : t("materiales.salida.titulo"));
+        dlg.setHeaderText(tf("materiales.ajuste.header", sel.getNombre(), sel.getStockActual(), sel.getUnidad()));
+        dlg.setContentText(tf("materiales.ajuste.cantidad", sel.getUnidad()));
         dlg.showAndWait().ifPresent(s -> {
             try {
                 double cantidad = Double.parseDouble(s.replace(",", "."));
                 dao.ajustarStock(sel.getId(), cantidad, tipo,
                     tipo.equals("entrada") ? "Entrada manual" : "Salida manual");
                 cargar();
-            } catch (NumberFormatException ex) { alerta("Introduce una cantidad válida."); }
+            } catch (NumberFormatException ex) { alerta(t("materiales.alerta.cantidad_invalida")); }
             catch (Exception ex) { mostrarError(ex); }
         });
     }
 
     private Optional<Material> dialogo(Material m) {
         Dialog<Material> dlg = new Dialog<>();
-        dlg.setTitle(m.getId() == 0 ? "Nuevo material" : "Editar material");
+        dlg.setTitle(m.getId() == 0 ? t("materiales.dialogo.nuevo") : tf("materiales.dialogo.editar", m.getNombre()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         GridPane grid = new GridPane();
         grid.setHgap(10); grid.setVgap(10); grid.setPadding(new Insets(16));
-        TextField fNombre    = tf(m.getNombre());
-        TextField fRef       = tf(m.getReferencia());
+        TextField fNombre    = txf(m.getNombre());
+        TextField fRef       = txf(m.getReferencia());
         ComboBox<String> fCat = new ComboBox<>(FXCollections.observableArrayList(CATEGORIAS));
         fCat.setValue(m.getCategoria() != null ? m.getCategoria() : CATEGORIAS[0]);
-        TextField fStock     = tf(m.getStockActual() > 0 ? String.valueOf(m.getStockActual()) : "0");
-        TextField fStockMin  = tf(m.getStockMinimo() > 0 ? String.valueOf(m.getStockMinimo()) : "0");
-        TextField fUnidad    = tf(m.getUnidad() != null ? m.getUnidad() : "ud");
-        TextField fPrecio    = tf(m.getPrecioUnidad() > 0 ? String.valueOf(m.getPrecioUnidad()) : "0");
-        TextField fProveedor = tf(m.getProveedor());
-        grid.addRow(0, lbl("Nombre *"), fNombre, lbl("Referencia"), fRef);
-        grid.addRow(1, lbl("Categoría"), fCat, lbl("Unidad"), fUnidad);
-        grid.addRow(2, lbl("Stock actual"), fStock, lbl("Stock mínimo"), fStockMin);
-        grid.addRow(3, lbl("Precio/ud. (€)"), fPrecio, lbl("Proveedor"), fProveedor);
+        TextField fStock     = txf(m.getStockActual() > 0 ? String.valueOf(m.getStockActual()) : "0");
+        TextField fStockMin  = txf(m.getStockMinimo() > 0 ? String.valueOf(m.getStockMinimo()) : "0");
+        TextField fUnidad    = txf(m.getUnidad() != null ? m.getUnidad() : "ud");
+        TextField fPrecio    = txf(m.getPrecioUnidad() > 0 ? String.valueOf(m.getPrecioUnidad()) : "0");
+        TextField fProveedor = txf(m.getProveedor());
+        grid.addRow(0, lbl(t("materiales.campo.nombre")), fNombre, lbl(t("materiales.campo.referencia")), fRef);
+        grid.addRow(1, lbl(t("materiales.campo.categoria")), fCat, lbl(t("materiales.campo.unidad")), fUnidad);
+        grid.addRow(2, lbl(t("materiales.campo.stock_actual")), fStock, lbl(t("materiales.campo.stock_minimo")), fStockMin);
+        grid.addRow(3, lbl(t("materiales.campo.precio_unidad")), fPrecio, lbl(t("materiales.campo.proveedor")), fProveedor);
         dialogExtraFields = new LinkedHashMap<>();
         dynamicColumns.addFormFields(grid, 4, m, dialogExtraFields);
         dlg.getDialogPane().setContent(grid);
@@ -374,12 +377,12 @@ public class MaterialesView extends VBox {
     private Node buildTabConsumo() {
         VBox box = new VBox(10);
         box.setPadding(new Insets(12));
-        Label info = new Label("Define cuánto material se consume por unidad de cada técnica. El stock se descuenta automáticamente al crear una factura.");
+        Label info = new Label(t("materiales.consumo.info"));
         info.setStyle("-fx-text-fill:#666;-fx-font-size:12;");
         info.setWrapText(true);
         tablaConsumo.getStyleClass().add("data-table");
         tablaConsumo.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        TableColumn<ConsumoMaterial, Double> colCant = new TableColumn<>("Cant./unidad");
+        TableColumn<ConsumoMaterial, Double> colCant = new TableColumn<>(t("materiales.consumo.col.cantidad"));
         colCant.setCellValueFactory(new PropertyValueFactory<>("cantidadPorUnidad"));
         colCant.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -390,13 +393,13 @@ public class MaterialesView extends VBox {
             }
         });
         tablaConsumo.getColumns().addAll(
-            colConsumo("Técnica", "tecnica", 150), colConsumo("Material", "materialNombre", 220),
-            colCant, colConsumo("Unidad", "unidad", 80));
-        tablaConsumo.setPlaceholder(new Label("Sin reglas de consumo."));
+            colConsumo(t("materiales.consumo.col.tecnica"), "tecnica", 150), colConsumo(t("materiales.consumo.col.material"), "materialNombre", 220),
+            colCant, colConsumo(t("materiales.consumo.col.unidad"), "unidad", 80));
+        tablaConsumo.setPlaceholder(new Label(t("materiales.consumo.vacia")));
         VBox.setVgrow(tablaConsumo, Priority.ALWAYS);
-        Button btnAdd  = btn("+ Añadir regla", this::nuevaRegla);
-        Button btnEdit = btn("✏ Editar",       this::editarRegla);
-        Button btnDel  = btn("🗑 Eliminar",     this::eliminarRegla);
+        Button btnAdd  = btn(t("materiales.consumo.btn.anadir"),  this::nuevaRegla);
+        Button btnEdit = btn(t("materiales.btn.editar"),          this::editarRegla);
+        Button btnDel  = btn(t("materiales.consumo.btn.eliminar"), this::eliminarRegla);
         box.getChildren().addAll(info, tablaConsumo, new HBox(8, btnAdd, btnEdit, btnDel));
         return box;
     }
@@ -407,18 +410,18 @@ public class MaterialesView extends VBox {
     private void nuevaRegla() { dialogoConsumo(new ConsumoMaterial()).ifPresent(c -> { try { consumoDao.save(c); cargarConsumo(); } catch (Exception e) { mostrarError(e); } }); }
     private void editarRegla() {
         ConsumoMaterial sel = tablaConsumo.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una regla para editar."); return; }
+        if (sel == null) { alerta(t("materiales.consumo.alerta.editar")); return; }
         dialogoConsumo(sel).ifPresent(c -> { try { consumoDao.save(c); cargarConsumo(); } catch (Exception e) { mostrarError(e); } });
     }
     private void eliminarRegla() {
         ConsumoMaterial sel = tablaConsumo.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una regla."); return; }
-        conf("¿Eliminar la regla: " + sel.getTecnica() + " → " + sel.getMaterialNombre() + "?",
+        if (sel == null) { alerta(t("materiales.consumo.alerta.seleccion")); return; }
+        conf(tf("materiales.consumo.eliminar.confirmar", sel.getTecnica(), sel.getMaterialNombre()),
             () -> { try { consumoDao.delete(sel.getId()); cargarConsumo(); } catch (Exception e) { mostrarError(e); } });
     }
     private Optional<ConsumoMaterial> dialogoConsumo(ConsumoMaterial c) {
         Dialog<ConsumoMaterial> dlg = new Dialog<>();
-        dlg.setTitle(c.getId() == 0 ? "Nueva regla de consumo" : "Editar regla de consumo");
+        dlg.setTitle(c.getId() == 0 ? t("materiales.consumo.dialogo.nuevo") : t("materiales.consumo.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(440);
         GridPane grid = new GridPane();
@@ -435,18 +438,18 @@ public class MaterialesView extends VBox {
         });
         materiales.stream().filter(m -> m.getId() == c.getMaterialId()).findFirst().ifPresent(fMaterial::setValue);
         fMaterial.setMaxWidth(Double.MAX_VALUE);
-        TextField fCantidad = tf(c.getCantidadPorUnidad() > 0 ? String.valueOf(c.getCantidadPorUnidad()) : "");
-        grid.addRow(0, lbl("Técnica *"), fTecnica);
-        grid.addRow(1, lbl("Material *"), fMaterial);
-        grid.addRow(2, lbl("Cant. por unidad *"), fCantidad);
+        TextField fCantidad = txf(c.getCantidadPorUnidad() > 0 ? String.valueOf(c.getCantidadPorUnidad()) : "");
+        grid.addRow(0, lbl(t("materiales.consumo.campo.tecnica")), fTecnica);
+        grid.addRow(1, lbl(t("materiales.consumo.campo.material")), fMaterial);
+        grid.addRow(2, lbl(t("materiales.consumo.campo.cantidad")), fCantidad);
         GridPane.setHgrow(fTecnica, Priority.ALWAYS);
         GridPane.setHgrow(fMaterial, Priority.ALWAYS);
         GridPane.setHgrow(fCantidad, Priority.ALWAYS);
         dlg.getDialogPane().setContent(grid);
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, event -> {
-            if (fMaterial.getValue() == null) { alerta("Selecciona un material."); event.consume(); }
-            else if (parseDouble(fCantidad.getText()) <= 0) { alerta("La cantidad debe ser mayor que 0."); event.consume(); }
+            if (fMaterial.getValue() == null) { alerta(t("materiales.alerta.sin_seleccion")); event.consume(); }
+            else if (parseDouble(fCantidad.getText()) <= 0) { alerta(t("materiales.consumo.alerta.cantidad_invalida")); event.consume(); }
         });
         dlg.setResultConverter(bt -> {
             if (bt != ButtonType.OK) return null;
@@ -485,9 +488,9 @@ public class MaterialesView extends VBox {
     private HBox buildResumenPagos() {
         HBox row = new HBox(12);
 
-        VBox cardPendiente = tarjetaResumen("💶  Total pendiente", lblTotalPendiente, "#F39C12");
-        VBox cardVencido   = tarjetaResumen("🔴  Vencidos",        lblVencidos,       "#E74C3C");
-        VBox cardProximo   = tarjetaResumen("⏰  Próximos 7 días", lblProximos,       "#E67E22");
+        VBox cardPendiente = tarjetaResumen(t("materiales.pagos.card.pendiente"), lblTotalPendiente, "#F39C12");
+        VBox cardVencido   = tarjetaResumen(t("materiales.pagos.card.vencidos"),  lblVencidos,       "#E74C3C");
+        VBox cardProximo   = tarjetaResumen(t("materiales.pagos.card.proximos"),  lblProximos,       "#E67E22");
 
         row.getChildren().addAll(cardPendiente, cardVencido, cardProximo);
         return row;
@@ -508,11 +511,11 @@ public class MaterialesView extends VBox {
     private HBox buildToolbarPagos() {
         // Botones de filtro (tipo toggle)
         ToggleGroup tg = new ToggleGroup();
-        ToggleButton bTodos     = filtroBtn("Todos",      "todos",     tg);
-        ToggleButton bPendiente = filtroBtn("Pendientes", "pendiente", tg);
-        ToggleButton bVencido   = filtroBtn("Vencidos",   "vencido",   tg);
-        ToggleButton bProximo   = filtroBtn("Próximos",   "proximo",   tg);
-        ToggleButton bPagado    = filtroBtn("Pagados",    "pagado",    tg);
+        ToggleButton bTodos     = filtroBtn(t("materiales.pagos.filtro.todos"),      "todos",     tg);
+        ToggleButton bPendiente = filtroBtn(t("materiales.pagos.filtro.pendientes"), "pendiente", tg);
+        ToggleButton bVencido   = filtroBtn(t("materiales.pagos.filtro.vencidos"),   "vencido",   tg);
+        ToggleButton bProximo   = filtroBtn(t("materiales.pagos.filtro.proximos"),   "proximo",   tg);
+        ToggleButton bPagado    = filtroBtn(t("materiales.pagos.filtro.pagados"),    "pagado",    tg);
         bTodos.setSelected(true);
 
         HBox filtros = new HBox(2, bTodos, bPendiente, bVencido, bProximo, bPagado);
@@ -520,10 +523,10 @@ public class MaterialesView extends VBox {
 
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo   = btn("+ Nueva compra",  this::nuevoPago);
-        Button btnPagado  = btn("✓ Marcar pagado", this::marcarPagado);
-        Button btnEditar  = btn("✏ Editar",         this::editarPago);
-        Button btnBorrar  = btn("🗑 Eliminar",       this::eliminarPago);
+        Button btnNuevo   = btn(t("materiales.pagos.btn.nueva"),          this::nuevoPago);
+        Button btnPagado  = btn(t("materiales.pagos.btn.marcar_pagado"), this::marcarPagado);
+        Button btnEditar  = btn(t("materiales.btn.editar"),               this::editarPago);
+        Button btnBorrar  = btn(t("materiales.pagos.btn.eliminar"),       this::eliminarPago);
 
         HBox bar = new HBox(10, filtros, sp, btnNuevo, btnPagado, btnEditar, btnBorrar);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -565,10 +568,10 @@ public class MaterialesView extends VBox {
                 Circle dot = new Circle(7);
                 Tooltip tip = new Tooltip();
                 switch (p.getEstadoEfectivo()) {
-                    case "pagado"   -> { dot.setFill(Color.web("#27AE60")); tip.setText("Pagado"); }
-                    case "vencido"  -> { dot.setFill(Color.web("#E74C3C")); tip.setText("Vencido"); }
-                    case "proximo"  -> { dot.setFill(Color.web("#E67E22")); tip.setText("Próximo a vencer"); }
-                    default         -> { dot.setFill(Color.web("#4C9BE8")); tip.setText("Pendiente"); }
+                    case "pagado"   -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("materiales.pagos.estado.pagado")); }
+                    case "vencido"  -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("materiales.pagos.estado.vencido")); }
+                    case "proximo"  -> { dot.setFill(Color.web("#E67E22")); tip.setText(t("materiales.pagos.estado.proximo")); }
+                    default         -> { dot.setFill(Color.web("#4C9BE8")); tip.setText(t("materiales.pagos.estado.pendiente")); }
                 }
                 Tooltip.install(dot, tip);
                 setGraphic(dot);
@@ -577,22 +580,22 @@ public class MaterialesView extends VBox {
         });
 
         // Columna material
-        TableColumn<PagoMaterial, String> colMat = new TableColumn<>("Material");
+        TableColumn<PagoMaterial, String> colMat = new TableColumn<>(t("materiales.pagos.col.material"));
         colMat.setCellValueFactory(new PropertyValueFactory<>("materialNombre"));
         colMat.setPrefWidth(160);
 
         // Columna proveedor
-        TableColumn<PagoMaterial, String> colProv = new TableColumn<>("Proveedor");
+        TableColumn<PagoMaterial, String> colProv = new TableColumn<>(t("materiales.pagos.col.proveedor"));
         colProv.setCellValueFactory(new PropertyValueFactory<>("proveedor"));
         colProv.setPrefWidth(130);
 
         // Columna nº factura
-        TableColumn<PagoMaterial, String> colNum = new TableColumn<>("Nº Factura");
+        TableColumn<PagoMaterial, String> colNum = new TableColumn<>(t("materiales.pagos.col.num_factura"));
         colNum.setCellValueFactory(new PropertyValueFactory<>("numeroFactura"));
         colNum.setPrefWidth(100);
 
         // Columna fecha compra
-        TableColumn<PagoMaterial, LocalDate> colFc = new TableColumn<>("Fecha compra");
+        TableColumn<PagoMaterial, LocalDate> colFc = new TableColumn<>(t("materiales.pagos.col.fecha_compra"));
         colFc.setCellValueFactory(new PropertyValueFactory<>("fechaCompra"));
         colFc.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -603,7 +606,7 @@ public class MaterialesView extends VBox {
         colFc.setPrefWidth(105);
 
         // Columna importe
-        TableColumn<PagoMaterial, Double> colImp = new TableColumn<>("Importe");
+        TableColumn<PagoMaterial, Double> colImp = new TableColumn<>(t("materiales.pagos.col.importe"));
         colImp.setCellValueFactory(new PropertyValueFactory<>("importeTotal"));
         colImp.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -614,12 +617,12 @@ public class MaterialesView extends VBox {
         colImp.setPrefWidth(90);
 
         // Columna forma de pago
-        TableColumn<PagoMaterial, String> colFp = new TableColumn<>("Forma pago");
+        TableColumn<PagoMaterial, String> colFp = new TableColumn<>(t("materiales.pagos.col.forma_pago"));
         colFp.setCellValueFactory(new PropertyValueFactory<>("formaPago"));
         colFp.setPrefWidth(90);
 
         // Columna fecha vencimiento (con color)
-        TableColumn<PagoMaterial, LocalDate> colFv = new TableColumn<>("Vencimiento");
+        TableColumn<PagoMaterial, LocalDate> colFv = new TableColumn<>(t("materiales.pagos.col.vencimiento"));
         colFv.setCellValueFactory(new PropertyValueFactory<>("fechaVencimiento"));
         colFv.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -638,7 +641,7 @@ public class MaterialesView extends VBox {
         colFv.setPrefWidth(105);
 
         // Columna días restantes
-        TableColumn<PagoMaterial, Void> colDias = new TableColumn<>("Días");
+        TableColumn<PagoMaterial, Void> colDias = new TableColumn<>(t("materiales.pagos.col.dias"));
         colDias.setPrefWidth(70);
         colDias.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Void v, boolean empty) {
@@ -646,7 +649,7 @@ public class MaterialesView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setText(null); setStyle(""); return; }
                 PagoMaterial p = getTableRow().getItem();
                 switch (p.getEstadoEfectivo()) {
-                    case "pagado"  -> { setText("PAGADO"); setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;"); }
+                    case "pagado"  -> { setText(t("materiales.pagos.dias.pagado")); setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;"); }
                     case "vencido" -> { setText(p.getDiasRestantes() + "d"); setStyle("-fx-text-fill:#E74C3C;-fx-font-weight:bold;"); }
                     case "proximo" -> { setText("+" + p.getDiasRestantes() + "d"); setStyle("-fx-text-fill:#E67E22;-fx-font-weight:bold;"); }
                     default        -> { setText("+" + p.getDiasRestantes() + "d"); setStyle(""); }
@@ -655,13 +658,13 @@ public class MaterialesView extends VBox {
         });
 
         // Columna notas
-        TableColumn<PagoMaterial, String> colNotas = new TableColumn<>("Notas");
+        TableColumn<PagoMaterial, String> colNotas = new TableColumn<>(t("materiales.pagos.col.notas"));
         colNotas.setCellValueFactory(new PropertyValueFactory<>("notas"));
         colNotas.setPrefWidth(140);
 
         tablaPagos.getColumns().addAll(
             colEst, colMat, colProv, colNum, colFc, colImp, colFp, colFv, colDias, colNotas);
-        tablaPagos.setPlaceholder(new Label("No hay pagos registrados"));
+        tablaPagos.setPlaceholder(new Label(t("materiales.pagos.tabla.vacia")));
 
         // Doble clic para editar
         tablaPagos.setRowFactory(tv -> {
@@ -717,7 +720,7 @@ public class MaterialesView extends VBox {
 
     private void editarPago() {
         PagoMaterial sel = tablaPagos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago para editar."); return; }
+        if (sel == null) { alerta(t("materiales.pagos.alerta.editar")); return; }
         dialogoPago(sel).ifPresent(p -> {
             try { pagoDao.save(p); cargarPagos(); } catch (Exception e) { mostrarError(e); }
         });
@@ -725,19 +728,19 @@ public class MaterialesView extends VBox {
 
     private void marcarPagado() {
         PagoMaterial sel = tablaPagos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago para marcarlo como pagado."); return; }
-        if ("pagado".equals(sel.getEstado())) { alerta("Este pago ya está marcado como pagado."); return; }
+        if (sel == null) { alerta(t("materiales.pagos.alerta.marcar")); return; }
+        if ("pagado".equals(sel.getEstado())) { alerta(t("materiales.pagos.alerta.ya_pagado")); return; }
 
         Dialog<LocalDate> dlg = new Dialog<>();
-        dlg.setTitle("Marcar como pagado");
-        dlg.setHeaderText(sel.getMaterialNombre() + " — " + String.format("%.2f €", sel.getImporteTotal()));
+        dlg.setTitle(t("materiales.pagos.marcar.titulo"));
+        dlg.setHeaderText(tf("materiales.pagos.marcar.header", sel.getMaterialNombre(), sel.getImporteTotal()));
 
         DatePicker dp = new DatePicker(LocalDate.now());
-        VBox content = new VBox(8, new Label("Fecha en que se realizó el pago:"), dp);
+        VBox content = new VBox(8, new Label(t("materiales.pagos.marcar.fecha_label")), dp);
         content.setPadding(new Insets(14));
         dlg.getDialogPane().setContent(content);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("✓ Confirmar pago");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("materiales.pagos.marcar.confirmar"));
 
         if (getScene() != null)
             dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -751,9 +754,8 @@ public class MaterialesView extends VBox {
 
     private void eliminarPago() {
         PagoMaterial sel = tablaPagos.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un pago para eliminar."); return; }
-        conf("¿Eliminar el pago de \"" + sel.getMaterialNombre() + "\" (" +
-            String.format("%.2f €", sel.getImporteTotal()) + ")?",
+        if (sel == null) { alerta(t("materiales.pagos.alerta.eliminar")); return; }
+        conf(tf("materiales.pagos.eliminar.confirmar", sel.getMaterialNombre(), sel.getImporteTotal()),
             () -> { try { pagoDao.delete(sel.getId()); cargarPagos(); } catch (Exception e) { mostrarError(e); } });
     }
 
@@ -761,7 +763,7 @@ public class MaterialesView extends VBox {
 
     private Optional<PagoMaterial> dialogoPago(PagoMaterial p) {
         Dialog<PagoMaterial> dlg = new Dialog<>();
-        dlg.setTitle(p.getId() == 0 ? "Nueva compra de material" : "Editar pago");
+        dlg.setTitle(p.getId() == 0 ? t("materiales.pagos.dialogo.nueva") : t("materiales.pagos.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(520);
 
@@ -778,10 +780,10 @@ public class MaterialesView extends VBox {
             materiales.stream().filter(m -> m.getId() == p.getMaterialId()).findFirst().ifPresent(cbMaterial::setValue);
 
         // ── Campos de texto ───────────────────────────────────────────────────
-        TextField tfProveedor = tf(p.getProveedor());
-        TextField tfNumFact   = tf(p.getNumeroFactura());
-        TextField tfCantidad  = tf(p.getCantidadComprada() > 0 ? String.valueOf(p.getCantidadComprada()) : "");
-        TextField tfImporte   = tf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
+        TextField tfProveedor = txf(p.getProveedor());
+        TextField tfNumFact   = txf(p.getNumeroFactura());
+        TextField tfCantidad  = txf(p.getCantidadComprada() > 0 ? String.valueOf(p.getCantidadComprada()) : "");
+        TextField tfImporte   = txf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
         TextArea  taNotas     = new TextArea(p.getNotas() != null ? p.getNotas() : "");
         taNotas.setPrefRowCount(2);
         taNotas.setWrapText(true);
@@ -836,24 +838,24 @@ public class MaterialesView extends VBox {
         grid.getColumnConstraints().addAll(cc0, cc1);
 
         int r = 0;
-        grid.addRow(r++, lbl("Material *"), cbMaterial);
-        grid.addRow(r++, lbl("Proveedor"),   tfProveedor);
-        grid.addRow(r++, lbl("Nº factura"),  tfNumFact);
-        grid.addRow(r++, lbl("Fecha compra *"), dpCompra);
-        grid.addRow(r++, lbl("Forma de pago"), cbFormaPago);
-        grid.addRow(r++, lbl("Vencimiento *"), dpVencimiento);
-        grid.addRow(r++, lbl("Cantidad comprada"), tfCantidad);
-        grid.addRow(r++, lbl("Importe total (€) *"), tfImporte);
-        grid.addRow(r,   lbl("Notas"), taNotas);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.material")), cbMaterial);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.proveedor")),   tfProveedor);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.num_factura")),  tfNumFact);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.fecha_compra")), dpCompra);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.forma_pago")), cbFormaPago);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.vencimiento")), dpVencimiento);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.cantidad")), tfCantidad);
+        grid.addRow(r++, lbl(t("materiales.pagos.campo.importe")), tfImporte);
+        grid.addRow(r,   lbl(t("materiales.pagos.campo.notas")), taNotas);
 
         dlg.getDialogPane().setContent(grid);
 
         // Validación
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            if (cbMaterial.getValue() == null) { alerta("Selecciona un material."); ev.consume(); return; }
-            if (dpVencimiento.getValue() == null) { alerta("Introduce la fecha de vencimiento."); ev.consume(); return; }
-            if (parseDouble(tfImporte.getText()) <= 0) { alerta("El importe total debe ser mayor que 0."); ev.consume(); }
+            if (cbMaterial.getValue() == null) { alerta(t("materiales.alerta.sin_seleccion")); ev.consume(); return; }
+            if (dpVencimiento.getValue() == null) { alerta(t("materiales.pagos.alerta.sin_vencimiento")); ev.consume(); return; }
+            if (parseDouble(tfImporte.getText()) <= 0) { alerta(t("materiales.pagos.alerta.importe_invalido")); ev.consume(); }
         });
 
         if (getScene() != null)
@@ -888,7 +890,7 @@ public class MaterialesView extends VBox {
             ? new java.util.ArrayList<>(getScene().getStylesheets())
             : List.of();
         ModuloWindowManager.abrirEnVentana(
-            "Importación de materiales",
+            t("materiales.importar.titulo"),
             () -> new ImportView(ImportService.TipoEntidad.MATERIALES, () -> {
                 cargar();
                 cargarConsumo();
@@ -900,18 +902,18 @@ public class MaterialesView extends VBox {
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("materiales.importar.completada", r.duracion().toMillis() / 1000.0)).append(System.lineSeparator());
+        sb.append(tf("materiales.importar.filas_importadas", r.filasImportadas())).append(System.lineSeparator());
+        sb.append(tf("materiales.importar.filas_actualizadas", r.filasActualizadas())).append(System.lineSeparator());
+        sb.append(tf("materiales.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("materiales.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("materiales.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("materiales.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -924,20 +926,13 @@ public class MaterialesView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de materiales como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con la estructura y los datos de materiales, consumo y pagos.", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Datos de todos los materiales (con consumo y pagos) en formato JSON.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de materiales con estado de stock en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de materiales en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"), t("export.fmt.sqlite.desc"), "db"},
+            {"csv",    t("export.fmt.csv.label"),    t("materiales.export.csv.desc"), "csv"},
+            {"sql",    t("export.fmt.sql.label"),    t("materiales.export.sql.desc"), "sql"},
+            {"json",   t("export.fmt.json.label"),   t("materiales.export.json.desc"), "json"},
+            {"pdf",    t("export.fmt.pdf.label"),    t("materiales.export.pdf.desc"), "pdf"},
+            {"word",   t("export.fmt.word.label"),   t("materiales.export.word.desc"), "docx"},
+            {"excel",  t("export.fmt.excel.label"),  t("materiales.export.excel.desc"), "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -962,18 +957,18 @@ public class MaterialesView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar materiales");
+        dlg.setTitle(t("materiales.exportar.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -986,11 +981,11 @@ public class MaterialesView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
-        fc.setInitialFileName("Materiales_" +
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
+        fc.setInitialFileName(t("nav.materiales") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Materiales", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("materiales.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -1033,8 +1028,8 @@ public class MaterialesView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -1073,7 +1068,7 @@ public class MaterialesView extends VBox {
     private void previsualizar() {
         List<Material> sel = new java.util.ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Material> lista = sel.isEmpty() ? new java.util.ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("materiales.previsualizar.sin_seleccion")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -1083,11 +1078,11 @@ public class MaterialesView extends VBox {
                     Material m = lista.get(0);
                     Path pdfPath = new PDFService().generarFichaMaterial(m);
                     pdfBytes = Files.readAllBytes(pdfPath);
-                    tituloVentana = "Previsualización — Material " + m.getNombre();
+                    tituloVentana = tf("materiales.previsualizar.titulo.uno", m.getNombre());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarMateriales(lista);
-                    tituloVentana = "Previsualización — Materiales (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("materiales.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -1119,7 +1114,7 @@ public class MaterialesView extends VBox {
         dlg.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> accion.run());
     }
 
-    private TextField tf(String v)    { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v)   { return new TextField(v != null ? v : ""); }
     private Label     lbl(String t)   { return new Label(t); }
     private String toDbColumn(String campo) {
         return switch (campo) {
@@ -1135,10 +1130,10 @@ public class MaterialesView extends VBox {
     private boolean contiene(String texto, String q) { return texto != null && texto.toLowerCase().contains(q); }
     private void alerta(String m)     { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
-        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        String msg = e.getMessage() != null ? e.getMessage() : t("common.error.desconocido");
         javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
         if (w != null && msg.contains("UNIQUE constraint failed")) {
-            ToastService.error(w, "Código de material ya existente.", "MAT-ERR-1");
+            ToastService.error(w, t("materiales.error.codigo_duplicado"), "MAT-ERR-1");
         } else {
             new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
         }
