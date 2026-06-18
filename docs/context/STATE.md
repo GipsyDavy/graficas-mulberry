@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-18 (sesión cierre — Sprint i18n-13 — 151/151)
+**Última actualización:** 2026-06-18 (sesión cierre — Sprint i18n-14 — 151/151)
 
 ---
 
@@ -19,9 +19,9 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-18 (Sprint i18n-13)
+### ESTADO AL CIERRE DE SESIÓN 2026-06-18 (Sprint i18n-14)
 
-**HEAD:** `bf3340f` + commits i18n-13 (ver tabla abajo). Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `bf3340f` + commits i18n-13/i18n-14 (ver tabla abajo). Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
@@ -38,14 +38,15 @@ Actualizar tras cada sprint cerrado.
 | i18n-11 | MaterialesView migrada — toolbar stock, tabla, diálogo material, tab consumo por técnica, tab pagos a proveedores, importación, exportación, previsualización, errores, título diálogo columnas + prefijo fichero exportado (142 claves materiales.*); rename `tf()`→`txf()` |
 | i18n-12 | TarifasView migrada — toolbar, tabla, diálogo tarifa, gestión de tramos (sub-diálogo + tabla), importación, exportación, previsualización, título diálogo columnas + prefijo fichero exportado, filtro técnica + sentinel "Todas" (74 claves tarifas.*); rename `tf()`→`txf()`; rename `Tarifa t`→`tarifa` (param de método completo, no solo lambdas) |
 | i18n-13 | ComprasProveedorView migrada — resumen KPIs, toolbar filtros, tabla, diálogo pago, marcar pagado, eliminar, validaciones (60 claves compras.*); rename `tf()`→`txf()` (4 call sites); `FORMAS_PAGO` y códigos internos de filtro NO traducidos (valores BD/lógica) |
+| i18n-14 | EstadisticasView migrada — títulos, tabs, KPIs, títulos de gráficos, nombres de series, previsualización, exportación PDF, errores (49 claves estadisticas.*); sin renombrados por colisión (único `t` local es `Tab t` dentro de `tab()`, sin llamada interna a `t()` global); PALETA/COLOR_*/CHART_COLOR_*/"—"/"…"/`ex.getMessage()` NO traducidos |
 
 **Estado del sistema i18n al cierre:**
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-13: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `compras.*` verificada (60 idénticas en los 6 bundles, 0 diffs).
-- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, `MaterialesView`, `TarifasView`, **`ComprasProveedorView`**.
-- Vistas pendientes de migrar: EstadisticasView, CalendarioView, etc.
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-14: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `estadisticas.*` verificada (49 idénticas en los 6 bundles, 0 diffs).
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, `MaterialesView`, `TarifasView`, `ComprasProveedorView`, **`EstadisticasView`**.
+- Vistas pendientes de migrar: CalendarioView.
 
 **Hallazgo i18n-10 (Codex, revisión post-implementación):** en `EmpleadosView` el segundo argumento de `DynamicColumnRuntime(...)` (título visible en el diálogo "⚙ Columnas" vía `ColumnConfiguratorDialog`) y el prefijo de `fc.setInitialFileName(...)` en exportación SÍ se migraron (`t("nav.empleados")`). MaterialesView (i18n-11) replicó la misma migración desde el inicio (`t("nav.materiales")`). Las 8 vistas restantes (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, Tarifas, ComprasProveedor) **dejan estos dos puntos sin traducir** (string literal en español) — gap de cobertura real, no regresión, pendiente de homogeneizar en una futura pasada de limpieza si se decide.
 
@@ -82,6 +83,7 @@ Actualizar tras cada sprint cerrado.
 - `materiales.*` — MaterialesView completa (142 claves)
 - `tarifas.*` — TarifasView completa (74 claves)
 - `compras.*` — ComprasProveedorView completa (60 claves)
+- `estadisticas.*` — EstadisticasView completa (49 claves)
 
 **Patrón de migración establecido (repetir en i18n-4+):**
 ```java
@@ -96,11 +98,12 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit i18n-13 (ver tabla de sprints arriba). Tests: 151/151. App funcional.
+**HEAD:** commit i18n-14 (ver tabla de sprints arriba). Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-14** — migrar `EstadisticasView` (o `CalendarioView`). Mismo patrón. Buscar conflictos de naming antes de añadir imports.
+1. **Sprint i18n-15** — migrar `CalendarioView` (última vista pendiente). Mismo patrón. Buscar conflictos de naming antes de añadir imports.
 2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
+3. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
@@ -181,7 +184,27 @@ Validación final: `mvnw clean compile` limpio + `mvnw test` → **151/151 BUILD
 
 ---
 
-### CHECKLIST SPRINT i18n-14 — EstadisticasView o CalendarioView (siguiente)
+### CHECKLIST SPRINT i18n-14 — EstadisticasView — ✅ EJECUTADO (ver resultado abajo)
+
+Pasos 0-6 ejecutados según el patrón. Paso 1: sin conflictos de naming. Único identificador `t` en el archivo es la variable local `Tab t = new Tab(texto, contenido)` dentro del helper privado `tab()`; ese método no llama a la función global `t()` en su scope, así que no requiere rename (regla 4 de "Reglas i18n consolidadas").
+
+Decisión Paso 3: `EstadisticasView` no usa `DynamicColumnRuntime` ni diálogo de columnas — no aplica el gap de i18n-10. Sí tiene exportación PDF y previsualización, ambas migradas.
+
+Categoría nueva en este sprint (primera vista de gráficos migrada): títulos de gráfico (`barChart`/`lineChart`/`pieChart`) y nombres de serie (leyenda) son texto visible al usuario y se migraron como claves `estadisticas.chart.*` / `estadisticas.serie.*`. La clave `estadisticas.chart.ingresos_tecnica` se reutiliza para un pie chart y un bar chart distintos (mismo texto español "Ingresos por técnica (€)" en ambos contextos).
+
+No traducido (no son literales de UI o son datos/estilo): array `PALETA` y constantes `COLOR_INGRESOS/GASTOS/NOMINAS/PRIMARIO/AZUL` (valores hex); strings `"#HEXCOLOR"` pasados a `PieChart.Data`; estilos inline `"CHART_COLOR_N:..."`; guion `"—"` como placeholder de "sin clave" en `primeraClave()`; elipsis `"…"` de truncado en `serie()`; `ex.getMessage()` crudo en el `Alert` de error de exportación PDF (no es literal hardcodeado).
+
+49 claves `estadisticas.*` en los 6 bundles, paridad verificada (diff por nombre de clave, 0 diferencias). 8 claves usan `tf()` con placeholders `{0}`; en FR se evitaron apóstrofes en esas 8 (no fue necesario reformular ninguna, ya que ninguna requería posesivo/elisión en francés).
+
+Incidencia técnica nueva detectada y corregida: nombres de variable PowerShell son **case-insensitive** — `$eA` (é minúscula) y `$EA` (É mayúscula) se resolvieron como la misma variable, y la segunda asignación sobrescribió la primera, produciendo "BÉnÉfice"/"GÉnération"/"EnregistrÉ" con É mayúscula indebida en todo el bloque FR. Detectado vía `grep` post-escritura. Solución: eliminar bloque corrupto (incluyendo un duplicado accidental generado durante el primer intento de fix) restaurando el archivo a su longitud previa al sprint, y reescribir usando nombres de variable inequívocos (`$eLow`/`$eCap`) en vez de mayúscula/minúscula del mismo nombre. Una errata adicional de diacrítico en CA ("mès"→"més") detectada y corregida igual que en sprints previos.
+
+Validación final: `mvnw clean compile` limpio + `mvnw test` → **151/151 BUILD SUCCESS**. Codex (revisión post-implementación, bloque IDE): sin hallazgos, sin literales sin migrar, paridad 49/49 confirmada, sin mojibake, scope respetado (PALETA/COLOR_*/CHART_COLOR_*/"—"/"…"/`ex.getMessage()` intactos).
+
+VibeSec: LIMPIO — app de escritorio, sin XSS/CSRF/SSRF/auth aplicable; solo extracción de strings UI.
+
+---
+
+### CHECKLIST SPRINT i18n-15 — CalendarioView (siguiente, última vista pendiente)
 
 Mismo patrón. Buscar conflictos de naming `t`/`tf` antes de añadir imports. Ver "Reglas i18n consolidadas" abajo.
 
@@ -632,10 +655,9 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Cola prioritaria
 
-1. **Sprint i18n-13** — migrar `ComprasProveedorView`. Mismo patrón. Ver checklist en la cabecera del documento.
-2. **Sprint i18n-14+** — EstadisticasView, CalendarioView (orden sugerido, no fijo).
-3. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
-4. **Gap de cobertura i18n** — homogeneizar `DynamicColumnRuntime` (título diálogo columnas) y prefijo de fichero exportado en las 7 vistas que aún lo dejan sin traducir (ver hallazgo Codex i18n-10; EmpleadosView, MaterialesView y TarifasView ya migradas).
+1. **Sprint i18n-15** — migrar `CalendarioView` (última vista pendiente). Mismo patrón. Ver checklist en la cabecera del documento.
+2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
+3. **Gap de cobertura i18n** — homogeneizar `DynamicColumnRuntime` (título diálogo columnas) y prefijo de fichero exportado en las 7 vistas que aún lo dejan sin traducir (ver hallazgo Codex i18n-10; EmpleadosView, MaterialesView y TarifasView ya migradas).
 
 ---
 
@@ -643,6 +665,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-14 | (ver tabla cabecera) | EstadisticasView: títulos, tabs, KPIs, gráficos, series, previsualización, exportación PDF (49 claves) |
+| i18n-13 | `8db3041` | ComprasProveedorView: resumen KPIs, toolbar filtros, tabla, diálogo pago, marcar pagado, eliminar (60 claves); rename tf()→txf() |
 | i18n-12 | `bf3340f` | TarifasView: toolbar, tabla, diálogo tarifa, gestión de tramos, import/export, previsualización (74 claves); rename tf()→txf(); rename `Tarifa t`→`tarifa` (param método completo); sentinel "Todas" fix |
 | i18n-11 | `0799fb5` | MaterialesView: toolbar stock, tabla, diálogo, tab consumo, tab pagos proveedor, import/export, previsualización (142 claves); rename tf()→txf(); DynamicColumnRuntime+export prefix migrados |
 | i18n-10 | `4f55afc` | EmpleadosView: toolbar, tabla, diálogo, baja/reactivar, import/export, previsualización (~75 claves); rename tf()→txf() |
@@ -674,6 +698,6 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Deuda técnica conocida
 
-- i18n: vistas de módulo pendientes de migrar (ComprasProveedorView, EstadisticasView, CalendarioView)
+- i18n: vista de módulo pendiente de migrar (CalendarioView)
 - i18n: `DynamicColumnRuntime` (título diálogo "⚙ Columnas") y prefijo de fichero exportado sin migrar en 7 vistas (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, ComprasProveedor) — EmpleadosView (i18n-10), MaterialesView (i18n-11) y TarifasView (i18n-12) ya lo migraron
 - Refactor B2: inyección de Connection en DAOs (largo plazo)
