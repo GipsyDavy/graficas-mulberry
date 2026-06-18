@@ -21,6 +21,9 @@ import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.ToastService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -61,7 +64,7 @@ public class EmpleadosView extends VBox {
         COLUMNAS_BASE.put("direccion", "Dirección");
     }
     private final DynamicColumnRuntime<Empleado> dynamicColumns =
-        new DynamicColumnRuntime<>("empleados", "Empleados", COLUMNAS_BASE, tabla, datos, Empleado::getId);
+        new DynamicColumnRuntime<>("empleados", t("nav.empleados"), COLUMNAS_BASE, tabla, datos, Empleado::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private CheckBox chkMostrarBajas;
     private TextField txtBuscar;
@@ -72,7 +75,7 @@ public class EmpleadosView extends VBox {
         setPadding(new Insets(24));
         setSpacing(12);
 
-        Label titulo = new Label("Empleados");
+        Label titulo = new Label(t("nav.empleados"));
         titulo.getStyleClass().add("view-title");
 
         Label hint = buildBeginnerHint();
@@ -83,7 +86,7 @@ public class EmpleadosView extends VBox {
     }
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Usa el botón \"Nuevo\" para añadir un empleado. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("empleados.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -94,32 +97,32 @@ public class EmpleadosView extends VBox {
     }
 
     private HBox buildToolbar() {
-        chkMostrarBajas = new CheckBox("Mostrar empleados dados de baja");
+        chkMostrarBajas = new CheckBox(t("empleados.toolbar.mostrar_bajas"));
         chkMostrarBajas.setOnAction(e -> cargar());
 
-        Button btnNuevo     = btn("+ Nuevo", this::nuevo);
-        Button btnEditar    = btn("✏ Editar", this::editar);
-        Button btnBaja      = btn("🚫 Dar de baja", this::darDeBaja);
-        Button btnReactivar = btn("✅ Reactivar", this::reactivar);
-        Button btnImportar  = btn("📥 Importar", this::importar);
-        Button btnExportar   = btn("📤 Exportar", this::exportar);
-        Button btnPreview    = btn("👁 Previsualizar", this::previsualizar);
-        Button btnColumnas   = btn("⚙ Columnas", dynamicColumns::configure);
-        chkMostrarBajas.setTooltip(new Tooltip("Incluir en la tabla los empleados dados de baja"));
-        btnNuevo.setTooltip(new Tooltip("Crear un nuevo empleado"));
-        btnEditar.setTooltip(new Tooltip("Editar el empleado seleccionado"));
-        btnBaja.setTooltip(new Tooltip("Dar de baja al empleado seleccionado"));
-        btnReactivar.setTooltip(new Tooltip("Reactivar un empleado dado de baja"));
-        btnImportar.setTooltip(new Tooltip("Importar empleados desde CSV, Excel o JSON"));
-        btnExportar.setTooltip(new Tooltip("Exportar empleados a PDF, Excel u otros formatos"));
-        btnPreview.setTooltip(new Tooltip("Previsualizar ficha del empleado en PDF"));
-        btnColumnas.setTooltip(new Tooltip("Mostrar u ocultar columnas de la tabla"));
+        Button btnNuevo     = btn(t("empleados.btn.nuevo"),      this::nuevo);
+        Button btnEditar    = btn(t("empleados.btn.editar"),     this::editar);
+        Button btnBaja      = btn(t("empleados.btn.baja"),       this::darDeBaja);
+        Button btnReactivar = btn(t("empleados.btn.reactivar"),  this::reactivar);
+        Button btnImportar  = btn(t("empleados.btn.importar"),   this::importar);
+        Button btnExportar   = btn(t("empleados.btn.exportar"),   this::exportar);
+        Button btnPreview    = btn(t("empleados.btn.previsualizar"), this::previsualizar);
+        Button btnColumnas   = btn(t("empleados.btn.columnas"),   dynamicColumns::configure);
+        chkMostrarBajas.setTooltip(new Tooltip(t("empleados.toolbar.mostrar_bajas.tip")));
+        btnNuevo.setTooltip(new Tooltip(t("empleados.btn.nuevo.tip")));
+        btnEditar.setTooltip(new Tooltip(t("empleados.btn.editar.tip")));
+        btnBaja.setTooltip(new Tooltip(t("empleados.btn.baja.tip")));
+        btnReactivar.setTooltip(new Tooltip(t("empleados.btn.reactivar.tip")));
+        btnImportar.setTooltip(new Tooltip(t("empleados.btn.importar.tip")));
+        btnExportar.setTooltip(new Tooltip(t("empleados.btn.exportar.tip")));
+        btnPreview.setTooltip(new Tooltip(t("empleados.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(new Tooltip(t("empleados.btn.columnas.tip")));
 
         txtBuscar = new TextField();
-        txtBuscar.setPromptText("🔍  Buscar por nombre, NIF, email…");
+        txtBuscar.setPromptText(t("empleados.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip("Buscar por nombre, apellidos, NIF o email"));
+        txtBuscar.setTooltip(new Tooltip(t("empleados.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -135,7 +138,7 @@ public class EmpleadosView extends VBox {
         tabla.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
 
         // Estado (activo / baja)
-        TableColumn<Empleado, Boolean> colEstado = new TableColumn<>("Estado");
+        TableColumn<Empleado, Boolean> colEstado = new TableColumn<>(t("empleados.col.estado"));
         colEstado.setCellValueFactory(new PropertyValueFactory<>("activo"));
         colEstado.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Boolean v, boolean empty) {
@@ -143,11 +146,11 @@ public class EmpleadosView extends VBox {
                 if (empty || v == null) { setText(null); setStyle(""); return; }
                 Empleado e = getTableRow().getItem();
                 if (v) {
-                    setText("ACTIVO");
+                    setText(t("empleados.estado.activo"));
                     setStyle("-fx-text-fill:#27AE60;-fx-font-weight:bold;");
                 } else {
                     String baja = (e != null && e.getFechaBaja() != null) ? " · " + e.getFechaBaja() : "";
-                    setText("BAJA" + baja);
+                    setText(t("empleados.estado.baja") + baja);
                     setStyle("-fx-text-fill:#E74C3C;-fx-font-weight:bold;");
                 }
             }
@@ -155,7 +158,7 @@ public class EmpleadosView extends VBox {
         colEstado.setPrefWidth(140);
         colEstado.setUserData("activo");
 
-        TableColumn<Empleado, Double> colSalario = new TableColumn<>("Salario base");
+        TableColumn<Empleado, Double> colSalario = new TableColumn<>(t("empleados.col.salario_base"));
         colSalario.setCellValueFactory(new PropertyValueFactory<>("salarioBase"));
         colSalario.setUserData("salario_base");
         colSalario.setCellFactory(c -> new TableCell<>() {
@@ -165,7 +168,7 @@ public class EmpleadosView extends VBox {
             }
         });
 
-        TableColumn<Empleado, Double> colIrpf = new TableColumn<>("IRPF");
+        TableColumn<Empleado, Double> colIrpf = new TableColumn<>(t("empleados.col.irpf"));
         colIrpf.setCellValueFactory(new PropertyValueFactory<>("irpf"));
         colIrpf.setUserData("irpf");
         colIrpf.setCellFactory(c -> new TableCell<>() {
@@ -176,18 +179,18 @@ public class EmpleadosView extends VBox {
         });
 
         tabla.getColumns().addAll(
-            col("Nombre",    "nombre",    140),
-            col("Apellidos",  "apellidos",  140),
-            col("NIF",       "nif",        95),
-            col("Categoría", "categoria", 120),
+            col(t("empleados.col.nombre"),    "nombre",    140),
+            col(t("empleados.col.apellidos"),  "apellidos",  140),
+            col(t("empleados.col.nif"),       "nif",        95),
+            col(t("empleados.col.categoria"), "categoria", 120),
             colSalario,
             colIrpf,
-            col("Fecha alta", "fechaAlta",  100),
-            col("Teléfono",   "telefono",   110),
-            col("Email",      "email",      170),
+            col(t("empleados.col.fecha_alta"), "fechaAlta",  100),
+            col(t("empleados.col.telefono"),   "telefono",   110),
+            col(t("empleados.col.email"),      "email",      170),
             colEstado
         );
-        tabla.setPlaceholder(Icons.emptyState("No hay empleados registrados todavía"));
+        tabla.setPlaceholder(Icons.emptyState(t("empleados.tabla.vacia")));
         return tabla;
     }
 
@@ -201,7 +204,7 @@ public class EmpleadosView extends VBox {
                           || contiene(e.getEmail(), q)   || contiene(e.getNif(), q))
                 .toList();
             datos.setAll(lista);
-            lblContador.setText(lista.size() + " empleados");
+            lblContador.setText(tf("empleados.contador", lista.size()));
             dynamicColumns.apply(); TableColumnSizing.animarFilas(tabla);
         } catch (Exception e) { mostrarError(e); }
     }
@@ -223,7 +226,7 @@ public class EmpleadosView extends VBox {
 
     private void editar() {
         Empleado sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un empleado para editar."); return; }
+        if (sel == null) { alerta(t("empleados.seleccion.editar")); return; }
         try {
             Empleado e = dao.findById(sel.getId());
             dialogo(e).ifPresent(emp -> {
@@ -234,10 +237,10 @@ public class EmpleadosView extends VBox {
 
     private void darDeBaja() {
         Empleado sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un empleado."); return; }
-        if (!sel.isActivo()) { alerta("El empleado ya está dado de baja."); return; }
+        if (sel == null) { alerta(t("empleados.seleccion.generica")); return; }
+        if (!sel.isActivo()) { alerta(t("empleados.error.ya_baja")); return; }
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Dar de baja a " + sel.getNombreCompleto() + "?\nSe registrará la fecha de hoy como fecha de baja.",
+            tf("empleados.baja.confirmar", sel.getNombreCompleto()),
             ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
@@ -247,10 +250,10 @@ public class EmpleadosView extends VBox {
 
     private void reactivar() {
         Empleado sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona un empleado."); return; }
-        if (sel.isActivo()) { alerta("El empleado ya está activo."); return; }
+        if (sel == null) { alerta(t("empleados.seleccion.generica")); return; }
+        if (sel.isActivo()) { alerta(t("empleados.error.ya_activo")); return; }
         Alert conf = new Alert(Alert.AlertType.CONFIRMATION,
-            "¿Reactivar a " + sel.getNombreCompleto() + "?", ButtonType.YES, ButtonType.NO);
+            tf("empleados.reactivar.confirmar", sel.getNombreCompleto()), ButtonType.YES, ButtonType.NO);
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try { dao.reactivar(sel.getId()); cargar(); } catch (Exception e) { mostrarError(e); }
@@ -259,45 +262,43 @@ public class EmpleadosView extends VBox {
 
     private Optional<Empleado> dialogo(Empleado e) {
         Dialog<Empleado> dlg = new Dialog<>();
-        dlg.setTitle(e.getId() == 0 ? "Nuevo empleado" : "Editar empleado — " + e.getNombreCompleto());
+        dlg.setTitle(e.getId() == 0 ? t("empleados.dialogo.nuevo") : tf("empleados.dialogo.editar", e.getNombreCompleto()));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(540);
 
         GridPane grid = new GridPane();
         grid.setHgap(12); grid.setVgap(10); grid.setPadding(new Insets(16));
 
-        TextField fNombre    = tf(e.getNombre());
-        TextField fApellido  = tf(e.getApellidos());
-        TextField fNif       = tf(e.getNif());
+        TextField fNombre    = txf(e.getNombre());
+        TextField fApellido  = txf(e.getApellidos());
+        TextField fNif       = txf(e.getNif());
         ComboBox<String> fCat = new ComboBox<>(FXCollections.observableArrayList(CATEGORIAS));
         fCat.setValue(e.getCategoria() != null ? e.getCategoria() : CATEGORIAS[0]);
         fCat.setMaxWidth(Double.MAX_VALUE);
-        TextField fFechaAlta = tf(e.getFechaAlta());
-        TextField fSalario   = tf(e.getSalarioBase() > 0 ? String.valueOf(e.getSalarioBase()) : "1200");
-        TextField fIrpf      = tf(e.getIrpf() > 0 ? String.valueOf(e.getIrpf()) : "15");
-        TextField fTelefono  = tf(e.getTelefono());
-        TextField fEmail     = tf(e.getEmail());
-        TextField fIban      = tf(e.getIban());
-        TextField fDireccion = tf(e.getDireccion());
-        CheckBox  chkActivo  = new CheckBox("Activo");
+        TextField fFechaAlta = txf(e.getFechaAlta());
+        TextField fSalario   = txf(e.getSalarioBase() > 0 ? String.valueOf(e.getSalarioBase()) : "1200");
+        TextField fIrpf      = txf(e.getIrpf() > 0 ? String.valueOf(e.getIrpf()) : "15");
+        TextField fTelefono  = txf(e.getTelefono());
+        TextField fEmail     = txf(e.getEmail());
+        TextField fIban      = txf(e.getIban());
+        TextField fDireccion = txf(e.getDireccion());
+        CheckBox  chkActivo  = new CheckBox(t("empleados.campo.activo"));
         chkActivo.setSelected(e.isActivo());
 
         // Fila 0: Nombre, Apellido
-        grid.addRow(0, lbl("Nombre *"), fNombre, lbl("Apellidos"), fApellido);
-        // Fila 1: NIF, Categoría → reubicado abajo
+        grid.addRow(0, lbl(t("empleados.campo.nombre")), fNombre, lbl(t("empleados.campo.apellidos")), fApellido);
         // Fila 1: NIF, Categoría
-        grid.addRow(1, lbl("NIF"), fNif, lbl("Categoría"), fCat);
-        // Fila 2: Fecha alta desplazada
+        grid.addRow(1, lbl(t("empleados.campo.nif")), fNif, lbl(t("empleados.campo.categoria")), fCat);
         // Fila 2: Fecha alta + Salario + IRPF
-        grid.addRow(2, lbl("Fecha alta"), fFechaAlta, lbl("Salario base (€)"), fSalario);
+        grid.addRow(2, lbl(t("empleados.campo.fecha_alta")), fFechaAlta, lbl(t("empleados.campo.salario_base")), fSalario);
         // Fila 3: IRPF + Teléfono
-        grid.addRow(3, lbl("IRPF (%)"), fIrpf, lbl("Teléfono"), fTelefono);
+        grid.addRow(3, lbl(t("empleados.campo.irpf")), fIrpf, lbl(t("empleados.campo.telefono")), fTelefono);
         // Fila 4: Email (completo)
-        grid.add(lbl("Email"), 0, 4); grid.add(fEmail, 1, 4, 3, 1);
+        grid.add(lbl(t("empleados.campo.email")), 0, 4); grid.add(fEmail, 1, 4, 3, 1);
         // Fila 5: IBAN (completo)
-        grid.add(lbl("IBAN"), 0, 5); grid.add(fIban, 1, 5, 3, 1);
+        grid.add(lbl(t("empleados.campo.iban")), 0, 5); grid.add(fIban, 1, 5, 3, 1);
         // Fila 6: Dirección (completo)
-        grid.add(lbl("Dirección"), 0, 6); grid.add(fDireccion, 1, 6, 3, 1);
+        grid.add(lbl(t("empleados.campo.direccion")), 0, 6); grid.add(fDireccion, 1, 6, 3, 1);
         // Fila 7: Activo
         grid.add(chkActivo, 1, 7);
         dialogExtraFields = new LinkedHashMap<>();
@@ -352,7 +353,7 @@ public class EmpleadosView extends VBox {
             ? new ArrayList<>(getScene().getStylesheets())
             : List.of();
         ModuloWindowManager.abrirEnVentana(
-            "Importación de empleados",
+            t("empleados.importar.titulo"),
             () -> new ImportView(ImportService.TipoEntidad.EMPLEADOS, this::cargar),
             css
         );
@@ -360,18 +361,18 @@ public class EmpleadosView extends VBox {
 
     private void mostrarResultadoImportacion(org.gipsybuho.service.importer.ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("empleados.importar.completada", r.duracion().toMillis() / 1000.0)).append(System.lineSeparator());
+        sb.append(tf("empleados.importar.filas_importadas", r.filasImportadas())).append(System.lineSeparator());
+        sb.append(tf("empleados.importar.filas_actualizadas", r.filasActualizadas())).append(System.lineSeparator());
+        sb.append(tf("empleados.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("empleados.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("empleados.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
-        a.setTitle("Resultado de importación");
+        a.setTitle(t("empleados.importar.resultado.titulo"));
         a.setHeaderText(null);
         a.getDialogPane().setPrefWidth(480);
         if (getScene() != null) a.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
@@ -380,20 +381,20 @@ public class EmpleadosView extends VBox {
 
     private void exportar() {
         String[][] formatos = {
-            {"sqlite", "💾  Copia de seguridad SQLite",
-                "Copia completa y exacta de la base de datos. Ideal para restaurar en otro equipo.", "db"},
-            {"csv",    "📊  Exportar a CSV (Excel / LibreOffice)",
-                "Tabla de empleados como hoja de cálculo. Compatible con Excel y LibreOffice.", "csv"},
-            {"sql",    "🗄️  Volcado SQL",
-                "Script SQL con la estructura y los datos de empleados y nóminas.", "sql"},
-            {"json",   "{ }  Exportar a JSON",
-                "Datos de todos los empleados (con nóminas) en formato JSON estructurado.", "json"},
-            {"pdf",    "📄  Exportar a PDF",
-                "Listado de empleados como tabla en un documento PDF.", "pdf"},
-            {"word",   "📝  Exportar a Word",
-                "Tabla de empleados en documento Word (.docx), editable.", "docx"},
-            {"excel",  "📗  Exportar a Excel (.xlsx)",
-                "Hoja de cálculo Excel (.xlsx), compatible con Microsoft Excel y LibreOffice Calc.", "xlsx"}
+            {"sqlite", t("export.fmt.sqlite.label"),
+                t("export.fmt.sqlite.desc"), "db"},
+            {"csv",    t("export.fmt.csv.label"),
+                t("empleados.export.csv.desc"), "csv"},
+            {"sql",    t("export.fmt.sql.label"),
+                t("empleados.export.sql.desc"), "sql"},
+            {"json",   t("export.fmt.json.label"),
+                t("empleados.export.json.desc"), "json"},
+            {"pdf",    t("export.fmt.pdf.label"),
+                t("empleados.export.pdf.desc"), "pdf"},
+            {"word",   t("export.fmt.word.label"),
+                t("empleados.export.word.desc"), "docx"},
+            {"excel",  t("export.fmt.excel.label"),
+                t("empleados.export.excel.desc"), "xlsx"}
         };
 
         ToggleGroup grupo = new ToggleGroup();
@@ -418,18 +419,18 @@ public class EmpleadosView extends VBox {
         }
         grupo.getToggles().get(0).setSelected(true);
 
-        Label lblSelecciona = new Label("Selecciona el formato de exportación:");
+        Label lblSelecciona = new Label(t("export.dialog.instruccion"));
         lblSelecciona.setStyle("-fx-font-size:13px; -fx-font-weight:bold;");
         VBox contenido = new VBox(12, lblSelecciona, opBox);
         contenido.setPadding(new Insets(16));
 
         Dialog<String[]> dlg = new Dialog<>();
-        dlg.setTitle("Exportar empleados");
+        dlg.setTitle(t("empleados.exportar.titulo"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         if (getScene() != null) dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.getDialogPane().setPrefWidth(460);
         dlg.getDialogPane().setContent(contenido);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("Exportar →");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("export.dialog.btn"));
 
         dlg.setResultConverter(bt -> {
             if (bt == ButtonType.OK && grupo.getSelectedToggle() != null)
@@ -442,11 +443,11 @@ public class EmpleadosView extends VBox {
 
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
-        fc.setTitle("Guardar exportación — " + fmt[1]);
-        fc.setInitialFileName("Empleados_" +
+        fc.setTitle(tf("export.dialog.guardar", fmt[1]));
+        fc.setInitialFileName(t("nav.empleados") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Empleados", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("empleados.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);
@@ -489,8 +490,8 @@ public class EmpleadosView extends VBox {
                     SoundService.play(SoundService.Sound.COMPLETE);
                     setDisable(false);
                     Alert ok = new Alert(Alert.AlertType.INFORMATION,
-                        "Exportación completada:\n" + destino, ButtonType.OK);
-                    ok.setTitle("Exportación completada");
+                        tf("export.exito.mensaje", destino), ButtonType.OK);
+                    ok.setTitle(t("export.exito.titulo"));
                     ok.setHeaderText(null);
                     if (getScene() != null) ok.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
                     ok.showAndWait();
@@ -516,7 +517,7 @@ public class EmpleadosView extends VBox {
     private void previsualizar() {
         List<Empleado> sel = new ArrayList<>(tabla.getSelectionModel().getSelectedItems());
         List<Empleado> lista = sel.isEmpty() ? new ArrayList<>(datos) : sel;
-        if (lista.isEmpty()) { alerta("No hay registros para previsualizar."); return; }
+        if (lista.isEmpty()) { alerta(t("empleados.previsualizar.sin_seleccion")); return; }
         setDisable(true);
         SoundService.play(SoundService.Sound.START);
         Thread.ofVirtual().start(() -> {
@@ -526,11 +527,11 @@ public class EmpleadosView extends VBox {
                     Empleado emp = lista.get(0);
                     Path pdfPath = new PDFService().generarFichaEmpleado(emp);
                     pdfBytes = Files.readAllBytes(pdfPath);
-                    tituloVentana = "Previsualización — Empleado " + emp.getNombreCompleto();
+                    tituloVentana = tf("empleados.previsualizar.titulo.uno", emp.getNombreCompleto());
                     Files.deleteIfExists(pdfPath);
                 } else {
                     pdfBytes = PdfPreviewService.previsualizarEmpleados(lista);
-                    tituloVentana = "Previsualización — Empleados (" + lista.size() + " registro(s))";
+                    tituloVentana = tf("empleados.previsualizar.titulo.varios", lista.size());
                 }
                 final byte[] bytes = pdfBytes; final String titulo = tituloVentana;
                 Platform.runLater(() -> {
@@ -555,7 +556,7 @@ public class EmpleadosView extends VBox {
         b.setOnAction(e -> r.run()); return b;
     }
 
-    private TextField tf(String v) { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label lbl(String t) { return new Label(t); }
     private String toDbColumn(String campo) {
         return switch (campo) {
@@ -568,10 +569,10 @@ public class EmpleadosView extends VBox {
     private double parseDouble(String s) { try { return Double.parseDouble(s.replace(",",".")); } catch(Exception e){return 0;} }
     private void alerta(String m) { new Alert(Alert.AlertType.INFORMATION, m, ButtonType.OK).showAndWait(); }
     private void mostrarError(Exception e) {
-        String msg = e.getMessage() != null ? e.getMessage() : "Error desconocido";
+        String msg = e.getMessage() != null ? e.getMessage() : t("common.error.desconocido");
         javafx.stage.Window w = getScene() != null ? getScene().getWindow() : null;
         if (w != null && msg.contains("UNIQUE constraint failed")) {
-            ToastService.error(w, "DNI ya registrado en otro empleado.", "EMP-ERR-1");
+            ToastService.error(w, t("empleados.error.nif_duplicado"), "EMP-ERR-1");
         } else {
             new Alert(Alert.AlertType.ERROR, "Error: " + msg, ButtonType.OK).showAndWait();
         }
