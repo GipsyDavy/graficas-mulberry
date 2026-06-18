@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-18 (sesión cierre — Sprint i18n-11 — 151/151)
+**Última actualización:** 2026-06-18 (sesión cierre — Sprint i18n-12 — 151/151)
 
 ---
 
@@ -19,9 +19,9 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-18 (Sprint i18n-11)
+### ESTADO AL CIERRE DE SESIÓN 2026-06-18 (Sprint i18n-12)
 
-**HEAD:** `0799fb5`. Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** `bf3340f`. Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
@@ -36,14 +36,15 @@ Actualizar tras cada sprint cerrado.
 | i18n-9 | NominasView migrada — toolbar, tabla, diálogos (nueva/editar+resumen+generar mes), importación, exportación, previsualización, errores (~76 claves nominas.*) |
 | i18n-10 | EmpleadosView migrada — toolbar, tabla, diálogo alta/edición, baja/reactivar, importación, exportación, previsualización, errores, título diálogo columnas + prefijo fichero exportado (~75 claves empleados.*); rename `tf()`→`txf()` |
 | i18n-11 | MaterialesView migrada — toolbar stock, tabla, diálogo material, tab consumo por técnica, tab pagos a proveedores, importación, exportación, previsualización, errores, título diálogo columnas + prefijo fichero exportado (142 claves materiales.*); rename `tf()`→`txf()` |
+| i18n-12 | TarifasView migrada — toolbar, tabla, diálogo tarifa, gestión de tramos (sub-diálogo + tabla), importación, exportación, previsualización, título diálogo columnas + prefijo fichero exportado, filtro técnica + sentinel "Todas" (74 claves tarifas.*); rename `tf()`→`txf()`; rename `Tarifa t`→`tarifa` (param de método completo, no solo lambdas) |
 
 **Estado del sistema i18n al cierre:**
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-11: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `materiales.*` verificada (142 idénticas en los 6 bundles).
-- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, **`MaterialesView`**.
-- Vistas pendientes de migrar: TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView, etc.
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-12: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `tarifas.*` verificada (74 idénticas en los 6 bundles).
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, `MaterialesView`, **`TarifasView`**.
+- Vistas pendientes de migrar: ComprasProveedorView, EstadisticasView, CalendarioView, etc.
 
 **Hallazgo i18n-10 (Codex, revisión post-implementación):** en `EmpleadosView` el segundo argumento de `DynamicColumnRuntime(...)` (título visible en el diálogo "⚙ Columnas" vía `ColumnConfiguratorDialog`) y el prefijo de `fc.setInitialFileName(...)` en exportación SÍ se migraron (`t("nav.empleados")`). MaterialesView (i18n-11) replicó la misma migración desde el inicio (`t("nav.materiales")`). Las 8 vistas restantes (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, Tarifas, ComprasProveedor) **dejan estos dos puntos sin traducir** (string literal en español) — gap de cobertura real, no regresión, pendiente de homogeneizar en una futura pasada de limpieza si se decide.
 
@@ -92,10 +93,10 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** `0799fb5`. Tests: 151/151. App funcional.
+**HEAD:** `bf3340f`. Tests: 151/151. App funcional.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-12** — migrar `TarifasView`. Mismo patrón. Ver checklist abajo.
+1. **Sprint i18n-13** — migrar `ComprasProveedorView`. Mismo patrón. Ver checklist abajo.
 2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 
 **Comando de verificación al inicio de sesión:**
@@ -139,37 +140,29 @@ Commit: `0799fb5` — `feat(i18n): migrar MaterialesView a LanguageManager — S
 
 ---
 
-### CHECKLIST SPRINT i18n-12 — TarifasView (siguiente)
+### CHECKLIST SPRINT i18n-12 — TarifasView — ✅ EJECUTADO (ver resultado abajo)
 
-**Paso 0 — antes de tocar el archivo:**
-```powershell
-.\mvnw.cmd test   # verificar 151/151
-git log --oneline -5   # verificar HEAD = commit de cierre i18n-11
-```
+Pasos 0-6 ejecutados según el patrón. Paso 1: conflictos más extensos que en sprints previos — `Tarifa t` se usaba como **parámetro de método completo** en `dialogo(Tarifa t)` (no solo lambda), más lambdas `t ->` en `cargar()` (x2), `nueva()`, `editar()`, `actualizarFiltroTecnicas()` (String técnica), y variables locales `Tarifa t` en `lanzarExportacion()`/`previsualizar()`. Todos renombrados a `tarifa`/`tec`. Helper `private TextField tf(String v)` renombrado a `txf()` (7 call sites). `btn(String t,...)`/`lbl(String t)` no colisionan, sin tocar.
 
-**Paso 1 — Buscar conflictos de nombres en TarifasView:**
-```bash
-grep -n "private.*\btf\b\|private.*\bt\b" src/main/java/org/gipsybuho/ui/TarifasView.java
-grep -n "\bTableView.*\bt\b" src/main/java/org/gipsybuho/ui/TarifasView.java
-grep -n "for.*TextField tf" src/main/java/org/gipsybuho/ui/TarifasView.java
-```
-Resolver ANTES de añadir imports, igual que en sprints previos (ver "Reglas i18n consolidadas" abajo).
+Hallazgo propio (no Codex): el sentinel de filtro `"Todas"` (3 ocurrencias: comparación + 2 asignaciones) no es valor BD sino label de UI — migrado a `t("tarifas.filtro.todas")` consistentemente en las 3 ocurrencias para no romper el filtro en otros idiomas.
 
-**Paso 2 — Imports:**
-```java
-import static org.gipsybuho.service.LanguageManager.t;
-import static org.gipsybuho.service.LanguageManager.tf;
-```
+74 claves `tarifas.*` en los 6 bundles, paridad verificada (diff por nombre de clave, 0 diferencias). Reutilizadas claves compartidas `export.dialog.*`, `export.exito.*`, `export.fmt.*.label/.sqlite.desc` sin redefinir.
 
-**Paso 3 — Migrar top-down** (toolbar, tabla, diálogos, importación, exportación, previsualización, errores). Migrar también desde el inicio: 2º arg de `DynamicColumnRuntime(...)` y prefijo `fc.setInitialFileName(...)` vía `t("nav.tarifas")` — patrón ya consolidado en i18n-10/i18n-11, no dejar como gap nuevo.
+Decisión Paso 3 (aplicada desde el inicio): `DynamicColumnRuntime` 2º arg y prefijo `fc.setInitialFileName(...)` migrados a `t("nav.tarifas")`, replicando patrón i18n-10/i18n-11.
 
-**Paso 4 — Reutilizar claves compartidas** `export.dialog.*`, `export.exito.*`, `export.fmt.*.label`, `common.error.desconocido` — NO redefinir.
+`mostrarError(Exception e)` con `"Error: " + e.getMessage()` — verificado que AlbaranesView y FacturasView (ya migradas) dejan el mismo patrón intacto; no se toca, consistente con precedente.
 
-**Paso 5 — Bundles:** bloque `tarifas.*` en los 6 `messages_{es,en,ca,eu,gl,fr}.properties`, apóstrofes dobles en CA/FR solo en claves `tf()` (o reformular para evitarlos, preferido).
+Validación final: `mvnw clean compile` limpio + `mvnw test` → **151/151 BUILD SUCCESS** (verificado independientemente por Claude Code y por Codex vía bloque IDE).
 
-**Paso 6 — Validar:** `mvnw clean compile` + `mvnw test` → 151/151. Verificar paridad de claves entre bundles con `diff`.
+Codex (revisión post-implementación, bloque IDE): sin hallazgos bloqueantes, sin gap nuevo tipo i18n-10. Confirmó shadowing resuelto, rename `tf()→txf()` completo, paridad de bundles, placeholders `{0}` intactos en las 7 claves `tf()` en los 6 idiomas.
 
-**Paso 7 — VibeSec → Commit.**
+VibeSec: LIMPIO — app de escritorio, sin XSS/CSRF/SSRF/auth aplicable; solo extracción de strings UI + rename de variables.
+
+---
+
+### CHECKLIST SPRINT i18n-13 — ComprasProveedorView (siguiente)
+
+Mismo patrón. Buscar conflictos `Tarifa`/`PagoMaterial t` antes de añadir imports. Ver "Reglas i18n consolidadas" abajo.
 
 ---
 
@@ -580,8 +573,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `0799fb5` |
-| Mensaje | `feat(i18n): migrar MaterialesView a LanguageManager — Sprint i18n-11` |
+| HEAD | `bf3340f` |
+| Mensaje | `feat(i18n): migrar TarifasView a LanguageManager — Sprint i18n-12` |
 | Rama | `master` |
 | Tests | 151/151 verdes (`.\mvnw.cmd test`) |
 | Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
@@ -589,6 +582,8 @@ Preguntar al usuario qué prioriza si no lo indica.
 ---
 
 ## Sprint activo
+
+**Sprint i18n-12** — ✅ CERRADO. TarifasView migrada (74 claves tarifas.*). DynamicColumnRuntime + prefijo export migrados desde el inicio. tf()→txf(). Sentinel "Todas" fix. HEAD `bf3340f`. 151/151.
 
 **Sprint i18n-11** — ✅ CERRADO. MaterialesView migrada (142 claves materiales.*). DynamicColumnRuntime + prefijo export migrados desde el inicio. tf()→txf(). HEAD `0799fb5`. 151/151.
 
@@ -616,10 +611,10 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Cola prioritaria
 
-1. **Sprint i18n-12** — migrar `TarifasView`. Mismo patrón. Ver checklist en la cabecera del documento.
-2. **Sprint i18n-13+** — ComprasProveedorView, EstadisticasView, CalendarioView (orden sugerido, no fijo).
+1. **Sprint i18n-13** — migrar `ComprasProveedorView`. Mismo patrón. Ver checklist en la cabecera del documento.
+2. **Sprint i18n-14+** — EstadisticasView, CalendarioView (orden sugerido, no fijo).
 3. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
-4. **Gap de cobertura i18n** — homogeneizar `DynamicColumnRuntime` (título diálogo columnas) y prefijo de fichero exportado en las 8 vistas que aún lo dejan sin traducir (ver hallazgo Codex i18n-10; EmpleadosView e i18n-11 MaterialesView ya migradas).
+4. **Gap de cobertura i18n** — homogeneizar `DynamicColumnRuntime` (título diálogo columnas) y prefijo de fichero exportado en las 7 vistas que aún lo dejan sin traducir (ver hallazgo Codex i18n-10; EmpleadosView, MaterialesView y TarifasView ya migradas).
 
 ---
 
@@ -627,6 +622,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-12 | `bf3340f` | TarifasView: toolbar, tabla, diálogo tarifa, gestión de tramos, import/export, previsualización (74 claves); rename tf()→txf(); rename `Tarifa t`→`tarifa` (param método completo); sentinel "Todas" fix |
 | i18n-11 | `0799fb5` | MaterialesView: toolbar stock, tabla, diálogo, tab consumo, tab pagos proveedor, import/export, previsualización (142 claves); rename tf()→txf(); DynamicColumnRuntime+export prefix migrados |
 | i18n-10 | `4f55afc` | EmpleadosView: toolbar, tabla, diálogo, baja/reactivar, import/export, previsualización (~75 claves); rename tf()→txf() |
 | i18n-9 | `75e68e3` | NominasView: toolbar, tabla, diálogos, generar mes, import/export, previsualización (~76 claves) |
@@ -657,6 +653,6 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Deuda técnica conocida
 
-- i18n: vistas de módulo pendientes de migrar (TarifasView, ComprasProveedorView, EstadisticasView, CalendarioView)
-- i18n: `DynamicColumnRuntime` (título diálogo "⚙ Columnas") y prefijo de fichero exportado sin migrar en 8 vistas (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, Tarifas, ComprasProveedor) — EmpleadosView (i18n-10) y MaterialesView (i18n-11) ya lo migraron
+- i18n: vistas de módulo pendientes de migrar (ComprasProveedorView, EstadisticasView, CalendarioView)
+- i18n: `DynamicColumnRuntime` (título diálogo "⚙ Columnas") y prefijo de fichero exportado sin migrar en 7 vistas (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, ComprasProveedor) — EmpleadosView (i18n-10), MaterialesView (i18n-11) y TarifasView (i18n-12) ya lo migraron
 - Refactor B2: inyección de Connection en DAOs (largo plazo)
