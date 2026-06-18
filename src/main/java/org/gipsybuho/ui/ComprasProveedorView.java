@@ -17,6 +17,9 @@ import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
 import org.gipsybuho.service.PreferenceService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -42,7 +45,7 @@ public class ComprasProveedorView extends VBox {
 
     public ComprasProveedorView() {
         getStyleClass().add("module-view");
-        Label titulo = new Label("Compras a Proveedor");
+        Label titulo = new Label(t("compras.titulo"));
         titulo.getStyleClass().add("module-title");
         Label hint = buildBeginnerHint();
         buildTabla();
@@ -52,7 +55,7 @@ public class ComprasProveedorView extends VBox {
     }
 
     private Label buildBeginnerHint() {
-        Label hint = new Label("💡  Registra las compras a proveedores y realiza el seguimiento de pagos pendientes. Pulsa F1 para abrir la ayuda.");
+        Label hint = new Label(t("compras.hint"));
         hint.getStyleClass().add("beginner-hint");
         hint.setWrapText(true);
         hint.setMaxWidth(Double.MAX_VALUE);
@@ -65,9 +68,9 @@ public class ComprasProveedorView extends VBox {
     private HBox buildResumen() {
         HBox row = new HBox(12);
         row.getChildren().addAll(
-            tarjetaResumen("💶  Total pendiente", lblTotalPendiente, "#F39C12"),
-            tarjetaResumen("🔴  Vencidos",        lblVencidos,       "#E74C3C"),
-            tarjetaResumen("⏰  Próximos 7 días", lblProximos,       "#E67E22")
+            tarjetaResumen(t("compras.resumen.pendiente"), lblTotalPendiente, "#F39C12"),
+            tarjetaResumen(t("compras.resumen.vencidos"),  lblVencidos,       "#E74C3C"),
+            tarjetaResumen(t("compras.resumen.proximos"),  lblProximos,       "#E67E22")
         );
         return row;
     }
@@ -86,11 +89,11 @@ public class ComprasProveedorView extends VBox {
 
     private HBox buildToolbar() {
         ToggleGroup tg = new ToggleGroup();
-        ToggleButton bTodos     = filtroBtn("Todos",      "todos",     tg);
-        ToggleButton bPendiente = filtroBtn("Pendientes", "pendiente", tg);
-        ToggleButton bVencido   = filtroBtn("Vencidos",   "vencido",   tg);
-        ToggleButton bProximo   = filtroBtn("Próximos",   "proximo",   tg);
-        ToggleButton bPagado    = filtroBtn("Pagados",    "pagado",    tg);
+        ToggleButton bTodos     = filtroBtn(t("compras.filtro.todos"),      "todos",     tg);
+        ToggleButton bPendiente = filtroBtn(t("compras.filtro.pendientes"), "pendiente", tg);
+        ToggleButton bVencido   = filtroBtn(t("compras.filtro.vencidos"),   "vencido",   tg);
+        ToggleButton bProximo   = filtroBtn(t("compras.filtro.proximos"),   "proximo",   tg);
+        ToggleButton bPagado    = filtroBtn(t("compras.filtro.pagados"),    "pagado",    tg);
         bTodos.setSelected(true);
 
         HBox filtros = new HBox(2, bTodos, bPendiente, bVencido, bProximo, bPagado);
@@ -100,10 +103,10 @@ public class ComprasProveedorView extends VBox {
         Region sp = new Region();
         HBox.setHgrow(sp, Priority.ALWAYS);
 
-        Button btnNuevo  = btn("+ Nueva compra",  this::nuevoPago);
-        Button btnPagado = btn("✓ Marcar pagado", this::marcarPagado);
-        Button btnEditar = btn("✏ Editar",         this::editarPago);
-        Button btnBorrar = btn("🗑 Eliminar",       this::eliminarPago);
+        Button btnNuevo  = btn(t("compras.btn.nuevo"),         this::nuevoPago);
+        Button btnPagado = btn(t("compras.btn.marcar_pagado"), this::marcarPagado);
+        Button btnEditar = btn(t("compras.btn.editar"),        this::editarPago);
+        Button btnBorrar = btn(t("compras.btn.eliminar"),      this::eliminarPago);
 
         HBox bar = new HBox(10, filtros, sp, lblContador, btnNuevo, btnPagado, btnEditar, btnBorrar);
         bar.setAlignment(Pos.CENTER_LEFT);
@@ -144,10 +147,10 @@ public class ComprasProveedorView extends VBox {
                 Circle dot = new Circle(7);
                 Tooltip tip = new Tooltip();
                 switch (p.getEstadoEfectivo()) {
-                    case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText("Pagado"); }
-                    case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText("Vencido"); }
-                    case "proximo" -> { dot.setFill(Color.web("#E67E22")); tip.setText("Próximo a vencer"); }
-                    default        -> { dot.setFill(Color.web("#4C9BE8")); tip.setText("Pendiente"); }
+                    case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("compras.estado.pagado")); }
+                    case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("compras.estado.vencido")); }
+                    case "proximo" -> { dot.setFill(Color.web("#E67E22")); tip.setText(t("compras.estado.proximo")); }
+                    default        -> { dot.setFill(Color.web("#4C9BE8")); tip.setText(t("compras.estado.pendiente")); }
                 }
                 Tooltip.install(dot, tip);
                 setGraphic(dot);
@@ -155,19 +158,19 @@ public class ComprasProveedorView extends VBox {
             }
         });
 
-        TableColumn<PagoMaterial, String> colMat  = new TableColumn<>("Material");
+        TableColumn<PagoMaterial, String> colMat  = new TableColumn<>(t("compras.tabla.material"));
         colMat.setCellValueFactory(new PropertyValueFactory<>("materialNombre"));
         colMat.setPrefWidth(160);
 
-        TableColumn<PagoMaterial, String> colProv = new TableColumn<>("Proveedor");
+        TableColumn<PagoMaterial, String> colProv = new TableColumn<>(t("compras.tabla.proveedor"));
         colProv.setCellValueFactory(new PropertyValueFactory<>("proveedor"));
         colProv.setPrefWidth(130);
 
-        TableColumn<PagoMaterial, String> colNum  = new TableColumn<>("Nº Factura");
+        TableColumn<PagoMaterial, String> colNum  = new TableColumn<>(t("compras.tabla.num_factura"));
         colNum.setCellValueFactory(new PropertyValueFactory<>("numeroFactura"));
         colNum.setPrefWidth(100);
 
-        TableColumn<PagoMaterial, LocalDate> colFc = new TableColumn<>("Fecha compra");
+        TableColumn<PagoMaterial, LocalDate> colFc = new TableColumn<>(t("compras.tabla.fecha_compra"));
         colFc.setCellValueFactory(new PropertyValueFactory<>("fechaCompra"));
         colFc.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -177,7 +180,7 @@ public class ComprasProveedorView extends VBox {
         });
         colFc.setPrefWidth(105);
 
-        TableColumn<PagoMaterial, Double> colImp  = new TableColumn<>("Importe");
+        TableColumn<PagoMaterial, Double> colImp  = new TableColumn<>(t("compras.tabla.importe"));
         colImp.setCellValueFactory(new PropertyValueFactory<>("importeTotal"));
         colImp.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Double v, boolean empty) {
@@ -187,11 +190,11 @@ public class ComprasProveedorView extends VBox {
         });
         colImp.setPrefWidth(90);
 
-        TableColumn<PagoMaterial, String> colFp   = new TableColumn<>("Forma pago");
+        TableColumn<PagoMaterial, String> colFp   = new TableColumn<>(t("compras.tabla.forma_pago"));
         colFp.setCellValueFactory(new PropertyValueFactory<>("formaPago"));
         colFp.setPrefWidth(90);
 
-        TableColumn<PagoMaterial, LocalDate> colFv = new TableColumn<>("Vencimiento");
+        TableColumn<PagoMaterial, LocalDate> colFv = new TableColumn<>(t("compras.tabla.vencimiento"));
         colFv.setCellValueFactory(new PropertyValueFactory<>("fechaVencimiento"));
         colFv.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(LocalDate v, boolean empty) {
@@ -209,7 +212,7 @@ public class ComprasProveedorView extends VBox {
         });
         colFv.setPrefWidth(105);
 
-        TableColumn<PagoMaterial, Void> colDias = new TableColumn<>("Días");
+        TableColumn<PagoMaterial, Void> colDias = new TableColumn<>(t("compras.tabla.dias"));
         colDias.setPrefWidth(65);
         colDias.setCellFactory(c -> new TableCell<>() {
             @Override protected void updateItem(Void v, boolean empty) {
@@ -218,12 +221,12 @@ public class ComprasProveedorView extends VBox {
                 PagoMaterial p = getTableRow().getItem();
                 if ("pagado".equals(p.getEstado())) { setText("—"); setStyle(""); return; }
                 long d = p.getDiasRestantes();
-                setText(d < 0 ? "Vencido" : d + " d");
+                setText(d < 0 ? t("compras.estado.vencido") : tf("compras.tabla.dias_valor", d));
                 setStyle(d <= 0 ? "-fx-text-fill:#E74C3C;" : d <= 7 ? "-fx-text-fill:#E67E22;" : "");
             }
         });
 
-        TableColumn<PagoMaterial, String> colNotas = new TableColumn<>("Notas");
+        TableColumn<PagoMaterial, String> colNotas = new TableColumn<>(t("compras.tabla.notas"));
         colNotas.setCellValueFactory(new PropertyValueFactory<>("notas"));
         colNotas.setPrefWidth(140);
 
@@ -254,10 +257,10 @@ public class ComprasProveedorView extends VBox {
                 default          -> todos;
             };
             datos.setAll(filtrados);
-            lblContador.setText(filtrados.size() + " compras");
+            lblContador.setText(tf("compras.contador", filtrados.size()));
             actualizarResumen(todos);
         } catch (Exception e) {
-            alerta("Error al cargar compras: " + e.getMessage());
+            alerta(tf("compras.error.cargar", e.getMessage()));
         }
     }
 
@@ -269,63 +272,62 @@ public class ComprasProveedorView extends VBox {
         double sumVenc  = todos.stream().filter(p -> "vencido".equals(p.getEstadoEfectivo()))
             .mapToDouble(PagoMaterial::getImporteTotal).sum();
         long countProx = todos.stream().filter(p -> "proximo".equals(p.getEstadoEfectivo())).count();
-        lblTotalPendiente.setText(String.format("%.2f €", totalPend));
-        lblVencidos.setText(countVenc + (countVenc == 1 ? " pago" : " pagos") +
-            (countVenc > 0 ? String.format("  (%.0f €)", sumVenc) : ""));
-        lblProximos.setText(countProx + (countProx == 1 ? " pago" : " pagos"));
+        lblTotalPendiente.setText(tf("compras.resumen.importe", totalPend));
+        String pagosVenc = countVenc == 1 ? tf("compras.resumen.pagos_uno", countVenc) : tf("compras.resumen.pagos_varios", countVenc);
+        lblVencidos.setText(pagosVenc + (countVenc > 0 ? "  " + tf("compras.resumen.importe_paren", sumVenc) : ""));
+        lblProximos.setText(countProx == 1 ? tf("compras.resumen.pagos_uno", countProx) : tf("compras.resumen.pagos_varios", countProx));
     }
 
     private void nuevoPago() {
         dialogoPago(new PagoMaterial()).ifPresent(p -> {
             try { pagoDao.save(p); cargar(); }
-            catch (Exception e) { alerta("Error al guardar: " + e.getMessage()); }
+            catch (Exception e) { alerta(tf("compras.error.guardar", e.getMessage())); }
         });
     }
 
     private void editarPago() {
         PagoMaterial sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una compra para editar."); return; }
+        if (sel == null) { alerta(t("compras.alerta.editar")); return; }
         dialogoPago(sel).ifPresent(p -> {
             try { pagoDao.save(p); cargar(); }
-            catch (Exception e) { alerta("Error al guardar: " + e.getMessage()); }
+            catch (Exception e) { alerta(tf("compras.error.guardar", e.getMessage())); }
         });
     }
 
     private void marcarPagado() {
         PagoMaterial sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una compra para marcarla como pagada."); return; }
-        if ("pagado".equals(sel.getEstado())) { alerta("Esta compra ya está marcada como pagada."); return; }
+        if (sel == null) { alerta(t("compras.alerta.marcar")); return; }
+        if ("pagado".equals(sel.getEstado())) { alerta(t("compras.alerta.ya_pagado")); return; }
 
         Dialog<LocalDate> dlg = new Dialog<>();
-        dlg.setTitle("Marcar como pagado");
-        dlg.setHeaderText(sel.getMaterialNombre() + " — " + String.format("%.2f €", sel.getImporteTotal()));
+        dlg.setTitle(t("compras.marcar.titulo"));
+        dlg.setHeaderText(tf("compras.marcar.header", sel.getMaterialNombre(), sel.getImporteTotal()));
         DatePicker dp = new DatePicker(LocalDate.now());
-        VBox content = new VBox(8, new Label("Fecha en que se realizó el pago:"), dp);
+        VBox content = new VBox(8, new Label(t("compras.marcar.fecha_label")), dp);
         content.setPadding(new Insets(14));
         dlg.getDialogPane().setContent(content);
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText("✓ Confirmar pago");
+        ((Button) dlg.getDialogPane().lookupButton(ButtonType.OK)).setText(t("compras.marcar.confirmar"));
         if (getScene() != null)
             dlg.getDialogPane().getStylesheets().addAll(getScene().getStylesheets());
         dlg.setResultConverter(bt -> bt == ButtonType.OK ? dp.getValue() : null);
         dlg.showAndWait().ifPresent(fecha -> {
             try { pagoDao.marcarPagado(sel.getId(), fecha); cargar(); }
-            catch (Exception e) { alerta("Error al marcar pago: " + e.getMessage()); }
+            catch (Exception e) { alerta(tf("compras.error.marcar", e.getMessage())); }
         });
     }
 
     private void eliminarPago() {
         PagoMaterial sel = tabla.getSelectionModel().getSelectedItem();
-        if (sel == null) { alerta("Selecciona una compra para eliminar."); return; }
-        conf("¿Eliminar la compra de \"" + sel.getMaterialNombre() + "\" (" +
-            String.format("%.2f €", sel.getImporteTotal()) + ")?",
+        if (sel == null) { alerta(t("compras.alerta.eliminar")); return; }
+        conf(tf("compras.eliminar.confirmar", sel.getMaterialNombre(), sel.getImporteTotal()),
             () -> { try { pagoDao.delete(sel.getId()); cargar(); }
-                    catch (Exception e) { alerta("Error al eliminar: " + e.getMessage()); } });
+                    catch (Exception e) { alerta(tf("compras.error.eliminar", e.getMessage())); } });
     }
 
     private Optional<PagoMaterial> dialogoPago(PagoMaterial p) {
         Dialog<PagoMaterial> dlg = new Dialog<>();
-        dlg.setTitle(p.getId() == 0 ? "Nueva compra de material" : "Editar compra");
+        dlg.setTitle(p.getId() == 0 ? t("compras.dialogo.nueva") : t("compras.dialogo.editar"));
         dlg.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dlg.getDialogPane().setPrefWidth(520);
 
@@ -341,10 +343,10 @@ public class ComprasProveedorView extends VBox {
         if (p.getMaterialId() > 0)
             materiales.stream().filter(m -> m.getId() == p.getMaterialId()).findFirst().ifPresent(cbMaterial::setValue);
 
-        TextField tfProveedor = tf(p.getProveedor());
-        TextField tfNumFact   = tf(p.getNumeroFactura());
-        TextField tfCantidad  = tf(p.getCantidadComprada() > 0 ? String.valueOf(p.getCantidadComprada()) : "");
-        TextField tfImporte   = tf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
+        TextField tfProveedor = txf(p.getProveedor());
+        TextField tfNumFact   = txf(p.getNumeroFactura());
+        TextField tfCantidad  = txf(p.getCantidadComprada() > 0 ? String.valueOf(p.getCantidadComprada()) : "");
+        TextField tfImporte   = txf(p.getImporteTotal() > 0 ? String.format("%.2f", p.getImporteTotal()) : "");
         TextArea  taNotas     = new TextArea(p.getNotas() != null ? p.getNotas() : "");
         taNotas.setPrefRowCount(2);
         taNotas.setWrapText(true);
@@ -393,22 +395,22 @@ public class ComprasProveedorView extends VBox {
         grid.getColumnConstraints().addAll(cc0, cc1);
 
         int r = 0;
-        grid.addRow(r++, lbl("Material *"),          cbMaterial);
-        grid.addRow(r++, lbl("Proveedor"),            tfProveedor);
-        grid.addRow(r++, lbl("Nº factura"),           tfNumFact);
-        grid.addRow(r++, lbl("Fecha compra *"),       dpCompra);
-        grid.addRow(r++, lbl("Forma de pago"),        cbFormaPago);
-        grid.addRow(r++, lbl("Vencimiento *"),        dpVencimiento);
-        grid.addRow(r++, lbl("Cantidad comprada"),    tfCantidad);
-        grid.addRow(r++, lbl("Importe total (€) *"),  tfImporte);
-        grid.addRow(r,   lbl("Notas"),                taNotas);
+        grid.addRow(r++, lbl(t("compras.campo.material")),     cbMaterial);
+        grid.addRow(r++, lbl(t("compras.campo.proveedor")),    tfProveedor);
+        grid.addRow(r++, lbl(t("compras.campo.num_factura")),  tfNumFact);
+        grid.addRow(r++, lbl(t("compras.campo.fecha_compra")), dpCompra);
+        grid.addRow(r++, lbl(t("compras.campo.forma_pago")),   cbFormaPago);
+        grid.addRow(r++, lbl(t("compras.campo.vencimiento")),  dpVencimiento);
+        grid.addRow(r++, lbl(t("compras.campo.cantidad")),     tfCantidad);
+        grid.addRow(r++, lbl(t("compras.campo.importe")),      tfImporte);
+        grid.addRow(r,   lbl(t("compras.campo.notas")),        taNotas);
         dlg.getDialogPane().setContent(grid);
 
         Node okBtn = dlg.getDialogPane().lookupButton(ButtonType.OK);
         okBtn.addEventFilter(javafx.event.ActionEvent.ACTION, ev -> {
-            if (cbMaterial.getValue() == null)       { alerta("Selecciona un material."); ev.consume(); return; }
-            if (dpVencimiento.getValue() == null)    { alerta("Introduce la fecha de vencimiento."); ev.consume(); return; }
-            if (parseDouble(tfImporte.getText()) <= 0) { alerta("El importe total debe ser mayor que 0."); ev.consume(); }
+            if (cbMaterial.getValue() == null)       { alerta(t("compras.validacion.material")); ev.consume(); return; }
+            if (dpVencimiento.getValue() == null)    { alerta(t("compras.validacion.vencimiento")); ev.consume(); return; }
+            if (parseDouble(tfImporte.getText()) <= 0) { alerta(t("compras.validacion.importe")); ev.consume(); }
         });
 
         if (getScene() != null)
@@ -450,7 +452,7 @@ public class ComprasProveedorView extends VBox {
         dlg.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> accion.run());
     }
 
-    private TextField tf(String v)  { return new TextField(v != null ? v : ""); }
+    private TextField txf(String v) { return new TextField(v != null ? v : ""); }
     private Label     lbl(String t) { return new Label(t); }
 
     private double parseDouble(String s) {
