@@ -12,6 +12,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.dao.TarifaTramoDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Tarifa;
 import org.gipsybuho.model.TarifaTramo;
 import org.gipsybuho.service.EntityImportService;
@@ -322,20 +323,20 @@ public class TarifasView extends VBox {
         tablaTramos.setPlaceholder(new Label(t("tarifas.tramos.tabla.vacio")));
 
         Runnable recargar = () -> {
-            try { tramos.setAll(new TarifaTramoDAO().findByTarifaId(tarifa.getId())); } catch (Exception e) { mostrarError(e); }
+            try { tramos.setAll(new TarifaTramoDAO(DatabaseManager.getConnection()).findByTarifaId(tarifa.getId())); } catch (Exception e) { mostrarError(e); }
         };
         recargar.run();
 
         Button btnAdd = btn(t("tarifas.tramos.btn.anadir"), () -> {
             dialogoTramo(tarifa, new TarifaTramo(tarifa.getId(), 0, 0)).ifPresent(tramo -> {
-                try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
+                try { new TarifaTramoDAO(DatabaseManager.getConnection()).save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
             });
         });
         Button btnEdit = btn(t("tarifas.tramos.btn.editar"), () -> {
             TarifaTramo sel = tablaTramos.getSelectionModel().getSelectedItem();
             if (sel == null) { alerta(t("tarifas.tramos.alerta_sel_editar")); return; }
             dialogoTramo(tarifa, sel).ifPresent(tramo -> {
-                try { new TarifaTramoDAO().save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
+                try { new TarifaTramoDAO(DatabaseManager.getConnection()).save(tramo); recargar.run(); } catch (Exception e) { mostrarError(e); }
             });
         });
         Button btnDel = btn(t("tarifas.tramos.btn.borrar"), () -> {
@@ -345,7 +346,7 @@ public class TarifasView extends VBox {
                 t("tarifas.tramos.confirmar_borrar"), ButtonType.YES, ButtonType.NO);
             conf.setHeaderText(null);
             conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
-                try { new TarifaTramoDAO().delete(sel.getId()); recargar.run(); } catch (Exception e) { mostrarError(e); }
+                try { new TarifaTramoDAO(DatabaseManager.getConnection()).delete(sel.getId()); recargar.run(); } catch (Exception e) { mostrarError(e); }
             });
         });
 

@@ -505,7 +505,7 @@ public class PresupuestosView extends VBox {
             int redondeado = (int)(Math.ceil(minutosReales / 5.0) * 5);
             try {
                 List<TarifaTramo> tramos =
-                    new TarifaTramoDAO().findByTarifaId(tarifaBase.getId());
+                    new TarifaTramoDAO(DatabaseManager.getConnection()).findByTarifaId(tarifaBase.getId());
                 TarifaTramo tramoUsado = tramos.stream()
                     .filter(tr -> tr.getTiempoMinutos() == redondeado)
                     .findFirst()

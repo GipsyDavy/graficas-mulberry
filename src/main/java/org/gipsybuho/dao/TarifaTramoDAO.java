@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.TarifaTramo;
 
 import java.sql.*;
@@ -9,9 +8,15 @@ import java.util.List;
 
 public class TarifaTramoDAO {
 
+    private final Connection conn;
+
+    public TarifaTramoDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<TarifaTramo> findByTarifaId(int tarifaId) throws SQLException {
         List<TarifaTramo> list = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM tarifa_tramos WHERE tarifa_id=? ORDER BY tiempo_minutos ASC")) {
             ps.setInt(1, tarifaId);
             ResultSet rs = ps.executeQuery();
@@ -26,7 +31,7 @@ public class TarifaTramoDAO {
 
     private void insert(TarifaTramo t) throws SQLException {
         String sql = "INSERT INTO tarifa_tramos (tarifa_id, tiempo_minutos, precio_tiempo) VALUES (?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setInt(1, t.getTarifaId());
             ps.setInt(2, t.getTiempoMinutos());
@@ -39,7 +44,7 @@ public class TarifaTramoDAO {
 
     private void update(TarifaTramo t) throws SQLException {
         String sql = "UPDATE tarifa_tramos SET tiempo_minutos=?, precio_tiempo=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, t.getTiempoMinutos());
             ps.setDouble(2, t.getPrecioTiempo());
             ps.setInt(3, t.getId());
@@ -48,7 +53,7 @@ public class TarifaTramoDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM tarifa_tramos WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
