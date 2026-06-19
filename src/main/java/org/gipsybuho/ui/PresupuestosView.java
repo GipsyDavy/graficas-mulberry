@@ -821,10 +821,10 @@ public class PresupuestosView extends VBox {
                     // Exportar un único presupuesto como documento detallado
                     Presupuesto presupuestoSeleccionado = dao.findById(presupuestosAExportar.get(0).getId());
                     if (presupuestoSeleccionado == null)
-                        throw new Exception("No se pudo cargar el presupuesto seleccionado.");
+                        throw new Exception(t("presupuestos.error.presupuesto_no_encontrado"));
                     Cliente clienteAsociado = clienteDAO.findById(presupuestoSeleccionado.getClienteId());
                     if (clienteAsociado == null)
-                        throw new Exception("No se pudo encontrar el cliente asociado al presupuesto.");
+                        throw new Exception(t("presupuestos.error.cliente_no_encontrado"));
 
                     if ("pdf".equals(fmt[0])) {
                         PDFService pdfService = new PDFService();
@@ -891,13 +891,13 @@ public class PresupuestosView extends VBox {
                     // Previsualizar un único presupuesto detallado
                     Presupuesto presupuestoSeleccionado = dao.findById(seleccionados.get(0).getId());
                     if (presupuestoSeleccionado == null) {
-                        throw new Exception("No se pudo cargar el presupuesto seleccionado.");
+                        throw new Exception(t("presupuestos.error.presupuesto_no_encontrado"));
                     }
                     Cliente clienteAsociado = clienteDAO.findById(presupuestoSeleccionado.getClienteId());
                     if (clienteAsociado == null) {
                         // Manejar el caso de cliente no encontrado, quizás usar un cliente por defecto o lanzar error
                         // Por ahora, lanzamos un error para que el usuario sepa que falta información
-                        throw new Exception("No se pudo encontrar el cliente asociado al presupuesto.");
+                        throw new Exception(t("presupuestos.error.cliente_no_encontrado"));
                     }
 
                     PDFService pdfService = new PDFService();
