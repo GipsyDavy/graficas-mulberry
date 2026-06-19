@@ -20,6 +20,7 @@ import javafx.scene.layout.VBox;
 import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
 import org.gipsybuho.dao.DynamicColumnValueDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.util.TypedValueFormatter;
 
 import java.sql.SQLException;
@@ -31,7 +32,7 @@ import java.util.Set;
 
 public class ColumnConfiguratorDialog {
 
-    private final ColumnConfigDAO dao = new ColumnConfigDAO();
+    private final ColumnConfigDAO dao;
     private final String tableName;
     private final String moduleName;
     private final Map<String, String> baseColumns;
@@ -55,6 +56,11 @@ public class ColumnConfiguratorDialog {
         this.baseColumns = baseColumns;
         this.ignoredColumns = Set.copyOf(ignoredColumns);
         this.stylesheets = new ArrayList<>(stylesheets);
+        try {
+            this.dao = new ColumnConfigDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public boolean show() throws SQLException {

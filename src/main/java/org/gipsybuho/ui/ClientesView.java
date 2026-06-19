@@ -15,6 +15,7 @@ import javafx.stage.FileChooser;
 import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -44,7 +46,7 @@ import java.util.Set;
 public class ClientesView extends VBox {
 
     private final ClienteDAO dao = new ClienteDAO();
-    private final ColumnConfigDAO columnConfigDAO = new ColumnConfigDAO();
+    private final ColumnConfigDAO columnConfigDAO;
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
     private final ProgressIndicator cargando = new ProgressIndicator();
@@ -72,6 +74,11 @@ public class ClientesView extends VBox {
         .collect(java.util.stream.Collectors.toUnmodifiableSet());
 
     public ClientesView() {
+        try {
+            columnConfigDAO = new ColumnConfigDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

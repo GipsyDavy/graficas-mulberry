@@ -10,6 +10,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.ColumnConfigDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Cliente;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.model.Material;
@@ -595,7 +596,7 @@ public class ImportView extends VBox {
             Set<String> baseKeys = spec.campos().stream()
                 .map(FieldSpec::clave)
                 .collect(java.util.stream.Collectors.toSet());
-            return new ColumnConfigDAO().findVisibleDynamic(spec.tableName(), baseKeys).stream()
+            return new ColumnConfigDAO(DatabaseManager.getConnection()).findVisibleDynamic(spec.tableName(), baseKeys).stream()
                 .map(ColumnConfigDAO.ColumnConfig::columnName)
                 .toList();
         } catch (Exception ex) {
@@ -638,7 +639,7 @@ public class ImportView extends VBox {
                     .collect(java.util.stream.Collectors.toSet());
                 String dataType = displayTypeToInternal(cbTipo.getValue());
                 ColumnConfigDAO.ColumnConfig config =
-                    new ColumnConfigDAO().addDynamicColumn(tableName, label, dataType, baseKeys);
+                    new ColumnConfigDAO(DatabaseManager.getConnection()).addDynamicColumn(tableName, label, dataType, baseKeys);
                 log("✅ Campo dinámico creado: " + config.label() + " (" + config.columnName() + ")");
                 panelPasos.getChildren().setAll(buildPaso3(new LinkedHashMap<>(mappingActual)));
             } catch (Exception ex) {
@@ -696,7 +697,7 @@ public class ImportView extends VBox {
         Set<String> baseKeys = specFor(tipoSeleccionado).campos().stream()
             .map(FieldSpec::clave)
             .collect(java.util.stream.Collectors.toSet());
-        ColumnConfigDAO.ColumnConfig config = new ColumnConfigDAO().addDynamicColumn(
+        ColumnConfigDAO.ColumnConfig config = new ColumnConfigDAO(DatabaseManager.getConnection()).addDynamicColumn(
             tableName,
             suggestion.label(),
             suggestion.dataType(),
@@ -757,7 +758,7 @@ public class ImportView extends VBox {
                 .collect(java.util.stream.Collectors.toSet());
             Map<String, String> types = new LinkedHashMap<>();
             for (ColumnConfigDAO.ColumnConfig config :
-                    new ColumnConfigDAO().findVisibleDynamic(spec.tableName(), baseKeys)) {
+                    new ColumnConfigDAO(DatabaseManager.getConnection()).findVisibleDynamic(spec.tableName(), baseKeys)) {
                 types.put(config.columnName(), config.dataType() != null ? config.dataType() : "TEXTO");
             }
             return types;

@@ -16,6 +16,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.Window;
 import javafx.util.StringConverter;
 import org.gipsybuho.dao.ColumnConfigDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.importer.*;
 
 import java.util.*;
@@ -86,7 +87,7 @@ public class ColumnMappingDialog extends Dialog<MappingResult> {
                     Set<String> especClaves = spec.campos().stream()
                         .map(FieldSpec::clave).collect(Collectors.toSet());
                     ColumnConfigDAO.ColumnConfig config =
-                        new ColumnConfigDAO().addDynamicColumn(tableName, label, especClaves);
+                        new ColumnConfigDAO(DatabaseManager.getConnection()).addDynamicColumn(tableName, label, especClaves);
                     // Añadir a la lista compartida: todos los ComboBox se actualizan automáticamente
                     opciones.add(config.columnName());
                     claveToEtiqueta.put(config.columnName(), config.label());

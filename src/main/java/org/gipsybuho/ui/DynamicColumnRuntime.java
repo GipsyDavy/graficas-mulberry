@@ -15,6 +15,7 @@ import javafx.scene.layout.GridPane;
 import org.gipsybuho.dao.ColumnConfigDAO;
 import org.gipsybuho.dao.ColumnConfigDAO.ColumnConfig;
 import org.gipsybuho.dao.DynamicColumnValueDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.util.TypedValueFormatter;
 
 import java.sql.SQLException;
@@ -26,7 +27,7 @@ import java.util.function.Function;
 
 public class DynamicColumnRuntime<T> {
 
-    private final ColumnConfigDAO configDAO = new ColumnConfigDAO();
+    private final ColumnConfigDAO configDAO;
     private final DynamicColumnValueDAO valueDAO = new DynamicColumnValueDAO();
     private final String tableName;
     private final String moduleName;
@@ -51,6 +52,11 @@ public class DynamicColumnRuntime<T> {
         this.table = table;
         this.data = data;
         this.idProvider = idProvider;
+        try {
+            this.configDAO = new ColumnConfigDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public void apply() {

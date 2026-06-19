@@ -2,6 +2,7 @@ package org.gipsybuho.dao;
 
 import org.gipsybuho.db.DatabaseManager;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -17,6 +18,12 @@ import java.util.Set;
 public class ColumnConfigDAO {
 
     public record ColumnConfig(String tableName, String columnName, String label, boolean baseColumn, boolean visible, String dataType) {}
+
+    private final Connection conn;
+
+    public ColumnConfigDAO(Connection conn) {
+        this.conn = conn;
+    }
 
     public void syncTable(String tableName, Map<String, String> baseColumns) throws SQLException {
         syncTable(tableName, baseColumns, Set.of());
@@ -51,7 +58,7 @@ public class ColumnConfigDAO {
             WHERE table_name=?
             ORDER BY base_column DESC, created_at, column_name
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tableName);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) configs.add(map(rs));
@@ -104,7 +111,7 @@ public class ColumnConfigDAO {
         if (cleanLabel.isBlank()) throw new IllegalArgumentException("La etiqueta no puede estar vacía.");
 
         ensureConfigTable();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE column_configs SET label=? WHERE table_name=? AND column_name=?")) {
             ps.setString(1, cleanLabel);
             ps.setString(2, tableName);
@@ -118,7 +125,7 @@ public class ColumnConfigDAO {
         DatabaseManager.requireSqlIdentifier(columnName);
         String safeType = dataType != null ? dataType : "TEXTO";
         ensureConfigTable();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE column_configs SET data_type=? WHERE table_name=? AND column_name=?")) {
             ps.setString(1, safeType);
             ps.setString(2, tableName);
@@ -139,7 +146,7 @@ public class ColumnConfigDAO {
         DatabaseManager.requireSqlIdentifier(tableName);
         DatabaseManager.requireSqlIdentifier(columnName);
         ensureConfigTable();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE column_configs SET visible=? WHERE table_name=? AND column_name=?")) {
             ps.setInt(1, visible ? 1 : 0);
             ps.setString(2, tableName);
@@ -152,7 +159,7 @@ public class ColumnConfigDAO {
         DatabaseManager.requireSqlIdentifier(tableName);
         DatabaseManager.requireSqlIdentifier(columnName);
         ensureConfigTable();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM column_configs WHERE table_name=? AND column_name=? AND base_column=0")) {
             ps.setString(1, tableName);
             ps.setString(2, columnName);
@@ -164,7 +171,7 @@ public class ColumnConfigDAO {
     }
 
     private void ensureConfigTable() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement()) {
+        try (Statement st = conn.createStatement()) {
             st.execute("""
                 CREATE TABLE IF NOT EXISTS column_configs (
                     table_name TEXT NOT NULL,
@@ -197,7 +204,7 @@ public class ColumnConfigDAO {
                 base_column=excluded.base_column,
                 visible=CASE WHEN column_configs.visible=0 AND excluded.base_column=0 THEN 0 ELSE excluded.visible END
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tableName);
             ps.setString(2, columnName);
             ps.setString(3, label);
@@ -210,7 +217,7 @@ public class ColumnConfigDAO {
 
     private List<String> physicalColumns(String tableName) throws SQLException {
         List<String> columns = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("PRAGMA table_info(" + DatabaseManager.quoteIdentifier(tableName) + ")")) {
             while (rs.next()) columns.add(rs.getString("name").toLowerCase(Locale.ROOT));
         }
