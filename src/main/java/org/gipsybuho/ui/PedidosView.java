@@ -640,8 +640,8 @@ public class PedidosView extends VBox {
         FileChooser fc = new FileChooser();
         fc.setTitle(t("pedidos.importar.titulo"));
         fc.getExtensionFilters().addAll(
-            new FileChooser.ExtensionFilter("Archivos importables (CSV, Excel, JSON)", "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
-            new FileChooser.ExtensionFilter("Todos los archivos", "*.*"));
+            new FileChooser.ExtensionFilter(t("pedidos.importar.filtro"), "*.csv", "*.xlsx", "*.xls", "*.xlsb", "*.xlsm", "*.json"),
+            new FileChooser.ExtensionFilter(t("pedidos.importar.todos_archivos"), "*.*"));
         File archivo = fc.showOpenDialog(getScene() != null ? getScene().getWindow() : null);
         if (archivo == null) return;
 
