@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-16-bis-3 — 151/151 — gap mensajes de error PresupuestosView cerrado)
+**Última actualización:** 2026-06-20 (Sprint B2-4 — DynamicColumnValueDAO inyección Connection — 151/151 — Refactor B2 en 4/17 DAOs)
 
 ---
 
@@ -167,9 +167,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `1a7
 
 ---
 
+### Sprint B2-4 — DynamicColumnValueDAO — ✅ CERRADO (2026-06-20)
+
+Cuarto DAO del Refactor B2. Trazabilidad: Claude Code lidera. Gemini no re-consultado — patrón ya validado en B2-1/B2-2/B2-3, sin incertidumbre arquitectónica nueva. Codex no consultado — cambio mecánico, 4 ficheros, compilación + 151/151 tests en verde como validación objetiva suficiente.
+
+Cambios: `DynamicColumnValueDAO(Connection conn)` reemplaza las 5 llamadas internas a `DatabaseManager.getConnection()` (`findValues` ×2, `updateValue`, `findUnconvertibleValues`, `normalizeColumnValues` — esta última tenía un `var conn = DatabaseManager.getConnection()` local redundante, eliminado en favor del campo `conn`). Las 8 llamadas a `DatabaseManager.requireSqlIdentifier`/`quoteIdentifier` quedan intactas — verificado, sin riesgo de SQL injection introducido.
+
+3 call sites actualizados: `EntityImportService.insertarFilas` (inline — reutiliza la `Connection conn` ya abierta en esa misma transacción, sin pedir una segunda vía `DatabaseManager.getConnection()`), `ColumnConfiguratorDialog.normalizeExistingValuesIfRequested` (inline, el método ya declara `throws SQLException` por lo que no requirió try/catch nuevo), `DynamicColumnRuntime` (campo `valueDAO`, ya sin inicializador desde B2-3 — se extendió el try/catch existente del campo `configDAO` para resolver una sola `Connection` y compartirla entre ambos DAOs).
+
+VibeSec ejecutado al cierre — sin hallazgos: 8 llamadas de validación de identificadores intactas, valores siempre parametrizados via `?`, sin fuga de la Connection singleton, lógica de autocommit/savepoint en `normalizeColumnValues` sin cambio de semántica (mismo objeto Connection compartido que antes). `/security-review` no aplicable.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `50f9d45`.
+
+**Próximo DAO recomendado (cola de bajo riesgo):** `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO` o `PedidoDAO` — sin dependencias cruzadas pendientes documentadas.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-3 (`1a7e1b0`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 3/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2/B2-3 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2/B2-3.
+**HEAD:** commit Sprint B2-4 (`50f9d45`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 4/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2/B2-3/B2-4 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2/B2-3/B2-4.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
