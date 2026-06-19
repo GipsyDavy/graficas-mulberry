@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-20 (Sprint B2-4 — DynamicColumnValueDAO inyección Connection — 151/151 — Refactor B2 en 4/17 DAOs)
+**Última actualización:** 2026-06-20 (Sprint B2-5 — ConsumoMaterialDAO inyección Connection — 151/151 — Refactor B2 en 5/17 DAOs)
 
 ---
 
@@ -183,9 +183,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `50f
 
 ---
 
+### Sprint B2-5 — ConsumoMaterialDAO — ✅ CERRADO (2026-06-20)
+
+Quinto DAO del Refactor B2. Trazabilidad: Claude Code lidera. Gemini no re-consultado — patrón ya validado en B2-1/B2-2/B2-3/B2-4, sin incertidumbre arquitectónica nueva. Codex no consultado — cambio mecánico, 3 ficheros, compilación + 151/151 tests en verde como validación objetiva suficiente.
+
+Cambios: `ConsumoMaterialDAO(Connection conn)` reemplaza las 5 llamadas internas a `DatabaseManager.getConnection()` (`findAll`, `findByTecnica`, `insert`, `update`, `delete`). DAO más simple de la cola hasta ahora — sin identificadores dinámicos, las 5 queries ya usaban placeholders `?`. Import `DatabaseManager` eliminado del DAO (quedó sin uso tras el refactor).
+
+2 call sites actualizados: `FacturaDAO.descontarMateriales` (inline, el método ya declaraba `throws SQLException`, sin try/catch nuevo) y `MaterialesView` (campo `consumoDao` sin inicializador, try/catch en el constructor — los campos hermanos `dao`/`pagoDao` quedan con su inicializador original, fuera de alcance de este sprint).
+
+VibeSec ejecutado al cierre — sin hallazgos: 5 queries parametrizadas vía `?` sin cambios, sin fuga de la Connection singleton, sin fuga de recursos nueva. `/security-review` no aplicable.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `5432805`.
+
+**Próximo DAO recomendado (cola de bajo riesgo):** `TarifaDAO`, `NominaDAO` o `PedidoDAO` — sin dependencias cruzadas pendientes documentadas.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-4 (`50f9d45`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 4/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2/B2-3/B2-4 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2/B2-3/B2-4.
+**HEAD:** commit Sprint B2-5 (`5432805`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 5/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1→B2-5 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-5.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
