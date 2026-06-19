@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Tarifa;
 
 import java.sql.*;
@@ -9,9 +8,15 @@ import java.util.List;
 
 public class TarifaDAO {
 
+    private final Connection conn;
+
+    public TarifaDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Tarifa> findAll() throws SQLException {
         List<Tarifa> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM tarifas ORDER BY tecnica, nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -20,7 +25,7 @@ public class TarifaDAO {
 
     public List<Tarifa> findByTecnica(String tecnica) throws SQLException {
         List<Tarifa> list = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM tarifas WHERE tecnica=? AND activa=1 ORDER BY nombre")) {
             ps.setString(1, tecnica);
             ResultSet rs = ps.executeQuery();
@@ -30,7 +35,7 @@ public class TarifaDAO {
     }
 
     public Tarifa findById(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM tarifas WHERE id=?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -44,7 +49,7 @@ public class TarifaDAO {
 
     private void insert(Tarifa t) throws SQLException {
         String sql = "INSERT INTO tarifas (tecnica,nombre,descripcion,precio_unit,precio_setup,minimo_unidades,activa,usa_tiempo) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, t);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -54,7 +59,7 @@ public class TarifaDAO {
 
     private void update(Tarifa t) throws SQLException {
         String sql = "UPDATE tarifas SET tecnica=?,nombre=?,descripcion=?,precio_unit=?,precio_setup=?,minimo_unidades=?,activa=?,usa_tiempo=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, t);
             ps.setInt(9, t.getId());
             ps.executeUpdate();
@@ -62,7 +67,7 @@ public class TarifaDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM tarifas WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();

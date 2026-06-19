@@ -29,6 +29,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -40,7 +41,7 @@ import java.util.Optional;
 public class TarifasView extends VBox {
 
     private static final String[] TECNICAS = {"Serigrafía", "DTF", "Bordado", "Vinilo", "Sublimación", "Gran Formato", "Offset", "Otros"};
-    private final TarifaDAO dao = new TarifaDAO();
+    private final TarifaDAO dao;
     private final ObservableList<Tarifa> datos = FXCollections.observableArrayList();
     private final TableView<Tarifa> tabla = new TableView<>(datos);
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
@@ -64,6 +65,11 @@ public class TarifasView extends VBox {
     private Label lblContador = new Label();
 
     public TarifasView() {
+        try {
+            dao = new TarifaDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

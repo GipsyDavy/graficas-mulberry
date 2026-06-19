@@ -565,7 +565,7 @@ public class EntityImportService {
 
     private int[] procesarTarifa(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                   List<RowError> errores) throws SQLException {
-        TarifaDAO dao = new TarifaDAO();
+        TarifaDAO dao = new TarifaDAO(conn);
         Tarifa t = ensamblarTarifa(vr.vals());
 
         if (policy == DuplicatePolicy.CREATE_NEW) {

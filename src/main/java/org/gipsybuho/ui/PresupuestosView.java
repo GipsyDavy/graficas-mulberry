@@ -442,7 +442,7 @@ public class PresupuestosView extends VBox {
 
         // Botón para insertar desde tarifa
         try {
-            List<Tarifa> tarifas = new TarifaDAO().findAll();
+            List<Tarifa> tarifas = new TarifaDAO(DatabaseManager.getConnection()).findAll();
             ComboBox<Tarifa> cbTarifa = new ComboBox<>(FXCollections.observableArrayList(tarifas));
             cbTarifa.setPromptText(t("presupuestos.linea.tarifa.prompt"));
             cbTarifa.setOnAction(e -> {

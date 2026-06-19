@@ -8,6 +8,7 @@ import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.apache.poi.xssf.extractor.XSSFBEventBasedExcelExtractor;
 import org.gipsybuho.dao.*;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.util.AppConstants;
 import org.gipsybuho.util.TypedValueFormatter;
@@ -1429,7 +1430,7 @@ public class ImportService {
     }
 
     private int importarTarifas(List<Map<String, String>> rows, Map<String, String> mapping) throws Exception {
-        TarifaDAO dao = new TarifaDAO();
+        TarifaDAO dao = new TarifaDAO(DatabaseManager.getConnection());
         int n = 0;
         for (Map<String, String> row : rows) {
             Tarifa t = new Tarifa();

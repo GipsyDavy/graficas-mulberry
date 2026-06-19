@@ -15,6 +15,7 @@ import org.gipsybuho.dao.ClienteDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.TarifaDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.*;
 import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
@@ -344,7 +345,7 @@ public class FacturasView extends VBox {
         TextField fDto   = txf(l.getDescuento() > 0 ? String.valueOf(l.getDescuento()) : "0");
 
         try {
-            List<Tarifa> tarifas = new TarifaDAO().findAll();
+            List<Tarifa> tarifas = new TarifaDAO(DatabaseManager.getConnection()).findAll();
             ComboBox<Tarifa> cbTarifa = new ComboBox<>(FXCollections.observableArrayList(tarifas));
             cbTarifa.setPromptText(t("facturas.tarifa.prompt"));
             cbTarifa.setOnAction(e -> {

@@ -35,7 +35,7 @@ class EntityImportServiceTarifaTest {
 
     @Test
     void importaTramosConMismaTecnicaYNombrePeroDistintoMinimo() throws Exception {
-        int inicial = new TarifaDAO().findAll().size();
+        int inicial = new TarifaDAO(DatabaseManager.getConnection()).findAll().size();
 
         ImportResult result = importar(List.of(
             fila("Tarjetas de visita", "Tarjetas 300g", "100", "12"),
@@ -44,12 +44,12 @@ class EntityImportServiceTarifaTest {
 
         assertEquals(2, result.filasImportadas());
         assertEquals(0, result.filasDescartadas());
-        assertEquals(inicial + 2, new TarifaDAO().findAll().size());
+        assertEquals(inicial + 2, new TarifaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
     void omiteSoloTramoDuplicadoConMismaTecnicaNombreYMinimo() throws Exception {
-        int inicial = new TarifaDAO().findAll().size();
+        int inicial = new TarifaDAO(DatabaseManager.getConnection()).findAll().size();
 
         importar(List.of(
             fila("Tarjetas de visita", "Tarjetas 300g", "100", "12")
@@ -61,7 +61,7 @@ class EntityImportServiceTarifaTest {
 
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.filasDescartadas());
-        assertEquals(inicial + 1, new TarifaDAO().findAll().size());
+        assertEquals(inicial + 1, new TarifaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     private ImportResult importar(List<Map<String, String>> filas, DuplicatePolicy policy) throws Exception {
