@@ -135,9 +135,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `912
 
 ---
 
+### Sprint B2-2 — NotaCalendarioDAO — ✅ CERRADO (2026-06-19)
+
+Segundo DAO del Refactor B2. Trazabilidad: Claude Code lidera. Gemini no re-consultado — patrón de migración ya validado y confirmado en Sprint B2-1, sin incertidumbre arquitectónica nueva. Codex no consultado — cambio mecánico, 5 ficheros, compilación + 151/151 tests en verde como validación objetiva suficiente.
+
+Cambios: `NotaCalendarioDAO(Connection conn)` reemplaza las 6 llamadas internas a `DatabaseManager.getConnection()` (`insertar`, `actualizar`, `eliminar`, `findByFecha`, `fechasConNotas`, `findProximas`). 4 call sites actualizados: `App.java` y `DashboardView.java` (inline, dentro de try/catch ya existente, sin cambio estructural) + `CalendarioView.java` y `ContextoERPService.java` (estructural, ver técnica nueva abajo).
+
+**Técnica nueva confirmada — inicializador de campo + excepción comprobada:** dos call sites (`CalendarioView`, `ContextoERPService`) tenían `private final XxxDAO dao = new XxxDAO();` como inicializador de campo. Al requerir el constructor una `Connection` obtenida vía `DatabaseManager.getConnection()` (declara `throws SQLException`), el inicializador de campo ya no compila sin manejar la excepción comprobada. Solución aplicada: declarar el campo sin inicializador (`private final XxxDAO dao;`) e instanciar dentro del constructor de la clase envolviendo en `try { dao = new XxxDAO(DatabaseManager.getConnection()); } catch (SQLException e) { throw new RuntimeException(e); }` — fail-fast, sin ocultar el error (no hay catch silencioso ni log que trague la excepción), coherente con app de escritorio monousuario sin recuperación elegante de fallo de conexión inicial. `ContextoERPService` no tenía constructor explícito previo (dependía del implícito); se añadió uno nuevo solo para este campo — los otros 5 DAOs del servicio (`presupuestoDAO`, `facturaDAO`, `pedidoDAO`, `materialDAO`, `clienteDAO`) quedan con su inicializador de campo original, fuera de alcance de este sprint. **Patrón reutilizable para próximos DAOs en cola** que tengan call sites como inicializador de campo (candidato detectado: `ColumnConfigDAO`, instanciado como campo en varias vistas).
+
+VibeSec ejecutado al cierre — sin hallazgos: SQL parametrizado intacto (6 queries con `?`, ninguna concatena input), sin fuga de la Connection singleton (nunca se cierra dentro del DAO, solo `PreparedStatement`/`ResultSet` vía try-with-resources, igual que el patrón original), sin fuga de recursos nueva (el `ResultSet` no envuelto en su propio try-with-resources en `findByFecha`/`fechasConNotas`/`findProximas` es patrón preexistente no tocado en este sprint), patrón `try/catch→RuntimeException` no oculta errores. `/security-review` no aplicable — no toca auth/datos personales/permisos.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `33ef82b`.
+
+**Próximo DAO recomendado (Fase 1 Gemini, bajo riesgo):** `ColumnConfigDAO` — sin dependencias cruzadas con otros DAOs; aplicar técnica de inicializador de campo si procede.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-1 (`9127d62`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 1/17 DAOs migrados (`TarifaTramoDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1 arriba.
+**HEAD:** commit Sprint B2-2 (`33ef82b`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 2/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2 arriba. Técnica de inicializador de campo + excepción comprobada documentada en B2-2, reutilizable para próximos DAOs.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
