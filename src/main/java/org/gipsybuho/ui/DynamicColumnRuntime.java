@@ -18,6 +18,7 @@ import org.gipsybuho.dao.DynamicColumnValueDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.util.TypedValueFormatter;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -28,7 +29,7 @@ import java.util.function.Function;
 public class DynamicColumnRuntime<T> {
 
     private final ColumnConfigDAO configDAO;
-    private final DynamicColumnValueDAO valueDAO = new DynamicColumnValueDAO();
+    private final DynamicColumnValueDAO valueDAO;
     private final String tableName;
     private final String moduleName;
     private final Map<String, String> baseColumns;
@@ -53,7 +54,9 @@ public class DynamicColumnRuntime<T> {
         this.data = data;
         this.idProvider = idProvider;
         try {
-            this.configDAO = new ColumnConfigDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            this.configDAO = new ColumnConfigDAO(conn);
+            this.valueDAO = new DynamicColumnValueDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

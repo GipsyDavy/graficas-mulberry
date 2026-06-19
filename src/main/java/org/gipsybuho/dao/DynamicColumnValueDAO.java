@@ -2,6 +2,7 @@ package org.gipsybuho.dao;
 
 import org.gipsybuho.db.DatabaseManager;
 
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -15,6 +16,12 @@ import java.util.function.Function;
 
 public class DynamicColumnValueDAO {
 
+    private final Connection conn;
+
+    public DynamicColumnValueDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public Map<Integer, Map<String, String>> findValues(String tableName, List<String> columns) throws SQLException {
         DatabaseManager.requireSqlIdentifier(tableName);
         Map<Integer, Map<String, String>> values = new LinkedHashMap<>();
@@ -26,7 +33,7 @@ public class DynamicColumnValueDAO {
         }
         sql.append(" FROM ").append(DatabaseManager.quoteIdentifier(tableName));
 
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql.toString())) {
             while (rs.next()) {
                 Map<String, String> row = new LinkedHashMap<>();
@@ -49,7 +56,7 @@ public class DynamicColumnValueDAO {
         }
         sql.append(" FROM ").append(DatabaseManager.quoteIdentifier(tableName)).append(" WHERE id=?");
 
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -64,7 +71,7 @@ public class DynamicColumnValueDAO {
         DatabaseManager.requireSqlIdentifier(columnName);
         String sql = "UPDATE " + DatabaseManager.quoteIdentifier(tableName)
             + " SET " + DatabaseManager.quoteIdentifier(columnName) + "=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, value);
             ps.setInt(2, id);
             ps.executeUpdate();
@@ -87,7 +94,7 @@ public class DynamicColumnValueDAO {
         Map<Integer, String> invalid = new LinkedHashMap<>();
         String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
             + " FROM " + DatabaseManager.quoteIdentifier(tableName);
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 String current = rs.getString(columnName);
@@ -107,7 +114,7 @@ public class DynamicColumnValueDAO {
         Map<Integer, String> updates = new LinkedHashMap<>();
         String sql = "SELECT id, " + DatabaseManager.quoteIdentifier(columnName)
             + " FROM " + DatabaseManager.quoteIdentifier(tableName);
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) {
                 String current = rs.getString(columnName);
@@ -120,7 +127,6 @@ public class DynamicColumnValueDAO {
             }
         }
 
-        var conn = DatabaseManager.getConnection();
         boolean previousAutoCommit = conn.getAutoCommit();
         Savepoint savepoint = null;
         if (previousAutoCommit) {

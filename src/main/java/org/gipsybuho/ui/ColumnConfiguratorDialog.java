@@ -321,7 +321,7 @@ public class ColumnConfiguratorDialog {
         Optional<ButtonType> result = confirm.showAndWait();
         if (result.isEmpty() || result.get() != ButtonType.YES) return;
 
-        DynamicColumnValueDAO valueDAO = new DynamicColumnValueDAO();
+        DynamicColumnValueDAO valueDAO = new DynamicColumnValueDAO(DatabaseManager.getConnection());
         Map<Integer, String> invalid = valueDAO.findUnconvertibleValues(
             tableName,
             selected.columnName(),

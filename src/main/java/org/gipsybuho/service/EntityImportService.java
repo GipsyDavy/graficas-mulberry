@@ -273,7 +273,7 @@ public class EntityImportService {
                 .collect(Collectors.toSet());
         String tableName = spec.tableName();
         boolean tieneExtras = !extraClaves.isEmpty() && tableName != null;
-        DynamicColumnValueDAO valueDAO = tieneExtras ? new DynamicColumnValueDAO() : null;
+        DynamicColumnValueDAO valueDAO = tieneExtras ? new DynamicColumnValueDAO(conn) : null;
 
         conn.setAutoCommit(false);
         try {
