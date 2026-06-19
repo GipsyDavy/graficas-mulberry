@@ -137,7 +137,7 @@ public class FacturaDAO {
     }
 
     private void descontarMateriales(Factura f) throws SQLException {
-        ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO();
+        ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO(DatabaseManager.getConnection());
         MaterialDAO matDao = new MaterialDAO();
         for (LineaFactura linea : f.getLineas()) {
             if (linea.getTecnica() == null || linea.getTecnica().isBlank()) continue;

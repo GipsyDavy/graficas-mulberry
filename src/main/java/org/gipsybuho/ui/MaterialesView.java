@@ -16,6 +16,7 @@ import javafx.util.StringConverter;
 import org.gipsybuho.dao.ConsumoMaterialDAO;
 import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.PagoMaterialDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.ConsumoMaterial;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
@@ -35,6 +36,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -60,7 +62,7 @@ public class MaterialesView extends VBox {
 
     // ── DAOs ──────────────────────────────────────────────────────────────────
     private final MaterialDAO      dao       = new MaterialDAO();
-    private final ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO();
+    private final ConsumoMaterialDAO consumoDao;
     private final PagoMaterialDAO  pagoDao   = new PagoMaterialDAO();
 
     // ── Stock tab ─────────────────────────────────────────────────────────────
@@ -104,6 +106,11 @@ public class MaterialesView extends VBox {
     // ── Constructor ───────────────────────────────────────────────────────────
 
     public MaterialesView() {
+        try {
+            consumoDao = new ConsumoMaterialDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

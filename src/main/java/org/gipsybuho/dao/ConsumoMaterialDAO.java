@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.ConsumoMaterial;
 
 import java.sql.*;
@@ -8,6 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConsumoMaterialDAO {
+
+    private final Connection conn;
+
+    public ConsumoMaterialDAO(Connection conn) {
+        this.conn = conn;
+    }
 
     public List<ConsumoMaterial> findAll() throws SQLException {
         List<ConsumoMaterial> list = new ArrayList<>();
@@ -17,7 +22,7 @@ public class ConsumoMaterialDAO {
             JOIN materiales m ON cmt.material_id = m.id
             ORDER BY cmt.tecnica, m.nombre
             """;
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) list.add(map(rs));
         }
@@ -32,7 +37,7 @@ public class ConsumoMaterialDAO {
             JOIN materiales m ON cmt.material_id = m.id
             WHERE cmt.tecnica = ?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, tecnica);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(map(rs));
@@ -46,7 +51,7 @@ public class ConsumoMaterialDAO {
 
     private void insert(ConsumoMaterial c) throws SQLException {
         String sql = "INSERT INTO consumo_material_tecnica (tecnica, material_id, cantidad_por_unidad) VALUES (?, ?, ?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, c.getTecnica());
             ps.setInt(2, c.getMaterialId());
             ps.setDouble(3, c.getCantidadPorUnidad());
@@ -58,7 +63,7 @@ public class ConsumoMaterialDAO {
 
     private void update(ConsumoMaterial c) throws SQLException {
         String sql = "UPDATE consumo_material_tecnica SET tecnica=?, material_id=?, cantidad_por_unidad=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, c.getTecnica());
             ps.setInt(2, c.getMaterialId());
             ps.setDouble(3, c.getCantidadPorUnidad());
@@ -68,7 +73,7 @@ public class ConsumoMaterialDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM consumo_material_tecnica WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
