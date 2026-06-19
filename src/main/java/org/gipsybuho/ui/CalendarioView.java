@@ -9,6 +9,9 @@ import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.service.SoundService;
 
+import static org.gipsybuho.service.LanguageManager.t;
+import static org.gipsybuho.service.LanguageManager.tf;
+
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -29,7 +32,7 @@ public class CalendarioView extends VBox {
         setPadding(new Insets(24));
         setSpacing(16);
 
-        Label titulo = new Label("Calendario");
+        Label titulo = new Label(t("calendario.titulo"));
         titulo.getStyleClass().add("view-title");
 
         for (int i = 0; i < 7; i++) {
@@ -49,7 +52,7 @@ public class CalendarioView extends VBox {
     private HBox buildNavegador() {
         Button btnAnt = new Button("◀");
         Button btnSig = new Button("▶");
-        Button btnHoy = new Button("Hoy");
+        Button btnHoy = new Button(t("calendario.btn.hoy"));
         btnAnt.getStyleClass().add("btn-cal-nav");
         btnSig.getStyleClass().add("btn-cal-nav");
         btnHoy.getStyleClass().add("btn-cal-hoy");
@@ -67,7 +70,8 @@ public class CalendarioView extends VBox {
     }
 
     private GridPane buildCabeceraDias() {
-        String[] nombres = {"Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"};
+        String[] nombres = {t("calendario.dia.lun"), t("calendario.dia.mar"), t("calendario.dia.mie"),
+            t("calendario.dia.jue"), t("calendario.dia.vie"), t("calendario.dia.sab"), t("calendario.dia.dom")};
         GridPane header = new GridPane();
         header.setHgap(6);
         for (int i = 0; i < 7; i++) {
@@ -163,18 +167,18 @@ public class CalendarioView extends VBox {
 
         Dialog<ButtonType> dialog = new Dialog<>();
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", esES);
-        dialog.setTitle("📅  " + cap(fecha.format(fmt)));
+        dialog.setTitle(tf("calendario.dialogo.titulo", cap(fecha.format(fmt))));
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
-        ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK)).setText("Guardar");
-        ((Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL)).setText("Cerrar");
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.OK)).setText(t("calendario.dialogo.btn_guardar"));
+        ((Button) dialog.getDialogPane().lookupButton(ButtonType.CANCEL)).setText(t("calendario.dialogo.btn_cerrar"));
 
         VBox cuerpo = new VBox(10);
         cuerpo.setPadding(new Insets(6, 2, 6, 2));
         cuerpo.setMinWidth(440);
 
         if (!notas.isEmpty()) {
-            Label lblExist = new Label("Notas guardadas:");
+            Label lblExist = new Label(t("calendario.notas.guardadas"));
             lblExist.setStyle("-fx-font-weight: bold; -fx-text-fill: #2D1A28;");
             cuerpo.getChildren().add(lblExist);
 
@@ -224,14 +228,14 @@ public class CalendarioView extends VBox {
             cuerpo.getChildren().add(sep);
         }
 
-        Label lblNueva = new Label(notas.isEmpty() ? "Añadir nota:" : "Nueva nota:");
+        Label lblNueva = new Label(notas.isEmpty() ? t("calendario.nota.anadir") : t("calendario.nota.nueva"));
         lblNueva.setStyle("-fx-font-weight: bold; -fx-text-fill: #2D1A28;");
 
         TextField tfTitulo = new TextField();
-        tfTitulo.setPromptText("Título  (ej: Reunión con cliente, entrega pedido…)");
+        tfTitulo.setPromptText(t("calendario.campo.titulo_prompt"));
 
         TextArea taDetalle = new TextArea();
-        taDetalle.setPromptText("Detalles opcionales…");
+        taDetalle.setPromptText(t("calendario.campo.detalle_prompt"));
         taDetalle.setPrefRowCount(3);
         taDetalle.setWrapText(true);
 
@@ -258,7 +262,7 @@ public class CalendarioView extends VBox {
                     } catch (Exception ex) {
                         SoundService.play(SoundService.Sound.ERROR);
                         new Alert(Alert.AlertType.ERROR,
-                            "No se pudo guardar la nota:\n" + ex.getMessage()).showAndWait();
+                            tf("calendario.error.guardar", ex.getMessage())).showAndWait();
                     }
                 }
             }
