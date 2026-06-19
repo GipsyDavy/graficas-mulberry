@@ -598,14 +598,14 @@ public class FacturasView extends VBox {
 
     private void mostrarResultadoImportacion(ImportResult r) {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Importación completada en %.1f s.%n", r.duracion().toMillis() / 1000.0));
-        sb.append(String.format("✓ %d filas importadas%n", r.filasImportadas()));
-        sb.append(String.format("✓ %d filas actualizadas%n", r.filasActualizadas()));
-        sb.append(String.format("✗ %d filas descartadas", r.filasDescartadas()));
+        sb.append(tf("facturas.importar.completada", r.duracion().toMillis() / 1000.0)).append(System.lineSeparator());
+        sb.append(tf("facturas.importar.filas_importadas", r.filasImportadas())).append(System.lineSeparator());
+        sb.append(tf("facturas.importar.filas_actualizadas", r.filasActualizadas())).append(System.lineSeparator());
+        sb.append(tf("facturas.importar.filas_descartadas", r.filasDescartadas()));
         if (!r.errores().isEmpty()) {
-            sb.append("\n\nErrores (primeros 10):");
+            sb.append(t("facturas.importar.errores_header"));
             r.errores().stream().limit(10).forEach(e ->
-                sb.append(String.format("%n  Fila %d — %s: %s",
+                sb.append(tf("facturas.importar.error_fila",
                     e.numeroFila(), e.campo() != null ? e.campo() : "—", e.mensaje())));
         }
         Alert a = new Alert(Alert.AlertType.INFORMATION, sb.toString(), ButtonType.OK);
@@ -703,10 +703,10 @@ public class FacturasView extends VBox {
                     // Exportar una única factura como documento detallado
                     Factura facturaSeleccionada = dao.findById(listaFinal.get(0).getId());
                     if (facturaSeleccionada == null)
-                        throw new Exception("No se pudo cargar la factura seleccionada.");
+                        throw new Exception(t("facturas.error.factura_no_encontrada"));
                     Cliente clienteAsociado = clienteDAO.findById(facturaSeleccionada.getClienteId());
                     if (clienteAsociado == null)
-                        throw new Exception("No se pudo encontrar el cliente asociado a la factura.");
+                        throw new Exception(t("facturas.error.cliente_no_encontrado"));
 
                     if ("pdf".equals(fmt[0])) {
                         PDFService pdfService = new PDFService();
@@ -763,10 +763,10 @@ public class FacturasView extends VBox {
                 if (lista.size() == 1) {
                     Factura facturaSeleccionada = dao.findById(lista.get(0).getId());
                     if (facturaSeleccionada == null)
-                        throw new Exception("No se pudo cargar la factura seleccionada.");
+                        throw new Exception(t("facturas.error.factura_no_encontrada"));
                     Cliente clienteAsociado = clienteDAO.findById(facturaSeleccionada.getClienteId());
                     if (clienteAsociado == null)
-                        throw new Exception("No se pudo encontrar el cliente asociado a la factura.");
+                        throw new Exception(t("facturas.error.cliente_no_encontrado"));
                     PDFService pdfService = new PDFService();
                     Path pdfPath = pdfService.generarFactura(facturaSeleccionada, clienteAsociado, true);
                     pdfBytes = Files.readAllBytes(pdfPath);
