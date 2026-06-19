@@ -624,7 +624,7 @@ public class EntityImportService {
 
     private int[] procesarNomina(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                   List<RowError> errores) throws SQLException {
-        NominaDAO dao = new NominaDAO();
+        NominaDAO dao = new NominaDAO(conn);
         Nomina n = ensamblarNomina(vr.vals(), conn, errores, vr.numero());
         if (n == null) return new int[]{0, 0, 0};
 

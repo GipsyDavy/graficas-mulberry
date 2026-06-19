@@ -48,7 +48,7 @@ class EntityImportServiceNominaTest {
 
         assertEquals(2, result.filasImportadas());
         assertEquals(0, result.errores().size());
-        assertEquals(2, new NominaDAO().findAll().size());
+        assertEquals(2, new NominaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -83,7 +83,7 @@ class EntityImportServiceNominaTest {
         existente.setEmpleadoId(empleado.getId());
         existente.setMes(1);
         existente.setAnio(2026);
-        new NominaDAO().save(existente);
+        new NominaDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importar(List.of(
             fila("Ana", "Garcia", "1", "2026", "1200")
@@ -92,7 +92,7 @@ class EntityImportServiceNominaTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(0, result.filasActualizadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new NominaDAO().findAll().size());
+        assertEquals(1, new NominaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -106,7 +106,7 @@ class EntityImportServiceNominaTest {
 
         assertEquals(1, result.filasImportadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new NominaDAO().findAll().size());
+        assertEquals(1, new NominaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test

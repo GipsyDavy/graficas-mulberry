@@ -39,9 +39,9 @@ class NominaDAOTest {
         n.setMes(5);
         n.setAnio(2026);
         n.setSalarioBase(1800.0);
-        new NominaDAO().save(n);
+        new NominaDAO(DatabaseManager.getConnection()).save(n);
 
-        Nomina recargada = new NominaDAO().findById(n.getId());
+        Nomina recargada = new NominaDAO(DatabaseManager.getConnection()).findById(n.getId());
         assertNotNull(recargada);
         assertEquals(5, recargada.getMes());
         assertEquals(2026, recargada.getAnio());
@@ -52,7 +52,7 @@ class NominaDAOTest {
     @Test
     void findByPeriodoFiltraPorMesYAnio() throws Exception {
         Empleado emp = crearEmpleado("Pedro", "Gomez");
-        NominaDAO dao = new NominaDAO();
+        NominaDAO dao = new NominaDAO(DatabaseManager.getConnection());
         Nomina n1 = nomina(emp.getId(), 1, 2026);
         Nomina n2 = nomina(emp.getId(), 2, 2026);
         dao.save(n1);
@@ -66,7 +66,7 @@ class NominaDAOTest {
     @Test
     void deleteEliminaRegistro() throws Exception {
         Empleado emp = crearEmpleado("Elena", "Mora");
-        NominaDAO dao = new NominaDAO();
+        NominaDAO dao = new NominaDAO(DatabaseManager.getConnection());
         Nomina n = nomina(emp.getId(), 3, 2026);
         dao.save(n);
         assertEquals(1, dao.findAll().size());

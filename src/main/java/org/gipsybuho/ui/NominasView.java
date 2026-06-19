@@ -11,6 +11,7 @@ import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.dao.NominaDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.model.Nomina;
 import org.gipsybuho.service.EntityImportService;
@@ -27,6 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -37,7 +39,7 @@ import java.util.Map;
 
 public class NominasView extends VBox {
 
-    private final NominaDAO dao = new NominaDAO();
+    private final NominaDAO dao;
     private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
     private TextField txtBuscar;
     private final NominaService nominaService = new NominaService();
@@ -71,6 +73,11 @@ public class NominasView extends VBox {
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public NominasView() {
+        try {
+            dao = new NominaDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

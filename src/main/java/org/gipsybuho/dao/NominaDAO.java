@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Nomina;
 
 import java.sql.*;
@@ -8,6 +7,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class NominaDAO {
+
+    private final Connection conn;
+
+    public NominaDAO(Connection conn) {
+        this.conn = conn;
+    }
 
     public List<Nomina> findAll() throws SQLException {
         List<Nomina> list = new ArrayList<>();
@@ -17,7 +22,7 @@ public class NominaDAO {
             JOIN empleados e ON n.empleado_id = e.id
             ORDER BY n.anio DESC, n.mes DESC, e.nombre
             """;
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) list.add(map(rs));
         }
@@ -33,7 +38,7 @@ public class NominaDAO {
             WHERE n.mes=? AND n.anio=?
             ORDER BY e.nombre
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, mes); ps.setInt(2, anio);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) list.add(map(rs));
@@ -48,7 +53,7 @@ public class NominaDAO {
             JOIN empleados e ON n.empleado_id = e.id
             WHERE n.id=?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? map(rs) : null;
@@ -67,7 +72,7 @@ public class NominaDAO {
             ss_trabajador,total_deducciones,neto,ss_empresa,coste_total_empresa)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, n);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -83,7 +88,7 @@ public class NominaDAO {
             ss_trabajador=?,total_deducciones=?,neto=?,ss_empresa=?,coste_total_empresa=?
             WHERE id=?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, n);
             ps.setInt(19, n.getId());
             ps.executeUpdate();
@@ -91,7 +96,7 @@ public class NominaDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM nominas WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
