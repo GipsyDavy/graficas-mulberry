@@ -151,9 +151,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `33e
 
 ---
 
+### Sprint B2-3 — ColumnConfigDAO — ✅ CERRADO (2026-06-20)
+
+Tercer DAO del Refactor B2. Trazabilidad: Claude Code lidera. Gemini no re-consultado — patrón ya validado en B2-1/B2-2. Codex no consultado — cambio mecánico, 6 ficheros, compilación + 151/151 tests en verde como validación objetiva suficiente.
+
+Cambios: `ColumnConfigDAO(Connection conn)` reemplaza las 8 llamadas internas a `DatabaseManager.getConnection()` (`findAll`, `rename`, `updateDataType`, `setColumnVisible`, `deleteDynamic`, `upsertConfig`, `ensureConfigTable`, `physicalColumns`). Las llamadas a `DatabaseManager.requireSqlIdentifier`/`addColumn`/`dropColumn`/`quoteIdentifier` (validación de nombres de tabla/columna dinámicos, usados en `PRAGMA table_info`/`ALTER TABLE`) quedan intactas — verificado explícitamente con VibeSec, sin riesgo de SQL injection introducido por el refactor.
+
+6 call sites actualizados: `ImportView` (4, inline dentro de try/catch existentes) y `ColumnMappingDialog` (1, inline) solo necesitaron import `DatabaseManager` + pasar `DatabaseManager.getConnection()`. `DynamicColumnRuntime`, `ColumnConfiguratorDialog` y `ClientesView` (3) reutilizan la técnica de inicializador de campo + excepción comprobada confirmada en B2-2 — campo sin inicializador, instanciación movida al constructor real con `try/catch SQLException->RuntimeException`. En `ColumnConfiguratorDialog` (constructores encadenados vía `this(...)`) la instanciación se colocó en el constructor base de 5 argumentos (el único que no delega más, donde corren los inicializadores de campo). `DynamicColumnValueDAO` en `DynamicColumnRuntime` queda fuera de alcance (su propio sprint futuro).
+
+VibeSec ejecutado al cierre — sin hallazgos: validación de identificadores SQL intacta (15 llamadas verificadas línea por línea), sin fuga de Connection singleton, sin fuga de recursos nueva, patrón `try/catch→RuntimeException` no oculta errores. `/security-review` no aplicable.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `1a7e1b0`.
+
+**Próximo DAO recomendado (Fase 1 Gemini, bajo riesgo):** `DynamicColumnValueDAO` — natural seguir aquí porque ya se tocó en este sprint vía `DynamicColumnRuntime` (campo `valueDAO` sin migrar, queda explícito el siguiente paso).
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-2 (`33ef82b`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 2/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2 arriba. Técnica de inicializador de campo + excepción comprobada documentada en B2-2, reutilizable para próximos DAOs.
+**HEAD:** commit Sprint B2-3 (`1a7e1b0`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 3/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1/B2-2/B2-3 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2/B2-3.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
