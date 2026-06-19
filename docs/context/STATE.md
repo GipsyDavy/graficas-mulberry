@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-18 (sesión cierre — Sprint i18n-14 — 151/151)
+**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-15 — 151/151 — i18n COMPLETO al 100%)
 
 ---
 
@@ -19,9 +19,9 @@ Actualizar tras cada sprint cerrado.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
 
-### ESTADO AL CIERRE DE SESIÓN 2026-06-18 (Sprint i18n-14)
+### ESTADO AL CIERRE DE SESIÓN 2026-06-19 (Sprint i18n-15 — i18n COMPLETO al 100%)
 
-**HEAD:** `bf3340f` + commits i18n-13/i18n-14 (ver tabla abajo). Rama: `master`. Tests: **151/151 verdes**.
+**HEAD:** commits i18n-15 (ver tabla abajo). Rama: `master`. Tests: **151/151 verdes**.
 
 **Sprints cerrados esta sesión:**
 
@@ -39,14 +39,15 @@ Actualizar tras cada sprint cerrado.
 | i18n-12 | TarifasView migrada — toolbar, tabla, diálogo tarifa, gestión de tramos (sub-diálogo + tabla), importación, exportación, previsualización, título diálogo columnas + prefijo fichero exportado, filtro técnica + sentinel "Todas" (74 claves tarifas.*); rename `tf()`→`txf()`; rename `Tarifa t`→`tarifa` (param de método completo, no solo lambdas) |
 | i18n-13 | ComprasProveedorView migrada — resumen KPIs, toolbar filtros, tabla, diálogo pago, marcar pagado, eliminar, validaciones (60 claves compras.*); rename `tf()`→`txf()` (4 call sites); `FORMAS_PAGO` y códigos internos de filtro NO traducidos (valores BD/lógica) |
 | i18n-14 | EstadisticasView migrada — títulos, tabs, KPIs, títulos de gráficos, nombres de series, previsualización, exportación PDF, errores (49 claves estadisticas.*); sin renombrados por colisión (único `t` local es `Tab t` dentro de `tab()`, sin llamada interna a `t()` global); PALETA/COLOR_*/CHART_COLOR_*/"—"/"…"/`ex.getMessage()` NO traducidos |
+| i18n-15 | CalendarioView migrada — título, navegación, días, diálogo de nota (título, botones, labels, prompts), error de guardado (18 claves calendario.*); sin conflictos de naming (sin `t`/`tf` previos); flechas/punto/cerrar/CSS/log consola NO traducidos; `Locale esES` para nombre mes/día queda en español (gap arquitectónico conocido, no corregido). **Última vista pendiente — i18n al 100%.** |
 
 **Estado del sistema i18n al cierre:**
 
 - `LanguageManager` — infraestructura completa (singleton, `t()`, `tf()`, fallback ES, UTF-8).
 - `LanguageManager.tf(key, args)` — añadido formalmente (MessageFormat wrapper).
-- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-14: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `estadisticas.*` verificada (49 idénticas en los 6 bundles, 0 diffs).
-- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, `MaterialesView`, `TarifasView`, `ComprasProveedorView`, **`EstadisticasView`**.
-- Vistas pendientes de migrar: CalendarioView.
+- 6 bundles COMPLETOS con todas las claves i18n-0 → i18n-15: `messages_{es,en,ca,eu,gl,fr}.properties`. Paridad de claves `calendario.*` verificada (18 idénticas en los 6 bundles, 0 diffs).
+- Vistas migradas: `LoginView`, `AdminSetupView`, `ConfiguracionView`, `MainView`, `DashboardView`, `ClientesView`, `FacturasView`, `PedidosView`, `AlbaranesView`, `PresupuestosView`, `NominasView`, `EmpleadosView`, `MaterialesView`, `TarifasView`, `ComprasProveedorView`, `EstadisticasView`, **`CalendarioView`**.
+- Vistas pendientes de migrar: **ninguna — i18n completo al 100%** (gap conocido no resuelto: `Locale esES` fijo en CalendarioView para nombres de mes/día, ver checklist i18n-15).
 
 **Hallazgo i18n-10 (Codex, revisión post-implementación):** en `EmpleadosView` el segundo argumento de `DynamicColumnRuntime(...)` (título visible en el diálogo "⚙ Columnas" vía `ColumnConfiguratorDialog`) y el prefijo de `fc.setInitialFileName(...)` en exportación SÍ se migraron (`t("nav.empleados")`). MaterialesView (i18n-11) replicó la misma migración desde el inicio (`t("nav.materiales")`). Las 8 vistas restantes (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, Tarifas, ComprasProveedor) **dejan estos dos puntos sin traducir** (string literal en español) — gap de cobertura real, no regresión, pendiente de homogeneizar en una futura pasada de limpieza si se decide.
 
@@ -84,6 +85,7 @@ Actualizar tras cada sprint cerrado.
 - `tarifas.*` — TarifasView completa (74 claves)
 - `compras.*` — ComprasProveedorView completa (60 claves)
 - `estadisticas.*` — EstadisticasView completa (49 claves)
+- `calendario.*` — CalendarioView completa (18 claves)
 
 **Patrón de migración establecido (repetir en i18n-4+):**
 ```java
@@ -98,12 +100,13 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit i18n-14 (ver tabla de sprints arriba). Tests: 151/151. App funcional.
+**HEAD:** commit i18n-15 (ver tabla de sprints arriba). Tests: 151/151. App funcional. **Migración i18n completa — no queda ninguna vista pendiente.**
 
 **Cola prioritaria (en orden recomendado):**
-1. **Sprint i18n-15** — migrar `CalendarioView` (última vista pendiente). Mismo patrón. Buscar conflictos de naming antes de añadir imports.
-2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
-3. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
+1. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
+2. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
+3. **Técnica reutilizable confirmada** — PowerShell backtick-n (`` `n ``) dentro de string entre comillas dobles inserta un salto de línea real, no el literal `\n` de dos caracteres que necesita un valor `.properties`. Usar siempre el literal `\n` (concatenación o escape explícito), nunca el escape especial de PowerShell, al construir valores multilínea de bundles.
+4. **Regla reforzada** — antes de cerrar cualquier sprint i18n, revisar generically TODAS las claves `tf()` (con `{0}`) de los 6 bundles buscando apóstrofes simples sin escapar, no solo las que ya se sabe que tienen posesivos/elisión. El hallazgo CA de i18n-15 lo detectó Codex, no el grep de autorrevisión.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
@@ -204,9 +207,25 @@ VibeSec: LIMPIO — app de escritorio, sin XSS/CSRF/SSRF/auth aplicable; solo ex
 
 ---
 
-### CHECKLIST SPRINT i18n-15 — CalendarioView (siguiente, última vista pendiente)
+### CHECKLIST SPRINT i18n-15 — CalendarioView — ✅ EJECUTADO (última vista pendiente — i18n COMPLETO al 100%)
 
-Mismo patrón. Buscar conflictos de naming `t`/`tf` antes de añadir imports. Ver "Reglas i18n consolidadas" abajo.
+Pasos 0-6 ejecutados según el patrón. Paso 1: sin conflictos de naming — `CalendarioView.java` no tiene ningún identificador `t`/`tf` (ni local var ni método privado), import directo sin renombrados.
+
+11 sitios de literal migrados a 18 claves `calendario.*` (título, botón "Hoy", 7 abreviaturas de día, título de diálogo con `tf()`, botones guardar/cerrar, labels notas existentes/nueva/añadir, prompts de título y detalle, error de guardado con `tf()`).
+
+No traducido (no son literales de UI o son deuda arquitectónica pre-existente, no corregida en este sprint quirúrgico): flechas de navegación `"◀"`/`"▶"`, punto de nota `"●"`, botón cerrar `"✕"`; estilos inline `-fx-...`; `System.err.println(...)` de log de consola (no visible en UI, precedente nuevo este sprint); `Locale esES = new Locale("es","ES")` usado en `DateTimeFormatter` para nombre de mes/día — el calendario seguirá mostrando nombres de mes/día en español sin importar el idioma de la app; gap de i18n conocido y documentado, no corregido aquí por ser cambio de arquitectura fuera del alcance de una extracción quirúrgica de strings.
+
+18 claves `calendario.*` en los 6 bundles, paridad verificada (0 diferencias). 2 claves usan `tf()` con placeholder `{0}` (`calendario.dialogo.titulo`, `calendario.error.guardar`).
+
+Erratas propias detectadas y autocorregidas antes de la revisión de Codex: GL con variables PowerShell no definidas (`$eLowGL`/`$aLowGL` nunca asignadas) produjo días truncados "Mr"/"Sb" en vez de "Mér"/"Sáb"; FR con acento equivocado ("rèunion" grave en vez de "réunion" agudo); FR con salto de línea real (backtick-n de PowerShell) insertado dentro de un valor `.properties`, partiendo la línea en dos y dejando `{0}` huérfano.
+
+**Hallazgo real de Codex (no autodetectado):** clave CA `calendario.error.guardar` (consumida vía `tf()`, con placeholder `{0}`) contenía un apóstrofe simple sin escapar en "s'ha" — inseguro para `MessageFormat`. Corregido por reformulación (no escaping `''`, consistente con la política del proyecto): `"No ha estat possible desar la nota:\n{0}"`. Confirma el valor de la revisión Codex obligatoria al cierre incluso en sprints "pequeños y mecánicos".
+
+Validación final: `mvnw clean compile` limpio + `mvnw test` → **151/151 BUILD SUCCESS** (re-ejecutado tras el fix CA, sigue verde). Codex (revisión post-implementación, bloque IDE): 1 hallazgo real (apóstrofe CA, corregido), resto limpio — 16 `t()` + 2 `tf()` correctos, paridad 18/18, sin mojibake, scope respetado.
+
+VibeSec: LIMPIO — app de escritorio, sin XSS/CSRF/SSRF/auth aplicable; solo extracción de strings UI.
+
+**CIERRE i18n: las 17 vistas de la aplicación están migradas a `LanguageManager`. No queda ninguna vista pendiente.**
 
 ---
 
@@ -655,9 +674,10 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Cola prioritaria
 
-1. **Sprint i18n-15** — migrar `CalendarioView` (última vista pendiente). Mismo patrón. Ver checklist en la cabecera del documento.
+1. **Migración i18n: COMPLETA.** Las 17 vistas de la aplicación usan `LanguageManager`. No queda ninguna vista pendiente de migrar.
 2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
 3. **Gap de cobertura i18n** — homogeneizar `DynamicColumnRuntime` (título diálogo columnas) y prefijo de fichero exportado en las 7 vistas que aún lo dejan sin traducir (ver hallazgo Codex i18n-10; EmpleadosView, MaterialesView y TarifasView ya migradas).
+4. **Gap arquitectónico i18n conocido** — `Locale esES` fijo en `CalendarioView` para nombres de mes/día (no corregido en i18n-15, fuera de alcance quirúrgico).
 
 ---
 
@@ -665,6 +685,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-15 | (ver tabla cabecera) | CalendarioView: título, navegación, días, diálogo de nota, error de guardado (18 claves); última vista pendiente — i18n al 100% |
 | i18n-14 | (ver tabla cabecera) | EstadisticasView: títulos, tabs, KPIs, gráficos, series, previsualización, exportación PDF (49 claves) |
 | i18n-13 | `8db3041` | ComprasProveedorView: resumen KPIs, toolbar filtros, tabla, diálogo pago, marcar pagado, eliminar (60 claves); rename tf()→txf() |
 | i18n-12 | `bf3340f` | TarifasView: toolbar, tabla, diálogo tarifa, gestión de tramos, import/export, previsualización (74 claves); rename tf()→txf(); rename `Tarifa t`→`tarifa` (param método completo); sentinel "Todas" fix |
@@ -698,6 +719,6 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Deuda técnica conocida
 
-- i18n: vista de módulo pendiente de migrar (CalendarioView)
+- i18n: `Locale esES` fijo en `CalendarioView` para nombres de mes/día — no respeta el idioma de la app (gap arquitectónico conocido, no corregido en i18n-15)
 - i18n: `DynamicColumnRuntime` (título diálogo "⚙ Columnas") y prefijo de fichero exportado sin migrar en 7 vistas (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, ComprasProveedor) — EmpleadosView (i18n-10), MaterialesView (i18n-11) y TarifasView (i18n-12) ya lo migraron
 - Refactor B2: inyección de Connection en DAOs (largo plazo)
