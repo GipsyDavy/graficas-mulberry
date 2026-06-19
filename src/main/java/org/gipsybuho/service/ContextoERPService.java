@@ -6,10 +6,12 @@ import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.dao.PedidoDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.Pedido;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
 import java.util.List;
@@ -29,10 +31,18 @@ public class ContextoERPService {
     private final PedidoDAO         pedidoDAO         = new PedidoDAO();
     private final MaterialDAO       materialDAO       = new MaterialDAO();
     private final ClienteDAO        clienteDAO        = new ClienteDAO();
-    private final NotaCalendarioDAO calendarioDAO     = new NotaCalendarioDAO();
+    private final NotaCalendarioDAO calendarioDAO;
 
     private volatile String cachedContexto = null;
     private volatile long   cacheTimestamp = 0L;
+
+    public ContextoERPService() {
+        try {
+            calendarioDAO = new NotaCalendarioDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     /** Devuelve el contexto cacheado o lo regenera si han pasado más de 8 minutos. */
     public String construirContexto() {

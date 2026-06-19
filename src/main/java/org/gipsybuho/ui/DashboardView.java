@@ -137,7 +137,7 @@ public class DashboardView extends VBox {
         try {
             String rawDias = org.gipsybuho.db.DatabaseManager.getConfig("cal_dias_panel");
             int diasPanel = rawDias.isBlank() ? 7 : Integer.parseInt(rawDias);
-            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(diasPanel);
+            List<NotaCalendario> proximas = new NotaCalendarioDAO(org.gipsybuho.db.DatabaseManager.getConnection()).findProximas(diasPanel);
             LocalDate hoy = LocalDate.now();
             DateTimeFormatter fmt = DateTimeFormatter.ofPattern("EEEE d 'de' MMMM", new Locale("es", "ES"));
 

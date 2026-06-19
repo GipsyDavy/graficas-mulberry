@@ -6,12 +6,14 @@ import javafx.scene.Cursor;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import org.gipsybuho.dao.NotaCalendarioDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.service.SoundService;
 
 import static org.gipsybuho.service.LanguageManager.t;
 import static org.gipsybuho.service.LanguageManager.tf;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.YearMonth;
 import java.time.format.DateTimeFormatter;
@@ -23,11 +25,16 @@ public class CalendarioView extends VBox {
     private YearMonth mesActual = YearMonth.now();
     private final GridPane gridDias = new GridPane();
     private final Label lblMesAnio = new Label();
-    private final NotaCalendarioDAO dao = new NotaCalendarioDAO();
+    private final NotaCalendarioDAO dao;
     private final Locale esES = new Locale("es", "ES");
     private Set<LocalDate> fechasConNotas = new HashSet<>();
 
     public CalendarioView() {
+        try {
+            dao = new NotaCalendarioDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(16);

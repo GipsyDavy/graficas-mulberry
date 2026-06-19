@@ -164,7 +164,7 @@ public class App extends Application {
             int diasAviso;
             try { diasAviso = rawDias.isBlank() ? 3 : Integer.parseInt(rawDias); }
             catch (NumberFormatException ignored) { diasAviso = 3; }
-            List<NotaCalendario> proximas = new NotaCalendarioDAO().findProximas(diasAviso);
+            List<NotaCalendario> proximas = new NotaCalendarioDAO(DatabaseManager.getConnection()).findProximas(diasAviso);
             if (proximas.isEmpty()) return;
 
             StringBuilder sb = new StringBuilder();
