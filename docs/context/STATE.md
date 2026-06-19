@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-16 — 151/151 — gap cobertura cerrado)
+**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-16-bis — 151/151 — gap filtro import cerrado)
 
 ---
 
@@ -121,14 +121,17 @@ Commit: `b1d6b3a` — `feat(i18n): cerrar gap cobertura DynamicColumnRuntime/exp
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit i18n-16 (`b1d6b3a`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Gap de cobertura DynamicColumnRuntime/export: cerrado.
+**HEAD:** commit i18n-16-bis (`1aa6d58`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Gap de cobertura DynamicColumnRuntime/export/filtro import: cerrado.
+
+**Trazabilidad i18n-16-bis:** Agente líder Claude Code. Codex consultado vía bloque IDE (revisión post-implementación, sin cambios aplicados, confirmó diff correcto y detectó 2 gaps nuevos fuera de alcance, ver punto 1 y 2 abajo). Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Gap filtro de importación sin traducir** — `facturas.importar.filtro`/`todos_archivos` y `pedidos.importar.filtro`/`todos_archivos` en FacturasView.java/PedidosView.java (ver checklist i18n-16 arriba). Mecánico, bajo riesgo, sin Multi-IA.
-2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
-3. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
-4. **Técnica reutilizable confirmada** — PowerShell backtick-n (`` `n ``) dentro de string entre comillas dobles inserta un salto de línea real, no el literal `\n` de dos caracteres que necesita un valor `.properties`. Usar siempre el literal `\n` (concatenación o escape explícito), nunca el escape especial de PowerShell, al construir valores multilínea de bundles.
-5. **Regla reforzada** — antes de cerrar cualquier sprint i18n, revisar generically TODAS las claves `tf()` (con `{0}`) de los 6 bundles buscando apóstrofes simples sin escapar, no solo las que ya se sabe que tienen posesivos/elisión. El hallazgo CA de i18n-15 lo detectó Codex, no el grep de autorrevisión.
+1. **Gap texto hardcodeado en `mostrarResultadoImportacion()`** (hallazgo Codex i18n-16-bis, verificado por Claude Code) — `FacturasView.java:599-617` y `PedidosView.java:688-706`: `String.format("Importación completada en %.1f s...")`, "filas importadas/actualizadas/descartadas", "Errores (primeros 10)", "Fila {n} — {campo}: {mensaje}". Patrón de referencia ya migrado: `albaranes.importar.completada`/`filas_importadas`/`filas_actualizadas`/`filas_descartadas`/`errores_header`/`error_fila` en `AlbaranesView.java` (usa `tf()` con MessageFormat, no `String.format`). Requiere ojo con apóstrofes en CA/FR por usar `{0}`.
+2. **Gap mensajes de excepción visibles al usuario** (hallazgo Codex i18n-16-bis, verificado por Claude Code) — `FacturasView.java:766` (`throw new Exception("No se pudo cargar la factura seleccionada.")`) y línea 769 (`"No se pudo encontrar el cliente asociado a la factura."`). Se capturan y muestran vía `mostrarError(e)` → `Alert.ERROR` con `e.getMessage()` (línea 821): SÍ son user-facing, no solo log. Pendiente confirmar alcance completo (puede haber más `throw new Exception("...")` similares en el mismo bloque de exportación/previsualización, líneas ~755-800).
+3. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
+4. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
+5. **Técnica reutilizable confirmada** — PowerShell backtick-n (`` `n ``) dentro de string entre comillas dobles inserta un salto de línea real, no el literal `\n` de dos caracteres que necesita un valor `.properties`. Usar siempre el literal `\n` (concatenación o escape explícito), nunca el escape especial de PowerShell, al construir valores multilínea de bundles.
+6. **Regla reforzada** — antes de cerrar cualquier sprint i18n, revisar generically TODAS las claves `tf()` (con `{0}`) de los 6 bundles buscando apóstrofes simples sin escapar, no solo las que ya se sabe que tienen posesivos/elisión. El hallazgo CA de i18n-15 lo detectó Codex, no el grep de autorrevisión.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
@@ -708,6 +711,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-16-bis | `1aa6d58` | Filtro de IMPORTACIÓN en FacturasView/PedidosView (4 claves *.importar.filtro/todos_archivos). Codex detecta 2 gaps nuevos verificados, no corregidos (fuera de alcance): texto hardcodeado en mostrarResultadoImportacion() y mensajes de excepción visibles vía mostrarError() en FacturasView |
 | i18n-16 | `b1d6b3a` | Gap cobertura DynamicColumnRuntime/export en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas: título diálogo, prefijo fichero, ExtensionFilter exportación (18 claves *.export.filtro). Gap import sin traducir en Facturas/Pedidos detectado por Codex, no corregido (fuera de alcance) |
 | i18n-15 | (ver tabla cabecera) | CalendarioView: título, navegación, días, diálogo de nota, error de guardado (18 claves); última vista pendiente — i18n al 100% |
 | i18n-14 | (ver tabla cabecera) | EstadisticasView: títulos, tabs, KPIs, gráficos, series, previsualización, exportación PDF (49 claves) |
