@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-20 (Sprint B2-6 — TarifaDAO inyección Connection — 151/151 — Refactor B2 en 6/17 DAOs)
+**Última actualización:** 2026-06-20 (Sprint B2-7 — NominaDAO inyección Connection — 151/151 — Refactor B2 en 7/17 DAOs)
 
 ---
 
@@ -215,9 +215,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `791
 
 ---
 
+### Sprint B2-7 — NominaDAO — ✅ CERRADO (2026-06-20)
+
+Séptimo DAO del Refactor B2. Trazabilidad: Claude Code lidera. Gemini no re-consultado — patrón ya validado en B2-1→B2-6, sin incertidumbre arquitectónica nueva. Codex no consultado — cambio mecánico, validación objetiva (compilación + 151/151 tests) suficiente.
+
+Cambios: `NominaDAO(Connection conn)` reemplaza las 6 llamadas internas a `DatabaseManager.getConnection()` (`findAll`, `findByPeriodo`, `findById`, `insert`, `update`, `delete`). Sin identificadores dinámicos, las 6 queries ya usaban placeholders `?`. Import `DatabaseManager` eliminado del DAO.
+
+5 call sites actualizados: `EntityImportService.procesarNomina` (inline, reusa el `conn` de la transacción ya en curso), `NominasView` (campo `dao` sin inicializador, try/catch en el constructor — campo hermano `empleadoDAO` queda con su inicializador original, fuera de alcance; imports `DatabaseManager`/`SQLException` añadidos), y los tests `NominaDAOTest` (4 ocurrencias) y `EntityImportServiceNominaTest` (5 ocurrencias) — `new EmpleadoDAO()` en ambos tests queda intacto, fuera de alcance de este sprint.
+
+VibeSec ejecutado al cierre — sin hallazgos: 6 queries parametrizadas vía `?` sin cambios, sin fuga de la Connection singleton, sin fuga de recursos nueva. `/security-review` no aplicable.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `1e6bdd3`.
+
+**Próximo DAO recomendado (cola de bajo riesgo):** `PedidoDAO` — sin dependencias cruzadas pendientes documentadas.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-6 (`79183dd`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 6/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1→B2-6 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-6.
+**HEAD:** commit Sprint B2-7 (`1e6bdd3`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 7/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1→B2-7 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-7.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
