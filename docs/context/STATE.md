@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-16-bis-2 — 151/151 — gaps mostrarResultadoImportacion()+mensajes de error cerrados)
+**Última actualización:** 2026-06-19 (sesión cierre — Sprint i18n-16-bis-3 — 151/151 — gap mensajes de error PresupuestosView cerrado)
 
 ---
 
@@ -121,15 +121,14 @@ Commit: `b1d6b3a` — `feat(i18n): cerrar gap cobertura DynamicColumnRuntime/exp
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit i18n-16-bis-2 (`16e3215`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Gap de cobertura DynamicColumnRuntime/export/filtro import/mostrarResultadoImportacion()/mensajes de error en Facturas/Pedidos: cerrado.
+**HEAD:** commit i18n-16-bis-3 (`d9dbf6a`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Gap de cobertura DynamicColumnRuntime/export/filtro import/mostrarResultadoImportacion()/mensajes de error en Facturas/Pedidos/Presupuestos: cerrado.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
-**Hallazgo fuera de alcance (NO corregido, requiere decisión de usuario antes de tocar código):** `PresupuestosView.java` líneas 824, 827, 894, 900 tiene el mismo patrón `throw new Exception("No se pudo cargar el presupuesto seleccionado.")`/`"No se pudo encontrar el cliente asociado al presupuesto."` que se acaba de corregir en FacturasView, visible vía `mostrarError()`. Descubierto por Claude Code durante un grep de verificación, fuera del alcance acordado (Facturas/Pedidos). No corregido — pendiente preguntar al usuario si se incluye en un sprint futuro.
+**Sprint i18n-16-bis-3 — ✅ CERRADO (mismo día, 2026-06-19).** Hallazgo fuera de alcance de i18n-16-bis-2 (`PresupuestosView.java` líneas 824, 827, 894, 900, mismo patrón `throw new Exception(...)` visible vía `mostrarError()`) incluido en el sprint tras confirmación explícita del usuario ("Sí, inclúyelo en este mismo sprint"). 4 throws migrados a `t("presupuestos.error.presupuesto_no_encontrado")`/`t("presupuestos.error.cliente_no_encontrado")`. 2 claves nuevas × 6 bundles (paridad verificada). VibeSec al cierre: sin hallazgos (lookup de bundle estático, sin input de usuario). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151. Commit: `d9dbf6a`.
 
 **Cola prioritaria (en orden recomendado):**
-1. **Gap PresupuestosView (ver hallazgo fuera de alcance arriba)** — mismo patrón de mensajes de excepción sin traducir que en FacturasView, 4 ocurrencias. Requiere confirmación de usuario sobre alcance antes de implementar.
-2. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
+1. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
 3. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
 4. **Técnica reutilizable confirmada** — PowerShell backtick-n (`` `n ``) dentro de string entre comillas dobles inserta un salto de línea real, no el literal `\n` de dos caracteres que necesita un valor `.properties`. Usar siempre el literal `\n` (concatenación o escape explícito), nunca el escape especial de PowerShell, al construir valores multilínea de bundles.
 5. **Regla reforzada** — antes de cerrar cualquier sprint i18n, revisar generically TODAS las claves `tf()` (con `{0}`) de los 6 bundles buscando apóstrofes simples sin escapar, no solo las que ya se sabe que tienen posesivos/elisión. El hallazgo CA de i18n-15 lo detectó Codex, no el grep de autorrevisión.
@@ -702,10 +701,9 @@ Preguntar al usuario qué prioriza si no lo indica.
 ## Cola prioritaria
 
 1. **Migración i18n: COMPLETA.** Las 17 vistas de la aplicación usan `LanguageManager`.
-2. **Gap PresupuestosView (hallazgo i18n-16-bis-2, NO corregido)** — `PresupuestosView.java:824,827,894,900`, mismo patrón de `throw new Exception(...)` visible vía `mostrarError()` que se acaba de corregir en FacturasView. Fuera del alcance acordado para este sprint; requiere confirmación de usuario antes de implementar.
-3. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
-4. **Gap de cobertura i18n: CERRADO** (i18n-16/i18n-16-bis/i18n-16-bis-2). `DynamicColumnRuntime`, prefijo de fichero exportado, `ExtensionFilter` exportación+importación y `mostrarResultadoImportacion()`/mensajes de error migrados en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas (import/export únicamente en Facturas/Pedidos; Presupuestos con gap de mensajes de error pendiente, ver punto 2).
-5. **Gap arquitectónico i18n conocido** — `Locale esES` fijo en `CalendarioView` para nombres de mes/día (no corregido en i18n-15, fuera de alcance quirúrgico).
+2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
+3. **Gap de cobertura i18n: CERRADO** (i18n-16/i18n-16-bis/i18n-16-bis-2/i18n-16-bis-3). `DynamicColumnRuntime`, prefijo de fichero exportado, `ExtensionFilter` exportación+importación y `mostrarResultadoImportacion()`/mensajes de error migrados en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas.
+4. **Gap arquitectónico i18n conocido** — `Locale esES` fijo en `CalendarioView` para nombres de mes/día (no corregido en i18n-15, fuera de alcance quirúrgico).
 
 ---
 
@@ -713,6 +711,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Sprint | Commit | Descripción |
 |---|---|---|
+| i18n-16-bis-3 | `d9dbf6a` | Cierra el hallazgo fuera de alcance de i18n-16-bis-2: 4 mensajes de excepción visibles vía mostrarError() en PresupuestosView migrados a t("presupuestos.error.presupuesto_no_encontrado")/t("presupuestos.error.cliente_no_encontrado"), mismo patrón que FacturasView. 2 claves nuevas × 6 bundles. Incluido en el sprint tras confirmación explícita del usuario |
 | i18n-16-bis-2 | `16e3215` | Cierra los 2 gaps de i18n-16-bis: mostrarResultadoImportacion() migrado a tf()/t() en FacturasView+PedidosView (patrón AlbaranesView); 4 mensajes de excepción visibles vía mostrarError() en FacturasView migrados a t("facturas.error.*") (Codex señaló 2, Claude Code verificó y encontró 4 reales). 14 claves nuevas × 6 bundles. Nuevo hallazgo fuera de alcance, no corregido: mismo patrón en PresupuestosView |
 | i18n-16-bis | `1aa6d58` | Filtro de IMPORTACIÓN en FacturasView/PedidosView (4 claves *.importar.filtro/todos_archivos). Codex detecta 2 gaps nuevos verificados, no corregidos (fuera de alcance): texto hardcodeado en mostrarResultadoImportacion() y mensajes de excepción visibles vía mostrarError() en FacturasView |
 | i18n-16 | `b1d6b3a` | Gap cobertura DynamicColumnRuntime/export en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas: título diálogo, prefijo fichero, ExtensionFilter exportación (18 claves *.export.filtro). Gap import sin traducir en Facturas/Pedidos detectado por Codex, no corregido (fuera de alcance) |
