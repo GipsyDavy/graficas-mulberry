@@ -119,9 +119,25 @@ Commit: `b1d6b3a` — `feat(i18n): cerrar gap cobertura DynamicColumnRuntime/exp
 
 ---
 
+### Sprint B2-1 — TarifaTramoDAO — ✅ CERRADO (2026-06-19)
+
+Primer DAO del Refactor B2 (inyección de Connection). Trazabilidad: Claude Code lidera. Gemini consultado ANTES vía bloque IDE (obligatorio por tocar BD/lógica crítica) — propuso inyección por constructor + `DAOFactory` transicional + orden de migración por fases de riesgo. Claude Code, con confirmación explícita del usuario, descartó el `DAOFactory` por YAGNI/KISS del proyecto (capa de indirección innecesaria para app monousuario sin pool) — inyección directa: cada DAO migrado de forma atómica, sus propios call sites actualizados en el mismo sprint, sin clase intermedia. Codex no consultado en esta ronda — cambio mecánico de 3 ficheros, sin incertidumbre tras compilación+tests en verde.
+
+**Hallazgo propio corregido antes de cerrar:** primer intento usó `try (Connection conn = DatabaseManager.getConnection())` en los call sites — habría cerrado la Connection singleton compartida de toda la app al salir del bloque (gestionada por `DatabaseManager` como singleton de vida completa, solo se cierra al apagar la app). Corregido a `DatabaseManager.getConnection()` sin try-with-resources sobre la Connection.
+
+Cambios: `TarifaTramoDAO(Connection conn)` reemplaza las 4 llamadas internas a `DatabaseManager.getConnection()`; 5 call sites actualizados (`TarifasView` ×4, `PresupuestosView` ×1). Import `DatabaseManager` añadido en `TarifasView` (no lo tenía).
+
+VibeSec ejecutado al cierre — limpio (SQL parametrizado intacto, sin fuga de Connection, sin input HTTP/red aplicable a app de escritorio). `/security-review` no aplicable — no toca auth/datos personales/permisos.
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `9127d62`.
+
+**Próximo DAO recomendado (Fase 1 Gemini, bajo riesgo):** `ColumnConfigDAO` o `NotaCalendarioDAO` — sin dependencias cruzadas con otros DAOs.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit i18n-16-bis-3 (`d9dbf6a`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Gap de cobertura DynamicColumnRuntime/export/filtro import/mostrarResultadoImportacion()/mensajes de error en Facturas/Pedidos/Presupuestos: cerrado.
+**HEAD:** commit Sprint B2-1 (`9127d62`). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 1/17 DAOs migrados (`TarifaTramoDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1 arriba.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
@@ -701,7 +717,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 ## Cola prioritaria
 
 1. **Migración i18n: COMPLETA.** Las 17 vistas de la aplicación usan `LanguageManager`.
-2. **Refactor B2** — inyección de Connection en DAOs (largo plazo). Requiere Gemini ANTES.
+2. **Refactor B2 — inyección de Connection en DAOs: EN CURSO.** Sprint B2-1 cerrado (`TarifaTramoDAO`, commit `9127d62`). Patrón confirmado: inyección directa por constructor, sin `DAOFactory` (decisión propia, desvío de la recomendación de Gemini por YAGNI/KISS — ver detalle abajo). Pendientes 16 DAOs, 1 por sprint, orden por riesgo/dependencias (Gemini: bajo riesgo primero — ColumnConfigDAO, NotaCalendarioDAO, DynamicColumnValueDAO, ConsumoMaterialDAO, TarifaDAO, NominaDAO, PedidoDAO — luego MaterialDAO/ClienteDAO/EmpleadoDAO/PagoMaterialDAO/PagoPedidoDAO/PresupuestoDAO — finalmente orquestadores FacturaDAO/AlbaranDAO y UserDAO (auth, requiere /security-review extra) al final).
 3. **Gap de cobertura i18n: CERRADO** (i18n-16/i18n-16-bis/i18n-16-bis-2/i18n-16-bis-3). `DynamicColumnRuntime`, prefijo de fichero exportado, `ExtensionFilter` exportación+importación y `mostrarResultadoImportacion()`/mensajes de error migrados en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas.
 4. **Gap arquitectónico i18n conocido** — `Locale esES` fijo en `CalendarioView` para nombres de mes/día (no corregido en i18n-15, fuera de alcance quirúrgico).
 
