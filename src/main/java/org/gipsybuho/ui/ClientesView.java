@@ -467,10 +467,10 @@ public class ClientesView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Clientes_" +
+        fc.setInitialFileName(t("nav.clientes") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Clientes", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("clientes.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);

@@ -767,10 +767,10 @@ public class PedidosView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Pedidos_" +
+        fc.setInitialFileName(t("nav.pedidos") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Pedidos", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("pedidos.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);

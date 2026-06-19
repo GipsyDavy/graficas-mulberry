@@ -59,7 +59,7 @@ public class AlbaranesView extends VBox {
         COLUMNAS_BASE.put("created_at", "Creado");
     }
     private final DynamicColumnRuntime<Albaran> dynamicColumns =
-        new DynamicColumnRuntime<>("albaranes", "Albaranes", COLUMNAS_BASE, tabla, datos, Albaran::getId);
+        new DynamicColumnRuntime<>("albaranes", t("nav.albaranes"), COLUMNAS_BASE, tabla, datos, Albaran::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
     private Label lblContador = new Label();
@@ -550,7 +550,7 @@ public class AlbaranesView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Albaranes_" +
+        fc.setInitialFileName(t("nav.albaranes") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
             new FileChooser.ExtensionFilter(tf("albaranes.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));

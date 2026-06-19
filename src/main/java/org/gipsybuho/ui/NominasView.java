@@ -67,7 +67,7 @@ public class NominasView extends VBox {
         COLUMNAS_BASE.put("created_at", "Creado");
     }
     private final DynamicColumnRuntime<Nomina> dynamicColumns =
-        new DynamicColumnRuntime<>("nominas", "Nóminas", COLUMNAS_BASE, tabla, datos, Nomina::getId);
+        new DynamicColumnRuntime<>("nominas", t("nav.nominas"), COLUMNAS_BASE, tabla, datos, Nomina::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
 
     public NominasView() {
@@ -517,7 +517,7 @@ public class NominasView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Nominas_" +
+        fc.setInitialFileName(t("nav.nominas") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
             new FileChooser.ExtensionFilter(tf("nominas.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));

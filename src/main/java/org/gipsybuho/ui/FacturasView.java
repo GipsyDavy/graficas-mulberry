@@ -62,7 +62,7 @@ public class FacturasView extends VBox {
         COLUMNAS_BASE.put("created_at", "Creado");
     }
     private final DynamicColumnRuntime<Factura> dynamicColumns =
-        new DynamicColumnRuntime<>("facturas", "Facturas", COLUMNAS_BASE, tabla, datos, Factura::getId);
+        new DynamicColumnRuntime<>("facturas", t("nav.facturas"), COLUMNAS_BASE, tabla, datos, Factura::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
     private Label lblContador = new Label();
@@ -674,10 +674,10 @@ public class FacturasView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Facturas_" +
+        fc.setInitialFileName(t("nav.facturas") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
-            new FileChooser.ExtensionFilter(fmt[3].toUpperCase() + " — Facturas", "*." + fmt[3]));
+            new FileChooser.ExtensionFilter(tf("facturas.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
         File docs = new File(System.getProperty("user.home"), "Documents");
         if (!docs.exists()) docs = new File(System.getProperty("user.home"));
         fc.setInitialDirectory(docs);

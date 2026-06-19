@@ -66,7 +66,7 @@ public class PresupuestosView extends VBox {
         COLUMNAS_BASE.put("created_at", "Creado");
     }
     private final DynamicColumnRuntime<Presupuesto> dynamicColumns =
-        new DynamicColumnRuntime<>("presupuestos", "Presupuestos", COLUMNAS_BASE, tabla, datos, Presupuesto::getId);
+        new DynamicColumnRuntime<>("presupuestos", t("nav.presupuestos"), COLUMNAS_BASE, tabla, datos, Presupuesto::getId);
     private Map<String, TextField> dialogExtraFields = new LinkedHashMap<>();
     private TextField txtBuscar;
     private Label lblContador = new Label();
@@ -785,7 +785,7 @@ public class PresupuestosView extends VBox {
     private void lanzarExportacion(String[] fmt) {
         FileChooser fc = new FileChooser();
         fc.setTitle(tf("export.dialog.guardar", fmt[1]));
-        fc.setInitialFileName("Presupuestos_" +
+        fc.setInitialFileName(t("nav.presupuestos") + "_" +
             LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss")) + "." + fmt[3]);
         fc.getExtensionFilters().add(
             new FileChooser.ExtensionFilter(tf("presupuestos.export.filtro", fmt[3].toUpperCase()), "*." + fmt[3]));
