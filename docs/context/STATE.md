@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-20 (Sprint B2-7 — NominaDAO inyección Connection — 151/151 — Refactor B2 en 7/17 DAOs)
+**Última actualización:** 2026-06-21 (Sprint B2-8 — PedidoDAO inyección Connection — 151/151 — Refactor B2 en 8/17 DAOs)
 
 ---
 
@@ -231,9 +231,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `1e6
 
 ---
 
+### Sprint B2-8 — PedidoDAO — ✅ CERRADO (2026-06-21)
+
+Octavo DAO del Refactor B2. Trazabilidad: Claude Code lidera. **Multi-IA usado esta vez** (primer wrinkle nuevo desde B2-1: método con transacción manual + DAO hermano anidado) — Gemini consultado vía bloque IDE (planificación, confirmó: usar `this.conn` en vez de `DatabaseManager.getConnection()` local en `crearDesdePresupuesto` es seguro porque es la misma instancia singleton; dejar `PresupuestoDAO` hermano sin migrar es correcto, solo hace lectura; replicar patrón de `calendarioDAO` en `ContextoERPService` es correcto). Codex consultado vía bloque IDE (verificación de inventario de call sites antes de implementar, vía grep): confirmó los 8 call sites de producción/test sin omisiones, corrigió detalle menor (`PedidoDAOTest` tiene 5 ocurrencias, no 4 como se contó a mano), y señaló que `DatabaseManager.generarNumeroPedido()` depende internamente de `DatabaseManager.getConnection()` pero vive en `DatabaseManager`, no en `PedidoDAO` — fuera de alcance de este sprint, queda intacto.
+
+Cambios: `PedidoDAO(Connection conn)` reemplaza las 5 llamadas internas a `DatabaseManager.getConnection()` (`findAll`, `findById`, `insert`, `update`, `delete`) vía sed. Sin identificadores dinámicos, las 5 queries ya usaban placeholders `?`. `crearDesdePresupuesto()` cambiado de `Connection conn = DatabaseManager.getConnection();` (variable local) a usar directamente el campo `this.conn` inyectado — mismo objeto singleton, sin cambio de comportamiento transaccional (`externalTx`/commit/rollback intactos). `new PresupuestoDAO()` dentro de `crearDesdePresupuesto` queda sin migrar (hermano fuera de alcance, solo lectura). Import `DatabaseManager` se mantiene en el DAO (lo sigue usando `generarNumeroPedido()`).
+
+8 call sites de producción/test actualizados: `EntityImportService.procesarPedido` (inline, reusa el `conn` de la transacción ya en scope), `ContextoERPService` (campo `pedidoDAO` sin inicializador, resuelto en el constructor reusando el mismo `conn` que `calendarioDAO`; import `Connection` añadido), `PresupuestosView.crearPedido` (inline dentro de un `try/catch(Exception)` ya existente), `PedidosView` (campo `pedidoDao` sin inicializador, try/catch en el constructor — hermanos `pagoDao`/`clienteDao` quedan con su inicializador original, fuera de alcance; import `SQLException` añadido), y 4 archivos de test (`PedidoDAOTest` 5 ocurrencias, `PagoPedidoDAOTest` 1, `EntityImportServiceAlbaranTest` 1, `EntityImportServicePedidoTest` 8 — 19 ocurrencias totales vía sed, `DatabaseManager` ya importado en los 4).
+
+VibeSec ejecutado al cierre — sin hallazgos: 5 queries parametrizadas vía `?` sin cambios, sin fuga de la Connection singleton, sin fuga de recursos nueva, transacción manual revisada y confirmada equivalente. `/security-review` no aplicable (no es `UserDAO`).
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151.
+
+**Próximo DAO recomendado (cola de bajo riesgo agotada — pasa a riesgo moderado):** `MaterialDAO`, `ClienteDAO`, `EmpleadoDAO`, `PagoMaterialDAO`, `PagoPedidoDAO` o `PresupuestoDAO`.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-7 (`1e6bdd3`, más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 7/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`). Patrón y orden de migración confirmados — ver Sprint B2-1→B2-7 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-7.
+**HEAD:** commit Sprint B2-8 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 8/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`). Cola de bajo riesgo agotada — el próximo sprint entra en riesgo moderado (`MaterialDAO`, `ClienteDAO`, `EmpleadoDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `PresupuestoDAO`), revisar dependencias cruzadas antes de elegir. Patrón y orden de migración confirmados — ver Sprint B2-1→B2-8 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-8.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
