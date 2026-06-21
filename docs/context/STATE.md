@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-21 (Sprint B2-10 — PagoMaterialDAO inyección Connection — 151/151 — Refactor B2 en 10/17 DAOs)
+**Última actualización:** 2026-06-21 (Sprint B2-11 — PagoPedidoDAO inyección Connection — 151/151 — Refactor B2 en 11/17 DAOs)
 
 ---
 
@@ -281,9 +281,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `478
 
 ---
 
+### Sprint B2-11 — PagoPedidoDAO — ✅ CERRADO (2026-06-21)
+
+Undécimo DAO del Refactor B2. Trazabilidad: Claude Code lidera. **Multi-IA usado** (riesgo moderado, norma confirmada en B2-8/B2-9/B2-10). Gemini consultado vía bloque IDE (planificación ANTES de implementar): confirmó el plan de compartir un único `conn` entre `pedidoDao` y `pagoDao` en el constructor de `PedidosView`; confirmó dejar `clienteDao` sin tocar (fuera de alcance); confirmó que `PagoPedidoDAO` no tiene wrinkles (sin identificadores dinámicos, sin transacción manual); confirmó razonable cerrar el sprint sin tocar `ClienteDAO`. Codex consultado vía bloque IDE (verificación de inventario antes de implementar, vía grep): confirmó las 4 ocurrencias de `new PagoPedidoDAO(` (3 en `PagoPedidoDAOTest`, 1 en `PedidosView`) sin discrepancias; confirmó las 8 llamadas a `DatabaseManager.getConnection()` en el DAO original (líneas 24, 35, 54, 70, 78, 87, 95, 103); confirmó ausencia de `requireSqlIdentifier`/`quoteIdentifier`/`setAutoCommit`; confirmó que el helper `crearPedido()` del test usa `PedidoDAO` con la misma Connection singleton, sin riesgo adicional; confirmó que `pagos_pedido` es hijo CASCADE de `pedidos` pero no bloquea ningún DAO no migrado. Sin discrepancias en ninguna de las dos revisiones.
+
+Cambios: `PagoPedidoDAO(Connection conn)` reemplaza las 8 llamadas internas a `DatabaseManager.getConnection()` (`findByPedido`, `findAll`, `insert`, `update`, `marcarPagado`, `delete`, `countVencidos`, `totalPendiente`). Sin identificadores dinámicos, todas las queries ya usaban placeholders `?`. Import `DatabaseManager` eliminado del DAO (sin otros usos).
+
+3 ficheros actualizados: `PagoPedidoDAOTest` (3 ocurrencias, `new PagoPedidoDAO(DatabaseManager.getConnection())`, `DatabaseManager` ya importado), `PedidosView` (campo `pagoDao` con inicializador inline → sin inicializador, resuelto en el constructor junto a `pedidoDao` compartiendo el mismo `conn`; import `Connection` añadido — no estaba presente en este fichero; `clienteDao` queda intacto, fuera de alcance).
+
+VibeSec ejecutado al cierre — sin hallazgos: 8 queries parametrizadas vía `?` sin cambios, sin fuga de la Connection singleton, sin fuga de recursos nueva (todos los `Statement`/`PreparedStatement` siguen en try-with-resources), 0 referencias residuales a `DatabaseManager` en el DAO. `/security-review` no aplicable (no es `UserDAO`).
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `981e787`.
+
+**Próximo DAO recomendado (riesgo moderado, continúa):** `ClienteDAO`, `EmpleadoDAO` o `PresupuestoDAO`. `EmpleadoDAO` sin wrinkles (perfil tan simple como `PagoPedidoDAO`/`PagoMaterialDAO`); `PresupuestoDAO` tiene transacción manual (`setAutoCommit`, mismo patrón que `PedidoDAO`/`MaterialDAO`); `ClienteDAO` usa `quoteIdentifier` (identificadores dinámicos) — el más sensible de los 3 restantes, candidato natural para cerrar la cola de riesgo moderado al final.
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-10 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 10/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`). Cola de riesgo moderado en curso: quedan `ClienteDAO`, `EmpleadoDAO`, `PagoPedidoDAO`, `PresupuestoDAO`. Patrón y orden de migración confirmados — ver Sprint B2-1→B2-10 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-10. La cola de riesgo moderado sigue exigiendo Multi-IA real (Gemini+Codex) — no asumir mecánico sin consulta, aunque el perfil técnico (grep) sea simple.
+**HEAD:** commit Sprint B2-11 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 11/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`). Cola de riesgo moderado en curso: quedan `ClienteDAO`, `EmpleadoDAO`, `PresupuestoDAO`. Patrón y orden de migración confirmados — ver Sprint B2-1→B2-11 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-11. La cola de riesgo moderado sigue exigiendo Multi-IA real (Gemini+Codex) — no asumir mecánico sin consulta, aunque el perfil técnico (grep) sea simple.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
