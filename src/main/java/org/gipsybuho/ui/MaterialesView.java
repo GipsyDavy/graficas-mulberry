@@ -36,6 +36,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -61,7 +62,7 @@ public class MaterialesView extends VBox {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     // ── DAOs ──────────────────────────────────────────────────────────────────
-    private final MaterialDAO      dao       = new MaterialDAO();
+    private final MaterialDAO      dao;
     private final ConsumoMaterialDAO consumoDao;
     private final PagoMaterialDAO  pagoDao   = new PagoMaterialDAO();
 
@@ -107,7 +108,9 @@ public class MaterialesView extends VBox {
 
     public MaterialesView() {
         try {
-            consumoDao = new ConsumoMaterialDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            consumoDao = new ConsumoMaterialDAO(conn);
+            dao = new MaterialDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

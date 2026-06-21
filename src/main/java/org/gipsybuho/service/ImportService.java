@@ -1369,7 +1369,7 @@ public class ImportService {
     }
 
     private int importarMateriales(List<Map<String, String>> rows, Map<String, String> mapping) throws Exception {
-        MaterialDAO dao = new MaterialDAO();
+        MaterialDAO dao = new MaterialDAO(DatabaseManager.getConnection());
         int n = 0;
         for (Map<String, String> row : rows) {
             Material m = new Material();

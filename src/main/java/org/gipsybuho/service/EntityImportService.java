@@ -383,7 +383,7 @@ public class EntityImportService {
 
     private int[] procesarMaterial(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                     List<RowError> errores) throws SQLException {
-        MaterialDAO dao = new MaterialDAO();
+        MaterialDAO dao = new MaterialDAO(conn);
         Material m = ensamblarMaterial(vr.vals());
 
         if (policy == DuplicatePolicy.CREATE_NEW) {

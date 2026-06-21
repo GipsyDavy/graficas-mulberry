@@ -18,6 +18,7 @@ import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.util.Duration;
 import org.gipsybuho.dao.*;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -183,7 +184,7 @@ public class DashboardView extends VBox {
             int clientes     = new ClienteDAO().count();
             int presupPend   = new PresupuestoDAO().countByEstado("enviado");
             int factPend     = new FacturaDAO().countByEstado("pendiente");
-            int bajoStock    = new MaterialDAO().countBajoStock();
+            int bajoStock    = new MaterialDAO(DatabaseManager.getConnection()).countBajoStock();
             double facturado = new FacturaDAO().totalFacturadoAnio(LocalDate.now().getYear());
 
             int[]    enteros = {clientes, presupPend, factPend, bajoStock};

@@ -13,6 +13,7 @@ import javafx.scene.shape.Circle;
 import javafx.util.StringConverter;
 import org.gipsybuho.dao.MaterialDAO;
 import org.gipsybuho.dao.PagoMaterialDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Material;
 import org.gipsybuho.model.PagoMaterial;
 import org.gipsybuho.service.PreferenceService;
@@ -20,6 +21,7 @@ import org.gipsybuho.service.PreferenceService;
 import static org.gipsybuho.service.LanguageManager.t;
 import static org.gipsybuho.service.LanguageManager.tf;
 
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -33,7 +35,7 @@ public class ComprasProveedorView extends VBox {
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
     private final PagoMaterialDAO pagoDao     = new PagoMaterialDAO();
-    private final MaterialDAO     materialDao  = new MaterialDAO();
+    private final MaterialDAO     materialDao;
 
     private final ObservableList<PagoMaterial> datos = FXCollections.observableArrayList();
     private final TableView<PagoMaterial>      tabla = new TableView<>(datos);
@@ -44,6 +46,11 @@ public class ComprasProveedorView extends VBox {
     private String filtroPagos = "todos";
 
     public ComprasProveedorView() {
+        try {
+            materialDao = new MaterialDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("module-view");
         Label titulo = new Label(t("compras.titulo"));
         titulo.getStyleClass().add("module-title");

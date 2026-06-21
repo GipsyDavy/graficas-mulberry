@@ -138,7 +138,7 @@ public class FacturaDAO {
 
     private void descontarMateriales(Factura f) throws SQLException {
         ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO(DatabaseManager.getConnection());
-        MaterialDAO matDao = new MaterialDAO();
+        MaterialDAO matDao = new MaterialDAO(DatabaseManager.getConnection());
         for (LineaFactura linea : f.getLineas()) {
             if (linea.getTecnica() == null || linea.getTecnica().isBlank()) continue;
             List<org.gipsybuho.model.ConsumoMaterial> reglas = consumoDao.findByTecnica(linea.getTecnica());

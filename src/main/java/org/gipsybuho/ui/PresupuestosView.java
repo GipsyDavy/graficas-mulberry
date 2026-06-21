@@ -578,7 +578,7 @@ public class PresupuestosView extends VBox {
         lblPicker.setStyle("-fx-font-weight:bold; -fx-font-size:13px;");
 
         List<Material> materiales;
-        try { materiales = new MaterialDAO().findAll(); }
+        try { materiales = new MaterialDAO(DatabaseManager.getConnection()).findAll(); }
         catch (Exception e) { materiales = new java.util.ArrayList<>(); }
 
         ComboBox<Material> cbMat = new ComboBox<>(FXCollections.observableArrayList(materiales));

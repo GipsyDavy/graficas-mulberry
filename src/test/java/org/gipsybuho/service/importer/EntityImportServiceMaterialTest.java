@@ -36,7 +36,7 @@ class EntityImportServiceMaterialTest {
 
     @Test
     void importaMaterialesSinReferenciaUsandoNombreComoClave() throws Exception {
-        int inicial = new MaterialDAO().findAll().size();
+        int inicial = new MaterialDAO(DatabaseManager.getConnection()).findAll().size();
 
         ImportResult result = importar(List.of(
             Map.of("nombre", "Plástico brillo 250m", "proveedor", "CODIAL", "precio_unidad", "0.35"),
@@ -45,31 +45,31 @@ class EntityImportServiceMaterialTest {
 
         assertEquals(2, result.filasImportadas());
         assertEquals(0, result.filasDescartadas());
-        assertEquals(inicial + 2, new MaterialDAO().findAll().size());
+        assertEquals(inicial + 2, new MaterialDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
     void omiteMaterialDuplicadoPorNombreCuandoNoHayReferencia() throws Exception {
-        int inicial = new MaterialDAO().findAll().size();
+        int inicial = new MaterialDAO(DatabaseManager.getConnection()).findAll().size();
 
         importar(List.of(Map.of("nombre", "Tinta cyan", "precio_unidad", "12")));
         ImportResult result = importar(List.of(Map.of("nombre", "Tinta cyan", "precio_unidad", "15")));
 
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.filasDescartadas());
-        assertEquals(inicial + 1, new MaterialDAO().findAll().size());
+        assertEquals(inicial + 1, new MaterialDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
     void sigueUsandoReferenciaComoClaveCuandoExiste() throws Exception {
-        int inicial = new MaterialDAO().findAll().size();
+        int inicial = new MaterialDAO(DatabaseManager.getConnection()).findAll().size();
 
         importar(List.of(Map.of("nombre", "Papel estucado", "referencia", "REF-1")));
         // Mismo nombre pero referencia distinta: NO es duplicado.
         ImportResult result = importar(List.of(Map.of("nombre", "Papel estucado", "referencia", "REF-2")));
 
         assertEquals(1, result.filasImportadas());
-        assertEquals(inicial + 2, new MaterialDAO().findAll().size());
+        assertEquals(inicial + 2, new MaterialDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -83,7 +83,7 @@ class EntityImportServiceMaterialTest {
             DuplicatePolicy.SKIP_IF_EXISTS);
 
         assertEquals(1, result.filasImportadas());
-        Material guardado = new MaterialDAO().findAll().stream()
+        Material guardado = new MaterialDAO(DatabaseManager.getConnection()).findAll().stream()
             .filter(m -> "Papel con unidad numerica".equals(m.getNombre()))
             .findFirst().orElse(null);
         assertNotNull(guardado);

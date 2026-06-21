@@ -30,7 +30,7 @@ public class ContextoERPService {
     private final PresupuestoDAO    presupuestoDAO    = new PresupuestoDAO();
     private final FacturaDAO        facturaDAO        = new FacturaDAO();
     private final PedidoDAO         pedidoDAO;
-    private final MaterialDAO       materialDAO       = new MaterialDAO();
+    private final MaterialDAO       materialDAO;
     private final ClienteDAO        clienteDAO        = new ClienteDAO();
     private final NotaCalendarioDAO calendarioDAO;
 
@@ -42,6 +42,7 @@ public class ContextoERPService {
             Connection conn = DatabaseManager.getConnection();
             calendarioDAO = new NotaCalendarioDAO(conn);
             pedidoDAO = new PedidoDAO(conn);
+            materialDAO = new MaterialDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

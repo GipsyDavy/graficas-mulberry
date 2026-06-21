@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Material;
 
 import java.sql.*;
@@ -9,9 +8,15 @@ import java.util.List;
 
 public class MaterialDAO {
 
+    private final Connection conn;
+
+    public MaterialDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Material> findAll() throws SQLException {
         List<Material> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM materiales ORDER BY categoria, nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -20,7 +25,7 @@ public class MaterialDAO {
 
     public List<Material> findBajoStock() throws SQLException {
         List<Material> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM materiales WHERE stock_actual <= stock_minimo ORDER BY nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -28,14 +33,14 @@ public class MaterialDAO {
     }
 
     public int countBajoStock() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM materiales WHERE stock_actual <= stock_minimo")) {
             return rs.next() ? rs.getInt(1) : 0;
         }
     }
 
     public Material findById(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM materiales WHERE id=?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -49,7 +54,7 @@ public class MaterialDAO {
 
     private void insert(Material m) throws SQLException {
         String sql = "INSERT INTO materiales (nombre,referencia,categoria,stock_actual,stock_minimo,unidad,precio_unidad,proveedor) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, m);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -59,7 +64,7 @@ public class MaterialDAO {
 
     private void update(Material m) throws SQLException {
         String sql = "UPDATE materiales SET nombre=?,referencia=?,categoria=?,stock_actual=?,stock_minimo=?,unidad=?,precio_unidad=?,proveedor=?,updated_at=datetime('now') WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, m);
             ps.setInt(9, m.getId());
             ps.executeUpdate();
@@ -67,7 +72,6 @@ public class MaterialDAO {
     }
 
     public void ajustarStock(int id, double cantidad, String tipo, String descripcion) throws SQLException {
-        Connection conn = DatabaseManager.getConnection();
         Material m = findById(id);
         if (m == null) return;
         double nuevoStock = tipo.equals("entrada") ? m.getStockActual() + cantidad : m.getStockActual() - cantidad;
@@ -98,7 +102,7 @@ public class MaterialDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM materiales WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();

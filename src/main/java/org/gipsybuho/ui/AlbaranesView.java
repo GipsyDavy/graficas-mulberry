@@ -366,7 +366,7 @@ public class AlbaranesView extends VBox {
 
     private void dialogoDesdeStock(ObservableList<LineaAlbaran> lineas) {
         List<Material> materiales;
-        try { materiales = new MaterialDAO().findAll(); }
+        try { materiales = new MaterialDAO(DatabaseManager.getConnection()).findAll(); }
         catch (Exception e) { mostrarError(e); return; }
         if (materiales.isEmpty()) { alerta(t("albaranes.stock.sin_materiales")); return; }
 

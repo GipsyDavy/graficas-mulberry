@@ -44,9 +44,9 @@ class MaterialDAOTest {
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         try {
-            new MaterialDAO().ajustarStock(idMaterial, 10.0, "salida", "test rollback");
+            new MaterialDAO(DatabaseManager.getConnection()).ajustarStock(idMaterial, 10.0, "salida", "test rollback");
             // Stock DENTRO de la tx: ya descontado en memoria de la tx.
-            assertEquals(90.0, new MaterialDAO().findById(idMaterial).getStockActual(), 0.001,
+            assertEquals(90.0, new MaterialDAO(DatabaseManager.getConnection()).findById(idMaterial).getStockActual(), 0.001,
                 "Dentro de la tx, el stock debe verse descontado");
             // Forzamos rollback del caller. ajustarStock NO debe haber commiteado.
             conn.rollback();
@@ -55,7 +55,7 @@ class MaterialDAOTest {
         }
 
         // Despues del rollback: el stock vuelve al original y no hay movimiento nuevo.
-        assertEquals(100.0, new MaterialDAO().findById(idMaterial).getStockActual(), 0.001,
+        assertEquals(100.0, new MaterialDAO(DatabaseManager.getConnection()).findById(idMaterial).getStockActual(), 0.001,
             "Tras rollback del caller, el stock vuelve al estado previo");
         assertEquals(movimientosPrevios, contarMovimientos(idMaterial),
             "Tras rollback del caller, no hay movimiento de stock registrado");
@@ -66,9 +66,9 @@ class MaterialDAOTest {
         Material m = crearMaterial("Tinta test 2", 50.0);
         int idMaterial = m.getId();
 
-        new MaterialDAO().ajustarStock(idMaterial, 5.0, "salida", "test sin tx externa");
+        new MaterialDAO(DatabaseManager.getConnection()).ajustarStock(idMaterial, 5.0, "salida", "test sin tx externa");
 
-        assertEquals(45.0, new MaterialDAO().findById(idMaterial).getStockActual(), 0.001,
+        assertEquals(45.0, new MaterialDAO(DatabaseManager.getConnection()).findById(idMaterial).getStockActual(), 0.001,
             "Sin tx externa, ajustarStock commitea y el stock queda persistido");
         assertTrue(contarMovimientos(idMaterial) >= 1,
             "Sin tx externa, el movimiento queda registrado");
@@ -85,9 +85,9 @@ class MaterialDAOTest {
         m.setStockMinimo(0.0);
         m.setPrecioUnidad(0.0);
 
-        new MaterialDAO().save(m);
+        new MaterialDAO(DatabaseManager.getConnection()).save(m);
 
-        Material recargado = new MaterialDAO().findById(m.getId());
+        Material recargado = new MaterialDAO(DatabaseManager.getConnection()).findById(m.getId());
         assertEquals("consumibles", recargado.getCategoria(),
             "categoria null al insertar debe preservar DEFAULT DDL 'consumibles'");
         assertEquals("ud", recargado.getUnidad(),
@@ -96,7 +96,7 @@ class MaterialDAOTest {
 
     @Test
     void referenciaUnicaRechazaDuplicado() throws Exception {
-        MaterialDAO dao = new MaterialDAO();
+        MaterialDAO dao = new MaterialDAO(DatabaseManager.getConnection());
         Material m1 = new Material();
         m1.setNombre("Material A");
         m1.setReferencia("REF-UNICA-001");
@@ -124,7 +124,7 @@ class MaterialDAOTest {
         m.setStockMinimo(0.0);
         m.setUnidad("ud");
         m.setPrecioUnidad(1.0);
-        new MaterialDAO().save(m);
+        new MaterialDAO(DatabaseManager.getConnection()).save(m);
         return m;
     }
 

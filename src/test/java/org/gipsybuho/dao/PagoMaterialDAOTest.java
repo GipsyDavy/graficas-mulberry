@@ -73,7 +73,7 @@ class PagoMaterialDAOTest {
         Material m = new Material();
         m.setNombre(nombre);
         m.setUnidad("ud");
-        new MaterialDAO().save(m);
+        new MaterialDAO(DatabaseManager.getConnection()).save(m);
         return m;
     }
 
