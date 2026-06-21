@@ -49,7 +49,7 @@ class EntityImportServicePedidoTest {
 
         assertEquals(2, result.filasImportadas());
         assertEquals(0, result.errores().size());
-        assertEquals(2, new PedidoDAO().findAll().size());
+        assertEquals(2, new PedidoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -76,7 +76,7 @@ class EntityImportServicePedidoTest {
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Cliente con nif"));
         assertTrue(result.errores().get(0).mensaje().contains("no encontrado"));
-        assertEquals(0, new PedidoDAO().findAll().size());
+        assertEquals(0, new PedidoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -89,7 +89,7 @@ class EntityImportServicePedidoTest {
 
         assertEquals(1, result.filasImportadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new PedidoDAO().findAll().size());
+        assertEquals(1, new PedidoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -112,7 +112,7 @@ class EntityImportServicePedidoTest {
         Pedido existente = new Pedido();
         existente.setClienteId(cliente.getId());
         existente.setNumero("PED-1");
-        new PedidoDAO().save(existente);
+        new PedidoDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importar(List.of(
                 fila("111A", "", "", "PED-1", "120.50")
@@ -121,7 +121,7 @@ class EntityImportServicePedidoTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(0, result.filasActualizadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new PedidoDAO().findAll().size());
+        assertEquals(1, new PedidoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -160,7 +160,7 @@ class EntityImportServicePedidoTest {
         existente.setClienteId(cliente.getId());
         existente.setNumero("P-001");
         existente.setFecha(java.time.LocalDate.of(2024, 1, 15));
-        new PedidoDAO().save(existente);
+        new PedidoDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importarConFecha(List.of(
                 fila("111A", "", "", "P-001", "120.50", "15/03/2024")
@@ -173,7 +173,7 @@ class EntityImportServicePedidoTest {
         assertEquals(ErrorTipo.TIPO_INVALIDO, err.tipo());
         assertEquals("fecha", err.campo());
         assertTrue(err.mensaje().contains("Fecha no válida"));
-        Pedido guardado = new PedidoDAO().findAll().stream()
+        Pedido guardado = new PedidoDAO(DatabaseManager.getConnection()).findAll().stream()
                 .filter(pedido -> "P-001".equals(pedido.getNumero()))
                 .findFirst()
                 .orElseThrow();
@@ -196,7 +196,7 @@ class EntityImportServicePedidoTest {
         assertEquals(ErrorTipo.TIPO_INVALIDO, err.tipo());
         assertTrue(err.mensaje().contains("Fecha no válida"));
         assertTrue(err.mensaje().contains("31/12/2025"));
-        assertTrue(new PedidoDAO().findAll().stream()
+        assertTrue(new PedidoDAO(DatabaseManager.getConnection()).findAll().stream()
                 .noneMatch(pedido -> "P-FECHA-MALA".equals(pedido.getNumero())));
     }
 

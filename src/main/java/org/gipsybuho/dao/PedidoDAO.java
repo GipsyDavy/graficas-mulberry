@@ -12,6 +12,12 @@ import java.util.stream.Collectors;
 
 public class PedidoDAO {
 
+    private final Connection conn;
+
+    public PedidoDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     private static final String SELECT_BASE = """
         SELECT p.*,
             c.nombre || COALESCE(' ' || NULLIF(c.apellidos,''), '') AS cliente_nombre,
@@ -26,7 +32,7 @@ public class PedidoDAO {
 
     public List<Pedido> findAll() throws SQLException {
         List<Pedido> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(SELECT_BASE + "ORDER BY p.fecha DESC, p.id DESC")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -34,7 +40,7 @@ public class PedidoDAO {
     }
 
     public Pedido findById(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 SELECT_BASE + "WHERE p.id = ?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -53,7 +59,7 @@ public class PedidoDAO {
                estado, descripcion, importe_total, iva_porcentaje, notas)
             VALUES (?,?,?,?,?,?,?,?,?,?)
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(ps, p);
             ps.executeUpdate();
@@ -69,7 +75,7 @@ public class PedidoDAO {
               estado=?, descripcion=?, importe_total=?, iva_porcentaje=?, notas=?
             WHERE id=?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             bind(ps, p);
             ps.setInt(11, p.getId());
             ps.executeUpdate();
@@ -77,7 +83,7 @@ public class PedidoDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM pedidos WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -115,7 +121,6 @@ public class PedidoDAO {
             .collect(Collectors.joining(", "));
         p.setDescripcion(desc.isBlank() ? null : desc);
 
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {

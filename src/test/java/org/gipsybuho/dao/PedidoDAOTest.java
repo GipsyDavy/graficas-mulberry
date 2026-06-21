@@ -35,9 +35,9 @@ class PedidoDAOTest {
     void saveInsertaYRecuperaConClienteNombreJoin() throws Exception {
         Cliente c = crearCliente("Imprenta Sol", "Garcia");
         Pedido p = nuevoPedido(c.getId(), "PED-001");
-        new PedidoDAO().save(p);
+        new PedidoDAO(DatabaseManager.getConnection()).save(p);
 
-        Pedido recargado = new PedidoDAO().findById(p.getId());
+        Pedido recargado = new PedidoDAO(DatabaseManager.getConnection()).findById(p.getId());
         assertNotNull(recargado);
         assertEquals("PED-001", recargado.getNumero());
         assertTrue(recargado.getClienteNombre().contains("Imprenta Sol"), "findById debe resolver clienteNombre via JOIN");
@@ -52,9 +52,9 @@ class PedidoDAOTest {
         p.setFecha(LocalDate.now());
         // estado e iva_porcentaje NO se setean: bind aplica defaults Java-side
 
-        new PedidoDAO().save(p);
+        new PedidoDAO(DatabaseManager.getConnection()).save(p);
 
-        Pedido recargado = new PedidoDAO().findById(p.getId());
+        Pedido recargado = new PedidoDAO(DatabaseManager.getConnection()).findById(p.getId());
         assertNotNull(recargado);
         assertEquals("pendiente", recargado.getEstado(), "estado null debe quedar como 'pendiente'");
         assertEquals(21.0, recargado.getIvaPorcentaje(), 0.001, "iva_porcentaje<=0 debe quedar como 21.0");
@@ -63,7 +63,7 @@ class PedidoDAOTest {
     @Test
     void deleteEliminaRegistro() throws Exception {
         Cliente c = crearCliente("Litografia Norte", "");
-        PedidoDAO dao = new PedidoDAO();
+        PedidoDAO dao = new PedidoDAO(DatabaseManager.getConnection());
         Pedido p = nuevoPedido(c.getId(), "PED-DEL-1");
         dao.save(p);
         assertEquals(1, dao.findAll().size());

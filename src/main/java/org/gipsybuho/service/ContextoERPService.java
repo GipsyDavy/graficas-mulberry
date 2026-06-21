@@ -11,6 +11,7 @@ import org.gipsybuho.model.Material;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.Pedido;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.TextStyle;
@@ -28,7 +29,7 @@ public class ContextoERPService {
 
     private final PresupuestoDAO    presupuestoDAO    = new PresupuestoDAO();
     private final FacturaDAO        facturaDAO        = new FacturaDAO();
-    private final PedidoDAO         pedidoDAO         = new PedidoDAO();
+    private final PedidoDAO         pedidoDAO;
     private final MaterialDAO       materialDAO       = new MaterialDAO();
     private final ClienteDAO        clienteDAO        = new ClienteDAO();
     private final NotaCalendarioDAO calendarioDAO;
@@ -38,7 +39,9 @@ public class ContextoERPService {
 
     public ContextoERPService() {
         try {
-            calendarioDAO = new NotaCalendarioDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            calendarioDAO = new NotaCalendarioDAO(conn);
+            pedidoDAO = new PedidoDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

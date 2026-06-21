@@ -205,7 +205,7 @@ class EntityImportServiceAlbaranTest {
         p.setFecha(LocalDate.parse("2025-01-15"));
         p.setEstado("pendiente");
         p.setIvaPorcentaje(21.0);
-        new PedidoDAO().save(p);
+        new PedidoDAO(DatabaseManager.getConnection()).save(p);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "A-1", "", "P-77", "Camiseta", 10, "ud")

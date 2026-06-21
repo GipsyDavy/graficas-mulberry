@@ -84,7 +84,7 @@ class PagoPedidoDAOTest {
         p.setFecha(LocalDate.now());
         p.setEstado("pendiente");
         p.setIvaPorcentaje(21.0);
-        new PedidoDAO().save(p);
+        new PedidoDAO(DatabaseManager.getConnection()).save(p);
         return p.getId();
     }
 

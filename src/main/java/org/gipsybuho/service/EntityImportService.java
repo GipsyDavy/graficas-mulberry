@@ -709,7 +709,7 @@ public class EntityImportService {
 
     private int[] procesarPedido(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                   List<RowError> errores) throws SQLException {
-        PedidoDAO dao = new PedidoDAO();
+        PedidoDAO dao = new PedidoDAO(conn);
         Pedido p = ensamblarPedido(vr.vals(), conn, errores, vr.numero());
         if (p == null) return new int[]{0, 0, 0};
 
