@@ -28,6 +28,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -40,7 +41,7 @@ import java.util.Map;
 public class NominasView extends VBox {
 
     private final NominaDAO dao;
-    private final EmpleadoDAO empleadoDAO = new EmpleadoDAO();
+    private final EmpleadoDAO empleadoDAO;
     private TextField txtBuscar;
     private final NominaService nominaService = new NominaService();
     private Label lblContador = new Label();
@@ -74,7 +75,9 @@ public class NominasView extends VBox {
 
     public NominasView() {
         try {
-            dao = new NominaDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            dao = new NominaDAO(conn);
+            empleadoDAO = new EmpleadoDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

@@ -98,7 +98,7 @@ class EntityImportServiceNominaTest {
     @Test
     void importaNominaDeEmpleadoInactivo() throws Exception {
         Empleado empleado = crearEmpleado("Maria", "Ruiz");
-        new EmpleadoDAO().delete(empleado.getId());
+        new EmpleadoDAO(DatabaseManager.getConnection()).delete(empleado.getId());
 
         ImportResult result = importar(List.of(
             fila("Maria", "Ruiz", "3", "2025", "1100")
@@ -152,7 +152,7 @@ class EntityImportServiceNominaTest {
         empleado.setNombre(nombre);
         empleado.setApellidos(apellidos);
         empleado.setActivo(true);
-        new EmpleadoDAO().save(empleado);
+        new EmpleadoDAO(DatabaseManager.getConnection()).save(empleado);
         return empleado;
     }
 }

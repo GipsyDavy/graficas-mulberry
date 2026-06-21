@@ -81,7 +81,7 @@ class NominaDAOTest {
         e.setNombre(nombre);
         e.setApellidos(apellidos);
         e.setActivo(true);
-        new EmpleadoDAO().save(e);
+        new EmpleadoDAO(DatabaseManager.getConnection()).save(e);
         return e;
     }
 

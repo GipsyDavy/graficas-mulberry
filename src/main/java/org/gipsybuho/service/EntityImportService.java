@@ -449,7 +449,7 @@ public class EntityImportService {
 
     private int[] procesarEmpleado(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                     List<RowError> errores) throws SQLException {
-        EmpleadoDAO dao = new EmpleadoDAO();
+        EmpleadoDAO dao = new EmpleadoDAO(conn);
         Empleado emp = ensamblarEmpleado(vr.vals());
 
         if (policy == DuplicatePolicy.CREATE_NEW) {

@@ -11,6 +11,7 @@ import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.layout.*;
 import javafx.stage.FileChooser;
 import org.gipsybuho.dao.EmpleadoDAO;
+import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Empleado;
 import org.gipsybuho.service.EntityImportService;
 import org.gipsybuho.service.ExportService;
@@ -28,6 +29,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -43,7 +45,7 @@ public class EmpleadosView extends VBox {
         "Diseñadora", "Contable", "Administrativo", "Taller", "Jefe de Taller", "Prácticas"
     };
 
-    private final EmpleadoDAO dao = new EmpleadoDAO();
+    private final EmpleadoDAO dao;
     private final ObservableList<Empleado> datos = FXCollections.observableArrayList();
     private final TableView<Empleado> tabla = new TableView<>(datos);
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
@@ -71,6 +73,11 @@ public class EmpleadosView extends VBox {
     private Label lblContador = new Label();
 
     public EmpleadosView() {
+        try {
+            dao = new EmpleadoDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

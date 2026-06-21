@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Empleado;
 
 import java.sql.*;
@@ -9,9 +8,15 @@ import java.util.List;
 
 public class EmpleadoDAO {
 
+    private final Connection conn;
+
+    public EmpleadoDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Empleado> findAll() throws SQLException {
         List<Empleado> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM empleados WHERE activo=1 ORDER BY nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -20,7 +25,7 @@ public class EmpleadoDAO {
 
     public List<Empleado> findAllIncluirBajas() throws SQLException {
         List<Empleado> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM empleados ORDER BY nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -28,7 +33,7 @@ public class EmpleadoDAO {
     }
 
     public Empleado findById(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM empleados WHERE id = ?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -42,7 +47,7 @@ public class EmpleadoDAO {
 
     private void insert(Empleado e) throws SQLException {
         String sql = "INSERT INTO empleados (nombre,apellidos,nif,categoria,salario_base,fecha_alta,iban,irpf,activo,telefono,email,direccion) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, e);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -52,7 +57,7 @@ public class EmpleadoDAO {
 
     private void update(Empleado e) throws SQLException {
         String sql = "UPDATE empleados SET nombre=?,apellidos=?,nif=?,categoria=?,salario_base=?,fecha_alta=?,iban=?,irpf=?,activo=?,telefono=?,email=?,direccion=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, e);
             ps.setInt(13, e.getId());
             ps.executeUpdate();
@@ -60,7 +65,7 @@ public class EmpleadoDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE empleados SET activo=0, fecha_baja=date('now') WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -68,7 +73,7 @@ public class EmpleadoDAO {
     }
 
     public void reactivar(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE empleados SET activo=1, fecha_baja=NULL WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -76,7 +81,7 @@ public class EmpleadoDAO {
     }
 
     public int count() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM empleados WHERE activo=1")) {
             return rs.next() ? rs.getInt(1) : 0;
         }

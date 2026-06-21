@@ -1397,7 +1397,7 @@ public class ImportService {
     }
 
     private int importarEmpleados(List<Map<String, String>> rows, Map<String, String> mapping) throws Exception {
-        EmpleadoDAO dao = new EmpleadoDAO();
+        EmpleadoDAO dao = new EmpleadoDAO(DatabaseManager.getConnection());
         int n = 0;
         for (Map<String, String> row : rows) {
             Empleado emp = new Empleado();

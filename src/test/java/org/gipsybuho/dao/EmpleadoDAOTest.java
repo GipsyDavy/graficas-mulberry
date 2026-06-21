@@ -35,9 +35,9 @@ class EmpleadoDAOTest {
         e.setNombre("Marta");
         e.setApellidos("Fernandez");
         e.setActivo(true);
-        new EmpleadoDAO().save(e);
+        new EmpleadoDAO(DatabaseManager.getConnection()).save(e);
 
-        Empleado recargado = new EmpleadoDAO().findById(e.getId());
+        Empleado recargado = new EmpleadoDAO(DatabaseManager.getConnection()).findById(e.getId());
         assertNotNull(recargado);
         assertEquals("Marta", recargado.getNombre());
         assertEquals("Fernandez", recargado.getApellidos());
@@ -47,7 +47,7 @@ class EmpleadoDAOTest {
 
     @Test
     void deleteHaceSoftDeleteYReactivarLoRestaurea() throws Exception {
-        EmpleadoDAO dao = new EmpleadoDAO();
+        EmpleadoDAO dao = new EmpleadoDAO(DatabaseManager.getConnection());
         Empleado e = new Empleado();
         e.setNombre("Jose");
         e.setApellidos("Ruiz");
@@ -65,7 +65,7 @@ class EmpleadoDAOTest {
 
     @Test
     void countCuentaSoloActivos() throws Exception {
-        EmpleadoDAO dao = new EmpleadoDAO();
+        EmpleadoDAO dao = new EmpleadoDAO(DatabaseManager.getConnection());
         Empleado activo = new Empleado();
         activo.setNombre("Ana");
         activo.setActivo(true);
@@ -83,7 +83,7 @@ class EmpleadoDAOTest {
 
     @Test
     void nifUnicoRechazaDuplicado() throws Exception {
-        EmpleadoDAO dao = new EmpleadoDAO();
+        EmpleadoDAO dao = new EmpleadoDAO(DatabaseManager.getConnection());
         Empleado e1 = new Empleado();
         e1.setNombre("Ana");
         e1.setNif("12345678A");
