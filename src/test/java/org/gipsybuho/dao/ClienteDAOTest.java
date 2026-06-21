@@ -42,9 +42,9 @@ class ClienteDAOTest {
         c.setNombre("Test Empresa");
         // tipo y ciudad se dejan a null para verificar que setBase aplica el fallback Java-side.
 
-        new ClienteDAO().save(c);
+        new ClienteDAO(DatabaseManager.getConnection()).save(c);
 
-        Cliente recargado = new ClienteDAO().findById(c.getId());
+        Cliente recargado = new ClienteDAO(DatabaseManager.getConnection()).findById(c.getId());
         assertEquals("empresa", recargado.getTipo(),
             "tipo null al insertar debe preservar DEFAULT DDL 'empresa'");
         assertEquals("Almería", recargado.getCiudad(),
@@ -83,7 +83,7 @@ class ClienteDAOTest {
 
     @Test
     void nifUnicoRechazaDuplicado() throws Exception {
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(DatabaseManager.getConnection());
         Cliente c1 = new Cliente();
         c1.setNombre("Empresa A");
         c1.setNif("B12345678");
@@ -99,7 +99,7 @@ class ClienteDAOTest {
     @Test
     void updateMantieneColumnasExtraValidasConQuotingCentralizado() throws Exception {
         DatabaseManager.addColumn("clientes", "campo_extra");
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(DatabaseManager.getConnection());
 
         Cliente c = new Cliente();
         c.setNombre("Empresa Extra");
@@ -114,7 +114,7 @@ class ClienteDAOTest {
     }
 
     private Cliente mapCliente(List<String> columns, Map<String, Object> values) throws Exception {
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(DatabaseManager.getConnection());
         Method map = ClienteDAO.class.getDeclaredMethod("map", ResultSet.class);
         map.setAccessible(true);
         return (Cliente) map.invoke(dao, resultSet(columns, values));

@@ -33,6 +33,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -47,7 +49,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 public class PresupuestosView extends VBox {
 
     private final PresupuestoDAO dao = new PresupuestoDAO();
-    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final ClienteDAO clienteDAO;
     private final ObservableList<Presupuesto> datos = FXCollections.observableArrayList();
     private final TableView<Presupuesto> tabla = new TableView<>(datos);
     private static final Map<String, String> COLUMNAS_BASE = new LinkedHashMap<>();
@@ -72,6 +74,11 @@ public class PresupuestosView extends VBox {
     private Label lblContador = new Label();
 
     public PresupuestosView() {
+        try {
+            clienteDAO = new ClienteDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);

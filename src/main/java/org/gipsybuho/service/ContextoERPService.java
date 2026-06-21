@@ -31,7 +31,7 @@ public class ContextoERPService {
     private final FacturaDAO        facturaDAO        = new FacturaDAO();
     private final PedidoDAO         pedidoDAO;
     private final MaterialDAO       materialDAO;
-    private final ClienteDAO        clienteDAO        = new ClienteDAO();
+    private final ClienteDAO        clienteDAO;
     private final NotaCalendarioDAO calendarioDAO;
 
     private volatile String cachedContexto = null;
@@ -43,6 +43,7 @@ public class ContextoERPService {
             calendarioDAO = new NotaCalendarioDAO(conn);
             pedidoDAO = new PedidoDAO(conn);
             materialDAO = new MaterialDAO(conn);
+            clienteDAO = new ClienteDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

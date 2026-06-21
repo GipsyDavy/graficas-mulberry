@@ -78,7 +78,7 @@ class PedidoDAOTest {
         c.setNombre(nombre);
         c.setApellidos(apellidos);
         c.setTipo("empresa");
-        new ClienteDAO().save(c);
+        new ClienteDAO(DatabaseManager.getConnection()).save(c);
         return c;
     }
 

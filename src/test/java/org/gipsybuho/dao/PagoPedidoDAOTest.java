@@ -76,7 +76,7 @@ class PagoPedidoDAOTest {
         Cliente c = new Cliente();
         c.setNombre("Cliente Test");
         c.setTipo("empresa");
-        new ClienteDAO().save(c);
+        new ClienteDAO(DatabaseManager.getConnection()).save(c);
 
         Pedido p = new Pedido();
         p.setClienteId(c.getId());

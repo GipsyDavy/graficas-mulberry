@@ -181,7 +181,7 @@ public class DashboardView extends VBox {
 
     private void cargarDatos(FlowPane tarjetas) {
         try {
-            int clientes     = new ClienteDAO().count();
+            int clientes     = new ClienteDAO(DatabaseManager.getConnection()).count();
             int presupPend   = new PresupuestoDAO().countByEstado("enviado");
             int factPend     = new FacturaDAO().countByEstado("pendiente");
             int bajoStock    = new MaterialDAO(DatabaseManager.getConnection()).countBajoStock();

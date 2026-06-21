@@ -97,7 +97,7 @@ class AlbaranDAOTest {
         c.setApellidos("Garcia");
         c.setNif("111A");
         c.setTipo("empresa");
-        new ClienteDAO().save(c);
+        new ClienteDAO(DatabaseManager.getConnection()).save(c);
         return c;
     }
 

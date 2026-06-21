@@ -179,7 +179,7 @@ public class ImportarClientesService {
         List<String> columnasNuevas = asegurarColumnas(headerToCol.values());
 
         // 3. Cargar clientes existentes para deduplicar
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(DatabaseManager.getConnection());
         List<Cliente> existentes;
         try { existentes = dao.findAll(); } catch (Exception e) { existentes = new ArrayList<>(); }
 

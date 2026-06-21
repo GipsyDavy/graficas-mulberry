@@ -1339,7 +1339,7 @@ public class ImportService {
     }
 
     private int importarClientes(List<Map<String, String>> rows, Map<String, String> mapping) throws Exception {
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(DatabaseManager.getConnection());
         int n = 0;
         for (Map<String, String> row : rows) {
             Cliente c = new Cliente();

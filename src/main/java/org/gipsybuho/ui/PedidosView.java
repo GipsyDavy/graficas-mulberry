@@ -57,7 +57,7 @@ public class PedidosView extends VBox {
     // ── DAOs ──────────────────────────────────────────────────────────────────
     private final PedidoDAO     pedidoDao;
     private final PagoPedidoDAO pagoDao;
-    private final ClienteDAO    clienteDao = new ClienteDAO();
+    private final ClienteDAO    clienteDao;
 
     // ── Tab Pedidos ───────────────────────────────────────────────────────────
     private final ObservableList<Pedido>     datosPedidos     = FXCollections.observableArrayList();
@@ -91,6 +91,7 @@ public class PedidosView extends VBox {
             Connection conn = DatabaseManager.getConnection();
             pedidoDao = new PedidoDAO(conn);
             pagoDao = new PagoPedidoDAO(conn);
+            clienteDao = new ClienteDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

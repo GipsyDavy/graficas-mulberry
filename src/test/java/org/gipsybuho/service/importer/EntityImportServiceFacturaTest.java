@@ -235,7 +235,7 @@ class EntityImportServiceFacturaTest {
         cliente.setApellidos(apellidos);
         cliente.setNif(nif);
         cliente.setTipo("empresa");
-        new ClienteDAO().save(cliente);
+        new ClienteDAO(DatabaseManager.getConnection()).save(cliente);
         return cliente;
     }
 }

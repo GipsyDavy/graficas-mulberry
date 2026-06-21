@@ -508,7 +508,7 @@ public class EntityImportService {
 
     private int[] procesarCliente(Connection conn, ValidRow vr, DuplicatePolicy policy,
                                    List<RowError> errores) throws SQLException {
-        ClienteDAO dao = new ClienteDAO();
+        ClienteDAO dao = new ClienteDAO(conn);
         Cliente c = ensamblarCliente(vr.vals());
 
         if (policy == DuplicatePolicy.CREATE_NEW) {

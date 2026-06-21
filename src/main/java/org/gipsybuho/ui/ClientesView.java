@@ -34,6 +34,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
@@ -45,7 +46,7 @@ import java.util.Set;
 
 public class ClientesView extends VBox {
 
-    private final ClienteDAO dao = new ClienteDAO();
+    private final ClienteDAO dao;
     private final ColumnConfigDAO columnConfigDAO;
     private final ObservableList<Cliente> datos = FXCollections.observableArrayList();
     private final TableView<Cliente> tabla = new TableView<>(datos);
@@ -75,7 +76,9 @@ public class ClientesView extends VBox {
 
     public ClientesView() {
         try {
-            columnConfigDAO = new ColumnConfigDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            columnConfigDAO = new ColumnConfigDAO(conn);
+            dao = new ClienteDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

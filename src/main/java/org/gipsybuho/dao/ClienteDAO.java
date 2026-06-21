@@ -8,6 +8,12 @@ import java.util.*;
 
 public class ClienteDAO {
 
+    private final Connection conn;
+
+    public ClienteDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     private static final Set<String> CAMPOS_FIJOS = Set.of(
         "id", "nombre", "apellidos", "apellido", "tipo", "nif",
         "direccion", "ciudad", "cp", "telefono", "email", "notas", "created_at"
@@ -15,7 +21,7 @@ public class ClienteDAO {
 
     public List<Cliente> findAll() throws SQLException {
         List<Cliente> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT * FROM clientes ORDER BY nombre")) {
             while (rs.next()) list.add(map(rs));
         }
@@ -25,7 +31,7 @@ public class ClienteDAO {
     public List<Cliente> search(String texto) throws SQLException {
         List<Cliente> list = new ArrayList<>();
         String sql = "SELECT * FROM clientes WHERE nombre LIKE ? OR apellidos LIKE ? OR nif LIKE ? OR email LIKE ? ORDER BY nombre";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             String q = "%" + texto + "%";
             ps.setString(1, q); ps.setString(2, q); ps.setString(3, q); ps.setString(4, q);
             ResultSet rs = ps.executeQuery();
@@ -35,7 +41,7 @@ public class ClienteDAO {
     }
 
     public Cliente findById(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM clientes WHERE id = ?")) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
@@ -57,7 +63,7 @@ public class ClienteDAO {
         String sql = "INSERT INTO clientes (" + quotedColumns(cols) + ") VALUES (" +
             String.join(",", Collections.nCopies(cols.size(), "?")) + ")";
 
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             setBase(ps, c);
             int idx = 11;
             for (String key : extraKeys) ps.setString(idx++, c.getExtra(key));
@@ -79,7 +85,7 @@ public class ClienteDAO {
         extraKeys.forEach(k -> sets.add(DatabaseManager.quoteIdentifier(k) + "=?"));
         sql.append(String.join(",", sets)).append(" WHERE id=?");
 
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql.toString())) {
+        try (PreparedStatement ps = conn.prepareStatement(sql.toString())) {
             setBase(ps, c);
             int idx = 11;
             for (String key : extraKeys) ps.setString(idx++, c.getExtra(key));
@@ -89,7 +95,7 @@ public class ClienteDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM clientes WHERE id = ?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -97,7 +103,7 @@ public class ClienteDAO {
     }
 
     public int count() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM clientes")) {
             return rs.next() ? rs.getInt(1) : 0;
         }
@@ -106,7 +112,7 @@ public class ClienteDAO {
     /** Devuelve los nombres de columnas extra (fuera de los campos fijos) presentes en la tabla. */
     public List<String> obtenerColumnasExtra() throws SQLException {
         List<String> extras = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery("PRAGMA table_info(clientes)")) {
             while (rs.next()) {
                 String col = rs.getString("name").toLowerCase();

@@ -30,6 +30,8 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.LinkedHashMap;
@@ -42,7 +44,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 public class FacturasView extends VBox {
 
     private final FacturaDAO dao = new FacturaDAO();
-    private final ClienteDAO clienteDAO = new ClienteDAO();
+    private final ClienteDAO clienteDAO;
     private final ObservableList<Factura> datos = FXCollections.observableArrayList();
     private final TableView<Factura> tabla = new TableView<>(datos);
     private final ProgressIndicator cargando = new ProgressIndicator();
@@ -69,6 +71,11 @@ public class FacturasView extends VBox {
     private Label lblContador = new Label();
 
     public FacturasView() {
+        try {
+            clienteDAO = new ClienteDAO(DatabaseManager.getConnection());
+        } catch (SQLException e) {
+            throw new RuntimeException(e);
+        }
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(12);
