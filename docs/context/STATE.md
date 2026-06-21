@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-21 (Sprint B2-11 — PagoPedidoDAO inyección Connection — 151/151 — Refactor B2 en 11/17 DAOs)
+**Última actualización:** 2026-06-21 (Sprint B2-12 — EmpleadoDAO inyección Connection — 151/151 — Refactor B2 en 12/17 DAOs)
 
 ---
 
@@ -297,9 +297,25 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `981
 
 ---
 
+### Sprint B2-12 — EmpleadoDAO — ✅ CERRADO (2026-06-21)
+
+Duodécimo DAO del Refactor B2. Trazabilidad: Claude Code lidera. **Multi-IA usado** (riesgo moderado, norma confirmada en B2-8→B2-11). Gemini consultado vía bloque IDE (planificación ANTES de implementar): confirmó reusar el parámetro `Connection conn` ya recibido por `EntityImportService.procesarEmpleado(...)`; confirmó inline `new EmpleadoDAO(DatabaseManager.getConnection())` en `ImportService.importarEmpleados(...)` (ya declara `throws Exception`, sin `Connection` en scope); confirmó el patrón estándar de mover el campo `dao` de `EmpleadosView` al constructor con try/catch; confirmó refactorizar el constructor de `NominasView` para resolver `conn` una sola vez y compartirlo entre `dao` (`NominaDAO`) y `empleadoDAO`; sin riesgos detectados. Codex consultado vía bloque IDE (verificación de inventario antes de implementar, vía grep): confirmó las 8 llamadas a `DatabaseManager.getConnection()` en el DAO original (`findAll`, `findAllIncluirBajas`, `findById`, `insert`, `update`, `delete`, `reactivar`, `count`); confirmó ausencia de `requireSqlIdentifier`/`quoteIdentifier`/`setAutoCommit`; **corrigió el conteo inicial de call sites de 13 a 12** — 2 de las 14 menciones de `new EmpleadoDAO(` encontradas por `rg -uu` eran referencias documentales (`docs/context/STATE.md`, `docs/security/rg-file-surface-2026-06-13.txt`), no código fuente; confirmó que `EmpleadosView`/`NominasView` no importaban `java.sql.Connection` (había que añadirlo) y que `NominasView` ya importaba `SQLException`; confirmó que ningún otro DAO no migrado depende de `EmpleadoDAO` de forma bloqueante (FK `nominas.empleado_id` sin `ON DELETE CASCADE`). Sin discrepancias de contenido en ninguna de las dos revisiones — solo la corrección de conteo (13→12), que no afectó al plan de implementación.
+
+Cambios: `EmpleadoDAO(Connection conn)` reemplaza las 8 llamadas internas a `DatabaseManager.getConnection()`. Sin identificadores dinámicos, todas las queries ya usaban placeholders `?`. Import `DatabaseManager` eliminado del DAO (solo queda mención en comentario).
+
+8 ficheros actualizados: `EmpleadoDAOTest` (5 ocurrencias), `NominaDAOTest` (1 ocurrencia), `EntityImportServiceNominaTest` (2 ocurrencias) — los 3 ya importaban `DatabaseManager`; `EntityImportService.procesarEmpleado()` reusa el `conn` ya recibido como parámetro; `ImportService.importarEmpleados()` inline `new EmpleadoDAO(DatabaseManager.getConnection())`; `EmpleadosView` (campo `dao` con inicializador inline → sin inicializador, nuevo try/catch en el constructor, imports `Connection`/`SQLException` añadidos — no estaban presentes); `NominasView` (campo `empleadoDAO` con inicializador inline → sin inicializador, constructor refactorizado para resolver `conn` una sola vez y compartirlo con `dao`, import `Connection` añadido).
+
+VibeSec ejecutado al cierre — sin hallazgos: 8 queries parametrizadas vía `?` sin cambios, sin fuga de la Connection singleton, sin fuga de recursos nueva, 0 referencias residuales a `DatabaseManager` en el DAO (solo comentario), 12/12 call sites migrados verificados vía grep. `/security-review` no aplicable (no es `UserDAO`).
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `8e975c9`.
+
+**Próximo DAO recomendado (riesgo moderado, continúa):** `ClienteDAO` o `PresupuestoDAO` — cola de riesgo moderado en sus 2 últimos candidatos. `PresupuestoDAO` tiene transacción manual (`setAutoCommit`, mismo patrón ya resuelto en `PedidoDAO`/`MaterialDAO`); `ClienteDAO` usa `quoteIdentifier` (identificadores dinámicos) — el más sensible de toda la cola moderada, candidato natural para cerrarla al final antes de pasar a los orquestadores (`FacturaDAO`, `AlbaranDAO`) y finalmente `UserDAO` (auth-sensible, requiere `/security-review`).
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-11 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 11/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`). Cola de riesgo moderado en curso: quedan `ClienteDAO`, `EmpleadoDAO`, `PresupuestoDAO`. Patrón y orden de migración confirmados — ver Sprint B2-1→B2-11 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-11. La cola de riesgo moderado sigue exigiendo Multi-IA real (Gemini+Codex) — no asumir mecánico sin consulta, aunque el perfil técnico (grep) sea simple.
+**HEAD:** commit Sprint B2-12 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. Refactor B2 (Connection inyectada en DAOs): 12/17 DAOs migrados (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `EmpleadoDAO`). Cola de riesgo moderado en curso: quedan `ClienteDAO`, `PresupuestoDAO` (últimos 2 de la cola moderada). Patrón y orden de migración confirmados — ver Sprint B2-1→B2-12 arriba. Técnica de inicializador de campo + excepción comprobada (incl. constructores encadenados vía `this(...)`) documentada y reutilizada en B2-2→B2-12. La cola de riesgo moderado sigue exigiendo Multi-IA real (Gemini+Codex) — no asumir mecánico sin consulta, aunque el perfil técnico (grep) sea simple.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
