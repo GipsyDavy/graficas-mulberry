@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.PagoMaterial;
 
 import java.sql.*;
@@ -10,6 +9,12 @@ import java.util.List;
 
 public class PagoMaterialDAO {
 
+    private final Connection conn;
+
+    public PagoMaterialDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     private static final String SELECT_BASE = """
         SELECT pm.*, m.nombre AS mat_nombre, m.unidad AS mat_unidad
         FROM pagos_material pm
@@ -18,7 +23,7 @@ public class PagoMaterialDAO {
 
     public List<PagoMaterial> findAll() throws SQLException {
         List<PagoMaterial> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(SELECT_BASE +
                  "ORDER BY CASE pm.estado WHEN 'pendiente' THEN 0 ELSE 1 END, pm.fecha_vencimiento ASC")) {
             while (rs.next()) list.add(map(rs));
@@ -28,7 +33,7 @@ public class PagoMaterialDAO {
 
     public List<PagoMaterial> findPendientes() throws SQLException {
         List<PagoMaterial> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(SELECT_BASE +
                  "WHERE pm.estado = 'pendiente' ORDER BY pm.fecha_vencimiento ASC")) {
             while (rs.next()) list.add(map(rs));
@@ -39,7 +44,7 @@ public class PagoMaterialDAO {
     public List<PagoMaterial> findVencidos() throws SQLException {
         List<PagoMaterial> list = new ArrayList<>();
         String hoy = LocalDate.now().toString();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 SELECT_BASE + "WHERE pm.estado='pendiente' AND pm.fecha_vencimiento < ? ORDER BY pm.fecha_vencimiento")) {
             ps.setString(1, hoy);
             ResultSet rs = ps.executeQuery();
@@ -52,7 +57,7 @@ public class PagoMaterialDAO {
         List<PagoMaterial> list = new ArrayList<>();
         String hoy   = LocalDate.now().toString();
         String hasta = LocalDate.now().plusDays(dias).toString();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 SELECT_BASE + "WHERE pm.estado='pendiente' AND pm.fecha_vencimiento >= ? AND pm.fecha_vencimiento <= ? ORDER BY pm.fecha_vencimiento")) {
             ps.setString(1, hoy);
             ps.setString(2, hasta);
@@ -64,7 +69,7 @@ public class PagoMaterialDAO {
 
     public int countVencidos() throws SQLException {
         String hoy = LocalDate.now().toString();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COUNT(*) FROM pagos_material WHERE estado='pendiente' AND fecha_vencimiento < ?")) {
             ps.setString(1, hoy);
             ResultSet rs = ps.executeQuery();
@@ -73,7 +78,7 @@ public class PagoMaterialDAO {
     }
 
     public double totalPendiente() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(
                  "SELECT COALESCE(SUM(importe_total),0) FROM pagos_material WHERE estado='pendiente'")) {
             return rs.next() ? rs.getDouble(1) : 0;
@@ -92,7 +97,7 @@ public class PagoMaterialDAO {
                fecha_vencimiento, estado, fecha_pago, notas)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(ps, p);
             ps.executeUpdate();
@@ -109,7 +114,7 @@ public class PagoMaterialDAO {
               fecha_vencimiento=?, estado=?, fecha_pago=?, notas=?
             WHERE id=?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             bind(ps, p);
             ps.setInt(13, p.getId());
             ps.executeUpdate();
@@ -117,7 +122,7 @@ public class PagoMaterialDAO {
     }
 
     public void marcarPagado(int id, LocalDate fechaPago) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE pagos_material SET estado='pagado', fecha_pago=? WHERE id=?")) {
             ps.setString(1, fechaPago != null ? fechaPago.toString() : LocalDate.now().toString());
             ps.setInt(2, id);
@@ -126,7 +131,7 @@ public class PagoMaterialDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM pagos_material WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();

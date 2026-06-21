@@ -64,7 +64,7 @@ public class MaterialesView extends VBox {
     // ── DAOs ──────────────────────────────────────────────────────────────────
     private final MaterialDAO      dao;
     private final ConsumoMaterialDAO consumoDao;
-    private final PagoMaterialDAO  pagoDao   = new PagoMaterialDAO();
+    private final PagoMaterialDAO  pagoDao;
 
     // ── Stock tab ─────────────────────────────────────────────────────────────
     private final ObservableList<Material> datos = FXCollections.observableArrayList();
@@ -111,6 +111,7 @@ public class MaterialesView extends VBox {
             Connection conn = DatabaseManager.getConnection();
             consumoDao = new ConsumoMaterialDAO(conn);
             dao = new MaterialDAO(conn);
+            pagoDao = new PagoMaterialDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

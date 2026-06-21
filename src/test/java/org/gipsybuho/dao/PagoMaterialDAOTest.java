@@ -36,7 +36,7 @@ class PagoMaterialDAOTest {
     void saveInsertaYMarcarPagadoCambiaEstado() throws Exception {
         Material mat = crearMaterial("Papel A4");
         PagoMaterial p = pagoPendiente(mat.getId(), 250.0, LocalDate.now().plusDays(30));
-        PagoMaterialDAO dao = new PagoMaterialDAO();
+        PagoMaterialDAO dao = new PagoMaterialDAO(DatabaseManager.getConnection());
         dao.save(p);
         assertEquals("pendiente", dao.findAll().get(0).getEstado());
 
@@ -47,7 +47,7 @@ class PagoMaterialDAOTest {
     @Test
     void findPendientesNoIncluyePagados() throws Exception {
         Material mat = crearMaterial("Tinta");
-        PagoMaterialDAO dao = new PagoMaterialDAO();
+        PagoMaterialDAO dao = new PagoMaterialDAO(DatabaseManager.getConnection());
         PagoMaterial pendiente = pagoPendiente(mat.getId(), 100.0, LocalDate.now().plusDays(10));
         PagoMaterial pagado = pagoPendiente(mat.getId(), 200.0, LocalDate.now().plusDays(5));
         dao.save(pendiente);
@@ -62,7 +62,7 @@ class PagoMaterialDAOTest {
     @Test
     void totalPendienteAgregaCorrectamente() throws Exception {
         Material mat = crearMaterial("Cartón");
-        PagoMaterialDAO dao = new PagoMaterialDAO();
+        PagoMaterialDAO dao = new PagoMaterialDAO(DatabaseManager.getConnection());
         dao.save(pagoPendiente(mat.getId(), 300.0, LocalDate.now().plusDays(10)));
         dao.save(pagoPendiente(mat.getId(), 150.0, LocalDate.now().plusDays(20)));
 

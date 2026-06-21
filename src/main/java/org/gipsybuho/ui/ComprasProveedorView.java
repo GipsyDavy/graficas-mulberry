@@ -21,6 +21,7 @@ import org.gipsybuho.service.PreferenceService;
 import static org.gipsybuho.service.LanguageManager.t;
 import static org.gipsybuho.service.LanguageManager.tf;
 
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
@@ -34,7 +35,7 @@ public class ComprasProveedorView extends VBox {
     };
     private static final DateTimeFormatter FMT = DateTimeFormatter.ofPattern("dd/MM/yyyy");
 
-    private final PagoMaterialDAO pagoDao     = new PagoMaterialDAO();
+    private final PagoMaterialDAO pagoDao;
     private final MaterialDAO     materialDao;
 
     private final ObservableList<PagoMaterial> datos = FXCollections.observableArrayList();
@@ -47,7 +48,9 @@ public class ComprasProveedorView extends VBox {
 
     public ComprasProveedorView() {
         try {
-            materialDao = new MaterialDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            materialDao = new MaterialDAO(conn);
+            pagoDao = new PagoMaterialDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
