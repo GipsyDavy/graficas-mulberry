@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.PagoPedido;
 
 import java.sql.*;
@@ -9,6 +8,12 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class PagoPedidoDAO {
+
+    private final Connection conn;
+
+    public PagoPedidoDAO(Connection conn) {
+        this.conn = conn;
+    }
 
     private static final String SELECT_BASE = """
         SELECT pp.*,
@@ -21,7 +26,7 @@ public class PagoPedidoDAO {
 
     public List<PagoPedido> findByPedido(int pedidoId) throws SQLException {
         List<PagoPedido> list = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 SELECT_BASE + "WHERE pp.pedido_id = ? ORDER BY pp.fecha_vencimiento ASC, pp.id ASC")) {
             ps.setInt(1, pedidoId);
             ResultSet rs = ps.executeQuery();
@@ -32,7 +37,7 @@ public class PagoPedidoDAO {
 
     public List<PagoPedido> findAll() throws SQLException {
         List<PagoPedido> list = new ArrayList<>();
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(SELECT_BASE +
                  "ORDER BY CASE pp.estado WHEN 'pendiente' THEN 0 ELSE 1 END, pp.fecha_vencimiento ASC")) {
             while (rs.next()) list.add(map(rs));
@@ -51,7 +56,7 @@ public class PagoPedidoDAO {
                forma_pago, estado, fecha_pago, notas)
             VALUES (?,?,?,?,?,?,?,?,?)
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 sql, Statement.RETURN_GENERATED_KEYS)) {
             bind(ps, p);
             ps.executeUpdate();
@@ -67,7 +72,7 @@ public class PagoPedidoDAO {
               forma_pago=?, estado=?, fecha_pago=?, notas=?
             WHERE id=?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             bind(ps, p);
             ps.setInt(10, p.getId());
             ps.executeUpdate();
@@ -75,7 +80,7 @@ public class PagoPedidoDAO {
     }
 
     public void marcarPagado(int id, LocalDate fecha) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE pagos_pedido SET estado='pagado', fecha_pago=? WHERE id=?")) {
             ps.setString(1, fecha != null ? fecha.toString() : LocalDate.now().toString());
             ps.setInt(2, id);
@@ -84,7 +89,7 @@ public class PagoPedidoDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM pagos_pedido WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -92,7 +97,7 @@ public class PagoPedidoDAO {
     }
 
     public int countVencidos() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(
                  "SELECT COUNT(*) FROM pagos_pedido WHERE estado='pendiente' AND fecha_vencimiento < date('now')")) {
             return rs.next() ? rs.getInt(1) : 0;
@@ -100,7 +105,7 @@ public class PagoPedidoDAO {
     }
 
     public double totalPendiente() throws SQLException {
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(
                  "SELECT COALESCE(SUM(importe),0) FROM pagos_pedido WHERE estado='pendiente'")) {
             return rs.next() ? rs.getDouble(1) : 0;

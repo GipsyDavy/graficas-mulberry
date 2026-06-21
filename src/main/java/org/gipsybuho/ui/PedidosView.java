@@ -33,6 +33,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -55,7 +56,7 @@ public class PedidosView extends VBox {
 
     // ── DAOs ──────────────────────────────────────────────────────────────────
     private final PedidoDAO     pedidoDao;
-    private final PagoPedidoDAO pagoDao    = new PagoPedidoDAO();
+    private final PagoPedidoDAO pagoDao;
     private final ClienteDAO    clienteDao = new ClienteDAO();
 
     // ── Tab Pedidos ───────────────────────────────────────────────────────────
@@ -87,7 +88,9 @@ public class PedidosView extends VBox {
 
     public PedidosView() {
         try {
-            pedidoDao = new PedidoDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            pedidoDao = new PedidoDAO(conn);
+            pagoDao = new PagoPedidoDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

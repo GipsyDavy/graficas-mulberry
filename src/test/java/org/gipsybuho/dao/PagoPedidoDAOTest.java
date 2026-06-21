@@ -37,7 +37,7 @@ class PagoPedidoDAOTest {
     void saveInsertaYMarcarPagadoCambiaEstado() throws Exception {
         int pedidoId = crearPedido("PED-PP-001");
         PagoPedido pp = pagoPendiente(pedidoId, 500.0);
-        PagoPedidoDAO dao = new PagoPedidoDAO();
+        PagoPedidoDAO dao = new PagoPedidoDAO(DatabaseManager.getConnection());
         dao.save(pp);
         assertEquals("pendiente", dao.findByPedido(pedidoId).get(0).getEstado());
 
@@ -49,7 +49,7 @@ class PagoPedidoDAOTest {
     void findByPedidoFiltraPorPedidoId() throws Exception {
         int pedido1 = crearPedido("PED-PP-002");
         int pedido2 = crearPedido("PED-PP-003");
-        PagoPedidoDAO dao = new PagoPedidoDAO();
+        PagoPedidoDAO dao = new PagoPedidoDAO(DatabaseManager.getConnection());
         dao.save(pagoPendiente(pedido1, 100.0));
         dao.save(pagoPendiente(pedido1, 200.0));
         dao.save(pagoPendiente(pedido2, 300.0));
@@ -62,7 +62,7 @@ class PagoPedidoDAOTest {
     @Test
     void totalPendienteAgregaCorrectamente() throws Exception {
         int pedidoId = crearPedido("PED-PP-004");
-        PagoPedidoDAO dao = new PagoPedidoDAO();
+        PagoPedidoDAO dao = new PagoPedidoDAO(DatabaseManager.getConnection());
         PagoPedido p1 = pagoPendiente(pedidoId, 400.0);
         PagoPedido p2 = pagoPendiente(pedidoId, 600.0);
         dao.save(p1);
