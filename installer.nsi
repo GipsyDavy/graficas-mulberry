@@ -9,7 +9,7 @@
 
 ; ── Configuracion general ────────────────────────────────────
 Name              "Graficas Mulberry"
-OutFile           "output\GraficasMulberry-Instalador-v14.0.1.exe"
+OutFile           "output\GraficasMulberry-Instalador-v14.1.0.exe"
 InstallDir        "$LOCALAPPDATA\GraficasMulberry"
 InstallDirRegKey  HKCU "Software\GraficasMulberry" "InstallDir"
 RequestExecutionLevel user
@@ -32,12 +32,12 @@ SetCompressorDictSize 32
 !define MUI_HEADERIMAGE_RIGHT
 
 ; ── MUI2: textos pagina de bienvenida ────────────────────────
-!define MUI_WELCOMEPAGE_TITLE "Graficas Mulberry 14.0.1"
+!define MUI_WELCOMEPAGE_TITLE "Graficas Mulberry 14.1.0"
 !define MUI_WELCOMEPAGE_TEXT "Bienvenido al instalador de Graficas Mulberry.$\r$\n$\r$\nEste sistema de gestion para serigrafía incluye su propio entorno Java. No necesitas instalar ningun software adicional.$\r$\n$\r$\nHaz clic en Siguiente para continuar."
 
 ; ── MUI2: textos pagina final ────────────────────────────────
 !define MUI_FINISHPAGE_TITLE "Instalacion completada"
-!define MUI_FINISHPAGE_TEXT "Graficas Mulberry v14.0.1 se ha instalado correctamente.$\r$\n$\r$\nSe ha creado un acceso directo en el escritorio.$\r$\n$\r$\nHaz clic en Finalizar para cerrar el instalador."
+!define MUI_FINISHPAGE_TEXT "Graficas Mulberry v14.1.0 se ha instalado correctamente.$\r$\n$\r$\nSe ha creado un acceso directo en el escritorio.$\r$\n$\r$\nHaz clic en Finalizar para cerrar el instalador."
 !define MUI_FINISHPAGE_RUN      "$INSTDIR\GraficasMulberry.exe"
 !define MUI_FINISHPAGE_RUN_TEXT "Abrir Graficas Mulberry ahora"
 
@@ -59,12 +59,12 @@ SetCompressorDictSize 32
 !insertmacro MUI_LANGUAGE "Spanish"
 
 ; ── Version info embebida en el .exe ─────────────────────────
-VIProductVersion "14.0.1.0"
+VIProductVersion "14.1.0.0"
 VIAddVersionKey /LANG=0 "ProductName"     "Graficas Mulberry"
-VIAddVersionKey /LANG=0 "ProductVersion"  "14.0.1"
+VIAddVersionKey /LANG=0 "ProductVersion"  "14.1.0"
 VIAddVersionKey /LANG=0 "CompanyName"     "Graficas Mulberry S.L."
 VIAddVersionKey /LANG=0 "FileDescription" "Instalador de Graficas Mulberry"
-VIAddVersionKey /LANG=0 "FileVersion"     "14.0.1.0"
+VIAddVersionKey /LANG=0 "FileVersion"     "14.1.0.0"
 VIAddVersionKey /LANG=0 "LegalCopyright"  "(C) 2024-2026 Graficas Mulberry S.L."
 
 ; ── Detectar version anterior y ofrecer desinstalacion ───────
@@ -95,7 +95,7 @@ Section "Aplicacion" SecMain
 
     ; Guardar directorio de instalacion
     WriteRegStr HKCU "Software\GraficasMulberry" "InstallDir" "$INSTDIR"
-    WriteRegStr HKCU "Software\GraficasMulberry" "Version"    "14.0.1"
+    WriteRegStr HKCU "Software\GraficasMulberry" "Version"    "14.1.0"
 
     ; Desinstalador
     WriteUninstaller "$INSTDIR\Desinstalar.exe"
@@ -106,7 +106,7 @@ Section "Aplicacion" SecMain
         "DisplayName" "Graficas Mulberry"
     WriteRegStr HKCU \
         "Software\Microsoft\Windows\CurrentVersion\Uninstall\GraficasMulberry" \
-        "DisplayVersion" "14.0.1"
+        "DisplayVersion" "14.1.0"
     WriteRegStr HKCU \
         "Software\Microsoft\Windows\CurrentVersion\Uninstall\GraficasMulberry" \
         "Publisher" "Graficas Mulberry S.L."

@@ -3,7 +3,33 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-22 (Sprint OLLAMA-PATH — fix defensivo OLLAMA_MODELS, diagnóstico HTTP 500 — 151/151 — v14.0.0 empaquetada)
+**Última actualización:** 2026-06-22 (Sprint AYUDA-OLLAMA-SIDEBAR — fix real ayuda/Ollama + reorganización sidebar — 151/151 — v14.1.0 empaquetada)
+
+---
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-22 (Sprint AYUDA-OLLAMA-SIDEBAR — v14.1.0 empaquetada)
+
+Agente líder: Claude Code. Sin Multi-IA — diagnósticos verificados directamente (jpackage `--add-modules`, `LOCALAPPDATA` real del entorno, conteo de call sites) y cambios mecánicos/bajo riesgo sin auth/BD/datos sensibles; usuario revisó cada paso en vivo (`mvn javafx:run`) antes de autorizar el siguiente.
+
+**1. Ayuda (F1 + icono) no funcionaba en el `.exe` empaquetado — causa raíz real:** `build-nsis.ps1` pasaba `--add-modules` a jpackage sin `javafx.web` ni `javafx.media`. Los jars sí se copiaban a `mods/`, pero el módulo nunca se resolvía en runtime → `new WebView()` en `HelpView` lanzaba `NoClassDefFoundError` silencioso (tragado por el handler por defecto de JavaFX, sin diálogo) en cada apertura, tanto por F1 como por el icono — parecía "desactivado". Bug presente desde el commit que introdujo F1 contextual (HELP-3), nunca detectado porque la validación siempre fue `mvn javafx:run` (classpath dev completo, módulo siempre presente ahí) o `mvnw test` (no toca UI/WebView), nunca el `.exe` real. Fix: `javafx.web,javafx.media` añadidos a `--add-modules`. Secundarios: `HelpView.MODULE_IDS` no incluía `"compras"` (grupo invisible en árbol aunque los artículos sí cargaban vía F1); icono footer de ayuda abría siempre el artículo general en vez de `HelpView.forModule(currentModuleId)` como F1 — homogeneizado.
+
+**2. Ollama HTTP 500 — el fix defensivo del sprint OLLAMA-PATH anterior no arreglaba nada:** `OllamaManager.configurarRutaModelos()` construía `OLLAMA_MODELS` desde `%LOCALAPPDATA%`, que en este equipo vale `C:\Users\Gipsy Dávy\AppData\Local` — sigue teniendo tilde y espacio, el mismo bug de llama-server que se pretendía evitar. Verificado con `echo $LOCALAPPDATA` en vivo. Fix real: ruta fija `C:\ProgramData\GraficasMulberry\ollama-models` (independiente del perfil de usuario) + persistencia `setx` a nivel de usuario (defensa para autoarranque futuro de Windows) + reinicio automático (`detenerProcesosExternos`/`reiniciarConRutaCorrecta`) si Ollama ya estaba corriendo con la ruta rota al abrir la app (decisión del usuario, alternativa "solo instrucción manual" descartada). `OllamaInstallerDialog.descargarModelo()` también fijado a la misma ruta — antes el `pull` y el server podían usar rutas distintas. **Sin verificar en vivo con un pull real:** Ollama no estaba instalado en la máquina durante la sesión (confirmado: sin proceso, sin exe en rutas estándar, sin registro de desinstalación) — pendiente de probar con instalación real vía el wizard de la app.
+
+**3. Sidebar — varios ajustes UX/UI a petición del usuario, todos confirmados visualmente en `mvn javafx:run` antes de cerrar:**
+- Grupos (CLIENTES/COMERCIAL/PERSONAL/ANALÍTICA/ASISTENTE IA) arrancan colapsados siempre (antes expandidos por defecto, sin persistencia de estado entre sesiones).
+- Cabecera de grupo con tinte `derive(-c-accent, 88%)` (mismo patrón que `.nav-pill`, se adapta solo a los 5 temas) + texto en `-c-text` (color oscuro de marca, no blanco — el primer intento con texto blanco quedó ilegible sobre el tinte claro, corregido en la misma sesión) + letter-spacing + opacidad 0.75/1.0 en hover.
+- Icono de colapsar/expandir sidebar: nuevo `Icons.sidebarToggle()` (doble chevron 18px) sustituye al `Icons.navArrow()` de 10px reutilizado que apenas se veía como control principal.
+- Tooltips: nuevo helper `Tooltips.java` (paquete `ui`), sustituido mecánicamente `new Tooltip(` → `Tooltips.of(` en 102 call sites / 14 archivos (vía sed, mismo patrón que las migraciones DAO de B2). Delay 300 ms, `setShowDuration(Duration.INDEFINITE)` — el valor intermedio de 20s probado primero seguía dando sensación de parpadeo (se ocultaba sola a destiempo mientras el usuario seguía mirando).
+- Grupo COMERCIAL reordenado: Materiales, Compras, Pedidos, Presupuestos, Albaranes, Facturas.
+- "Asistente IA" extraído de ANALÍTICA a su propio grupo (misma cabecera visual, reusa `navGrupo()`) — clave `nav.grupo.asistente` añadida en los 6 idiomas (es/en/ca/eu/gl/fr): "ASISTENTE IA"/"AI ASSISTANT"/"ASSISTENT IA"/"IA LAGUNTZAILEA"/"ASISTENTE IA"/"ASSISTANT IA".
+
+**4. Bug adicional encontrado al empaquetar:** `installer.nsi` tenía la versión `14.0.1` hardcodeada en 8 sitios (OutFile, textos MUI, `VIProductVersion`, claves de registro) totalmente desacoplada de `$APP_VERSION` en `build-nsis.ps1` — el primer build de esta sesión generó un `.exe` correctamente nombrado v14.1.0 según el log del script, pero el archivo real en disco seguía siendo `v14.0.1.exe` por dentro y por fuera. Corregido (sed mecánico, mismos 8 literales) y reempaquetado — confirmado el segundo build sí generó `GraficasMulberry-Instalador-v14.1.0.exe` (117.5 MB). **Riesgo no resuelto:** `installer.nsi` sigue sin leer la versión de una fuente única (`$APP_VERSION` no se pasa vía `/D` a `makensis`) — cualquier futuro bump de versión debe tocar manualmente `AppConstants.java` + `build-nsis.ps1` + `installer.nsi` (3 sitios), o repetirá este mismo bug. Pendiente de una futura sesión: parametrizar `installer.nsi` con `!define APP_VERSION` inyectado por `/DAPP_VERSION=...` desde `build-nsis.ps1`.
+
+VibeSec ejecutado en cada cierre parcial de esta sesión (ayuda, Ollama, sidebar) — sin hallazgos: `detenerProcesosExternos()` mata solo `ollama.exe` por nombre exacto, `setx` con valor fijo sin input externo, ruta `ProgramData` fija sin partes dinámicas, firma Authenticode del instalador de Ollama intacta. `/security-review` no aplicable (sin auth/datos personales/permisos tocados).
+
+Validación: `mvnw clean compile` + `mvnw test` → 151/151 en cada uno de los ~6 ciclos de esta sesión. Instalador final: `output/GraficasMulberry-Instalador-v14.1.0.exe`.
+
+**Próximo paso recomendado:** probar instalación real de Ollama vía el wizard de la app en esta máquina (no se pudo verificar en vivo en esta sesión) y confirmar que el chat IA funciona; considerar parametrizar la versión de `installer.nsi` para evitar regresiones futuras del punto 4.
 
 ---
 
@@ -18,6 +44,27 @@ Actualizar tras cada sprint cerrado.
 2. `AGENTS.md` — reglas entre agentes, sinceridad técnica.
 3. `CLAUDE.md` — checklist pre-sprint, reglas Multi-IA, convenciones.
 4. `MACRO-PROMPT-GRAFICAS-MULBERRY.md` — arquitectura completa, módulos, historial.
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-22 (Sprint OLLAMA-PATH — v14.0.1 empaquetada)
+
+**HEAD:** commit `e7e32ba` — `chore: bump version a v14.0.1 y empaquetar instalador`. Rama: `master`. Tests: **151/151 verdes**.
+
+**Commits finales de la sesión (orden cronológico del cierre):**
+1. `5e8f841` — `fix(i18n): Locale dinamico en CalendarioView segun idioma activo` (Sprint CALENDARIO-LOCALE — cierra último gap arquitectónico i18n conocido).
+2. `e772b78` — `docs(state): cerrar Sprint CALENDARIO-LOCALE`.
+3. `dc9cd62` — `chore: bump version a v14.0.0 y empaquetar instalador` (de la sesión anterior, no de hoy — listado aquí solo como referencia de orden).
+4. `edfec47` — `fix(ui): corregir version residual v13.5.0 a v14.0.0` (bug real: `ConfiguracionView` tenía `"Versión 13.5.0"` hardcodeado, no leía `AppConstants.APP_VERSION`).
+5. `fe69651` — `fix(ollama): fijar OLLAMA_MODELS sin tildes al arrancar Ollama` (Sprint OLLAMA-PATH — diagnóstico + fix defensivo del bug HTTP 500 persistente en el chat IA).
+6. `cfddd86` — `docs(state): cerrar Sprint OLLAMA-PATH`.
+7. `e7e32ba` — `chore: bump version a v14.0.1 y empaquetar instalador` (**HEAD actual**).
+
+**Instalador generado:** `output/GraficasMulberry-Instalador-v14.0.1.exe` (117.5 MB) + copia histórica en `installer/v14.0.1-nsis/`. Pipeline `build-nsis.ps1` ejecutado sin errores (mvn package → jpackage app-image → gen_graphics.py → makensis).
+
+**Punto exacto para continuar:** no hay sprint pendiente ni cola activa. Ver sección "### Punto de entrada exacto para el próximo sprint" más abajo para detalle completo (candidatos: traducir "de" literal en `CalendarioView`, fix manual de Ollama pendiente en la máquina del usuario — `OLLAMA_MODELS` + repull —, o nueva instrucción del usuario). **Preguntar al usuario por dónde continuar antes de empezar nada.**
+
+**Trazabilidad resumida del cierre:** Agente líder Claude Code en CALENDARIO-LOCALE, version-residual y OLLAMA-PATH. Sin Multi-IA en esos tres cierres — todos mecánicos/bajo riesgo tras diagnóstico directo (CALENDARIO-LOCALE: 2 ficheros, getter trivial; version-residual: grep + 3 ficheros; OLLAMA-PATH: causa raíz confirmada por reproducción `curl` directa, fix 1 fichero). VibeSec ejecutado en cada cierre — sin hallazgos. `/security-review` no aplicable en esos tres cierres (sin auth/datos sensibles tocados). Validación en cada sprint: `mvnw clean compile` + `mvnw test` → 151/151. Los sprints B2 previos del mismo día sí usaron Multi-IA cuando correspondía; ver sus bloques dedicados.
+
+---
 
 ### ESTADO AL CIERRE DE SESIÓN 2026-06-19 (Sprint i18n-16 — gap cobertura cerrado)
 
@@ -339,7 +386,7 @@ Cambios: `PresupuestoDAO(Connection conn)` reemplaza las 11 llamadas internas a 
 
 VibeSec ejecutado al cierre — skill genérico web (XSS/CSRF/SSRF), mayoría no aplica a app de escritorio JavaFX. Verificación manual propia sin hallazgos: 11 queries parametrizadas vía `?`/batch sin cambios, todos los `Statement`/`PreparedStatement` siguen en try-with-resources, 0 referencias residuales a `DatabaseManager.getConnection()` en el DAO (`grep` confirma), 0 `.close()` nuevo sobre la Connection singleton, semántica transaccional de `save()` preservada, 32/32 call sites migrados verificados vía grep (`new PresupuestoDAO()` sin argumento: 0 resultados). `/security-review` no aplicable (no es `UserDAO`).
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `1fd730e` (docs cierre: `b56e80e`).
 
 **Próximo DAO recomendado:** cola de riesgo moderado CERRADA (14/17). Siguen los orquestadores `FacturaDAO`/`AlbaranDAO` (ambos ya referencian `PresupuestoDAO` migrado en este sprint, ambos tienen transacción manual propia) y finalmente `UserDAO` (auth-sensible, requiere `/security-review` extra, no solo VibeSec, último DAO de la cola B2).
 
@@ -355,7 +402,7 @@ Cambios: `FacturaDAO(Connection conn)` reemplaza las 19 llamadas internas a `Dat
 
 VibeSec ejecutado al cierre — skill genérico web, mayoría no aplica a app de escritorio JavaFX. Verificación manual propia sin hallazgos: 0 referencias residuales a `DatabaseManager.getConnection()` en el DAO, 0 `.close()` nuevo sobre la Connection singleton, 33/33 call sites migrados verificados vía grep (`new FacturaDAO()` sin argumento: 0 resultados), parametrización SQL intacta en las 19 queries/batch, las 3 transacciones manuales (incluida la anidada de `crearDesdePresupuesto`→`save`→`descontarMateriales`) preservan su semántica exacta. `/security-review` no aplicable (no es `UserDAO`).
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `8a24946` (docs cierre: `6a44574`).
 
 **Próximo DAO recomendado:** `AlbaranDAO` — cierra la cola de orquestadores. Tiene transacción manual propia (`crearDesdeFactura`, `crearDesdePresupuesto`) y ya referencia `FacturaDAO`/`PresupuestoDAO` migrados (ambos pasarán a `this.conn` en vez de `DatabaseManager.getConnection()` inline). Tras `AlbaranDAO`: `UserDAO` (auth-sensible, requiere `/security-review` extra, no solo VibeSec, último DAO de toda la cola B2).
 
@@ -371,7 +418,7 @@ Cambios: `AlbaranDAO(Connection conn)` reemplaza las 15 llamadas internas a `Dat
 
 VibeSec ejecutado al cierre — skill genérico web, mayoría no aplica a app de escritorio JavaFX. Verificación manual propia sin hallazgos: 0 referencias residuales a `DatabaseManager.getConnection()` en el DAO, 0 `.close()` nuevo sobre la Connection singleton, 27/27 call sites migrados verificados vía grep (`new AlbaranDAO()` sin argumento: 0 resultados), parametrización SQL intacta en las 15 queries/batch, las 3 transacciones manuales preservan su semántica exacta. `/security-review` no aplicable (no es `UserDAO`).
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `38f6cef` (docs cierre: `0786ed1`).
 
 **Próximo DAO recomendado:** `UserDAO` — **último DAO de toda la cola B2**. Auth-sensible (BCrypt, roles, login). Requiere `/security-review` extra además de VibeSec, y Multi-IA obligatorio. Cierra completamente el Refactor B2 (17/17).
 
@@ -387,7 +434,7 @@ Cambios: `UserDAO(Connection conn)` reemplaza las 11 llamadas internas a `Databa
 
 VibeSec ejecutado al cierre — skill genérico web, mayoría no aplica a app de escritorio JavaFX; verificación manual propia centrada en lo auth-sensible: (1) `colFailed`/`colUntil` en los 8 call sites de `readLockout`/`writeLockout` usan exclusivamente las 4 constantes internas `COL_LOGIN_FAILED`/`COL_LOGIN_UNTIL`/`COL_REC_FAILED`/`COL_REC_UNTIL`, nunca un parámetro externo — sin riesgo SQLi; (2) los catches solo loguean `e.getMessage()` (mensaje JDBC), nunca `password_hash`/`security_answer_hash`; (3) 0 `.close()` en el fichero, sin fuga de la Connection singleton; (4) lógica de lockout anti-bruteforce intacta. `/security-review` ejecutado al cierre (obligatorio por tocar auth) — 0 hallazgos de alta confianza: resolver la Connection una vez al arrancar `AuthService` vs. por llamada no introduce regresión (misma instancia singleton); `SELECT_COLS` es constante estática sin input externo; columnas de lockout confirmadas como constantes internas. Reporte completo: "No high-confidence vulnerabilities identified."
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151 (incluye `AuthServiceTest` 7/7). Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151 (incluye `AuthServiceTest` 7/7). Commit: `922c501` (docs cierre: `1e925ab`).
 
 **Refactor B2 — COMPLETO.** 17/17 DAOs migrados a inyección de `Connection` por constructor. No queda ningún DAO pendiente en esta iniciativa.
 
@@ -403,7 +450,7 @@ Fuera de alcance (no tocado, cambio quirúrgico): el patrón `"d 'de' MMMM 'de' 
 
 VibeSec manual: `idiomaActual` solo se fija vía `setIdioma(nv.codigo())` en `ConfiguracionView.java:426`, código viene de un selector (ComboBox), no de input de texto libre — sin riesgo de inyección de Locale arbitrario. `/security-review` no aplicable (sin auth/datos sensibles).
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `5e8f841` (docs cierre: `e772b78`).
 
 ---
 
@@ -419,24 +466,25 @@ Bug reportado por el usuario: chat IA siempre devuelve "Error: Ollama encontró 
 
 VibeSec manual: `modelsDir` se construye solo con `LOCALAPPDATA` (env var del SO) + literales fijos, sin input de usuario — sin riesgo de path traversal. `pb.environment().put(...)` no usa shell, sin inyección. Sin secretos ni datos sensibles tocados. `/security-review` no aplicable (no toca auth/datos sensibles).
 
-Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: `fe69651` (docs cierre: `cfddd86`; paquete v14.0.1: `e7e32ba`).
 
 ---
 
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint OLLAMA-PATH (más el commit de este STATE.md). Tests: 151/151. App funcional. Versión empaquetada: **v14.0.0** (instalador NSIS generado, commit `dc9cd62`). Migración i18n de vistas: completa. **Refactor B2 (Connection inyectada en DAOs): COMPLETO, 17/17 DAOs migrados** (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `EmpleadoDAO`, `ClienteDAO`, `PresupuestoDAO`, `FacturaDAO`, `AlbaranDAO`, `UserDAO`). **Gap arquitectónico i18n de `CalendarioView` (Locale fijo): CERRADO** en Sprint CALENDARIO-LOCALE. **Bug Ollama HTTP 500 persistente: diagnosticado (causa externa — llama-server + ruta de usuario con tilde/espacio) y mitigado defensivamente en `OllamaManager`** en Sprint OLLAMA-PATH; pendiente que el usuario aplique el fix manual (`OLLAMA_MODELS` + repull) en su máquina si quiere usar el chat IA ya. Sin sprint B2 ni i18n pendiente. **Próxima sesión: definir nuevo foco** (no hay cola activa). Candidatos sin explorar todavía: traducir el patrón literal "de" en el formato de fecha de `CalendarioView` (ver detalle arriba); revisar si `DatabaseManager` necesita refactor adicional (pool de conexiones real si la app creciera a multiusuario, fuera de alcance YAGNI actual); o nuevas features/bugs que el usuario indique. Preguntar al usuario por dónde continuar si no hay instrucción explícita.
+**HEAD real:** `e7e32ba` — `chore: bump version a v14.0.1 y empaquetar instalador`. Rama: `master`. Tests verificados por Claude Code antes del empaquetado: **151/151 verdes**. App funcional. Versión de aplicación: **v14.0.1** (`AppConstants.APP_VERSION`). Instalador generado: `output/GraficasMulberry-Instalador-v14.0.1.exe` (117.5 MB) + copia histórica `installer/v14.0.1-nsis/`.
 
-**Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
+**Estado de iniciativas grandes:** migración i18n de vistas completa; gaps i18n de import/export cerrados; `CalendarioView` ya usa Locale dinámico; **Refactor B2 completo 17/17 DAOs** (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `EmpleadoDAO`, `ClienteDAO`, `PresupuestoDAO`, `FacturaDAO`, `AlbaranDAO`, `UserDAO`).
 
-**Sprint i18n-16-bis-3 — ✅ CERRADO (mismo día, 2026-06-19).** Hallazgo fuera de alcance de i18n-16-bis-2 (`PresupuestosView.java` líneas 824, 827, 894, 900, mismo patrón `throw new Exception(...)` visible vía `mostrarError()`) incluido en el sprint tras confirmación explícita del usuario ("Sí, inclúyelo en este mismo sprint"). 4 throws migrados a `t("presupuestos.error.presupuesto_no_encontrado")`/`t("presupuestos.error.cliente_no_encontrado")`. 2 claves nuevas × 6 bundles (paridad verificada). VibeSec al cierre: sin hallazgos (lookup de bundle estático, sin input de usuario). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151. Commit: `d9dbf6a`.
+**Ollama:** bug HTTP 500 diagnosticado como causa externa (`llama-server` + ruta Windows con tilde/espacio en `C:\Users\Gipsy Dávy\.ollama\models`). Código mitigado defensivamente en `OllamaManager` (`OLLAMA_MODELS` a ruta limpia cuando la app arranca Ollama). Para la máquina actual del usuario queda acción manual fuera del código: definir `OLLAMA_MODELS=C:\OllamaModels` o ruta limpia equivalente, reiniciar Ollama y ejecutar `ollama pull llama3.2` de nuevo.
 
-**Cola prioritaria (en orden recomendado):**
-1. **Refactor B2** — inyección de Connection en DAOs. Grande, riesgo alto. Requiere Gemini ANTES.
-3. **Técnica reutilizable confirmada** — nombres de variable PowerShell son case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos (`$eLow`/`$eCap`) al construir bloques con minúscula/mayúscula acentuada del mismo carácter base.
-4. **Técnica reutilizable confirmada** — PowerShell backtick-n (`` `n ``) dentro de string entre comillas dobles inserta un salto de línea real, no el literal `\n` de dos caracteres que necesita un valor `.properties`. Usar siempre el literal `\n` (concatenación o escape explícito), nunca el escape especial de PowerShell, al construir valores multilínea de bundles.
-5. **Regla reforzada** — antes de cerrar cualquier sprint i18n, revisar generically TODAS las claves `tf()` (con `{0}`) de los 6 bundles buscando apóstrofes simples sin escapar, no solo las que ya se sabe que tienen posesivos/elisión. El hallazgo CA de i18n-15 lo detectó Codex, no el grep de autorrevisión.
-6. **Técnica reutilizable confirmada (i18n-16-bis-2)** — al insertar líneas nuevas en `.properties` con emoji/acentos vía script, usar Python (`io.open(..., encoding="utf-8")`) en vez de PowerShell o el `Edit` tool para evitar mojibake; calcular el padding de alineación de `=` por longitud de clave (`41 - len(key)` espacios para que `=` caiga en columna 42, columna observada como estándar en todos los bundles de este proyecto) en vez de copiar espacios a mano.
+**No hay sprint activo ni cola obligatoria abierta.** Próxima sesión: preguntar al usuario por el nuevo foco antes de implementar. Candidatos no bloqueantes: traducir el patrón literal `"de"` en el formato de fecha larga de `CalendarioView`; revisar `DatabaseManager` solo si aparece una necesidad real de concurrencia/multiusuario; o abordar nueva feature/bug que indique el usuario.
+
+**Técnicas reutilizables confirmadas:**
+1. PowerShell trata nombres de variable como case-insensitive (`$eA`/`$EA` colisionan). Usar nombres claramente distintos.
+2. PowerShell `` `n `` dentro de string inserta salto real; para valores `.properties` que requieren dos caracteres, usar literal `\n`.
+3. Antes de cerrar cualquier sprint i18n, revisar todas las claves `tf()` con `{0}` en los 6 bundles buscando apóstrofes simples sin escapar.
+4. Al insertar líneas nuevas en `.properties` con emoji/acentos, preferir script UTF-8 controlado y revisar mojibake. Mantener alineación de `=` por longitud de clave, no copiando espacios a mano.
 
 **Comando de verificación al inicio de sesión:**
 ```powershell
@@ -938,13 +986,13 @@ Sprint RELEASE-GATE completado. Matriz reconstruida por Claude Code (Gemini no d
 
 ### Próximos pasos recomendados (en orden)
 
-**PUNTO DE ENTRADA EXACTO PARA EL PRÓXIMO AGENTE:**
+**PUNTO DE ENTRADA HISTÓRICO 2026-06-13 (NO VIGENTE):**
 
 HEAD: `d243cbe`. Rama: `master`. Tests: 146/146. App funcional. BD: 462 materiales reales.
 
 Todos los sprints principales cerrados. Cola: GAP-5 (largo plazo), GAP-8 (largo plazo), Refactor B2.
 
-Preguntar al usuario qué prioriza si no lo indica.
+Estado superado por el handoff vigente al inicio de este archivo (`e7e32ba`, v14.0.1, 151/151). No usar este bloque como punto de entrada actual.
 
 ### Decisiones tomadas que el próximo agente debe respetar
 - Glassmorphism sidebar: **EVITAR** — Codex lo descartó (rendimiento + parece moda en ERP).
@@ -966,48 +1014,28 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 | Campo | Valor |
 |---|---|
-| HEAD | `bf3340f` |
-| Mensaje | `feat(i18n): migrar TarifasView a LanguageManager — Sprint i18n-12` |
+| HEAD | `e7e32ba` |
+| Mensaje | `chore: bump version a v14.0.1 y empaquetar instalador` |
 | Rama | `master` |
 | Tests | 151/151 verdes (`.\mvnw.cmd test`) |
-| Versión app | v14.0.0 (`AppConstants.APP_VERSION`) — tabla histórica, ver header del documento para HEAD real |
+| Versión app | v14.0.1 (`AppConstants.APP_VERSION`) |
+| Instalador | `output/GraficasMulberry-Instalador-v14.0.1.exe` |
 
 ---
 
 ## Sprint activo
 
-**Sprint i18n-12** — ✅ CERRADO. TarifasView migrada (74 claves tarifas.*). DynamicColumnRuntime + prefijo export migrados desde el inicio. tf()→txf(). Sentinel "Todas" fix. HEAD `bf3340f`. 151/151.
-
-**Sprint i18n-11** — ✅ CERRADO. MaterialesView migrada (142 claves materiales.*). DynamicColumnRuntime + prefijo export migrados desde el inicio. tf()→txf(). HEAD `0799fb5`. 151/151.
-
-**Sprint i18n-3** — ✅ CERRADO. MainView migrada (~60 claves nav.* + main.*). TITULO_A_MODULO fix. tf() formal. HEAD `71177b4`. 151/151.
-
-**Sprint i18n-2** — ✅ CERRADO. ConfiguracionView migrada. 6 bundles completos. HEAD `6957681`.
-
-**Sprint i18n-1** — ✅ CERRADO. LoginView + AdminSetupView migrados. Bundles eu/gl/fr ~40 claves. HEAD `a035fe8`.
-
-**Sprint i18n-0** — ✅ CERRADO. Infraestructura LanguageManager + 6 bundles base. HEAD `1947fbc`.
-
-**Sprint RELEASE-GATE MANUAL** — ✅ CERRADO. 35/37 PASS, 1 SKIP.
-
-**Sprint Backlog GAPs** — ✅ CERRADO. GAP-1/2/3/6/7 implementados.
-
-**Sprint UI-E/F** — ✅ CERRADO. Animaciones, pill sidebar, contadores.
-
-**Sprint GAP-5 (Compras a Proveedor)** — ✅ CERRADO. ComprasProveedorView. HEAD `d243cbe`.
-
-**Sprint HelpService compras** — ✅ CERRADO. 5 artículos HTML. F1 vinculado. HEAD `7ae2a79`.
-
-**Sprint MIGRACION-COMPLEJA** — ✅ CERRADO. 462 materiales en BD.
+**Ninguno.** Último cierre: Sprint OLLAMA-PATH + empaquetado v14.0.1. No hay cola obligatoria abierta; preguntar al usuario por el siguiente foco antes de iniciar cambios.
 
 ---
 
 ## Cola prioritaria
 
-1. **Migración i18n: COMPLETA.** Las 17 vistas de la aplicación usan `LanguageManager`.
-2. **Refactor B2 — inyección de Connection en DAOs: EN CURSO.** Sprint B2-1 cerrado (`TarifaTramoDAO`, commit `9127d62`). Patrón confirmado: inyección directa por constructor, sin `DAOFactory` (decisión propia, desvío de la recomendación de Gemini por YAGNI/KISS — ver detalle abajo). Pendientes 16 DAOs, 1 por sprint, orden por riesgo/dependencias (Gemini: bajo riesgo primero — ColumnConfigDAO, NotaCalendarioDAO, DynamicColumnValueDAO, ConsumoMaterialDAO, TarifaDAO, NominaDAO, PedidoDAO — luego MaterialDAO/ClienteDAO/EmpleadoDAO/PagoMaterialDAO/PagoPedidoDAO/PresupuestoDAO — finalmente orquestadores FacturaDAO/AlbaranDAO y UserDAO (auth, requiere /security-review extra) al final).
-3. **Gap de cobertura i18n: CERRADO** (i18n-16/i18n-16-bis/i18n-16-bis-2/i18n-16-bis-3). `DynamicColumnRuntime`, prefijo de fichero exportado, `ExtensionFilter` exportación+importación y `mostrarResultadoImportacion()`/mensajes de error migrados en Clientes/Facturas/Pedidos/Albaranes/Presupuestos/Nóminas.
-4. **Gap arquitectónico i18n conocido** — `Locale esES` fijo en `CalendarioView` para nombres de mes/día (no corregido en i18n-15, fuera de alcance quirúrgico).
+1. **Sin cola activa.** Definir nuevo foco con el usuario al inicio del próximo sprint.
+2. **Migración i18n: COMPLETA.** Las vistas usan `LanguageManager`; `CalendarioView` ya usa Locale dinámico.
+3. **Refactor B2: COMPLETO.** 17/17 DAOs migrados a inyección de `Connection` por constructor.
+4. **Ollama:** código mitigado defensivamente; queda acción manual en la máquina del usuario si el chat IA sigue usando una instancia externa de Ollama con modelos en ruta acentuada.
+5. **Candidato menor i18n:** patrón literal `"de"` en fecha larga de `CalendarioView` si se quiere perfeccionar formato por idioma.
 
 ---
 
@@ -1053,6 +1081,6 @@ Preguntar al usuario qué prioriza si no lo indica.
 
 ## Deuda técnica conocida
 
-- i18n: `Locale esES` fijo en `CalendarioView` para nombres de mes/día — no respeta el idioma de la app (gap arquitectónico conocido, no corregido en i18n-15)
-- i18n: `DynamicColumnRuntime` (título diálogo "⚙ Columnas") y prefijo de fichero exportado sin migrar en 7 vistas (Clientes, Facturas, Pedidos, Albaranes, Presupuestos, Nóminas, ComprasProveedor) — EmpleadosView (i18n-10), MaterialesView (i18n-11) y TarifasView (i18n-12) ya lo migraron
-- Refactor B2: inyección de Connection en DAOs (largo plazo)
+- i18n menor: el patrón de fecha larga de `CalendarioView` conserva `"d 'de' MMMM 'de' yyyy"`; los nombres de mes/día ya usan Locale dinámico, pero la preposición literal sigue en español.
+- Ollama local del usuario: si una instancia externa ya está corriendo con modelos en `C:\Users\Gipsy Dávy\.ollama\models`, el fix de la app no puede cambiar ese proceso; requiere `OLLAMA_MODELS` manual + repull.
+- No reabrir Refactor B2 salvo necesidad concreta: la cola DAO quedó completa 17/17.

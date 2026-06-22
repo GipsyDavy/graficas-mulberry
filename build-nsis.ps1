@@ -5,7 +5,7 @@ $PROJECT     = "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
 $JAVA_HOME   = "C:\Program Files\Java\jdk-26"
 $MVN         = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
 $JPACKAGE    = "$JAVA_HOME\bin\jpackage.exe"
-$APP_VERSION = "14.0.1"
+$APP_VERSION = "14.1.0"
 
 $MAKENSIS = @(
     "C:\Program Files (x86)\NSIS\makensis.exe",
@@ -71,7 +71,7 @@ Write-Host "  Modulos JavaFX: $mods  |  Librerias classpath: $libs" -ForegroundC
     --main-jar "GraficasMulberry.jar" `
     --main-class "org.gipsybuho.Main" `
     --java-options "--module-path `$APPDIR/mods" `
-    --java-options "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics" `
+    --java-options "--add-modules javafx.controls,javafx.fxml,javafx.swing,javafx.base,javafx.graphics,javafx.web,javafx.media" `
     --dest "$PROJECT\output"
 
 if ($LASTEXITCODE -ne 0) { Write-Error "jpackage fallo"; exit 1 }

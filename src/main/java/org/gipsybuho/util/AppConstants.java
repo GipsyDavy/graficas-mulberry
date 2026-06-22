@@ -30,7 +30,7 @@ public final class AppConstants {
     // 2. NOMBRES DE LA APLICACIÓN Y CONFIGURACIÓN DE EMPRESA (ORIGINALES)
     // =========================================================================
     public static final String APP_NAME     = "Graficas Mulberry";
-    public static final String APP_VERSION  = "v14.0.1";
+    public static final String APP_VERSION  = "v14.1.0";
     public static final String COMPANY_NAME = "GRÁFICAS MULBERRY";
 
     public static final String CONFIG_EMPRESA_NOMBRE    = "empresa_nombre";
