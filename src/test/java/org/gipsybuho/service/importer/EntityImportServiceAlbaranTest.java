@@ -56,9 +56,9 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas(), "una entidad insertada");
 
-        List<Albaran> persistidos = new AlbaranDAO().findAll();
+        List<Albaran> persistidos = new AlbaranDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidos.size());
-        Albaran a = new AlbaranDAO().findById(persistidos.get(0).getId());
+        Albaran a = new AlbaranDAO(DatabaseManager.getConnection()).findById(persistidos.get(0).getId());
         assertNotNull(a);
         assertEquals("A-1", a.getNumero());
         assertEquals(2, a.getLineas().size());
@@ -88,7 +88,7 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(2, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Inconsistencia"));
-        assertEquals(0, new AlbaranDAO().findAll().size());
+        assertEquals(0, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -100,7 +100,7 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Cliente con nif"));
-        assertEquals(0, new AlbaranDAO().findAll().size());
+        assertEquals(0, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -113,7 +113,7 @@ class EntityImportServiceAlbaranTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        assertEquals(1, new AlbaranDAO().findAll().size());
+        assertEquals(1, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -124,7 +124,7 @@ class EntityImportServiceAlbaranTest {
         existente.setNumero("A-1");
         existente.setFecha("2025-01-15");
         existente.setEstado("pendiente");
-        new AlbaranDAO().save(existente);
+        new AlbaranDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "A-1", "", "", "Camiseta", 10, "ud")
@@ -133,7 +133,7 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(0, result.filasActualizadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new AlbaranDAO().findAll().size());
+        assertEquals(1, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -175,9 +175,9 @@ class EntityImportServiceAlbaranTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        List<Albaran> persistidos = new AlbaranDAO().findAll();
+        List<Albaran> persistidos = new AlbaranDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidos.size());
-        Albaran a = new AlbaranDAO().findById(persistidos.get(0).getId());
+        Albaran a = new AlbaranDAO(DatabaseManager.getConnection()).findById(persistidos.get(0).getId());
         assertEquals(f.getId(), a.getFacturaId());
         assertEquals(0, a.getPedidoId());
     }
@@ -193,7 +193,7 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Factura con numero"));
-        assertEquals(0, new AlbaranDAO().findAll().size());
+        assertEquals(0, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -213,9 +213,9 @@ class EntityImportServiceAlbaranTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        List<Albaran> persistidos = new AlbaranDAO().findAll();
+        List<Albaran> persistidos = new AlbaranDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidos.size());
-        Albaran a = new AlbaranDAO().findById(persistidos.get(0).getId());
+        Albaran a = new AlbaranDAO(DatabaseManager.getConnection()).findById(persistidos.get(0).getId());
         assertEquals(p.getId(), a.getPedidoId());
         assertEquals(0, a.getFacturaId());
     }
@@ -231,7 +231,7 @@ class EntityImportServiceAlbaranTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Pedido con numero"));
-        assertEquals(0, new AlbaranDAO().findAll().size());
+        assertEquals(0, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

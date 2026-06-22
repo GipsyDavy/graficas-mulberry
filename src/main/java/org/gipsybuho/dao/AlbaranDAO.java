@@ -10,6 +10,12 @@ import java.util.List;
 
 public class AlbaranDAO {
 
+    private final Connection conn;
+
+    public AlbaranDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Albaran> findAll() throws SQLException {
         List<Albaran> list = new ArrayList<>();
         String sql = """
@@ -21,7 +27,7 @@ public class AlbaranDAO {
             LEFT JOIN pedidos p ON a.pedido_id = p.id
             ORDER BY a.created_at DESC
             """;
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) list.add(map(rs));
         }
@@ -38,7 +44,7 @@ public class AlbaranDAO {
             LEFT JOIN pedidos p ON a.pedido_id = p.id
             WHERE a.id = ?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) return null;
@@ -50,7 +56,7 @@ public class AlbaranDAO {
 
     public List<LineaAlbaran> findLineas(int albaranId) throws SQLException {
         List<LineaAlbaran> lineas = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM lineas_albaran WHERE albaran_id=? ORDER BY orden")) {
             ps.setInt(1, albaranId);
             ResultSet rs = ps.executeQuery();
@@ -60,7 +66,7 @@ public class AlbaranDAO {
     }
 
     public Albaran crearDesdeFactura(int facturaId) throws SQLException {
-        FacturaDAO fDao = new FacturaDAO(DatabaseManager.getConnection());
+        FacturaDAO fDao = new FacturaDAO(this.conn);
         var factura = fDao.findById(facturaId);
         if (factura == null) throw new SQLException("Factura no encontrada");
 
@@ -79,7 +85,6 @@ public class AlbaranDAO {
             a.getLineas().add(la);
         }
 
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -96,7 +101,7 @@ public class AlbaranDAO {
     }
 
     public Albaran crearDesdePresupuesto(int presupuestoId) throws SQLException {
-        PresupuestoDAO pDao = new PresupuestoDAO(DatabaseManager.getConnection());
+        PresupuestoDAO pDao = new PresupuestoDAO(this.conn);
         var presupuesto = pDao.findById(presupuestoId);
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 
@@ -114,7 +119,6 @@ public class AlbaranDAO {
             a.getLineas().add(la);
         }
 
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -131,7 +135,6 @@ public class AlbaranDAO {
     }
 
     public void save(Albaran a) throws SQLException {
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -148,7 +151,7 @@ public class AlbaranDAO {
 
     private void insert(Albaran a) throws SQLException {
         String sql = "INSERT INTO albaranes (numero,cliente_id,fecha,factura_id,pedido_id,estado,observaciones) VALUES (?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, a);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -158,7 +161,7 @@ public class AlbaranDAO {
 
     private void update(Albaran a) throws SQLException {
         String sql = "UPDATE albaranes SET numero=?,cliente_id=?,fecha=?,factura_id=?,pedido_id=?,estado=?,observaciones=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, a);
             ps.setInt(8, a.getId());
             ps.executeUpdate();
@@ -166,14 +169,14 @@ public class AlbaranDAO {
     }
 
     private void saveLineas(Albaran a) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM lineas_albaran WHERE albaran_id=?")) {
             ps.setInt(1, a.getId());
             ps.executeUpdate();
         }
         if (a.getLineas().isEmpty()) return;
         String sql = "INSERT INTO lineas_albaran (albaran_id,descripcion,cantidad,unidad,orden) VALUES (?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             int orden = 0;
             for (LineaAlbaran l : a.getLineas()) {
                 ps.setInt(1, a.getId());
@@ -188,7 +191,7 @@ public class AlbaranDAO {
     }
 
     public void updateEstado(int id, String estado) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE albaranes SET estado=? WHERE id=?")) {
             ps.setString(1, estado);
             ps.setInt(2, id);
@@ -197,7 +200,7 @@ public class AlbaranDAO {
     }
 
     public void actualizarFacturaId(int albaranId, int facturaId) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE albaranes SET factura_id=? WHERE id=?")) {
             ps.setInt(1, facturaId);
             ps.setInt(2, albaranId);
@@ -206,7 +209,7 @@ public class AlbaranDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM albaranes WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();

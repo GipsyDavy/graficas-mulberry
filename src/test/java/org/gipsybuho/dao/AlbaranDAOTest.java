@@ -45,9 +45,9 @@ class AlbaranDAOTest {
         Albaran a = nuevoAlbaran(c.getId(), "A-1");
         a.setLineas(List.of(lineaAlbaran("Producto", 5), lineaAlbaranInvalida()));
 
-        assertThrows(SQLException.class, () -> new AlbaranDAO().save(a));
+        assertThrows(SQLException.class, () -> new AlbaranDAO(DatabaseManager.getConnection()).save(a));
 
-        assertEquals(0, new AlbaranDAO().findAll().size(),
+        assertEquals(0, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size(),
             "Si una linea falla, la cabecera no debe quedar persistida");
     }
 
@@ -62,12 +62,12 @@ class AlbaranDAOTest {
         String numeroColision = DatabaseManager.generarNumeroAlbaran();
         Albaran preExistente = nuevoAlbaran(c.getId(), numeroColision);
         preExistente.setLineas(List.of(lineaAlbaran("Otro", 1)));
-        new AlbaranDAO().save(preExistente);
+        new AlbaranDAO(DatabaseManager.getConnection()).save(preExistente);
         DatabaseManager.setConfig("siguiente_albaran", siguienteAlbaranPrevio);
 
-        assertThrows(SQLException.class, () -> new AlbaranDAO().crearDesdeFactura(f.getId()));
+        assertThrows(SQLException.class, () -> new AlbaranDAO(DatabaseManager.getConnection()).crearDesdeFactura(f.getId()));
 
-        assertEquals(1, new AlbaranDAO().findAll().size(),
+        assertEquals(1, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras el fallo, solo debe existir el albaran pre-creado");
     }
 
@@ -82,12 +82,12 @@ class AlbaranDAOTest {
         String numeroColision = DatabaseManager.generarNumeroAlbaran();
         Albaran preExistente = nuevoAlbaran(c.getId(), numeroColision);
         preExistente.setLineas(List.of(lineaAlbaran("Otro", 1)));
-        new AlbaranDAO().save(preExistente);
+        new AlbaranDAO(DatabaseManager.getConnection()).save(preExistente);
         DatabaseManager.setConfig("siguiente_albaran", siguienteAlbaranPrevio);
 
-        assertThrows(SQLException.class, () -> new AlbaranDAO().crearDesdePresupuesto(p.getId()));
+        assertThrows(SQLException.class, () -> new AlbaranDAO(DatabaseManager.getConnection()).crearDesdePresupuesto(p.getId()));
 
-        assertEquals(1, new AlbaranDAO().findAll().size(),
+        assertEquals(1, new AlbaranDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras el fallo, solo debe existir el albaran pre-creado");
     }
 
@@ -178,9 +178,9 @@ class AlbaranDAOTest {
         // estado NO se setea: debe quedar como DEFAULT DDL 'pendiente'
         a.setLineas(List.of(lineaAlbaran("Item", 1)));
 
-        new AlbaranDAO().save(a);
+        new AlbaranDAO(DatabaseManager.getConnection()).save(a);
 
-        Albaran recargado = new AlbaranDAO().findById(a.getId());
+        Albaran recargado = new AlbaranDAO(DatabaseManager.getConnection()).findById(a.getId());
         assertNotNull(recargado, "El albaran debe persistirse");
         assertEquals("pendiente", recargado.getEstado(),
             "estado=null en el modelo debe quedar como DEFAULT DDL 'pendiente'");

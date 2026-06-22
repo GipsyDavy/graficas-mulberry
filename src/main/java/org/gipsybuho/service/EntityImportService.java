@@ -1145,7 +1145,7 @@ public class EntityImportService {
         Albaran a = ensamblarAlbaran(clienteId, facturaId, pedidoId, vals, g.filas(), errores, numFila);
         if (a == null) return new int[]{0, 0, 0};
 
-        new AlbaranDAO().save(a);
+        new AlbaranDAO(conn).save(a);
         return new int[]{1, 0, g.filas().size()};
     }
 

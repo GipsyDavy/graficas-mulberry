@@ -507,7 +507,7 @@ public class FacturasView extends VBox {
         conf.setHeaderText(null);
         conf.showAndWait().filter(b -> b == ButtonType.YES).ifPresent(b -> {
             try {
-                var albaran = new AlbaranDAO().crearDesdeFactura(sel.getId());
+                var albaran = new AlbaranDAO(DatabaseManager.getConnection()).crearDesdeFactura(sel.getId());
                 new Alert(Alert.AlertType.INFORMATION,
                     tf("facturas.albaran.creado", albaran.getNumero()),
                     ButtonType.OK).showAndWait();

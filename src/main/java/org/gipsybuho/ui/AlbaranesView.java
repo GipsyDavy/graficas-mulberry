@@ -45,7 +45,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 public class AlbaranesView extends VBox {
 
-    private final AlbaranDAO dao = new AlbaranDAO();
+    private final AlbaranDAO dao;
     private final ClienteDAO clienteDAO;
     private final ObservableList<Albaran> datos = FXCollections.observableArrayList();
     private final TableView<Albaran> tabla = new TableView<>(datos);
@@ -68,7 +68,9 @@ public class AlbaranesView extends VBox {
 
     public AlbaranesView() {
         try {
-            clienteDAO = new ClienteDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            clienteDAO = new ClienteDAO(conn);
+            dao = new AlbaranDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
