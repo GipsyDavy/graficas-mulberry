@@ -34,6 +34,7 @@ public class OllamaManager {
             ProcessBuilder pb = new ProcessBuilder(exe.toString(), "serve");
             pb.redirectOutput(ProcessBuilder.Redirect.DISCARD);
             pb.redirectError(ProcessBuilder.Redirect.DISCARD);
+            configurarRutaModelos(pb);
             ollamaProcess = pb.start();
 
             // Esperar hasta 8 s a que el servidor esté listo
@@ -68,6 +69,24 @@ public class OllamaManager {
 
     public static boolean isInstalled() {
         return findOllamaExe() != null;
+    }
+
+    /**
+     * Fija OLLAMA_MODELS a una ruta propia de la app, sin tildes ni espacios.
+     * Evita el bug de llama-server en Windows que falla al leer modelos cuando
+     * el perfil de usuario contiene caracteres no ASCII (ej. "C:\Users\Gipsy Dávy"),
+     * devolviendo HTTP 500 "llama-server process has terminated" en cada consulta.
+     * Solo aplica al proceso que arranca esta clase; si Ollama ya está en
+     * ejecución (servicio externo), no se toca su configuración.
+     */
+    private static void configurarRutaModelos(ProcessBuilder pb) {
+        String localAppData = System.getenv("LOCALAPPDATA");
+        if (localAppData == null) return;
+        try {
+            Path modelsDir = Path.of(localAppData, "GraficasMulberry", "ollama-models");
+            Files.createDirectories(modelsDir);
+            pb.environment().put("OLLAMA_MODELS", modelsDir.toString());
+        } catch (Exception ignored) {}
     }
 
     // ── Búsqueda del ejecutable ───────────────────────────────────────────────
