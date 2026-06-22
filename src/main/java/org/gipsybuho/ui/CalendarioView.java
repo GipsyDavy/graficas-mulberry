@@ -8,6 +8,7 @@ import javafx.scene.layout.*;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.NotaCalendario;
+import org.gipsybuho.service.LanguageManager;
 import org.gipsybuho.service.SoundService;
 
 import static org.gipsybuho.service.LanguageManager.t;
@@ -26,7 +27,6 @@ public class CalendarioView extends VBox {
     private final GridPane gridDias = new GridPane();
     private final Label lblMesAnio = new Label();
     private final NotaCalendarioDAO dao;
-    private final Locale esES = new Locale("es", "ES");
     private Set<LocalDate> fechasConNotas = new HashSet<>();
 
     public CalendarioView() {
@@ -98,7 +98,7 @@ public class CalendarioView extends VBox {
     }
 
     private void cargarMes() {
-        String nombre = mesActual.getMonth().getDisplayName(TextStyle.FULL, esES);
+        String nombre = mesActual.getMonth().getDisplayName(TextStyle.FULL, LanguageManager.getInstance().getLocale());
         lblMesAnio.setText(cap(nombre) + " " + mesActual.getYear());
 
         try {
@@ -173,7 +173,7 @@ public class CalendarioView extends VBox {
         }
 
         Dialog<ButtonType> dialog = new Dialog<>();
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", esES);
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", LanguageManager.getInstance().getLocale());
         dialog.setTitle(tf("calendario.dialogo.titulo", cap(fecha.format(fmt))));
 
         dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);

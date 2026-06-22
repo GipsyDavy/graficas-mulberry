@@ -51,6 +51,11 @@ public final class LanguageManager {
         return idiomaActual;
     }
 
+    /** Locale del idioma activo, para formateo de fechas (nombres de mes/día). */
+    public Locale getLocale() {
+        return Locale.forLanguageTag(idiomaActual);
+    }
+
     /** Persiste el código de idioma. El cambio aplica al reiniciar la aplicación. */
     public void setIdioma(String codigo) {
         DatabaseManager.setConfig(KEY_IDIOMA, codigo);
