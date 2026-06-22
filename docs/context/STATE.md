@@ -3,7 +3,7 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-22 (Sprint B2-17 — UserDAO inyección Connection — 151/151 — **Refactor B2 COMPLETO 17/17 DAOs**)
+**Última actualización:** 2026-06-22 (Sprint CALENDARIO-LOCALE — Locale dinámico en CalendarioView — 151/151 — v14.0.0 empaquetada)
 
 ---
 
@@ -393,9 +393,23 @@ Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151 (incluye `Aut
 
 ---
 
+### Sprint CALENDARIO-LOCALE — Locale dinámico en CalendarioView — ✅ CERRADO (2026-06-22)
+
+Cierre del último gap arquitectónico i18n conocido (documentado desde i18n-15): `CalendarioView` usaba `private final Locale esES = new Locale("es", "ES")` fijo para nombres de mes (`getDisplayName(TextStyle.FULL, esES)`) y formato de fecha completa (`DateTimeFormatter.ofPattern(..., esES)`), ignorando el idioma activo de la app en los 6 idiomas soportados (es/en/ca/eu/fr/gl). Tarea pequeña, 2 ficheros, mecánica, bajo riesgo → **un agente, sin Multi-IA** (decisión documentada: cambio trivial — añadir un getter de lectura, sin lógica nueva — validación objetiva de compilación+151/151 fue suficiente, consultar Gemini/Codex no aportaba valor sobre el coste de cuota).
+
+Cambios: `LanguageManager.getLocale()` nuevo (`Locale.forLanguageTag(idiomaActual)`, reutiliza el campo privado ya existente). `CalendarioView.java`: campo `esES` eliminado; sus 2 usos reemplazados por `LanguageManager.getInstance().getLocale()`.
+
+Fuera de alcance (no tocado, cambio quirúrgico): el patrón `"d 'de' MMMM 'de' yyyy"` sigue con la palabra "de" literal en español hardcodeada — es un patrón de formato de fecha, no un nombre de mes/día, y traducirlo requeriría una clave i18n nueva por idioma con su propio patrón `DateTimeFormatter` (ca/eu/fr/gl tienen otra sintaxis). Nuevo gap documentado para sesión futura si se prioriza.
+
+VibeSec manual: `idiomaActual` solo se fija vía `setIdioma(nv.codigo())` en `ConfiguracionView.java:426`, código viene de un selector (ComboBox), no de input de texto libre — sin riesgo de inyección de Locale arbitrario. `/security-review` no aplicable (sin auth/datos sensibles).
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 151/151. Commit: pendiente (ver abajo).
+
+---
+
 ### Punto de entrada exacto para el próximo sprint
 
-**HEAD:** commit Sprint B2-17 (más el commit de este STATE.md). Tests: 151/151. App funcional. Migración i18n de vistas: completa. **Refactor B2 (Connection inyectada en DAOs): COMPLETO, 17/17 DAOs migrados** (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `EmpleadoDAO`, `ClienteDAO`, `PresupuestoDAO`, `FacturaDAO`, `AlbaranDAO`, `UserDAO`). No queda ningún DAO con `DatabaseManager.getConnection()` interno — todos reciben la `Connection` por constructor, gestionada centralmente como singleton por `DatabaseManager`. Sin sprint B2 pendiente. **Próxima sesión: definir nuevo foco** (no hay cola B2 activa). Candidatos sin explorar todavía: revisar si `DatabaseManager` mismo necesita refactor adicional (p.ej. pool de conexiones real si la app creciera a multiusuario, fuera de alcance YAGNI actual); o nuevas features/bugs que el usuario indique. Preguntar al usuario por dónde continuar si no hay instrucción explícita.
+**HEAD:** commit Sprint CALENDARIO-LOCALE (más el commit de este STATE.md). Tests: 151/151. App funcional. Versión empaquetada: **v14.0.0** (instalador NSIS generado, commit `dc9cd62`). Migración i18n de vistas: completa. **Refactor B2 (Connection inyectada en DAOs): COMPLETO, 17/17 DAOs migrados** (`TarifaTramoDAO`, `NotaCalendarioDAO`, `ColumnConfigDAO`, `DynamicColumnValueDAO`, `ConsumoMaterialDAO`, `TarifaDAO`, `NominaDAO`, `PedidoDAO`, `MaterialDAO`, `PagoMaterialDAO`, `PagoPedidoDAO`, `EmpleadoDAO`, `ClienteDAO`, `PresupuestoDAO`, `FacturaDAO`, `AlbaranDAO`, `UserDAO`). **Gap arquitectónico i18n de `CalendarioView` (Locale fijo): CERRADO** en Sprint CALENDARIO-LOCALE. Sin sprint B2 ni i18n pendiente. **Próxima sesión: definir nuevo foco** (no hay cola activa). Candidatos sin explorar todavía: traducir el patrón literal "de" en el formato de fecha de `CalendarioView` (ver detalle arriba); revisar si `DatabaseManager` necesita refactor adicional (pool de conexiones real si la app creciera a multiusuario, fuera de alcance YAGNI actual); o nuevas features/bugs que el usuario indique. Preguntar al usuario por dónde continuar si no hay instrucción explícita.
 
 **Trazabilidad i18n-16-bis-2:** Agente líder Claude Code. Codex consultado vía bloque IDE en la ronda anterior (i18n-16-bis), detectó y Claude Code verificó de forma independiente los 2 gaps cerrados en este sprint — al verificar, Claude Code descubrió que el gap 2 tenía en realidad 4 ocurrencias en FacturasView (exportar() y previsualizar(), no solo las 2 que Codex señaló en previsualizar()); las 4 se corrigieron. No se re-consultó Codex en esta ronda final: el patrón aplicado replica exactamente el ya validado de `AlbaranesView`, y la verificación objetiva (compilación + 151/151 tests + diff revisado por Claude Code) se consideró suficiente sin gasto adicional de cuota. Gemini no consultado — mecánico, bajo riesgo. VibeSec ejecutado al cierre — sin hallazgos (lookup de clave fija contra bundle interno, sin input de usuario, sin construcción de rutas). `/security-review` no aplicable. Validación: `mvnw clean compile` + `mvnw test` → 151/151.
 
