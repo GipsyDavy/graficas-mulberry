@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.User;
 import org.gipsybuho.model.UserRole;
 
@@ -17,9 +16,15 @@ public class UserDAO {
     private static final String SELECT_COLS =
         "id, username, password_hash, role, permissions, created_at, last_login, security_question, security_answer_hash";
 
+    private final Connection conn;
+
+    public UserDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public Optional<User> findByUsername(String username) {
         String sql = "SELECT " + SELECT_COLS + " FROM usuarios WHERE username = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, username);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return Optional.of(map(rs));
@@ -31,7 +36,7 @@ public class UserDAO {
 
     public Optional<User> findById(int id) {
         String sql = "SELECT " + SELECT_COLS + " FROM usuarios WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) return Optional.of(map(rs));
@@ -43,7 +48,7 @@ public class UserDAO {
 
     public boolean createUser(User user) {
         String sql = "INSERT INTO usuarios (username, password_hash, role, permissions, created_at) VALUES (?, ?, ?, ?, ?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPasswordHash());
             ps.setString(3, user.getRole().name());
@@ -61,7 +66,7 @@ public class UserDAO {
 
     public boolean updateUser(User user) {
         String sql = "UPDATE usuarios SET username = ?, password_hash = ?, role = ?, permissions = ? WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, user.getUsername());
             ps.setString(2, user.getPasswordHash());
             ps.setString(3, user.getRole().name());
@@ -76,7 +81,7 @@ public class UserDAO {
 
     public boolean deleteUser(int id) {
         String sql = "DELETE FROM usuarios WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             return ps.executeUpdate() > 0;
         } catch (SQLException e) {
@@ -88,7 +93,7 @@ public class UserDAO {
     public List<User> getAllUsers() {
         List<User> users = new ArrayList<>();
         String sql = "SELECT " + SELECT_COLS + " FROM usuarios ORDER BY username";
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) users.add(map(rs));
         } catch (SQLException e) {
@@ -99,7 +104,7 @@ public class UserDAO {
 
     public boolean updateSecurityQuestion(int userId, String question, String answerHash) {
         String sql = "UPDATE usuarios SET security_question = ?, security_answer_hash = ? WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, question);
             ps.setString(2, answerHash);
             ps.setInt(3, userId);
@@ -112,7 +117,7 @@ public class UserDAO {
 
     public void updateLastLogin(int userId) {
         String sql = "UPDATE usuarios SET last_login = ? WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, LocalDateTime.now().toString());
             ps.setInt(2, userId);
             ps.executeUpdate();
@@ -127,7 +132,7 @@ public class UserDAO {
 
     private LockoutState readLockout(int userId, String colFailed, String colUntil) {
         String sql = "SELECT " + colFailed + ", " + colUntil + " FROM usuarios WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, userId);
             ResultSet rs = ps.executeQuery();
             if (rs.next()) {
@@ -143,7 +148,7 @@ public class UserDAO {
 
     private void writeLockout(int userId, String colFailed, String colUntil, int count, Instant lockedUntil) {
         String sql = "UPDATE usuarios SET " + colFailed + " = ?, " + colUntil + " = ? WHERE id = ?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, count);
             ps.setString(2, lockedUntil != null ? lockedUntil.toString() : null);
             ps.setInt(3, userId);
@@ -206,7 +211,7 @@ public class UserDAO {
 
     public boolean hasAdmin() {
         String sql = "SELECT COUNT(*) FROM usuarios WHERE role = 'ADMINISTRADOR'";
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             return rs.next() && rs.getInt(1) > 0;
         } catch (SQLException e) {

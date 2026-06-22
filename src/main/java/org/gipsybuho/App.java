@@ -56,7 +56,7 @@ public class App extends Application {
         }
         SoundService.setMuted("1".equals(DatabaseManager.getConfig("audio_muted")));
 
-        authService = new AuthService(new UserDAO());
+        authService = new AuthService(new UserDAO(DatabaseManager.getConnection()));
 
         try {
             Image icon = new Image(Objects.requireNonNull(

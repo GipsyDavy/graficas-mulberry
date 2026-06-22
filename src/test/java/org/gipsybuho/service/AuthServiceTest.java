@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 import java.nio.file.Path;
+import java.sql.SQLException;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -26,7 +27,7 @@ class AuthServiceTest {
         DatabaseManager.closeConnection();
         System.setProperty("graficas.mulberry.db.url", "jdbc:sqlite:" + tempDir.resolve("test.db"));
         DatabaseManager.initialize();
-        auth = new AuthService(new UserDAO());
+        auth = new AuthService(new UserDAO(DatabaseManager.getConnection()));
     }
 
     @AfterEach
@@ -92,7 +93,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void lockoutLoginPersisteAlReiniciarAuthService() {
+    void lockoutLoginPersisteAlReiniciarAuthService() throws SQLException {
         assertTrue(auth.registerUser("admin", "12345678",
             UserRole.ADMINISTRADOR, UserRole.ADMINISTRADOR.getPermissionsString()));
 
@@ -102,13 +103,13 @@ class AuthServiceTest {
         assertTrue(auth.isLoginTemporarilyBlocked("admin"));
 
         // Simula reinicio: nueva instancia con la misma BD
-        AuthService auth2 = new AuthService(new UserDAO());
+        AuthService auth2 = new AuthService(new UserDAO(DatabaseManager.getConnection()));
         assertTrue(auth2.isLoginTemporarilyBlocked("admin"));
         assertFalse(auth2.login("admin", "12345678").isPresent());
     }
 
     @Test
-    void lockoutRecuperacionPersisteAlReiniciarAuthService() {
+    void lockoutRecuperacionPersisteAlReiniciarAuthService() throws SQLException {
         assertTrue(auth.registerUser("admin", "12345678",
             UserRole.ADMINISTRADOR, UserRole.ADMINISTRADOR.getPermissionsString()));
         assertTrue(auth.setSecurityQuestion("admin", AuthService.SECURITY_QUESTIONS.get(0), "respuesta"));
@@ -118,7 +119,7 @@ class AuthServiceTest {
         }
         assertTrue(auth.isRecoveryTemporarilyBlocked("admin"));
 
-        AuthService auth2 = new AuthService(new UserDAO());
+        AuthService auth2 = new AuthService(new UserDAO(DatabaseManager.getConnection()));
         assertTrue(auth2.isRecoveryTemporarilyBlocked("admin"));
         assertFalse(auth2.resetPasswordWithAnswer("admin", "respuesta", "87654321"));
     }
