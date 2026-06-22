@@ -444,9 +444,12 @@ public class OllamaInstallerDialog extends Stage {
             return;
         }
 
-        Process proc = new ProcessBuilder(ollamaExe.toString(), "pull", DEFAULT_MODEL)
-            .redirectErrorStream(true)
-            .start();
+        ProcessBuilder pullBuilder = new ProcessBuilder(ollamaExe.toString(), "pull", DEFAULT_MODEL)
+            .redirectErrorStream(true);
+        // Misma ruta que usa el servidor (OllamaManager) — si no coincide, el modelo
+        // se descarga en un sitio y el servidor busca en otro.
+        pullBuilder.environment().put("OLLAMA_MODELS", OllamaManager.modelsDir());
+        Process proc = pullBuilder.start();
 
         // 'ollama pull' usa \r para actualizar la misma línea de progreso.
         // BufferedReader.readLine() trata \r como separador, así que cada

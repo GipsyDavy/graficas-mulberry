@@ -17,6 +17,15 @@ import java.util.List;
  */
 public class OllamaManager {
 
+    /**
+     * Ruta fija de almacenamiento de modelos, fuera del perfil de usuario.
+     * Antes se derivaba de %LOCALAPPDATA%, pero en perfiles de Windows con
+     * tilde o espacio (ej. "C:\Users\Gipsy Dávy") esa ruta sigue siendo
+     * no-ASCII y no evita el bug de llama-server (ver {@link #configurarRutaModelos}).
+     * C:\ProgramData es independiente del usuario y solo contiene ASCII.
+     */
+    private static final Path MODELS_DIR = Path.of("C:", "ProgramData", "GraficasMulberry", "ollama-models");
+
     private static volatile Process ollamaProcess;
     private static volatile boolean started = false;
 
@@ -24,9 +33,44 @@ public class OllamaManager {
         Thread.ofVirtual().start(OllamaManager::startIfNeeded);
     }
 
-    public static void startIfNeeded() {
-        if (isRunning()) { started = true; return; }
+    /** Ruta de modelos usada por esta app — debe usarse también al hacer {@code ollama pull}. */
+    public static String modelsDir() {
+        return MODELS_DIR.toString();
+    }
 
+    public static void startIfNeeded() {
+        if (isRunning()) {
+            // Ya hay un servidor Ollama activo (autoarranque de Windows o manual) que no
+            // controlamos: puede estar usando la ruta de modelos rota por defecto.
+            // Se reinicia bajo nuestro control para garantizar la ruta correcta.
+            reiniciarConRutaCorrecta();
+            return;
+        }
+        lanzar();
+    }
+
+    private static void reiniciarConRutaCorrecta() {
+        detenerProcesosExternos();
+        for (int i = 0; i < 20; i++) {
+            if (!isRunning()) { lanzar(); return; }
+            try { Thread.sleep(250); } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                return;
+            }
+        }
+        System.err.println("OllamaManager: no se pudo detener la instancia previa de Ollama, se mantiene como está");
+    }
+
+    /** Termina cualquier proceso ollama.exe en ejecución, incluso si no lo iniciamos nosotros. */
+    private static void detenerProcesosExternos() {
+        ProcessHandle.allProcesses()
+            .filter(p -> p.info().command()
+                .map(c -> c.toLowerCase().endsWith("ollama.exe"))
+                .orElse(false))
+            .forEach(ProcessHandle::destroyForcibly);
+    }
+
+    private static void lanzar() {
         Path exe = findOllamaExe();
         if (exe == null) return;
 
@@ -72,20 +116,31 @@ public class OllamaManager {
     }
 
     /**
-     * Fija OLLAMA_MODELS a una ruta propia de la app, sin tildes ni espacios.
+     * Fija OLLAMA_MODELS a {@link #MODELS_DIR}, sin tildes ni espacios.
      * Evita el bug de llama-server en Windows que falla al leer modelos cuando
-     * el perfil de usuario contiene caracteres no ASCII (ej. "C:\Users\Gipsy Dávy"),
+     * la ruta contiene caracteres no ASCII (ej. "C:\Users\Gipsy Dávy"),
      * devolviendo HTTP 500 "llama-server process has terminated" en cada consulta.
-     * Solo aplica al proceso que arranca esta clase; si Ollama ya está en
-     * ejecución (servicio externo), no se toca su configuración.
+     * También persiste la variable a nivel de usuario (setx) para que un
+     * futuro autoarranque de Ollama por Windows (fuera del control de esta
+     * app) herede la ruta correcta tras el próximo inicio de sesión.
      */
     private static void configurarRutaModelos(ProcessBuilder pb) {
-        String localAppData = System.getenv("LOCALAPPDATA");
-        if (localAppData == null) return;
         try {
-            Path modelsDir = Path.of(localAppData, "GraficasMulberry", "ollama-models");
-            Files.createDirectories(modelsDir);
-            pb.environment().put("OLLAMA_MODELS", modelsDir.toString());
+            Files.createDirectories(MODELS_DIR);
+            pb.environment().put("OLLAMA_MODELS", MODELS_DIR.toString());
+            persistirVariablePermanente();
+        } catch (Exception e) {
+            System.err.println("OllamaManager: no se pudo preparar la ruta de modelos — " + e.getMessage());
+        }
+    }
+
+    private static void persistirVariablePermanente() {
+        if (MODELS_DIR.toString().equals(System.getenv("OLLAMA_MODELS"))) return;
+        try {
+            new ProcessBuilder("setx", "OLLAMA_MODELS", MODELS_DIR.toString())
+                .redirectOutput(ProcessBuilder.Redirect.DISCARD)
+                .redirectError(ProcessBuilder.Redirect.DISCARD)
+                .start();
         } catch (Exception ignored) {}
     }
 
