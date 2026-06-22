@@ -53,9 +53,9 @@ class EntityImportServiceFacturaTest {
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas(), "una entidad insertada");
 
-        List<Factura> persistidas = new FacturaDAO().findAll();
+        List<Factura> persistidas = new FacturaDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidas.size());
-        Factura f = new FacturaDAO().findById(persistidas.get(0).getId());
+        Factura f = new FacturaDAO(DatabaseManager.getConnection()).findById(persistidas.get(0).getId());
         assertNotNull(f);
         assertEquals("F-1", f.getNumero());
         assertEquals(2, f.getLineas().size());
@@ -84,7 +84,7 @@ class EntityImportServiceFacturaTest {
         // detectarInconsistenciaGrupo anade un RowError por cada fila del grupo discrepante.
         assertEquals(2, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Inconsistencia"));
-        assertEquals(0, new FacturaDAO().findAll().size());
+        assertEquals(0, new FacturaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -96,7 +96,7 @@ class EntityImportServiceFacturaTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Cliente con nif"));
-        assertEquals(0, new FacturaDAO().findAll().size());
+        assertEquals(0, new FacturaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -109,7 +109,7 @@ class EntityImportServiceFacturaTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        assertEquals(1, new FacturaDAO().findAll().size());
+        assertEquals(1, new FacturaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -121,7 +121,7 @@ class EntityImportServiceFacturaTest {
         existente.setFecha("2025-01-15");
         existente.setEstado("pendiente");
         existente.setIvaPorcentaje(21.0);
-        new FacturaDAO().save(existente);
+        new FacturaDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "F-1", "", "Camiseta", 10, "5.00", "0")
@@ -130,7 +130,7 @@ class EntityImportServiceFacturaTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(0, result.filasActualizadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new FacturaDAO().findAll().size());
+        assertEquals(1, new FacturaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -172,9 +172,9 @@ class EntityImportServiceFacturaTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        List<Factura> persistidas = new FacturaDAO().findAll();
+        List<Factura> persistidas = new FacturaDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidas.size());
-        Factura f = new FacturaDAO().findById(persistidas.get(0).getId());
+        Factura f = new FacturaDAO(DatabaseManager.getConnection()).findById(persistidas.get(0).getId());
         assertEquals(p.getId(), f.getPresupuestoId());
     }
 
@@ -189,7 +189,7 @@ class EntityImportServiceFacturaTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Presupuesto con numero"));
-        assertEquals(0, new FacturaDAO().findAll().size());
+        assertEquals(0, new FacturaDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────

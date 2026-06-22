@@ -208,7 +208,7 @@ public class AlbaranesView extends VBox {
         if (sel.getFacturaId() > 0) { alerta(tf("albaranes.crear_factura.ya_asociada", sel.getFacturaNumero())); return; }
         try {
             Albaran albaranCompleto = dao.findById(sel.getId());
-            org.gipsybuho.model.Factura f = new FacturaDAO().crearDesdeAlbaran(albaranCompleto);
+            org.gipsybuho.model.Factura f = new FacturaDAO(DatabaseManager.getConnection()).crearDesdeAlbaran(albaranCompleto);
             dao.actualizarFacturaId(sel.getId(), f.getId());
             cargar();
             new Alert(Alert.AlertType.INFORMATION,

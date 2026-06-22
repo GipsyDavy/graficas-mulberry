@@ -167,7 +167,7 @@ class EntityImportServiceAlbaranTest {
         f.setFecha("2025-01-15");
         f.setEstado("pendiente");
         f.setIvaPorcentaje(21.0);
-        new FacturaDAO().save(f);
+        new FacturaDAO(DatabaseManager.getConnection()).save(f);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "A-1", "F-99", "", "Camiseta", 10, "ud")

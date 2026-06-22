@@ -183,9 +183,9 @@ public class DashboardView extends VBox {
         try {
             int clientes     = new ClienteDAO(DatabaseManager.getConnection()).count();
             int presupPend   = new PresupuestoDAO(DatabaseManager.getConnection()).countByEstado("enviado");
-            int factPend     = new FacturaDAO().countByEstado("pendiente");
+            int factPend     = new FacturaDAO(DatabaseManager.getConnection()).countByEstado("pendiente");
             int bajoStock    = new MaterialDAO(DatabaseManager.getConnection()).countBajoStock();
-            double facturado = new FacturaDAO().totalFacturadoAnio(LocalDate.now().getYear());
+            double facturado = new FacturaDAO(DatabaseManager.getConnection()).totalFacturadoAnio(LocalDate.now().getYear());
 
             int[]    enteros = {clientes, presupPend, factPend, bajoStock};
             String[] idsEnt  = {"c1", "c2", "c3", "c4"};

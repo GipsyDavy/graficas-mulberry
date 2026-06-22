@@ -56,7 +56,7 @@ class AlbaranDAOTest {
         Cliente c = crearCliente();
         Factura f = nuevaFactura(c.getId(), "F-1");
         f.setLineas(List.of(lineaFactura("Camiseta", 10, 5.0)));
-        new FacturaDAO().save(f);
+        new FacturaDAO(DatabaseManager.getConnection()).save(f);
 
         String siguienteAlbaranPrevio = DatabaseManager.getConfig("siguiente_albaran");
         String numeroColision = DatabaseManager.generarNumeroAlbaran();

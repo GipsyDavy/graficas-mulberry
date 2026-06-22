@@ -43,7 +43,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 public class FacturasView extends VBox {
 
-    private final FacturaDAO dao = new FacturaDAO();
+    private final FacturaDAO dao;
     private final ClienteDAO clienteDAO;
     private final ObservableList<Factura> datos = FXCollections.observableArrayList();
     private final TableView<Factura> tabla = new TableView<>(datos);
@@ -72,7 +72,9 @@ public class FacturasView extends VBox {
 
     public FacturasView() {
         try {
-            clienteDAO = new ClienteDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            clienteDAO = new ClienteDAO(conn);
+            dao = new FacturaDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

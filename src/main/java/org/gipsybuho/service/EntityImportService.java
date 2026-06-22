@@ -970,7 +970,7 @@ public class EntityImportService {
         Factura f = ensamblarFactura(clienteId, presupuestoId, vals, g.filas(), errores, numFila);
         if (f == null) return new int[]{0, 0, 0};
 
-        new FacturaDAO().save(f);
+        new FacturaDAO(conn).save(f);
         return new int[]{1, 0, g.filas().size()};
     }
 

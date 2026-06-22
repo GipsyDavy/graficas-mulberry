@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.Albaran;
 import org.gipsybuho.model.Factura;
 import org.gipsybuho.model.LineaFactura;
@@ -11,6 +10,12 @@ import java.util.List;
 
 public class FacturaDAO {
 
+    private final Connection conn;
+
+    public FacturaDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Factura> findAll() throws SQLException {
         List<Factura> list = new ArrayList<>();
         String sql = """
@@ -19,7 +24,7 @@ public class FacturaDAO {
             LEFT JOIN clientes c ON f.cliente_id = c.id
             ORDER BY f.created_at DESC
             """;
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) list.add(map(rs));
         }
@@ -33,7 +38,7 @@ public class FacturaDAO {
             LEFT JOIN clientes c ON f.cliente_id = c.id
             WHERE f.id = ?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) return null;
@@ -45,7 +50,7 @@ public class FacturaDAO {
 
     public List<LineaFactura> findLineas(int facturaId) throws SQLException {
         List<LineaFactura> lineas = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM lineas_factura WHERE factura_id=? ORDER BY orden")) {
             ps.setInt(1, facturaId);
             ResultSet rs = ps.executeQuery();
@@ -55,7 +60,7 @@ public class FacturaDAO {
     }
 
     public Factura crearDesdePresupuesto(int presupuestoId) throws SQLException {
-        PresupuestoDAO pDao = new PresupuestoDAO(DatabaseManager.getConnection());
+        PresupuestoDAO pDao = new PresupuestoDAO(this.conn);
         var presupuesto = pDao.findById(presupuestoId);
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 
@@ -82,7 +87,6 @@ public class FacturaDAO {
             f.getLineas().add(lf);
         }
 
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -120,7 +124,6 @@ public class FacturaDAO {
         }
         f.calcularTotales();
 
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -137,8 +140,8 @@ public class FacturaDAO {
     }
 
     private void descontarMateriales(Factura f) throws SQLException {
-        ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO(DatabaseManager.getConnection());
-        MaterialDAO matDao = new MaterialDAO(DatabaseManager.getConnection());
+        ConsumoMaterialDAO consumoDao = new ConsumoMaterialDAO(this.conn);
+        MaterialDAO matDao = new MaterialDAO(this.conn);
         for (LineaFactura linea : f.getLineas()) {
             if (linea.getTecnica() == null || linea.getTecnica().isBlank()) continue;
             List<org.gipsybuho.model.ConsumoMaterial> reglas = consumoDao.findByTecnica(linea.getTecnica());
@@ -152,7 +155,6 @@ public class FacturaDAO {
     }
 
     public void save(Factura f) throws SQLException {
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -169,7 +171,7 @@ public class FacturaDAO {
 
     private void insert(Factura f) throws SQLException {
         String sql = "INSERT INTO facturas (numero,presupuesto_id,cliente_id,fecha,fecha_vencimiento,estado,forma_pago,base_imponible,iva_porcentaje,iva_importe,total,notas) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, f);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -179,7 +181,7 @@ public class FacturaDAO {
 
     private void update(Factura f) throws SQLException {
         String sql = "UPDATE facturas SET numero=?,presupuesto_id=?,cliente_id=?,fecha=?,fecha_vencimiento=?,estado=?,forma_pago=?,base_imponible=?,iva_porcentaje=?,iva_importe=?,total=?,notas=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, f);
             ps.setInt(13, f.getId());
             ps.executeUpdate();
@@ -187,13 +189,13 @@ public class FacturaDAO {
     }
 
     private void saveLineas(Factura f) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM lineas_factura WHERE factura_id=?")) {
             ps.setInt(1, f.getId());
             ps.executeUpdate();
         }
         String sql = "INSERT INTO lineas_factura (factura_id,descripcion,tecnica,cantidad,precio_unit,descuento,total,orden) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             int orden = 0;
             for (LineaFactura l : f.getLineas()) {
                 ps.setInt(1, f.getId());
@@ -211,7 +213,7 @@ public class FacturaDAO {
     }
 
     public void updateEstado(int id, String estado) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE facturas SET estado=? WHERE id=?")) {
             ps.setString(1, estado);
             ps.setInt(2, id);
@@ -220,7 +222,7 @@ public class FacturaDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM facturas WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -228,7 +230,7 @@ public class FacturaDAO {
     }
 
     public int countByEstado(String estado) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COUNT(*) FROM facturas WHERE estado=?")) {
             ps.setString(1, estado);
             ResultSet rs = ps.executeQuery();
@@ -237,7 +239,7 @@ public class FacturaDAO {
     }
 
     public double totalFacturadoAnio(int anio) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COALESCE(SUM(total),0) FROM facturas WHERE strftime('%Y',fecha)=? AND estado!='anulada'")) {
             ps.setString(1, String.valueOf(anio));
             ResultSet rs = ps.executeQuery();
@@ -247,7 +249,7 @@ public class FacturaDAO {
 
     public double totalFacturadoMes(int anio, int mes) throws SQLException {
         String mesStr = String.format("%04d-%02d", anio, mes);
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COALESCE(SUM(total),0) FROM facturas WHERE strftime('%Y-%m',fecha)=? AND estado!='anulada'")) {
             ps.setString(1, mesStr);
             ResultSet rs = ps.executeQuery();
@@ -268,7 +270,7 @@ public class FacturaDAO {
             ORDER BY total_mes DESC
             LIMIT ?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setString(1, mesStr);
             ps.setInt(2, limit);
             ResultSet rs = ps.executeQuery();

@@ -60,7 +60,7 @@ public class AlbaranDAO {
     }
 
     public Albaran crearDesdeFactura(int facturaId) throws SQLException {
-        FacturaDAO fDao = new FacturaDAO();
+        FacturaDAO fDao = new FacturaDAO(DatabaseManager.getConnection());
         var factura = fDao.findById(facturaId);
         if (factura == null) throw new SQLException("Factura no encontrada");
 

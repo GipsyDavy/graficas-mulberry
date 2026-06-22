@@ -46,9 +46,9 @@ class FacturaDAOTest {
         Factura f = nuevaFactura(c.getId(), "F-1");
         f.setLineas(List.of(lineaFactura("Camiseta", 10, 5.0), lineaFacturaInvalida()));
 
-        assertThrows(SQLException.class, () -> new FacturaDAO().save(f));
+        assertThrows(SQLException.class, () -> new FacturaDAO(DatabaseManager.getConnection()).save(f));
 
-        assertEquals(0, new FacturaDAO().findAll().size(),
+        assertEquals(0, new FacturaDAO(DatabaseManager.getConnection()).findAll().size(),
             "Si una linea falla, la cabecera no debe quedar persistida");
     }
 
@@ -69,14 +69,14 @@ class FacturaDAOTest {
         String numeroColision = DatabaseManager.generarNumeroFactura();
         Factura preExistente = nuevaFactura(c.getId(), numeroColision);
         preExistente.setLineas(List.of(lineaFactura("Bolsa", 1, 10.0)));
-        new FacturaDAO().save(preExistente);
+        new FacturaDAO(DatabaseManager.getConnection()).save(preExistente);
         DatabaseManager.setConfig("siguiente_factura", siguienteFacturaPrevio);
 
-        assertThrows(SQLException.class, () -> new FacturaDAO().crearDesdePresupuesto(p.getId()));
+        assertThrows(SQLException.class, () -> new FacturaDAO(DatabaseManager.getConnection()).crearDesdePresupuesto(p.getId()));
 
         // Verificacion de atomicidad:
         // Tras el fallo, sigue habiendo solo la factura pre-existente (no la nueva).
-        assertEquals(1, new FacturaDAO().findAll().size(),
+        assertEquals(1, new FacturaDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras el fallo, solo debe existir la factura pre-creada");
         Presupuesto recargado = new PresupuestoDAO(DatabaseManager.getConnection()).findById(p.getId());
         assertNotNull(recargado);
@@ -157,9 +157,9 @@ class FacturaDAOTest {
         f.setIvaPorcentaje(21.0);
         f.setLineas(List.of(lineaFactura("Item", 1, 1.0)));
 
-        new FacturaDAO().save(f);
+        new FacturaDAO(DatabaseManager.getConnection()).save(f);
 
-        Factura recargado = new FacturaDAO().findById(f.getId());
+        Factura recargado = new FacturaDAO(DatabaseManager.getConnection()).findById(f.getId());
         assertNotNull(recargado, "La factura debe persistirse");
         assertEquals("pendiente", recargado.getEstado(),
             "estado=null en el modelo debe quedar como DEFAULT DDL 'pendiente'");

@@ -269,7 +269,7 @@ public class PresupuestosView extends VBox {
             if (conf.showAndWait().orElse(ButtonType.NO) != ButtonType.YES) return;
         }
         try {
-            new FacturaDAO().crearDesdePresupuesto(sel.getId());
+            new FacturaDAO(DatabaseManager.getConnection()).crearDesdePresupuesto(sel.getId());
             cargar();
             new Alert(Alert.AlertType.INFORMATION, t("presupuestos.crear_factura.exito"), ButtonType.OK).showAndWait();
         } catch (Exception e) { mostrarError(e); }
