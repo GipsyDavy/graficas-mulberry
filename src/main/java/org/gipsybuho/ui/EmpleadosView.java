@@ -115,21 +115,21 @@ public class EmpleadosView extends VBox {
         Button btnExportar   = btn(t("empleados.btn.exportar"),   this::exportar);
         Button btnPreview    = btn(t("empleados.btn.previsualizar"), this::previsualizar);
         Button btnColumnas   = btn(t("empleados.btn.columnas"),   dynamicColumns::configure);
-        chkMostrarBajas.setTooltip(new Tooltip(t("empleados.toolbar.mostrar_bajas.tip")));
-        btnNuevo.setTooltip(new Tooltip(t("empleados.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("empleados.btn.editar.tip")));
-        btnBaja.setTooltip(new Tooltip(t("empleados.btn.baja.tip")));
-        btnReactivar.setTooltip(new Tooltip(t("empleados.btn.reactivar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("empleados.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("empleados.btn.exportar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("empleados.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("empleados.btn.columnas.tip")));
+        chkMostrarBajas.setTooltip(Tooltips.of(t("empleados.toolbar.mostrar_bajas.tip")));
+        btnNuevo.setTooltip(Tooltips.of(t("empleados.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("empleados.btn.editar.tip")));
+        btnBaja.setTooltip(Tooltips.of(t("empleados.btn.baja.tip")));
+        btnReactivar.setTooltip(Tooltips.of(t("empleados.btn.reactivar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("empleados.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("empleados.btn.exportar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("empleados.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("empleados.btn.columnas.tip")));
 
         txtBuscar = new TextField();
         txtBuscar.setPromptText(t("empleados.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip(t("empleados.buscar.tooltip")));
+        txtBuscar.setTooltip(Tooltips.of(t("empleados.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);

@@ -165,7 +165,7 @@ public class MaterialesView extends VBox {
         chkSoloAlerta.setOnAction(e -> cargar());
         cbCategoriaFiltro = new ComboBox<>();
         cbCategoriaFiltro.setPrefWidth(150);
-        cbCategoriaFiltro.setTooltip(new Tooltip(t("materiales.filtro.categoria.tip")));
+        cbCategoriaFiltro.setTooltip(Tooltips.of(t("materiales.filtro.categoria.tip")));
         cbCategoriaFiltro.setOnAction(e -> {
             if (!updatingCategoriaFiltro) cargar();
         });
@@ -183,16 +183,16 @@ public class MaterialesView extends VBox {
         Button btnExportar   = btn(t("materiales.btn.exportar"),      this::exportar);
         Button btnPreview    = btn(t("materiales.btn.previsualizar"), this::previsualizar);
         Button btnColumnas   = btn(t("materiales.btn.columnas"),      dynamicColumns::configure);
-        chkSoloAlerta.setTooltip(new Tooltip(t("materiales.chk.solo_alerta.tip")));
-        btnNuevo.setTooltip(new Tooltip(t("materiales.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("materiales.btn.editar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("materiales.btn.borrar.tip")));
-        btnEntrada.setTooltip(new Tooltip(t("materiales.btn.entrada.tip")));
-        btnSalida.setTooltip(new Tooltip(t("materiales.btn.salida.tip")));
-        btnImportar.setTooltip(new Tooltip(t("materiales.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("materiales.btn.exportar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("materiales.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("materiales.btn.columnas.tip")));
+        chkSoloAlerta.setTooltip(Tooltips.of(t("materiales.chk.solo_alerta.tip")));
+        btnNuevo.setTooltip(Tooltips.of(t("materiales.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("materiales.btn.editar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("materiales.btn.borrar.tip")));
+        btnEntrada.setTooltip(Tooltips.of(t("materiales.btn.entrada.tip")));
+        btnSalida.setTooltip(Tooltips.of(t("materiales.btn.salida.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("materiales.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("materiales.btn.exportar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("materiales.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("materiales.btn.columnas.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
@@ -577,7 +577,7 @@ public class MaterialesView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setGraphic(null); setText(null); return; }
                 PagoMaterial p = getTableRow().getItem();
                 Circle dot = new Circle(7);
-                Tooltip tip = new Tooltip();
+                Tooltip tip = Tooltips.of();
                 switch (p.getEstadoEfectivo()) {
                     case "pagado"   -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("materiales.pagos.estado.pagado")); }
                     case "vencido"  -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("materiales.pagos.estado.vencido")); }

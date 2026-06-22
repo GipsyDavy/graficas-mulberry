@@ -99,7 +99,7 @@ public class IAView extends VBox {
 
         cbVozTts.getItems().setAll(TextToSpeechService.nombresVoces());
         cbVozTts.setValue(TextToSpeechService.getVozSeleccionada());
-        cbVozTts.setTooltip(new Tooltip("Seleccionar voz española del asistente"));
+        cbVozTts.setTooltip(Tooltips.of("Seleccionar voz española del asistente"));
         cbVozTts.setOnAction(e -> {
             SoundService.play(SoundService.Sound.CLICK);
             if (cbVozTts.getValue() != null) {
@@ -169,13 +169,13 @@ public class IAView extends VBox {
     private void actualizarBotonVoz() {
         if (btnVoz.isSelected()) {
             btnVoz.setText("🔊 Voz activada");
-            btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA se leerá por voz"));
+            btnVoz.setTooltip(Tooltips.of("La respuesta del asistente IA se leerá por voz"));
             btnVoz.getStyleClass().remove("btn-voz-silenciado");
             if (!btnVoz.getStyleClass().contains("btn-voz-activo"))
                 btnVoz.getStyleClass().add("btn-voz-activo");
         } else {
             btnVoz.setText("🔇 Voz silenciada");
-            btnVoz.setTooltip(new Tooltip("La respuesta del asistente IA no se leerá por voz"));
+            btnVoz.setTooltip(Tooltips.of("La respuesta del asistente IA no se leerá por voz"));
             btnVoz.getStyleClass().remove("btn-voz-activo");
             if (!btnVoz.getStyleClass().contains("btn-voz-silenciado"))
                 btnVoz.getStyleClass().add("btn-voz-silenciado");

@@ -134,11 +134,11 @@ public class MainView extends BorderPane {
         logoBox.getChildren().add(lblEmpresa);
 
         // Toggle colapso del sidebar
-        StackPane collapseArrow = Icons.navArrow();
+        StackPane collapseArrow = Icons.sidebarToggle();
         Button btnCollapse = new Button();
         btnCollapse.setGraphic(collapseArrow);
         btnCollapse.getStyleClass().add("sidebar-collapse-btn");
-        Tooltip.install(btnCollapse, new Tooltip(t("main.sidebar.colapsar")));
+        Tooltip.install(btnCollapse, Tooltips.of(t("main.sidebar.colapsar")));
         btnCollapse.setOnAction(e -> {
             sidebarCollapsed = !sidebarCollapsed;
             if (sidebarCollapsed) {
@@ -183,7 +183,7 @@ public class MainView extends BorderPane {
         tfBusqueda = new TextField();
         tfBusqueda.setPromptText(t("main.search.prompt"));
         tfBusqueda.getStyleClass().add("sidebar-search");
-        tfBusqueda.setTooltip(new Tooltip(t("main.search.tooltip")));
+        tfBusqueda.setTooltip(Tooltips.of(t("main.search.tooltip")));
         tfBusqueda.setVisible(false);
         tfBusqueda.setManaged(false);
         tfBusqueda.setOnKeyPressed(e -> {
@@ -201,12 +201,12 @@ public class MainView extends BorderPane {
                 navBtn(UserPermissions.TARIFAS,  Icons.tag(),   "nav.tarifas",  TarifasView::new)
             ),
             navGrupo(t("nav.grupo.comercial"),
-                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(),  "nav.presupuestos", PresupuestosView::new),
-                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),        "nav.pedidos",      PedidosView::new),
-                navBtn(UserPermissions.ALBARANES,    Icons.file(),        "nav.albaranes",    AlbaranesView::new),
-                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),     "nav.facturas",     FacturasView::new),
                 navBtn(UserPermissions.MATERIALES,   Icons.layers(),      "nav.materiales",   MaterialesView::new),
-                navBtn(UserPermissions.COMPRAS,      Icons.shoppingBag(), "nav.compras",      ComprasProveedorView::new)
+                navBtn(UserPermissions.COMPRAS,      Icons.shoppingBag(), "nav.compras",      ComprasProveedorView::new),
+                navBtn(UserPermissions.PEDIDOS,      Icons.cart(),        "nav.pedidos",      PedidosView::new),
+                navBtn(UserPermissions.PRESUPUESTOS, Icons.assignment(),  "nav.presupuestos", PresupuestosView::new),
+                navBtn(UserPermissions.ALBARANES,    Icons.file(),        "nav.albaranes",    AlbaranesView::new),
+                navBtn(UserPermissions.FACTURAS,     Icons.receipt(),     "nav.facturas",     FacturasView::new)
             ),
             navGrupo(t("nav.grupo.personal"),
                 navBtn(UserPermissions.EMPLEADOS, Icons.person(), "nav.empleados", EmpleadosView::new),
@@ -214,7 +214,9 @@ public class MainView extends BorderPane {
             ),
             navGrupo(t("nav.grupo.analitica"),
                 navBtn(UserPermissions.ESTADISTICAS, Icons.barChart(), "nav.estadisticas", EstadisticasView::new),
-                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "nav.calendario",   CalendarioView::new),
+                navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "nav.calendario",   CalendarioView::new)
+            ),
+            navGrupo(t("nav.grupo.asistente"),
                 navBtn(UserPermissions.IA, Icons.robot(), "nav.asistente",
                     () -> mostrarVista(iaView, "nav.asistente"),
                     IAView::new)
@@ -283,7 +285,7 @@ public class MainView extends BorderPane {
         btnCerrarApp.setGraphicTextGap(8);
         btnCerrarApp.getStyleClass().add("sidebar-exit-btn");
         btnCerrarApp.setMaxWidth(Double.MAX_VALUE);
-        btnCerrarApp.setTooltip(new Tooltip(t("main.footer.salir.tooltip")));
+        btnCerrarApp.setTooltip(Tooltips.of(t("main.footer.salir.tooltip")));
         btnCerrarApp.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
         btnCerrarApp.setOnAction(e -> {
             if (confirmarSalida()) {
@@ -294,7 +296,7 @@ public class MainView extends BorderPane {
         Button btnLogout = new Button();
         btnLogout.setGraphic(Icons.logout());
         btnLogout.getStyleClass().add("sidebar-footer-btn");
-        Tooltip.install(btnLogout, new Tooltip(t("main.footer.logout.tooltip")));
+        Tooltip.install(btnLogout, Tooltips.of(t("main.footer.logout.tooltip")));
         btnLogout.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
         btnLogout.setOnAction(e -> {
             Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION,
@@ -309,8 +311,8 @@ public class MainView extends BorderPane {
         footerIconos.getChildren().add(btnLogout);
 
         Button btnHelp = buildFooterBtn(Icons.help(), "main.footer.ayuda",
-            () -> mostrarVista(new HelpView(), "nav.ayuda"),
-            HelpView::new);
+            () -> mostrarVista(HelpView.forModule(currentModuleId), "nav.ayuda"),
+            () -> HelpView.forModule(currentModuleId));
         footerIconos.getChildren().add(btnHelp);
 
         if (!footerIconos.getChildren().isEmpty()) {
@@ -331,7 +333,7 @@ public class MainView extends BorderPane {
         Button btn = new Button();
         btn.setGraphic(icon);
         btn.getStyleClass().add("sidebar-footer-btn");
-        Tooltip tip = new Tooltip(t(tooltipText) + t("main.footer.popup.suffix"));
+        Tooltip tip = Tooltips.of(t(tooltipText) + t("main.footer.popup.suffix"));
         tip.setStyle("-fx-font-size:11;");
         Tooltip.install(btn, tip);
         btn.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
@@ -469,7 +471,7 @@ public class MainView extends BorderPane {
             case "nav.asistente"    -> t("nav.tooltip.asistente");
             default                 -> t(texto);
         };
-        Tooltip tip = new Tooltip(tipDesc + t("main.footer.popup.suffix"));
+        Tooltip tip = Tooltips.of(tipDesc + t("main.footer.popup.suffix"));
         tip.setStyle("-fx-font-size:11;");
         Tooltip.install(pane, tip);
 
@@ -554,13 +556,13 @@ public class MainView extends BorderPane {
         header.setMaxWidth(Double.MAX_VALUE);
         header.setOnMouseEntered(e -> SoundService.play(SoundService.Sound.HOVER));
 
-        arrow.setRotate(90);
+        arrow.setRotate(0);
 
         VBox contenido = new VBox();
         contenido.getStyleClass().add("nav-group-content");
         contenido.getChildren().addAll(visibles);
-        contenido.setVisible(true);
-        contenido.setManaged(true);
+        contenido.setVisible(false);
+        contenido.setManaged(false);
 
         header.setOnMouseClicked(e -> {
             if (e.getButton() == MouseButton.PRIMARY) {

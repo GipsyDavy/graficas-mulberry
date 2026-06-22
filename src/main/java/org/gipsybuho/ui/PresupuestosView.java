@@ -105,22 +105,22 @@ public class PresupuestosView extends VBox {
         Button btnFacturar = btn(t("presupuestos.btn.crear_factura"), this::crearFactura);
         Button btnPreview  = btn(t("presupuestos.btn.previsualizar"), this::previsualizar);
         Button btnColumnas = btn(t("presupuestos.btn.columnas"), dynamicColumns::configure);
-        btnNuevo.setTooltip(new Tooltip(t("presupuestos.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("presupuestos.btn.editar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("presupuestos.btn.borrar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("presupuestos.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("presupuestos.btn.exportar.tip")));
-        btnPedido.setTooltip(new Tooltip(t("presupuestos.btn.crear_pedido.tip")));
-        btnAlbaran.setTooltip(new Tooltip(t("presupuestos.btn.crear_albaran.tip")));
-        btnFacturar.setTooltip(new Tooltip(t("presupuestos.btn.crear_factura.tip")));
-        btnPreview.setTooltip(new Tooltip(t("presupuestos.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("presupuestos.btn.columnas.tip")));
+        btnNuevo.setTooltip(Tooltips.of(t("presupuestos.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("presupuestos.btn.editar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("presupuestos.btn.borrar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("presupuestos.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("presupuestos.btn.exportar.tip")));
+        btnPedido.setTooltip(Tooltips.of(t("presupuestos.btn.crear_pedido.tip")));
+        btnAlbaran.setTooltip(Tooltips.of(t("presupuestos.btn.crear_albaran.tip")));
+        btnFacturar.setTooltip(Tooltips.of(t("presupuestos.btn.crear_factura.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("presupuestos.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("presupuestos.btn.columnas.tip")));
 
         txtBuscar = new TextField();
         txtBuscar.setPromptText(t("presupuestos.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip(t("presupuestos.buscar.tooltip")));
+        txtBuscar.setTooltip(Tooltips.of(t("presupuestos.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);

@@ -100,18 +100,18 @@ public class TarifasView extends VBox {
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
         cbTecnicaFiltro = new ComboBox<>();
         cbTecnicaFiltro.setPrefWidth(150);
-        cbTecnicaFiltro.setTooltip(new Tooltip(t("tarifas.filtro.tecnica.tip")));
+        cbTecnicaFiltro.setTooltip(Tooltips.of(t("tarifas.filtro.tecnica.tip")));
         cbTecnicaFiltro.setOnAction(e -> {
             if (!updatingTecnicaFiltro) cargar();
         });
-        btnNuevo.setTooltip(new Tooltip(t("tarifas.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("tarifas.btn.editar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("tarifas.btn.borrar.tip")));
-        btnTramos.setTooltip(new Tooltip(t("tarifas.btn.tramos.tip")));
-        btnImportar.setTooltip(new Tooltip(t("tarifas.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("tarifas.btn.exportar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("tarifas.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("tarifas.btn.columnas.tip")));
+        btnNuevo.setTooltip(Tooltips.of(t("tarifas.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("tarifas.btn.editar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("tarifas.btn.borrar.tip")));
+        btnTramos.setTooltip(Tooltips.of(t("tarifas.btn.tramos.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("tarifas.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("tarifas.btn.exportar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("tarifas.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("tarifas.btn.columnas.tip")));
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
         HBox bar = new HBox(8, cbTecnicaFiltro, txtBuscar, lblContador, sp, btnNuevo, btnEditar, btnBorrar, btnTramos, btnImportar, btnExportar, btnPreview, btnColumnas);

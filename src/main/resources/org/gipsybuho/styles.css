@@ -194,10 +194,10 @@
 .sidebar-collapse-btn {
     -fx-background-color: transparent;
     -fx-border-color: transparent;
-    -fx-padding: 4 6;
+    -fx-padding: 6 7;
     -fx-cursor: hand;
-    -fx-min-width: 28;
-    -fx-pref-width: 28;
+    -fx-min-width: 32;
+    -fx-pref-width: 32;
 }
 
 .sidebar-collapse-btn:hover {
@@ -336,26 +336,31 @@
     -fx-padding: 4 14 4 12;
     -fx-cursor: hand;
     -fx-max-width: infinity;
+    -fx-background-color: derive(-c-accent, 88%);
+    -fx-background-radius: 6;
 }
 
 .nav-group-header:hover {
-    -fx-background-color: transparent;
+    -fx-background-color: derive(-c-accent, 80%);
 }
 
 .nav-group-header:hover .nav-group-title {
-    -fx-text-fill: -c-sidebar-nav-text;
+    -fx-opacity: 1.0;
 }
 
 .sidebar .nav-group-title {
-    -fx-font-size: 9px;
+    -fx-font-size: 10px;
     -fx-font-weight: bold;
-    -fx-text-fill: -c-sidebar-version-text;
+    -fx-letter-spacing: 1px;
+    -fx-text-fill: -c-text;
+    -fx-opacity: 0.75;
 }
 
 .sidebar .nav-group-arrow {
     -fx-font-size: 9px;
-    -fx-text-fill: -c-sidebar-version-text;
+    -fx-text-fill: -c-text;
     -fx-min-width: 10px;
+    -fx-opacity: 0.75;
 }
 
 .nav-group-content .nav-btn {

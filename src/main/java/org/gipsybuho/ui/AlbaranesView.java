@@ -97,21 +97,21 @@ public class AlbaranesView extends VBox {
         Button btnBorrar   = btn(t("albaranes.btn.borrar"),          this::borrar);
         Button btnPreview    = btn(t("albaranes.btn.previsualizar"), this::previsualizar);
         Button btnColumnas   = btn(t("albaranes.btn.columnas"),      dynamicColumns::configure);
-        btnNuevo.setTooltip(new Tooltip(t("albaranes.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("albaranes.btn.editar.tip")));
-        btnFirmado.setTooltip(new Tooltip(t("albaranes.btn.marcar_firmado.tip")));
-        btnFacturar.setTooltip(new Tooltip(t("albaranes.btn.crear_factura.tip")));
-        btnImportar.setTooltip(new Tooltip(t("albaranes.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("albaranes.btn.exportar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("albaranes.btn.borrar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("albaranes.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("albaranes.btn.columnas.tip")));
+        btnNuevo.setTooltip(Tooltips.of(t("albaranes.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("albaranes.btn.editar.tip")));
+        btnFirmado.setTooltip(Tooltips.of(t("albaranes.btn.marcar_firmado.tip")));
+        btnFacturar.setTooltip(Tooltips.of(t("albaranes.btn.crear_factura.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("albaranes.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("albaranes.btn.exportar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("albaranes.btn.borrar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("albaranes.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("albaranes.btn.columnas.tip")));
 
         txtBuscar = new TextField();
         txtBuscar.setPromptText(t("albaranes.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip(t("albaranes.buscar.tooltip")));
+        txtBuscar.setTooltip(Tooltips.of(t("albaranes.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);

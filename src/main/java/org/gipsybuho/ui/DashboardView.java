@@ -111,7 +111,7 @@ public class DashboardView extends VBox {
             case "c5" -> t("dash.kpi.facturado.tip");
             default   -> titulo;
         };
-        Tooltip.install(card, new Tooltip(tipText));
+        Tooltip.install(card, Tooltips.of(tipText));
 
         TranslateTransition liftIn  = new TranslateTransition(Duration.millis(200), card);
         liftIn.setToY(-2);

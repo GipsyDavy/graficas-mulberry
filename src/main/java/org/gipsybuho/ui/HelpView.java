@@ -21,7 +21,7 @@ public class HelpView extends BorderPane {
     private static final String DEFAULT_ARTICLE = "GEN-PS-1";
 
     private static final String[] MODULE_IDS = {
-        "general", "clientes", "materiales", "empleados", "presupuestos",
+        "general", "clientes", "materiales", "compras", "empleados", "presupuestos",
         "facturas", "albaranes", "pedidos", "nominas", "tarifas",
         "importacion", "exportacion", "backups", "ia", "asistente",
         "estadisticas", "calendario", "usuarios", "configuracion"
@@ -33,6 +33,7 @@ public class HelpView extends BorderPane {
         m.put("general",       "General");
         m.put("clientes",      "Clientes");
         m.put("materiales",    "Materiales");
+        m.put("compras",       "Compras");
         m.put("empleados",     "Empleados");
         m.put("presupuestos",  "Presupuestos");
         m.put("facturas",      "Facturas");
@@ -107,19 +108,19 @@ public class HelpView extends BorderPane {
 
     private HBox buildTopBar() {
         btnBack.getStyleClass().add("btn-toolbar");
-        btnBack.setTooltip(new Tooltip("Artículo anterior"));
+        btnBack.setTooltip(Tooltips.of("Artículo anterior"));
         btnBack.setDisable(true);
         btnBack.setOnAction(e -> navigateBack());
 
         btnForward.getStyleClass().add("btn-toolbar");
-        btnForward.setTooltip(new Tooltip("Artículo siguiente"));
+        btnForward.setTooltip(Tooltips.of("Artículo siguiente"));
         btnForward.setDisable(true);
         btnForward.setOnAction(e -> navigateForward());
 
         Button btnHome = new Button();
         btnHome.setGraphic(Icons.home());
         btnHome.getStyleClass().add("btn-toolbar");
-        btnHome.setTooltip(new Tooltip("Inicio de la ayuda"));
+        btnHome.setTooltip(Tooltips.of("Inicio de la ayuda"));
         btnHome.setOnAction(e -> openArticle(DEFAULT_ARTICLE));
 
         tfSearch.setPromptText("Buscar en la ayuda…");

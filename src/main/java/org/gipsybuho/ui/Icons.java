@@ -2,6 +2,7 @@ package org.gipsybuho.ui;
 
 import javafx.geometry.Pos;
 import javafx.scene.control.Label;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.shape.SVGPath;
@@ -75,6 +76,31 @@ public final class Icons {
         pane.setPrefSize(10, 10);
         pane.setMaxSize(10, 10);
         pane.setMinSize(10, 10);
+        return pane;
+    }
+
+    /**
+     * Doble flecha para el botón de colapsar/expandir la barra lateral —
+     * más grande y reconocible que {@link #navArrow()}, que es un chevron
+     * pensado para el tamaño diminuto de las cabeceras de grupo del menú.
+     * Rotar el StackPane devuelto 180° para indicar el sentido contrario.
+     */
+    public static StackPane sidebarToggle() {
+        double scale = 13.0 / 24.0;
+        SVGPath p1 = new SVGPath();
+        p1.setContent(CHEVRON_R);
+        p1.getStyleClass().add("nav-group-arrow-icon");
+        p1.getTransforms().add(new Scale(scale, scale, 0, 0));
+        SVGPath p2 = new SVGPath();
+        p2.setContent(CHEVRON_R);
+        p2.getStyleClass().add("nav-group-arrow-icon");
+        p2.getTransforms().add(new Scale(scale, scale, 0, 0));
+        HBox doble = new HBox(-5, p1, p2);
+        doble.setAlignment(Pos.CENTER);
+        StackPane pane = new StackPane(doble);
+        pane.setPrefSize(18, 18);
+        pane.setMaxSize(18, 18);
+        pane.setMinSize(18, 18);
         return pane;
     }
 

@@ -105,20 +105,20 @@ public class NominasView extends VBox {
         Button btnGenMes   = btn(t("nominas.btn.generar_mes"),  this::generarMesCompleto);
         Button btnPreview  = btn(t("nominas.btn.previsualizar"), this::previsualizar);
         Button btnColumnas = btn(t("nominas.btn.columnas"),     dynamicColumns::configure);
-        btnNueva.setTooltip(new Tooltip(t("nominas.btn.nueva.tip")));
-        btnEditar.setTooltip(new Tooltip(t("nominas.btn.editar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("nominas.btn.borrar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("nominas.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("nominas.btn.exportar.tip")));
-        btnGenMes.setTooltip(new Tooltip(t("nominas.btn.generar_mes.tip")));
-        btnPreview.setTooltip(new Tooltip(t("nominas.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("nominas.btn.columnas.tip")));
+        btnNueva.setTooltip(Tooltips.of(t("nominas.btn.nueva.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("nominas.btn.editar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("nominas.btn.borrar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("nominas.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("nominas.btn.exportar.tip")));
+        btnGenMes.setTooltip(Tooltips.of(t("nominas.btn.generar_mes.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("nominas.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("nominas.btn.columnas.tip")));
 
         txtBuscar = new TextField();
         txtBuscar.setPromptText(t("nominas.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip(t("nominas.buscar.tooltip")));
+        txtBuscar.setTooltip(Tooltips.of(t("nominas.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);

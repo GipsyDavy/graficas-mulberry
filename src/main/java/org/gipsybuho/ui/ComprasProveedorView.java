@@ -155,7 +155,7 @@ public class ComprasProveedorView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setGraphic(null); return; }
                 PagoMaterial p = getTableRow().getItem();
                 Circle dot = new Circle(7);
-                Tooltip tip = new Tooltip();
+                Tooltip tip = Tooltips.of();
                 switch (p.getEstadoEfectivo()) {
                     case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("compras.estado.pagado")); }
                     case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("compras.estado.vencido")); }

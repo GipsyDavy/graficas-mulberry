@@ -127,14 +127,14 @@ public class ClientesView extends VBox {
         Button btnExportar = btn(t("clientes.btn.exportar"),     this::exportar);
         Button btnPreview  = btn(t("clientes.btn.previsualizar"),this::previsualizar);
         Button btnColumnas = btn(t("clientes.btn.columnas"),     this::configurarColumnas);
-        txtBuscar.setTooltip(new Tooltip(t("clientes.buscar.tooltip")));
-        btnNuevo.setTooltip(new Tooltip(t("clientes.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("clientes.btn.editar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("clientes.btn.borrar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("clientes.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("clientes.btn.exportar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("clientes.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("clientes.btn.columnas.tip")));
+        txtBuscar.setTooltip(Tooltips.of(t("clientes.buscar.tooltip")));
+        btnNuevo.setTooltip(Tooltips.of(t("clientes.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("clientes.btn.editar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("clientes.btn.borrar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("clientes.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("clientes.btn.exportar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("clientes.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("clientes.btn.columnas.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region spacer = new Region();

@@ -229,13 +229,13 @@ public class PedidosView extends VBox {
         Button btnExportar = btn(t("pedidos.btn.exportar"),      this::exportar);
         Button btnBorrar   = btn(t("pedidos.btn.eliminar"),      this::eliminarPedido);
         Button btnPreview  = btn(t("pedidos.btn.previsualizar"), this::previsualizar);
-        txtBusqueda.setTooltip(new Tooltip(t("pedidos.buscar.tooltip")));
-        btnNuevo.setTooltip(new Tooltip(t("pedidos.btn.nuevo.tip")));
-        btnEditar.setTooltip(new Tooltip(t("pedidos.btn.editar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("pedidos.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("pedidos.btn.exportar.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("pedidos.btn.eliminar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("pedidos.btn.previsualizar.tip")));
+        txtBusqueda.setTooltip(Tooltips.of(t("pedidos.buscar.tooltip")));
+        btnNuevo.setTooltip(Tooltips.of(t("pedidos.btn.nuevo.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("pedidos.btn.editar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("pedidos.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("pedidos.btn.exportar.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("pedidos.btn.eliminar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("pedidos.btn.previsualizar.tip")));
 
         lblContador.getStyleClass().add("row-counter");
         HBox bar = new HBox(10, filtros, txtBusqueda, lblContador, sp, btnNuevo, btnEditar, btnImportar, btnExportar, btnBorrar, btnPreview);
@@ -258,7 +258,7 @@ public class PedidosView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setGraphic(null); return; }
                 Pedido p = getTableRow().getItem();
                 Circle dot = new Circle(7);
-                Tooltip tip = new Tooltip(p.getEstadoDisplay());
+                Tooltip tip = Tooltips.of(p.getEstadoDisplay());
                 dot.setFill(switch (p.getEstado() != null ? p.getEstado() : "") {
                     case "en_proceso" -> Color.web("#F39C12");
                     case "listo"      -> Color.web("#27AE60");
@@ -471,7 +471,7 @@ public class PedidosView extends VBox {
                 if (empty || getTableRow() == null || getTableRow().getItem() == null) { setGraphic(null); return; }
                 PagoPedido p = getTableRow().getItem();
                 Circle dot = new Circle(7);
-                Tooltip tip = new Tooltip();
+                Tooltip tip = Tooltips.of();
                 switch (p.getEstadoEfectivo()) {
                     case "pagado"  -> { dot.setFill(Color.web("#27AE60")); tip.setText(t("pedidos.pago.estado.cobrado")); }
                     case "vencido" -> { dot.setFill(Color.web("#E74C3C")); tip.setText(t("pedidos.pago.estado.vencido")); }

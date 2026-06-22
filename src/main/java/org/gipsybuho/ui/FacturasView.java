@@ -116,21 +116,21 @@ public class FacturasView extends VBox {
         Button btnBorrar   = btn(t("facturas.btn.borrar"),          this::borrar);
         Button btnPreview  = btn(t("facturas.btn.previsualizar"),   this::previsualizar);
         Button btnColumnas = btn(t("facturas.btn.columnas"),        dynamicColumns::configure);
-        btnEditar.setTooltip(new Tooltip(t("facturas.btn.editar.tip")));
-        btnImportar.setTooltip(new Tooltip(t("facturas.btn.importar.tip")));
-        btnExportar.setTooltip(new Tooltip(t("facturas.btn.exportar.tip")));
-        btnAlbaran.setTooltip(new Tooltip(t("facturas.btn.albaran.tip")));
-        btnPagada.setTooltip(new Tooltip(t("facturas.btn.marcar_pagada.tip")));
-        btnAnular.setTooltip(new Tooltip(t("facturas.btn.anular.tip")));
-        btnBorrar.setTooltip(new Tooltip(t("facturas.btn.borrar.tip")));
-        btnPreview.setTooltip(new Tooltip(t("facturas.btn.previsualizar.tip")));
-        btnColumnas.setTooltip(new Tooltip(t("facturas.btn.columnas.tip")));
+        btnEditar.setTooltip(Tooltips.of(t("facturas.btn.editar.tip")));
+        btnImportar.setTooltip(Tooltips.of(t("facturas.btn.importar.tip")));
+        btnExportar.setTooltip(Tooltips.of(t("facturas.btn.exportar.tip")));
+        btnAlbaran.setTooltip(Tooltips.of(t("facturas.btn.albaran.tip")));
+        btnPagada.setTooltip(Tooltips.of(t("facturas.btn.marcar_pagada.tip")));
+        btnAnular.setTooltip(Tooltips.of(t("facturas.btn.anular.tip")));
+        btnBorrar.setTooltip(Tooltips.of(t("facturas.btn.borrar.tip")));
+        btnPreview.setTooltip(Tooltips.of(t("facturas.btn.previsualizar.tip")));
+        btnColumnas.setTooltip(Tooltips.of(t("facturas.btn.columnas.tip")));
 
         txtBuscar = new TextField();
         txtBuscar.setPromptText(t("facturas.buscar.prompt"));
         txtBuscar.setPrefWidth(220);
         txtBuscar.textProperty().addListener((o, a, b) -> cargar());
-        txtBuscar.setTooltip(new Tooltip(t("facturas.buscar.tooltip")));
+        txtBuscar.setTooltip(Tooltips.of(t("facturas.buscar.tooltip")));
 
         lblContador.getStyleClass().add("row-counter");
         Region sp = new Region(); HBox.setHgrow(sp, Priority.ALWAYS);
