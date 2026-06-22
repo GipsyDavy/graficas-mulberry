@@ -880,7 +880,7 @@ public class EntityImportService {
         Presupuesto p = ensamblarPresupuesto(clienteId, vals, g.filas(), errores, numFila);
         if (p == null) return new int[]{0, 0, 0};
 
-        new PresupuestoDAO().save(p);
+        new PresupuestoDAO(conn).save(p);
         return new int[]{1, 0, g.filas().size()};
     }
 

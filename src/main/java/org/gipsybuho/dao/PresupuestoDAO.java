@@ -1,6 +1,5 @@
 package org.gipsybuho.dao;
 
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.model.LineaPresupuesto;
 import org.gipsybuho.model.Presupuesto;
 
@@ -14,6 +13,12 @@ public class PresupuestoDAO {
     // SQLite no aplica DEFAULT cuando se inserta NULL explícito, solo si la columna se omite del INSERT.
     private static final String DEFAULT_CONDICIONES = "Presupuesto válido por 30 días. Precios sin IVA.";
 
+    private final Connection conn;
+
+    public PresupuestoDAO(Connection conn) {
+        this.conn = conn;
+    }
+
     public List<Presupuesto> findAll() throws SQLException {
         List<Presupuesto> list = new ArrayList<>();
         String sql = """
@@ -22,7 +27,7 @@ public class PresupuestoDAO {
             LEFT JOIN clientes c ON p.cliente_id = c.id
             ORDER BY p.created_at DESC
             """;
-        try (Statement st = DatabaseManager.getConnection().createStatement();
+        try (Statement st = conn.createStatement();
              ResultSet rs = st.executeQuery(sql)) {
             while (rs.next()) list.add(map(rs));
         }
@@ -36,7 +41,7 @@ public class PresupuestoDAO {
             LEFT JOIN clientes c ON p.cliente_id = c.id
             WHERE p.id = ?
             """;
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             ps.setInt(1, id);
             ResultSet rs = ps.executeQuery();
             if (!rs.next()) return null;
@@ -48,7 +53,7 @@ public class PresupuestoDAO {
 
     public List<LineaPresupuesto> findLineas(int presupuestoId) throws SQLException {
         List<LineaPresupuesto> lineas = new ArrayList<>();
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT * FROM lineas_presupuesto WHERE presupuesto_id=? ORDER BY orden")) {
             ps.setInt(1, presupuestoId);
             ResultSet rs = ps.executeQuery();
@@ -58,7 +63,6 @@ public class PresupuestoDAO {
     }
 
     public void save(Presupuesto p) throws SQLException {
-        Connection conn = DatabaseManager.getConnection();
         boolean externalTx = !conn.getAutoCommit();
         if (!externalTx) conn.setAutoCommit(false);
         try {
@@ -75,7 +79,7 @@ public class PresupuestoDAO {
 
     private void insert(Presupuesto p) throws SQLException {
         String sql = "INSERT INTO presupuestos (numero,cliente_id,fecha,fecha_validez,estado,base_imponible,iva_porcentaje,iva_importe,total,notas,condiciones) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
             set(ps, p);
             ps.executeUpdate();
             ResultSet keys = ps.getGeneratedKeys();
@@ -85,7 +89,7 @@ public class PresupuestoDAO {
 
     private void update(Presupuesto p) throws SQLException {
         String sql = "UPDATE presupuestos SET numero=?,cliente_id=?,fecha=?,fecha_validez=?,estado=?,base_imponible=?,iva_porcentaje=?,iva_importe=?,total=?,notas=?,condiciones=? WHERE id=?";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             set(ps, p);
             ps.setInt(12, p.getId());
             ps.executeUpdate();
@@ -93,13 +97,13 @@ public class PresupuestoDAO {
     }
 
     private void saveLineas(Presupuesto p) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM lineas_presupuesto WHERE presupuesto_id=?")) {
             ps.setInt(1, p.getId());
             ps.executeUpdate();
         }
         String sql = "INSERT INTO lineas_presupuesto (presupuesto_id,descripcion,tecnica,cantidad,precio_unit,descuento,total,orden) VALUES (?,?,?,?,?,?,?,?)";
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(sql)) {
+        try (PreparedStatement ps = conn.prepareStatement(sql)) {
             int orden = 0;
             for (LineaPresupuesto l : p.getLineas()) {
                 ps.setInt(1, p.getId());
@@ -117,7 +121,7 @@ public class PresupuestoDAO {
     }
 
     public void updateEstado(int id, String estado) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "UPDATE presupuestos SET estado=? WHERE id=?")) {
             ps.setString(1, estado);
             ps.setInt(2, id);
@@ -126,7 +130,7 @@ public class PresupuestoDAO {
     }
 
     public void delete(int id) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "DELETE FROM presupuestos WHERE id=?")) {
             ps.setInt(1, id);
             ps.executeUpdate();
@@ -134,7 +138,7 @@ public class PresupuestoDAO {
     }
 
     public int countByEstado(String estado) throws SQLException {
-        try (PreparedStatement ps = DatabaseManager.getConnection().prepareStatement(
+        try (PreparedStatement ps = conn.prepareStatement(
                 "SELECT COUNT(*) FROM presupuestos WHERE estado=?")) {
             ps.setString(1, estado);
             ResultSet rs = ps.executeQuery();

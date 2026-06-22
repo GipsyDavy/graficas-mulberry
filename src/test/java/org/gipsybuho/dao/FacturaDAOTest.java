@@ -57,7 +57,7 @@ class FacturaDAOTest {
         Cliente c = crearCliente();
         Presupuesto p = nuevoPresupuesto(c.getId(), "P-1");
         p.setLineas(List.of(lineaPresupuesto("Camiseta", 10, 5.0)));
-        new PresupuestoDAO().save(p);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
 
         // Estrategia para forzar fallo a mitad de crearDesdePresupuesto:
         // 1. Reservamos un numero de factura (incrementa siguiente_factura).
@@ -78,7 +78,7 @@ class FacturaDAOTest {
         // Tras el fallo, sigue habiendo solo la factura pre-existente (no la nueva).
         assertEquals(1, new FacturaDAO().findAll().size(),
             "Tras el fallo, solo debe existir la factura pre-creada");
-        Presupuesto recargado = new PresupuestoDAO().findById(p.getId());
+        Presupuesto recargado = new PresupuestoDAO(DatabaseManager.getConnection()).findById(p.getId());
         assertNotNull(recargado);
         assertNotEquals("facturado", recargado.getEstado(),
             "El estado del presupuesto NO debe haber cambiado a facturado");

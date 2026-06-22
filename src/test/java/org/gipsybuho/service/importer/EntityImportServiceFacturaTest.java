@@ -164,7 +164,7 @@ class EntityImportServiceFacturaTest {
         p.setFecha("2025-01-15");
         p.setEstado("aceptado");
         p.setIvaPorcentaje(21.0);
-        new PresupuestoDAO().save(p);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "F-1", "P-99", "Camiseta", 10, "5.00", "0")

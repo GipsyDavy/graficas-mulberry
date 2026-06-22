@@ -54,7 +54,7 @@ class TxAnidadaTest {
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         try {
-            new PresupuestoDAO().save(p);
+            new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
             new FacturaDAO().save(f);
             conn.commit();
         } catch (SQLException e) {
@@ -64,7 +64,7 @@ class TxAnidadaTest {
             conn.setAutoCommit(true);
         }
 
-        assertEquals(1, new PresupuestoDAO().findAll().size(),
+        assertEquals(1, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras commit del caller, el presupuesto debe persistir");
         assertEquals(1, new FacturaDAO().findAll().size(),
             "Tras commit del caller, la factura debe persistir");
@@ -81,7 +81,7 @@ class TxAnidadaTest {
         Connection conn = DatabaseManager.getConnection();
         conn.setAutoCommit(false);
         try {
-            new PresupuestoDAO().save(p);
+            new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
             new FacturaDAO().save(f);
             // Simulamos un error de negocio detectado DESPUES de los saves:
             // el caller decide rollbackear todo el grupo.
@@ -90,7 +90,7 @@ class TxAnidadaTest {
             conn.setAutoCommit(true);
         }
 
-        assertEquals(0, new PresupuestoDAO().findAll().size(),
+        assertEquals(0, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras rollback del caller, el presupuesto NO debe persistir");
         assertEquals(0, new FacturaDAO().findAll().size(),
             "Tras rollback del caller, la factura NO debe persistir");
@@ -109,7 +109,7 @@ class TxAnidadaTest {
         conn.setAutoCommit(false);
         try {
             assertThrows(SQLException.class, () -> {
-                new PresupuestoDAO().save(p);
+                new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
                 new FacturaDAO().save(fMala);
             });
             // El caller, como hace EntityImportService, rollbackea ante la excepcion.
@@ -118,7 +118,7 @@ class TxAnidadaTest {
             conn.setAutoCommit(true);
         }
 
-        assertEquals(0, new PresupuestoDAO().findAll().size(),
+        assertEquals(0, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size(),
             "Tras rollback del caller por SQLException, el primer save NO debe persistir");
         assertEquals(0, new FacturaDAO().findAll().size(),
             "Tras rollback del caller por SQLException, el segundo save (fallido) tampoco debe persistir");

@@ -104,7 +104,7 @@ public class PedidoDAO {
     }
 
     public Pedido crearDesdePresupuesto(int presupuestoId) throws SQLException {
-        PresupuestoDAO pDao = new PresupuestoDAO();
+        PresupuestoDAO pDao = new PresupuestoDAO(this.conn);
         var presupuesto = pDao.findById(presupuestoId);
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 

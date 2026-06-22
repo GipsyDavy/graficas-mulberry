@@ -27,7 +27,7 @@ public class ContextoERPService {
 
     private static final long CACHE_MILLIS = 8 * 60 * 1000L;
 
-    private final PresupuestoDAO    presupuestoDAO    = new PresupuestoDAO();
+    private final PresupuestoDAO    presupuestoDAO;
     private final FacturaDAO        facturaDAO        = new FacturaDAO();
     private final PedidoDAO         pedidoDAO;
     private final MaterialDAO       materialDAO;
@@ -44,6 +44,7 @@ public class ContextoERPService {
             pedidoDAO = new PedidoDAO(conn);
             materialDAO = new MaterialDAO(conn);
             clienteDAO = new ClienteDAO(conn);
+            presupuestoDAO = new PresupuestoDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

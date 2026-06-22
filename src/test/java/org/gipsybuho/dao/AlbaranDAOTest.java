@@ -76,7 +76,7 @@ class AlbaranDAOTest {
         Cliente c = crearCliente();
         Presupuesto p = nuevoPresupuesto(c.getId(), "P-1");
         p.setLineas(List.of(lineaPresupuesto("Camiseta", 10, 5.0)));
-        new PresupuestoDAO().save(p);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
 
         String siguienteAlbaranPrevio = DatabaseManager.getConfig("siguiente_albaran");
         String numeroColision = DatabaseManager.generarNumeroAlbaran();

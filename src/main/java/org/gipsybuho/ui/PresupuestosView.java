@@ -48,7 +48,7 @@ import static org.gipsybuho.service.LanguageManager.tf;
 
 public class PresupuestosView extends VBox {
 
-    private final PresupuestoDAO dao = new PresupuestoDAO();
+    private final PresupuestoDAO dao;
     private final ClienteDAO clienteDAO;
     private final ObservableList<Presupuesto> datos = FXCollections.observableArrayList();
     private final TableView<Presupuesto> tabla = new TableView<>(datos);
@@ -75,7 +75,9 @@ public class PresupuestosView extends VBox {
 
     public PresupuestosView() {
         try {
-            clienteDAO = new ClienteDAO(DatabaseManager.getConnection());
+            Connection conn = DatabaseManager.getConnection();
+            clienteDAO = new ClienteDAO(conn);
+            dao = new PresupuestoDAO(conn);
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }

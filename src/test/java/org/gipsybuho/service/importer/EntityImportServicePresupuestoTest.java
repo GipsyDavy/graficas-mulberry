@@ -51,9 +51,9 @@ class EntityImportServicePresupuestoTest {
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas(), "una entidad insertada");
 
-        List<Presupuesto> persistidos = new PresupuestoDAO().findAll();
+        List<Presupuesto> persistidos = new PresupuestoDAO(DatabaseManager.getConnection()).findAll();
         assertEquals(1, persistidos.size());
-        Presupuesto p = new PresupuestoDAO().findById(persistidos.get(0).getId());
+        Presupuesto p = new PresupuestoDAO(DatabaseManager.getConnection()).findById(persistidos.get(0).getId());
         assertNotNull(p);
         assertEquals("P-1", p.getNumero());
         assertEquals(2, p.getLineas().size());
@@ -79,7 +79,7 @@ class EntityImportServicePresupuestoTest {
         // detectarInconsistenciaGrupo añade un RowError por cada fila del grupo discrepante.
         assertEquals(2, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Inconsistencia"));
-        assertEquals(0, new PresupuestoDAO().findAll().size());
+        assertEquals(0, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -91,7 +91,7 @@ class EntityImportServicePresupuestoTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(1, result.errores().size());
         assertTrue(result.errores().get(0).mensaje().contains("Cliente con nif"));
-        assertEquals(0, new PresupuestoDAO().findAll().size());
+        assertEquals(0, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -104,7 +104,7 @@ class EntityImportServicePresupuestoTest {
 
         assertEquals(0, result.errores().size(), "no debe haber errores: " + result.errores());
         assertEquals(1, result.filasImportadas());
-        assertEquals(1, new PresupuestoDAO().findAll().size());
+        assertEquals(1, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test
@@ -116,7 +116,7 @@ class EntityImportServicePresupuestoTest {
         existente.setFecha("2025-01-15");
         existente.setEstado("borrador");
         existente.setIvaPorcentaje(21.0);
-        new PresupuestoDAO().save(existente);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(existente);
 
         ImportResult result = importar(List.of(
                 filaLinea("111A", "", "", "P-1", "Camiseta", 10, "5.00", "0")
@@ -125,7 +125,7 @@ class EntityImportServicePresupuestoTest {
         assertEquals(0, result.filasImportadas());
         assertEquals(0, result.filasActualizadas());
         assertEquals(0, result.errores().size());
-        assertEquals(1, new PresupuestoDAO().findAll().size());
+        assertEquals(1, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size());
     }
 
     @Test

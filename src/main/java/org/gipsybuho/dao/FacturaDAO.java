@@ -55,7 +55,7 @@ public class FacturaDAO {
     }
 
     public Factura crearDesdePresupuesto(int presupuestoId) throws SQLException {
-        PresupuestoDAO pDao = new PresupuestoDAO();
+        PresupuestoDAO pDao = new PresupuestoDAO(DatabaseManager.getConnection());
         var presupuesto = pDao.findById(presupuestoId);
         if (presupuesto == null) throw new SQLException("Presupuesto no encontrado");
 

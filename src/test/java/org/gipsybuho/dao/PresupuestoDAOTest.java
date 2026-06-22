@@ -41,9 +41,9 @@ class PresupuestoDAOTest {
         Presupuesto p = nuevoPresupuesto(c.getId(), "P-1");
         p.setLineas(List.of(linea("Camiseta", 10, 5.0), lineaInvalida()));
 
-        assertThrows(SQLException.class, () -> new PresupuestoDAO().save(p));
+        assertThrows(SQLException.class, () -> new PresupuestoDAO(DatabaseManager.getConnection()).save(p));
 
-        assertEquals(0, new PresupuestoDAO().findAll().size(),
+        assertEquals(0, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size(),
             "Si una linea falla, la cabecera no debe quedar persistida");
     }
 
@@ -52,17 +52,17 @@ class PresupuestoDAOTest {
         Cliente c = crearCliente();
         Presupuesto previo = nuevoPresupuesto(c.getId(), "P-1");
         previo.setLineas(List.of(linea("Camiseta", 10, 5.0)));
-        new PresupuestoDAO().save(previo);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(previo);
         int idPrevio = previo.getId();
 
         Presupuesto nuevo = nuevoPresupuesto(c.getId(), "P-2");
         nuevo.setLineas(List.of(linea("Bolsa", 5, 2.0), lineaInvalida()));
-        assertThrows(SQLException.class, () -> new PresupuestoDAO().save(nuevo));
+        assertThrows(SQLException.class, () -> new PresupuestoDAO(DatabaseManager.getConnection()).save(nuevo));
 
-        Presupuesto recargado = new PresupuestoDAO().findById(idPrevio);
+        Presupuesto recargado = new PresupuestoDAO(DatabaseManager.getConnection()).findById(idPrevio);
         assertNotNull(recargado, "El presupuesto previo no debe haberse perdido");
         assertEquals(1, recargado.getLineas().size(), "Las lineas previas siguen intactas");
-        assertEquals(1, new PresupuestoDAO().findAll().size(), "Solo el previo persiste");
+        assertEquals(1, new PresupuestoDAO(DatabaseManager.getConnection()).findAll().size(), "Solo el previo persiste");
     }
 
     private Cliente crearCliente() throws SQLException {
@@ -116,9 +116,9 @@ class PresupuestoDAOTest {
         p.setIvaPorcentaje(21.0);
         p.setLineas(List.of(linea("Item", 1, 1.0)));
 
-        new PresupuestoDAO().save(p);
+        new PresupuestoDAO(DatabaseManager.getConnection()).save(p);
 
-        Presupuesto recargado = new PresupuestoDAO().findById(p.getId());
+        Presupuesto recargado = new PresupuestoDAO(DatabaseManager.getConnection()).findById(p.getId());
         assertNotNull(recargado, "El presupuesto debe persistirse");
         assertEquals("borrador", recargado.getEstado(),
             "estado=null en el modelo debe quedar como DEFAULT DDL 'borrador'");
