@@ -5,7 +5,7 @@ $PROJECT     = "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
 $JAVA_HOME   = "C:\Program Files\Java\jdk-26"
 $MVN         = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
 $JPACKAGE    = "$JAVA_HOME\bin\jpackage.exe"
-$APP_VERSION = "13.5.0"
+$APP_VERSION = "14.0.0"
 
 $MAKENSIS = @(
     "C:\Program Files (x86)\NSIS\makensis.exe",
