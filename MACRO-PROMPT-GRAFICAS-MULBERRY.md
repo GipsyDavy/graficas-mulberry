@@ -57,7 +57,7 @@ Base de datos local SQLite vía JDBC directo.
 
 ## Estado actual
 **Proyecto existente y funcional.** No es un proyecto nuevo.
-Versión actual de la app: v13.5.0. HEAD: `6268479`.
+Versión actual de la app: v14.0.0. HEAD: `e772b78`.
 Estado operativo actual: `docs/context/STATE.md`.
 
 ## Raíz del proyecto

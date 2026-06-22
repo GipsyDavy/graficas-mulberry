@@ -18,6 +18,7 @@ import org.gipsybuho.service.MusicService;
 import org.gipsybuho.service.PreferenceService;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TemaManager;
+import org.gipsybuho.util.AppConstants;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -870,7 +871,7 @@ public class ConfiguracionView extends VBox {
         lblSubtitulo.setStyle("-fx-font-size:13px; -fx-text-fill:rgba(255,255,255,0.85);");
         lblSubtitulo.setWrapText(true);
 
-        Label lblVersion = new Label("Versión 13.5.0");
+        Label lblVersion = new Label("Versión " + AppConstants.APP_VERSION.replaceFirst("^v", ""));
         lblVersion.setStyle("-fx-font-size:18px; -fx-font-weight:bold; -fx-text-fill:rgba(255,255,255,0.95);");
 
         cardApp.getChildren().addAll(lblNombreApp, lblSubtitulo, lblVersion);

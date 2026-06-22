@@ -954,7 +954,7 @@ Preguntar al usuario qué prioriza si no lo indica.
 | Mensaje | `feat(i18n): migrar TarifasView a LanguageManager — Sprint i18n-12` |
 | Rama | `master` |
 | Tests | 151/151 verdes (`.\mvnw.cmd test`) |
-| Versión app | v13.5.0 (`AppConstants.APP_VERSION`) |
+| Versión app | v14.0.0 (`AppConstants.APP_VERSION`) — tabla histórica, ver header del documento para HEAD real |
 
 ---
 
