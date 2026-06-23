@@ -3,7 +3,7 @@ $ErrorActionPreference = "Stop"
 # ── Rutas ──────────────────────────────────────────────────────────
 $PROJECT     = "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
 $MVN         = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
-$APP_VERSION = "14.1.0"
+$APP_VERSION = "15.0.0"
 
 # JavaFX Web 21 requiere jdk.jsobject. JDK 26 ya no lo incluye y el .exe
 # empaquetado falla al resolver javafx.web antes de mostrar la ventana.
