@@ -3,7 +3,27 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-23 (Sprint PACKAGE-JDK26-JSOBJECT — fix arranque .exe empaquetado — 151/151 — v14.1.0 reempaquetada)
+**Última actualización:** 2026-06-23 (Sprint IA-CONTEXTO-MATERIALES + AUDIT-CSV-INJECTION — 158/158 — v14.1.0 reempaquetada)
+
+---
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-23 (Sprint IA-CONTEXTO-MATERIALES + AUDIT-CSV-INJECTION — v14.1.0 reempaquetada)
+
+Agente líder: Claude Code. Sin Multi-IA en ningún cierre de esta sesión — los tres cambios son mecánicos/bajo riesgo (1 archivo cada uno) con validación objetiva (`mvnw test`) suficiente; la auditoría de seguridad fue manual (Claude Code), sin consultar Codex/Gemini, justificado por ser revisión exploratoria sin ambigüedad arquitectónica.
+
+**1. Bug real reportado por el usuario — contexto IA no daba nombres reales de materiales:** `ContextoERPService.generarContexto()` solo mandaba a Ollama el conteo total de materiales y los nombres de los que tenían stock bajo. Sin nombres reales en el contexto, el modelo rellenaba con placeholders (`Material 1`, `Material 2`...) al pedirle el listado. Fix: la sección MATERIALES ahora itera `materialDAO.findAll()` completo y añade nombre+categoría+stock de cada material; la alerta de stock bajo se conserva igual. Commit `ff2292e`.
+
+**2. Auditoría de seguridad manual (a petición del usuario) — hallazgo nuevo no cubierto por `SECURITY_AUDIT_2026-06-13.md`:** CSV/Formula Injection (CWE-1236) en `ExportService.csvEscapar()` — solo escapaba sintaxis CSV (`;`, comillas, saltos de línea), no neutralizaba valores que empiezan por `=+-@\t`, que Excel/LibreOffice interpretan como inicio de fórmula al abrir el CSV exportado. Vector: campos libres (notas, nombre) rellenados manualmente o importados de fichero de terceros. Fix: antepone un apóstrofo cuando el primer carácter es uno de los disparadores de fórmula, antes del escapado existente. `csvEscapar` pasó de `private` a package-private (`static`) para poder testearlo sin reflection. 7 tests nuevos en `ExportServiceTest` (nuevo fichero). Validado con gitleaks sobre los ficheros tocados (sin secretos); semgrep `p/java` no pudo ejecutar — mismo bloqueo `SSLCertVerificationError` contra `semgrep.dev` ya documentado en `SECURITY_REMEDIATION_2026-06-13.md`, no es regresión nueva. Resto de la auditoría manual (SQL injection, command injection, backdoors, secretos) sin hallazgos — confirmé puntualmente que los fixes de la auditoría previa (`SingleInstanceLock` loopback-only, verificación Authenticode en `OllamaInstallerDialog`) siguen intactos. Commit `4d98a4f`.
+
+**3. Limitación honesta de esta auditoría:** revisión manual (Grep + lectura de código), sin relanzar semgrep/osv-scanner/spotbugs/clamav completos como en la auditoría del 2026-06-13 — no sustituye esa pasada con herramientas, la complementa. Observaciones menores registradas pero no corregidas (fuera de alcance, no autorizadas): preguntas de seguridad de baja entropía en `AuthService.SECURITY_QUESTIONS`, SQLite sin cifrado en reposo para datos personales/nóminas.
+
+**4. Empaquetado:** `.\build-nsis.ps1` ejecutado dos veces esta sesión (tras cada fix), generando ambas veces `output/GraficasMulberry-Instalador-v14.1.0.exe` (116.8 MB). En las dos ejecuciones hubo que cerrar con autorización del usuario un proceso `java.exe` residual que bloqueaba `target\classes` antes de `mvn clean`.
+
+**5. Push a origin:** `git push origin master` → `06cb04f..97675f0` (127 commits, incluye todo el trabajo de sesiones previas más esta). Repo remoto: `https://github.com/GipsyDavy/graficas-mulberry.git`.
+
+Validación: `mvnw clean compile` + `mvnw test` → **158/158 verdes** (151 base + 7 nuevos de `ExportServiceTest`).
+
+**Próximo paso recomendado:** si se retoma la idea de "crear presupuesto desde el asistente IA" (consultada y descartada por ahora por el usuario tras explicación de que requiere capa determinista de validación, no tool-calling directo del LLM), revisar esta sección de handoff antes de diseñar. Si se quiere cerrar el hallazgo de preguntas de seguridad de baja entropía o el cifrado en reposo de SQLite, son candidatos pendientes sin sprint abierto.
 
 ---
 
