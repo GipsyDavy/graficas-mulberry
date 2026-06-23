@@ -156,11 +156,18 @@ public class ContextoERPService {
 
         // ── Materiales ────────────────────────────────────────────────────────
         try {
-            int total     = materialDAO.findAll().size();
-            List<Material> criticos = materialDAO.findBajoStock();
-            sb.append("MATERIALES    → ").append(total).append(" en catálogo");
+            List<Material> todosMateriales = materialDAO.findAll();
+            List<Material> criticos        = materialDAO.findBajoStock();
+            sb.append("MATERIALES    → ").append(todosMateriales.size()).append(" en catálogo:\n");
+            for (Material m : todosMateriales) {
+                sb.append("    - ").append(m.getNombre());
+                if (m.getCategoria() != null && !m.getCategoria().isBlank())
+                    sb.append(" [").append(m.getCategoria()).append("]");
+                sb.append(" — stock: ").append(m.getStockActual())
+                  .append(" ").append(m.getUnidad()).append("\n");
+            }
             if (!criticos.isEmpty()) {
-                sb.append(" · ⚠ ").append(criticos.size()).append(" con stock bajo:\n");
+                sb.append("  ⚠ ").append(criticos.size()).append(" con stock bajo mínimo:\n");
                 for (Material m : criticos) {
                     sb.append("    - ").append(m.getNombre())
                       .append(" (stock actual: ").append(m.getStockActual())
@@ -170,7 +177,7 @@ public class ContextoERPService {
                 alertas.append("  ⚠ ").append(criticos.size())
                        .append(" material(es) bajo stock mínimo → revisar pedidos\n");
             } else {
-                sb.append(" · ✅ todos con stock suficiente\n");
+                sb.append("  ✅ todos con stock suficiente\n");
             }
         } catch (Exception ignored) {
             sb.append("MATERIALES    → (datos no disponibles)\n");
