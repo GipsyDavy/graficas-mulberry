@@ -125,7 +125,10 @@ public class ExportService {
         return sb.toString().getBytes(StandardCharsets.UTF_8);
     }
 
-    private static String csvEscapar(String s) {
+    static String csvEscapar(String s) {
+        if (!s.isEmpty() && "=+-@\t".indexOf(s.charAt(0)) >= 0) {
+            s = "'" + s;
+        }
         if (s.contains(";") || s.contains("\"") || s.contains("\n") || s.contains("\r")) {
             return "\"" + s.replace("\"", "\"\"") + "\"";
         }
