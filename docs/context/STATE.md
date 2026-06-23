@@ -3,7 +3,35 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-23 (Sprint IA-CONTEXTO-MATERIALES + AUDIT-CSV-INJECTION — 158/158 — v14.1.0 reempaquetada)
+**Última actualización:** 2026-06-23 (Sprint ASISTENTES + bump v15.0.0 — 158/158 — instalador generado)
+
+---
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-23 (Sprint ASISTENTES + bump v15.0.0)
+
+Agente líder: Claude Code. Multi-IA usado en la parte de diseño (bloque IDE Gemini pegado por el usuario, arquitectura de contexto ERP); resto sin Multi-IA — cambios mecánicos/quirúrgicos verificados con `mvnw test` y compilación, sin ambigüedad arquitectónica.
+
+**1. Unificación de módulos de asistente (commit `8c05583`):**
+- Módulo lateral "Asistente" → **"Asistentes"** (`AsistentesView.java`, nuevo), con pestañas "Asistente IA" (chat) y "Asistente Visual" (antes en Configuración → Asistente; esa pestaña se eliminó de `ConfiguracionView`).
+- Asistente visual desactivado por defecto en instalación nueva (antes activo por defecto).
+- Quitado el acompañamiento del asistente visual durante la instalación de Ollama/modelos (`OllamaInstallerDialog` perdió el campo y el método `asistente(...)` completo).
+- **Fix raíz "0 clientes":** `ContextoERPService` solo mandaba `clienteDAO.count()` al LLM, nunca nombres reales. Ahora lista nombre+ciudad+teléfono de `findAll()`. Añadidas secciones EMPLEADOS, TARIFAS, ALBARANES, NOMINAS; PRESUPUESTOS/FACTURAS con top-5. Arquitectura híbrida (resumen+top-N estático + `detalleBajoDemanda(promptUsuario)` por coincidencia de nombre) recomendada por Gemini para no superar `OllamaService.MAX_CONTEXT_CHARS=20_000`/`MAX_TOTAL_PROMPT_CHARS=60_000`.
+- Chips "Crear presupuesto"/"Generar factura" eliminados (la IA no genera documentos reales) → sustituidos por "Ver clientes".
+- Catálogo de modelos: añadidos `llama3.3`, `mistral-nemo`, `phi4-mini`. Kimi explícitamente no implementado (decisión del usuario). Qwen/DeepSeek sin cambios — versiones más recientes que devolvía WebFetch (`qwen3.6`, `deepseek-v4-pro`, `mistral-medium-3.5`) no se pudieron verificar como reales, descartadas por riesgo de alucinación tras confirmación del usuario.
+- Fix contraste modo oscuro en títulos de grupo del sidebar (`derive()` en CSS siempre aclara; override añadido en `styles.css`).
+- Ayuda contextual revisada: artículos del módulo "asistente" hablaban por error del asistente de bienvenida (bug preexistente, corregido a petición del usuario). Onboarding reubicado a `GEN-PS-2.html` nuevo. Changelog `GEN-NEW-1.html` actualizado.
+- Push: `985d933..8c05583` a `origin/master`.
+
+**2. Bump de versión v14.1.0 → v15.0.0 + reempaquetado (a petición del usuario, "genera el .exe para instalar en cualquier pc"):**
+- Actualizados los 4 ficheros canónicos (`AppConstants.APP_VERSION`, `pom.xml`, `build-nsis.ps1`, `installer.nsi` — 8 ocurrencias en este último). Grep confirmó sin residuos de `14.1.0` en `src/` (los únicos restantes son registros históricos fechados de sesiones previas en este mismo `STATE.md`, que por regla del proyecto no se tocan).
+- `mvnw clean compile` + `mvnw test` → 158/158 verdes.
+- 2 procesos `java.exe` residuales cerrados con autorización explícita del usuario antes de `mvn clean` (vía `AskUserQuestion`).
+- `.\build-nsis.ps1` completó Maven package + jpackage + NSIS → `output/GraficasMulberry-Instalador-v15.0.0.exe` (122.520.111 bytes / 116.8 MB).
+- **Sin commit todavía** de los ficheros de versión — pendiente de que el usuario lo pida explícitamente en este o próximo turno.
+
+**Limitación:** no se probó instalación real del .exe en `%LOCALAPPDATA%` ni arranque de la app empaquetada tras este bump — solo se confirmó generación y tamaño del instalador.
+
+**Próximo paso recomendado:** si se retoma "crear presupuesto desde el asistente IA", `OllamaService` no tiene tool-calling (solo `/api/generate` texto→texto) — requeriría capa intermedia determinista (JSON estructurado del LLM → validación contra BD vía DAOs → confirmación humana). Candidatos pendientes sin sprint abierto: preguntas de seguridad de baja entropía en `AuthService`, cifrado en reposo de SQLite.
 
 ---
 
