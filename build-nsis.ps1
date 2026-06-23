@@ -2,10 +2,41 @@ $ErrorActionPreference = "Stop"
 
 # ── Rutas ──────────────────────────────────────────────────────────
 $PROJECT     = "C:\Users\GipsyDavy\MAVEN\Graficas Mulberry"
-$JAVA_HOME   = "C:\Program Files\Java\jdk-26"
 $MVN         = "C:\Program Files\JetBrains\IntelliJ IDEA 2026.1\plugins\maven\lib\maven3\bin\mvn.cmd"
-$JPACKAGE    = "$JAVA_HOME\bin\jpackage.exe"
 $APP_VERSION = "14.1.0"
+
+# JavaFX Web 21 requiere jdk.jsobject. JDK 26 ya no lo incluye y el .exe
+# empaquetado falla al resolver javafx.web antes de mostrar la ventana.
+$JDK_CANDIDATE_PATTERNS = @(
+    "C:\Program Files\Java\jdk-21*",
+    "C:\Program Files\Eclipse Adoptium\jdk-21*",
+    "C:\Program Files\Java\jdk-25*",
+    "C:\Program Files\Java\jdk-24*"
+)
+
+$JAVA_HOME = $null
+$jdkCandidates = foreach ($pattern in $JDK_CANDIDATE_PATTERNS) {
+    Get-Item -Path $pattern -ErrorAction SilentlyContinue
+}
+
+foreach ($candidate in $jdkCandidates) {
+    $javaExe = Join-Path $candidate.FullName "bin\java.exe"
+    $jpackageExe = Join-Path $candidate.FullName "bin\jpackage.exe"
+    if ((Test-Path $javaExe) -and (Test-Path $jpackageExe)) {
+        $hasJsObject = & $javaExe --list-modules 2>$null | Select-String -SimpleMatch "jdk.jsobject"
+        if ($hasJsObject) {
+            $JAVA_HOME = $candidate.FullName
+            break
+        }
+    }
+}
+
+if (-not $JAVA_HOME) {
+    Write-Error "No se encontro un JDK compatible con JavaFX Web 21 (modulo jdk.jsobject). Instala JDK 21 o usa JDK 24/25; no uses JDK 26 para este empaquetado."
+    exit 1
+}
+
+$JPACKAGE    = "$JAVA_HOME\bin\jpackage.exe"
 
 $MAKENSIS = @(
     "C:\Program Files (x86)\NSIS\makensis.exe",
