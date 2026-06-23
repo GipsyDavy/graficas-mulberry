@@ -3,19 +3,17 @@
 <head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
 <title>Cómo activar y usar la IA integrada (Ollama)</title>
 <meta name="module" content="ia"><meta name="category" content="PS">
-<meta name="tags" content="IA,Ollama,activar,chat,modelo,local"></head>
+<meta name="tags" content="IA,Ollama,activar,chat,modelo,local,instalar"></head>
 <body>
-<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> IA</p>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Asistentes</p>
 <h1>Cómo activar y usar la IA integrada (Ollama)</h1>
-<div class="note">La integración con IA requiere que Ollama esté instalado y en ejecución en el equipo local. No requiere conexión a internet.</div>
+<div class="note">La integración con IA requiere <strong>Ollama</strong> instalado y en ejecución en el equipo local. No requiere conexión a internet: todo se procesa en tu ordenador.</div>
 <ol class="steps">
-  <li>Instala <strong>Ollama</strong> en el equipo (<a href="https://ollama.com" target="_blank">ollama.com</a>) y descarga al menos un modelo (por ejemplo, <code>ollama pull llama3</code>).</li>
-  <li>Asegúrate de que Ollama está en ejecución: abre una terminal y ejecuta <code>ollama serve</code>, o verifica que el servicio esté activo.</li>
-  <li>En Gráficas Mulberry, abre <strong>Configuración → IA</strong>.</li>
-  <li>Introduce la URL de la API de Ollama (por defecto: <code>http://localhost:11434</code>).</li>
-  <li>Selecciona el modelo que deseas usar.</li>
-  <li>Haz clic en <strong>Guardar</strong> y luego en <strong>Probar conexión</strong>.</li>
-  <li>Si la prueba es correcta, el módulo <strong>IA</strong> queda habilitado.</li>
+  <li>Abre el módulo <strong>Asistentes</strong> en el menú lateral y entra en la pestaña <strong>Asistente IA</strong>.</li>
+  <li>Si Ollama no está instalado, verás el botón <strong>Instalar Ollama</strong>. Haz clic y sigue el asistente de instalación (descarga Ollama y un modelo inicial automáticamente).</li>
+  <li>Cuando la instalación termina, el indicador de estado pasa a <strong>Conectado</strong>.</li>
+  <li>Elige el modelo que quieres usar en el desplegable de la barra superior del chat.</li>
+  <li>Escribe tu consulta en el campo de texto inferior y pulsa <kbd>Enter</kbd> o <strong>Enviar</strong>.</li>
 </ol>
-<div class="tip">Para un uso básico, el modelo <strong>llama3</strong> ofrece buena relación entre velocidad y calidad. Usa modelos más pequeños (llama3:8b) en equipos con menos memoria RAM.</div>
+<div class="tip">Usa el botón <strong>⚙ Modelos</strong> para descargar modelos adicionales o eliminar los que no uses. Cada modelo incluye una descripción de para qué tareas del taller es más adecuado.</div>
 </body></html>

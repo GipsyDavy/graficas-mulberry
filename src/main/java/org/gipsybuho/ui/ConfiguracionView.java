@@ -57,12 +57,9 @@ public class ConfiguracionView extends VBox {
         new TamanoFuente("config.tamano.muygrande", "17")
     );
 
-    private final VisualAssistantView assistant;
-
     // ── Constructor ───────────────────────────────────────────────────────────
 
-    public ConfiguracionView(VisualAssistantView assistant) {
-        this.assistant = assistant;
+    public ConfiguracionView() {
         getStyleClass().add("content-view");
         setPadding(new Insets(24));
         setSpacing(16);
@@ -78,13 +75,12 @@ public class ConfiguracionView extends VBox {
         Tab tabEmpresa      = new Tab("🏢  " + t("config.tab.empresa"),      buildTabEmpresa());
         Tab tabPreferencias = new Tab("⚙  "  + t("config.tab.preferencias"), buildTabPreferencias());
         Tab tabSonido       = new Tab("🔊  " + t("config.tab.sonido"),       buildTabSonido());
-        Tab tabAsistente    = new Tab("🧭  " + t("config.tab.asistente"),    buildTabAsistente());
         Tab tabDocumentos   = new Tab("📄  " + t("config.tab.documentos"),   buildTabDocumentos());
         Tab tabAcercaDe     = new Tab("ℹ  "  + t("config.tab.acercade"),     buildTabAcercaDe());
         Tab tabDiagnostico  = new Tab("🖥  " + t("config.tab.diagnostico"),  buildTabDiagnostico());
 
         tabs.getTabs().addAll(tabApariencia, tabEmpresa, tabPreferencias,
-            tabSonido, tabAsistente, tabDocumentos, tabAcercaDe, tabDiagnostico);
+            tabSonido, tabDocumentos, tabAcercaDe, tabDiagnostico);
         getChildren().addAll(titulo, tabs);
     }
 
@@ -912,17 +908,6 @@ public class ConfiguracionView extends VBox {
         contenido.getChildren().add(panel);
 
         ScrollPane scroll = new ScrollPane(contenido);
-        scroll.setFitToWidth(true);
-        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
-        return scroll;
-    }
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // TAB 5 — ASISTENTE VISUAL
-    // ═════════════════════════════════════════════════════════════════════════
-
-    private ScrollPane buildTabAsistente() {
-        ScrollPane scroll = new ScrollPane(new VisualAssistantConfigView(assistant));
         scroll.setFitToWidth(true);
         scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
         return scroll;

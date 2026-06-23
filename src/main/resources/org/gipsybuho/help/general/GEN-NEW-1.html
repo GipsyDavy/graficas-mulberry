@@ -10,9 +10,28 @@
 </head>
 <body>
 <p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> General</p>
-<h1>Novedades de la versión actual (v13.5)</h1>
+<h1>Novedades de la versión actual</h1>
 
-<h2>Importación mejorada — XLSB, XLSM y más formatos Excel</h2>
+<h2>v14.1.x — Módulo Asistentes</h2>
+<ul>
+  <li>El antiguo módulo <strong>Asistente</strong> ahora se llama <strong>Asistentes</strong> y agrupa
+      dos pestañas: <strong>Asistente IA</strong> (el chat) y <strong>Asistente Visual</strong>
+      (antes en Configuración; ya no está ahí).</li>
+  <li>El asistente visual (personaje flotante) viene <strong>desactivado por defecto</strong> en
+      instalaciones nuevas. Actívalo desde Asistentes → Asistente Visual.</li>
+  <li>Se quitó la opción de desactivar la animación del asistente durante la instalación de Ollama:
+      ahora siempre acompaña la instalación.</li>
+  <li>El Asistente IA ahora puede listar datos reales de clientes, empleados, materiales y tarifas,
+      y resumir presupuestos, facturas, albaranes y nóminas — antes solo daba contadores genéricos.</li>
+  <li>Quitados los accesos rápidos "Crear presupuesto" y "Generar factura" del chat (la IA no genera
+      documentos reales); añadido "Ver clientes".</li>
+  <li>Catálogo de modelos ampliado: <strong>llama3.3</strong>, <strong>mistral-nemo</strong> y
+      <strong>phi4-mini</strong>.</li>
+</ul>
+
+<h2>v13.5 — Importación mejorada y mejoras visuales</h2>
+
+<h3>Importación mejorada — XLSB, XLSM y más formatos Excel</h3>
 <p>Ahora puedes importar archivos en todos los formatos de Excel:</p>
 <ul>
   <li><strong>XLSB</strong> — Excel Binario (formato compacto de Microsoft Excel)</li>
@@ -23,7 +42,7 @@
 <p>No necesitas convertir el archivo antes de importarlo. Selecciona el archivo directamente
 y el asistente de importación lo procesa automáticamente.</p>
 
-<h2>Crear campos personalizados desde el asistente de importación</h2>
+<h3>Crear campos personalizados desde el asistente de importación</h3>
 <p>Durante la importación, ahora puedes crear un campo personalizado nuevo directamente
 en el diálogo de mapeo de columnas, sin tener que salir del flujo de importación.</p>
 <p>El botón <strong>➕ Nuevo campo…</strong> aparece en la parte inferior del diálogo de mapeo
@@ -32,12 +51,12 @@ cuando importas clientes, materiales, empleados, pedidos, nóminas o tarifas.</p
 por su estructura de cabecera + líneas.</div>
 <p>Consulta <a href="../importacion/IMP-TUT-1.html">Crear un campo personalizado durante la importación</a>.</p>
 
-<h2>Indicadores de carga (skeleton + overlay)</h2>
+<h3>Indicadores de carga (skeleton + overlay)</h3>
 <p>Las tablas de Clientes, Facturas y Pedidos ahora muestran un indicador de carga mientras
 se recuperan los datos de la base de datos. Esto es especialmente útil cuando la tabla
 tiene muchos registros.</p>
 
-<h2>Mejoras visuales</h2>
+<h3>Mejoras visuales</h3>
 <ul>
   <li>Asistente de IA (<em>IAView</em>) con barra de comandos estilizada.</li>
   <li>Barra de estado mejorada con variables CSS coherentes en todos los temas.</li>

@@ -139,12 +139,9 @@ public final class AppConstants {
     // =========================================================================
     // 9. SUGERENCIAS CONTEXTUALES (INTEGRAL)
     // =========================================================================
-    public static final String SUGGESTION_CREATE_BUDGET      = "📋 Crear presupuesto";
-    public static final String SUGGESTION_CREATE_BUDGET_MSG  = "Ayúdame a redactar un presupuesto para un cliente";
-    public static final String SUGGESTION_GENERATE_INVOICE   = "🧾 Generar factura";
-    public static final String SUGGESTION_GENERATE_INVOICE_MSG = "Genera la factura de este presupuesto";
     public static final String SUGGESTION_VIEW_MATERIALS     = "🗃 Ver materiales";
     public static final String SUGGESTION_VIEW_MATERIALS_MSG = "Muestra los materiales con bajo stock";
+    public static final String SUGGESTION_VIEW_CLIENTS       = "👥 Ver clientes";
 
     // =========================================================================
     // 10. EXPORTACIÓN Y DEBUG (ORIGINALES + IA)

@@ -363,6 +363,13 @@
     -fx-opacity: 0.75;
 }
 
+/* El fondo de la cabecera de grupo (derive(-c-accent, 88%)) siempre queda claro,
+   incluso en modo oscuro. El texto debe seguir ese fondo, no el tema. */
+.root.modo-oscuro .sidebar .nav-group-title,
+.root.modo-oscuro .sidebar .nav-group-arrow {
+    -fx-text-fill: -c-primary-dark;
+}
+
 .nav-group-content .nav-btn {
     -fx-padding: 9 12 9 14;
 }

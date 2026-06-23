@@ -50,6 +50,14 @@ public class ModelosGestionDialog extends Stage {
             "detalladas sobre materiales y técnicas.",
             false));
 
+        CATALOGO.put("llama3.3", new ModeloInfo(
+            "~43 GB", 48,
+            "Meta Llama 3.3 (70B). El Llama de texto más potente y reciente, con un " +
+            "rendimiento comparable a modelos mucho más grandes.",
+            "Solo para equipos muy potentes (48 GB+ de RAM). Máxima precisión en análisis " +
+            "complejos de rentabilidad, costes y negociación con clientes.",
+            false));
+
         CATALOGO.put("mistral", new ModeloInfo(
             "~4.1 GB", 8,
             "Mistral 7B. Desarrollado en Europa, muy eficiente en español y otros idiomas. " +
@@ -58,12 +66,28 @@ public class ModelosGestionDialog extends Stage {
             "Responde con naturalidad en español, perfecto para el trato comercial.",
             true));
 
+        CATALOGO.put("mistral-nemo", new ModeloInfo(
+            "~7.1 GB", 14,
+            "Mistral NeMo (12B). Versión más reciente y capaz que Mistral 7B, desarrollada " +
+            "junto a NVIDIA, con ventana de contexto muy amplia (128k).",
+            "Mejor que Mistral 7B para documentos largos y conversaciones extensas con el " +
+            "histórico de un cliente. Requiere algo más de RAM.",
+            false));
+
         CATALOGO.put("phi4", new ModeloInfo(
             "~9.1 GB", 16,
             "Microsoft Phi-4. Especializado en razonamiento matemático y lógico avanzado. " +
             "Destaca en cálculos precisos y análisis estructurado.",
             "Excelente para calcular costes de producción, márgenes de beneficio y " +
             "optimizar tarifas. Requiere al menos 16 GB de RAM.",
+            false));
+
+        CATALOGO.put("phi4-mini", new ModeloInfo(
+            "~2.5 GB", 6,
+            "Microsoft Phi-4-mini. Versión más reciente y ligera de Phi-4, con soporte de " +
+            "function calling y mejor multilingüe que Phi-3.5.",
+            "Buen equilibrio entre ligereza y capacidad de razonamiento. Sustituto " +
+            "recomendado de Phi-3.5 en equipos modestos.",
             false));
 
         CATALOGO.put("phi3.5", new ModeloInfo(

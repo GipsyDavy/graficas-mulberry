@@ -77,7 +77,7 @@ public class MainView extends BorderPane {
     private TextField tfBusqueda;
     private Region navPill;
     private StackPane navPillContainer;
-    private final IAView iaView;
+    private final AsistentesView asistentesView;
     private final User loggedInUser;
     private final AuthService authService;
     private final Stage primaryStage;
@@ -89,8 +89,8 @@ public class MainView extends BorderPane {
         this.loggedInUser = loggedInUser;
         this.authService = authService;
         this.onLogout = onLogout;
-        this.iaView = new IAView();
         this.visualAssistant = new VisualAssistantView();
+        this.asistentesView = new AsistentesView(visualAssistant);
         ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "nav.ayuda"));
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
@@ -218,8 +218,8 @@ public class MainView extends BorderPane {
             ),
             navGrupo(t("nav.grupo.asistente"),
                 navBtn(UserPermissions.IA, Icons.robot(), "nav.asistente",
-                    () -> mostrarVista(iaView, "nav.asistente"),
-                    IAView::new)
+                    () -> mostrarVista(asistentesView, "nav.asistente"),
+                    () -> new AsistentesView(visualAssistant))
             )
         );
 
@@ -269,8 +269,8 @@ public class MainView extends BorderPane {
         }
         if (loggedInUser.hasPermission(UserPermissions.CONFIGURACION)) {
             Button btnConfig = buildFooterBtn(Icons.settings(), "main.footer.configuracion",
-                () -> mostrarVista(new ConfiguracionView(visualAssistant), "main.footer.configuracion"),
-                () -> new ConfiguracionView(visualAssistant));
+                () -> mostrarVista(new ConfiguracionView(), "main.footer.configuracion"),
+                () -> new ConfiguracionView());
             footerIconos.getChildren().add(btnConfig);
         }
         if (loggedInUser.isAdmin()) {

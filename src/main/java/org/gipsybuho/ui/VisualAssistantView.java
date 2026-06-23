@@ -56,7 +56,6 @@ public class VisualAssistantView extends StackPane {
     public static final String KEY_VOZ = "asistente_visual_voz";
     public static final String KEY_PERSONAJE = "asistente_visual_personaje";
     public static final String KEY_TAMANO = "asistente_visual_tamano";
-    public static final String KEY_INSTALLER_ANIMATIONS = "asistente_visual_instalador_animado";
     private static final String KEY_POS_X = "asistente_visual_x";
     private static final String KEY_POS_Y = "asistente_visual_y";
     private static final double BUBBLE_MIN_WIDTH = 110;
@@ -148,7 +147,7 @@ public class VisualAssistantView extends StackPane {
         personajeActual = PERSONAJES.containsKey(personajeGuardado) ? personajeGuardado : "Vampi";
         tamanoActual = modoEmbebido ? 44 : (int) parseDouble(DatabaseManager.getConfig(KEY_TAMANO), 58);
         vozActiva = !modoEmbebido && "1".equals(DatabaseManager.getConfig(KEY_VOZ));
-        activo.set(modoEmbebido || !"0".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
+        activo.set(modoEmbebido || "1".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
 
         actualizarVisibilidad();
         actualizarPersonaje();

@@ -10,7 +10,6 @@ import javafx.scene.control.Slider;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import org.gipsybuho.db.DatabaseManager;
 import org.gipsybuho.service.SoundService;
 import org.gipsybuho.service.TextToSpeechService;
 
@@ -49,13 +48,6 @@ public class VisualAssistantConfigView extends VBox {
         chkVoz.selectedProperty().addListener((obs, old, selected) -> {
             SoundService.play(SoundService.Sound.CLICK);
             assistant.setVozActiva(selected);
-        });
-
-        CheckBox chkInstalador = new CheckBox("Mostrar asistente visual en instalación de Ollama y modelos");
-        chkInstalador.setSelected(!"0".equals(DatabaseManager.getConfig(VisualAssistantView.KEY_INSTALLER_ANIMATIONS)));
-        chkInstalador.selectedProperty().addListener((obs, old, selected) -> {
-            SoundService.play(SoundService.Sound.CLICK);
-            DatabaseManager.setConfig(VisualAssistantView.KEY_INSTALLER_ANIMATIONS, selected ? "1" : "0");
         });
 
         ComboBox<String> cbVozTts = new ComboBox<>();
@@ -115,8 +107,6 @@ public class VisualAssistantConfigView extends VBox {
         grid.add(new HBox(10, slTamano, lblTamano), 1, 3);
         grid.add(label("Posición:"), 0, 4);
         grid.add(btnRestablecer, 1, 4);
-        grid.add(label("Instaladores:"), 0, 5);
-        grid.add(chkInstalador, 1, 5);
 
         return grid;
     }

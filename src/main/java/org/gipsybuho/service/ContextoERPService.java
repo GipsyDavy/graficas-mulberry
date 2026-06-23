@@ -1,15 +1,26 @@
 package org.gipsybuho.service;
 
+import org.gipsybuho.dao.AlbaranDAO;
 import org.gipsybuho.dao.ClienteDAO;
+import org.gipsybuho.dao.EmpleadoDAO;
 import org.gipsybuho.dao.FacturaDAO;
 import org.gipsybuho.dao.MaterialDAO;
+import org.gipsybuho.dao.NominaDAO;
 import org.gipsybuho.dao.NotaCalendarioDAO;
 import org.gipsybuho.dao.PedidoDAO;
 import org.gipsybuho.dao.PresupuestoDAO;
+import org.gipsybuho.dao.TarifaDAO;
 import org.gipsybuho.db.DatabaseManager;
+import org.gipsybuho.model.Albaran;
+import org.gipsybuho.model.Cliente;
+import org.gipsybuho.model.Empleado;
+import org.gipsybuho.model.Factura;
 import org.gipsybuho.model.Material;
+import org.gipsybuho.model.Nomina;
 import org.gipsybuho.model.NotaCalendario;
 import org.gipsybuho.model.Pedido;
+import org.gipsybuho.model.Presupuesto;
+import org.gipsybuho.model.Tarifa;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -27,11 +38,18 @@ public class ContextoERPService {
 
     private static final long CACHE_MILLIS = 8 * 60 * 1000L;
 
+    private static final int TOP_N_TRANSACCIONAL = 5;
+    private static final int MIN_LARGO_NOMBRE_DETALLE = 3;
+
     private final PresupuestoDAO    presupuestoDAO;
     private final FacturaDAO        facturaDAO;
     private final PedidoDAO         pedidoDAO;
     private final MaterialDAO       materialDAO;
     private final ClienteDAO        clienteDAO;
+    private final EmpleadoDAO       empleadoDAO;
+    private final TarifaDAO         tarifaDAO;
+    private final AlbaranDAO        albaranDAO;
+    private final NominaDAO         nominaDAO;
     private final NotaCalendarioDAO calendarioDAO;
 
     private volatile String cachedContexto = null;
@@ -44,6 +62,10 @@ public class ContextoERPService {
             pedidoDAO = new PedidoDAO(conn);
             materialDAO = new MaterialDAO(conn);
             clienteDAO = new ClienteDAO(conn);
+            empleadoDAO = new EmpleadoDAO(conn);
+            tarifaDAO = new TarifaDAO(conn);
+            albaranDAO = new AlbaranDAO(conn);
+            nominaDAO = new NominaDAO(conn);
             presupuestoDAO = new PresupuestoDAO(conn);
             facturaDAO = new FacturaDAO(conn);
         } catch (SQLException e) {
@@ -66,6 +88,56 @@ public class ContextoERPService {
     /** Invalida el caché para forzar una regeneración en la próxima llamada. */
     public void invalidarCache() {
         cacheTimestamp = 0L;
+    }
+
+    /**
+     * Devuelve el contexto cacheado (resumen + listados de toda la app) y, si el prompt del
+     * usuario menciona el nombre de un cliente o empleado concreto, añade su detalle completo.
+     * Evita tener que listar siempre todos los registros en detalle (coste de caracteres),
+     * resolviendo bajo demanda solo lo que la consulta del usuario necesita.
+     */
+    public String construirContexto(String promptUsuario) {
+        String base = construirContexto();
+        String detalle = detalleBajoDemanda(promptUsuario);
+        return detalle.isBlank() ? base : base + "\n" + detalle;
+    }
+
+    private String detalleBajoDemanda(String promptUsuario) {
+        if (promptUsuario == null || promptUsuario.isBlank()) return "";
+        String promptLower = promptUsuario.toLowerCase(Locale.of("es", "ES"));
+        StringBuilder sb = new StringBuilder();
+
+        try {
+            for (Cliente c : clienteDAO.findAll()) {
+                if (coincideNombre(promptLower, c.getNombre())) {
+                    sb.append("DETALLE CLIENTE → ").append(c.getNombreCompleto());
+                    if (c.getCiudad() != null && !c.getCiudad().isBlank()) sb.append(" — ").append(c.getCiudad());
+                    if (c.getTelefono() != null && !c.getTelefono().isBlank()) sb.append(" — Tel: ").append(c.getTelefono());
+                    if (c.getEmail() != null && !c.getEmail().isBlank()) sb.append(" — ").append(c.getEmail());
+                    if (c.getNotas() != null && !c.getNotas().isBlank()) sb.append(" — Notas: ").append(c.getNotas());
+                    sb.append("\n");
+                }
+            }
+        } catch (Exception ignored) { /* sección opcional */ }
+
+        try {
+            for (Empleado e : empleadoDAO.findAll()) {
+                if (coincideNombre(promptLower, e.getNombre())) {
+                    sb.append("DETALLE EMPLEADO → ").append(e.getNombreCompleto());
+                    if (e.getCategoria() != null && !e.getCategoria().isBlank()) sb.append(" — ").append(e.getCategoria());
+                    if (e.getFechaAlta() != null && !e.getFechaAlta().isBlank()) sb.append(" — Alta: ").append(e.getFechaAlta());
+                    sb.append("\n");
+                }
+            }
+        } catch (Exception ignored) { /* sección opcional */ }
+
+        if (sb.isEmpty()) return "";
+        return "DETALLE BAJO DEMANDA (según tu consulta):\n" + sb;
+    }
+
+    private boolean coincideNombre(String promptLower, String nombre) {
+        if (nombre == null || nombre.trim().length() < MIN_LARGO_NOMBRE_DETALLE) return false;
+        return promptLower.contains(nombre.trim().toLowerCase(Locale.of("es", "ES")));
     }
 
     // ── Construcción real del contexto ────────────────────────────────────────
@@ -91,6 +163,16 @@ public class ContextoERPService {
               .append(borrador).append(" en borrador · ")
               .append(enviado).append(" enviados · ")
               .append(aceptado).append(" aceptados\n");
+            List<Presupuesto> recientes = presupuestoDAO.findAll();
+            if (!recientes.isEmpty()) {
+                sb.append("  Últimos presupuestos:\n");
+                for (Presupuesto p : recientes.subList(0, Math.min(TOP_N_TRANSACCIONAL, recientes.size()))) {
+                    sb.append("    - ").append(p.getNumero())
+                      .append(" — ").append(p.getClienteNombre())
+                      .append(" — ").append(p.getEstado())
+                      .append(" — ").append(String.format("%.2f €", p.getTotal())).append("\n");
+                }
+            }
         } catch (Exception ignored) {
             sb.append("PRESUPUESTOS  → (datos no disponibles)\n");
         }
@@ -112,6 +194,20 @@ public class ContextoERPService {
             if (pendientes > 0)
                 alertas.append("  ⚠ ").append(pendientes)
                        .append(" factura(s) pendientes de cobro\n");
+
+            List<Factura> pendientesDetalle = facturaDAO.findAll().stream()
+                .filter(f -> "pendiente".equalsIgnoreCase(f.getEstado()))
+                .limit(TOP_N_TRANSACCIONAL)
+                .toList();
+            if (!pendientesDetalle.isEmpty()) {
+                sb.append("  Facturas pendientes de cobro:\n");
+                for (Factura f : pendientesDetalle) {
+                    sb.append("    - ").append(f.getNumero())
+                      .append(" — ").append(f.getClienteNombre())
+                      .append(" — ").append(String.format("%.2f €", f.getTotal()))
+                      .append(" — vence: ").append(f.getFechaVencimiento()).append("\n");
+                }
+            }
         } catch (Exception ignored) {
             sb.append("FACTURAS      → (datos no disponibles)\n");
         }
@@ -185,10 +281,77 @@ public class ContextoERPService {
 
         // ── Clientes ──────────────────────────────────────────────────────────
         try {
-            int total = clienteDAO.count();
-            sb.append("CLIENTES      → ").append(total).append(" registrados\n");
+            List<Cliente> clientes = clienteDAO.findAll();
+            sb.append("CLIENTES      → ").append(clientes.size()).append(" registrados:\n");
+            for (Cliente c : clientes) {
+                sb.append("    - ").append(c.getNombreCompleto());
+                if (c.getCiudad() != null && !c.getCiudad().isBlank())
+                    sb.append(" — ").append(c.getCiudad());
+                if (c.getTelefono() != null && !c.getTelefono().isBlank())
+                    sb.append(" — Tel: ").append(c.getTelefono());
+                sb.append("\n");
+            }
         } catch (Exception ignored) {
             sb.append("CLIENTES      → (datos no disponibles)\n");
+        }
+
+        // ── Empleados ─────────────────────────────────────────────────────────
+        try {
+            List<Empleado> empleados = empleadoDAO.findAll();
+            sb.append("EMPLEADOS     → ").append(empleados.size()).append(" activos:\n");
+            for (Empleado e : empleados) {
+                sb.append("    - ").append(e.getNombreCompleto());
+                if (e.getCategoria() != null && !e.getCategoria().isBlank())
+                    sb.append(" — ").append(e.getCategoria());
+                sb.append("\n");
+            }
+        } catch (Exception ignored) {
+            sb.append("EMPLEADOS     → (datos no disponibles)\n");
+        }
+
+        // ── Tarifas ───────────────────────────────────────────────────────────
+        try {
+            List<Tarifa> tarifas = tarifaDAO.findAll();
+            sb.append("TARIFAS       → ").append(tarifas.size()).append(" definidas:\n");
+            for (Tarifa t : tarifas) {
+                sb.append("    - ").append(t.getNombre())
+                  .append(" [").append(t.getTecnica()).append("]")
+                  .append(" — ").append(String.format("%.2f €/ud", t.getPrecioUnit())).append("\n");
+            }
+        } catch (Exception ignored) {
+            sb.append("TARIFAS       → (datos no disponibles)\n");
+        }
+
+        // ── Albaranes ─────────────────────────────────────────────────────────
+        try {
+            List<Albaran> albaranes = albaranDAO.findAll();
+            long pendientesAlbaran = albaranes.stream()
+                .filter(a -> a.getEstado() != null && a.getEstado().equalsIgnoreCase("pendiente"))
+                .count();
+            sb.append("ALBARANES     → ").append(albaranes.size()).append(" en total · ")
+              .append(pendientesAlbaran).append(" pendientes\n");
+            if (!albaranes.isEmpty()) {
+                sb.append("  Últimos albaranes:\n");
+                for (Albaran a : albaranes.subList(0, Math.min(TOP_N_TRANSACCIONAL, albaranes.size()))) {
+                    sb.append("    - ").append(a.getNumero())
+                      .append(" — ").append(a.getClienteNombre())
+                      .append(" — ").append(a.getEstado()).append("\n");
+                }
+            }
+        } catch (Exception ignored) {
+            sb.append("ALBARANES     → (datos no disponibles)\n");
+        }
+
+        // ── Nóminas ───────────────────────────────────────────────────────────
+        try {
+            List<Nomina> nominasMes = nominaDAO.findAll().stream()
+                .filter(n -> n.getAnio() == anio && n.getMes() == mes)
+                .toList();
+            double costeMes = nominasMes.stream().mapToDouble(Nomina::getCosteTotalEmpresa).sum();
+            sb.append("NOMINAS       → ").append(nominasMes.size()).append(" generadas en ").append(mesNombre)
+              .append(" · coste total: ").append(String.format("%.2f €", costeMes)).append("\n");
+        } catch (Exception ignored) {
+            sb.append("NOMINAS       → (datos no disponibles)\n");
         }
 
         // ── Calendario: próximos 7 días ───────────────────────────────────────

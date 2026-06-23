@@ -3,26 +3,28 @@
 <head><meta charset="UTF-8"><link rel="stylesheet" href="../help.css">
 <title>Modelos Ollama compatibles y requisitos</title>
 <meta name="module" content="ia"><meta name="category" content="REF">
-<meta name="tags" content="IA,Ollama,modelos,requisitos,RAM,rendimiento"></head>
+<meta name="tags" content="IA,Ollama,modelos,requisitos,RAM,rendimiento,catálogo"></head>
 <body>
-<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> IA</p>
+<p class="breadcrumb"><a href="../index.html">Ayuda</a> <span>›</span> Asistentes</p>
 <h1>Modelos Ollama compatibles y requisitos</h1>
+<div class="note">Estos son los modelos disponibles desde <strong>⚙ Modelos</strong> en el Asistente IA. La descarga se hace con un clic; no es necesario usar la terminal.</div>
 <table class="field-ref">
-  <thead><tr><th>Modelo</th><th>RAM mínima</th><th>Velocidad</th><th>Calidad</th></tr></thead>
+  <thead><tr><th>Modelo</th><th>Tamaño descarga</th><th>RAM mínima recomendada</th><th>Uso recomendado</th></tr></thead>
   <tbody>
-    <tr><td>llama3:8b</td><td>8 GB</td><td>Rápida</td><td>Buena para tareas simples</td></tr>
-    <tr><td>llama3:70b</td><td>40 GB</td><td>Lenta</td><td>Muy alta</td></tr>
-    <tr><td>mistral:7b</td><td>8 GB</td><td>Rápida</td><td>Buena, especialmente en español</td></tr>
-    <tr><td>phi3:mini</td><td>4 GB</td><td>Muy rápida</td><td>Básica</td></tr>
+    <tr><td>llama3.2</td><td>~2.0 GB</td><td>8 GB</td><td>⭐ Recomendado de inicio: ágil para pedidos, facturas y albaranes</td></tr>
+    <tr><td>mistral</td><td>~4.1 GB</td><td>8 GB</td><td>⭐ Redacción de albaranes/facturas, trato comercial en español</td></tr>
+    <tr><td>qwen3</td><td>~5.2 GB</td><td>10 GB</td><td>⭐ Análisis de materiales, control de stock, datos complejos</td></tr>
+    <tr><td>llama3.1</td><td>~4.7 GB</td><td>10 GB</td><td>Presupuestos complejos y cálculo de costes</td></tr>
+    <tr><td>mistral-nemo</td><td>~7.1 GB</td><td>14 GB</td><td>Documentos largos e histórico extenso de un cliente</td></tr>
+    <tr><td>gemma3</td><td>~3.3 GB</td><td>8 GB</td><td>Consultas generales del ERP, opción intermedia</td></tr>
+    <tr><td>qwen2.5</td><td>~4.7 GB</td><td>8 GB</td><td>Comunicación con clientes y documentos en castellano</td></tr>
+    <tr><td>deepseek-r1</td><td>~4.7 GB</td><td>10 GB</td><td>Razonamiento paso a paso, optimización de costes y márgenes</td></tr>
+    <tr><td>phi4-mini</td><td>~2.5 GB</td><td>6 GB</td><td>Equipos modestos, function calling, más capaz que phi3.5</td></tr>
+    <tr><td>phi3.5</td><td>~2.2 GB</td><td>6 GB</td><td>Equipos con muy poca RAM, consultas cortas</td></tr>
+    <tr><td>phi4</td><td>~9.1 GB</td><td>16 GB</td><td>Cálculo de costes de producción y márgenes (requiere RAM alta)</td></tr>
+    <tr><td>llama4</td><td>~5.6 GB</td><td>12 GB</td><td>Multimodal: analiza imágenes de diseños o bocetos adjuntos</td></tr>
+    <tr><td>llama3.3</td><td>~43 GB</td><td>48 GB</td><td>Máxima precisión en texto, solo equipos muy potentes</td></tr>
   </tbody>
 </table>
-<div class="note">Los modelos se descargan con <code>ollama pull &lt;nombre&gt;</code>. El primero en descargarse puede tardar varios minutos según la conexión.</div>
-<h2>Configuración de la URL</h2>
-<table class="field-ref">
-  <thead><tr><th>Parámetro</th><th>Valor por defecto</th></tr></thead>
-  <tbody>
-    <tr><td>URL de la API</td><td>http://localhost:11434</td></tr>
-    <tr><td>Timeout</td><td>60 segundos</td></tr>
-  </tbody>
-</table>
+<div class="tip">Si no sabes cuál elegir, empieza por <strong>llama3.2</strong> o <strong>mistral</strong>: son los más ligeros y cubren la mayoría de tareas del día a día.</div>
 </body></html>

@@ -4,6 +4,7 @@
   {"id":"GEN-FAQ-1","module":"general","category":"FAQ","title":"Preguntas frecuentes generales","tags":["FAQ","preguntas","ayuda","general"],"path":"general/GEN-FAQ-1.html","priority":3},
   {"id":"GEN-ADV-1","module":"general","category":"ADV","title":"Acciones irreversibles: qué se puede recuperar y qué no","tags":["eliminar","borrar","irreversible","recuperar","backup"],"path":"general/GEN-ADV-1.html","priority":4},
   {"id":"GEN-NEW-1","module":"general","category":"NEW","title":"Novedades de la versión actual","tags":["novedades","versión","cambios","importar","XLSB","campo nuevo"],"path":"general/GEN-NEW-1.html","priority":5},
+  {"id":"GEN-PS-2","module":"general","category":"PS","title":"Cómo usar el asistente de bienvenida (configuración inicial guiada)","tags":["asistente","bienvenida","onboarding","configuración inicial","guía","pasos"],"path":"general/GEN-PS-2.html","priority":6},
 
   {"id":"CLI-PS-1","module":"clientes","category":"PS","title":"Cómo añadir un cliente nuevo","tags":["cliente","añadir","crear","nuevo","NIF","empresa"],"path":"clientes/CLI-PS-1.html","priority":1},
   {"id":"CLI-PS-2","module":"clientes","category":"PS","title":"Cómo editar los datos de un cliente","tags":["cliente","editar","modificar","actualizar"],"path":"clientes/CLI-PS-2.html","priority":2},

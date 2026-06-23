@@ -210,8 +210,7 @@ public class IAView extends VBox {
         FlowPane chips = new FlowPane(5, 5);
         String[] sugerencias = {
                 AppConstants.SUGGESTION_VIEW_MATERIALS,
-                AppConstants.SUGGESTION_CREATE_BUDGET,
-                AppConstants.SUGGESTION_GENERATE_INVOICE
+                AppConstants.SUGGESTION_VIEW_CLIENTS
         };
         for (String s : sugerencias) {
             Button b = new Button(s);
@@ -246,7 +245,7 @@ public class IAView extends VBox {
         Thread.ofVirtual().start(() -> {
             try {
                 if (incluirContexto) {
-                    ia.setContextoERP(contextoService.construirContexto());
+                    ia.setContextoERP(contextoService.construirContexto(prompt));
                 } else {
                     ia.setContextoERP(null);
                 }
