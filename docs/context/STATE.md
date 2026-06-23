@@ -3,7 +3,21 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-22 (Sprint AYUDA-OLLAMA-SIDEBAR — fix real ayuda/Ollama + reorganización sidebar — 151/151 — v14.1.0 empaquetada)
+**Última actualización:** 2026-06-23 (Sprint PACKAGE-JDK26-JSOBJECT — fix arranque .exe empaquetado — 151/151 — v14.1.0 reempaquetada)
+
+---
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-23 (Sprint PACKAGE-JDK26-JSOBJECT — v14.1.0 reempaquetada)
+
+Agente líder: Codex. Sin Multi-IA — diagnóstico reproducible localmente con el app-image generado y verificación objetiva del runtime; no se tocaron auth, BD ni datos sensibles. Se consultaron los docs de seguridad por tratarse de empaquetado/instalador.
+
+**Causa raíz del `.exe` que no arrancaba tras empaquetar:** `build-nsis.ps1` usaba `C:\Program Files\Java\jdk-26`. JDK 26 ya no contiene el módulo `jdk.jsobject`, pero `javafx-web-21.0.4-win.jar` declara `requires jdk.jsobject`. Resultado: el launcher nativo de `jpackage` fallaba durante la inicialización del boot layer antes de mostrar UI y salía con código `1`, sin diálogo visible. Reproducción: `output\GraficasMulberry\GraficasMulberry.exe` salía con `EXITED code=1`; ejecución manual con Java mostraba `java.lang.module.FindException: Module jdk.jsobject not found, required by javafx.web`.
+
+**Fix aplicado:** `build-nsis.ps1` ya no hardcodea JDK 26; selecciona un JDK compatible que tenga `bin\jpackage.exe` y el módulo `jdk.jsobject`, prefiriendo JDK 21 si existe y usando JDK 25/24 como fallback local. En esta máquina seleccionó JDK 25.0.1. `pom.xml` actualizado de `14.0.1` a `14.1.0` para alinear Maven con `AppConstants`, `build-nsis.ps1` e `installer.nsi`.
+
+**Validación:** `.\build-nsis.ps1` completó Maven package + jpackage + NSIS y generó `output/GraficasMulberry-Instalador-v14.1.0.exe` (122,516,113 bytes / 116.8 MB). `output\GraficasMulberry\runtime\release` confirma `JAVA_VERSION="25.0.1"` y contiene `jdk.jsobject`. `output\GraficasMulberry\GraficasMulberry.exe` quedó vivo tras 7 segundos (`RUNNING pid=3408`) y se cerró manualmente tras la prueba. `.\mvnw.cmd test` → 151/151 verdes.
+
+**Limitación:** no se ejecutó una instalación NSIS real en `%LOCALAPPDATA%` en esta sesión; se validó generación del instalador y arranque del app-image que el instalador copia. Recomendación pendiente: instalar JDK 21 para releases futuras y dejar JDK 25 solo como fallback mientras JavaFX 21 siga siendo la versión del proyecto.
 
 ---
 
