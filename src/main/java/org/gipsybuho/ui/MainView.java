@@ -73,6 +73,7 @@ public class MainView extends BorderPane {
 
     private final StackPane contentArea = new StackPane();
     private final VisualAssistantView visualAssistant;
+    private final IAView iaView;
     private VBox sidebar;
     private boolean sidebarCollapsed = false;
     private TextField tfBusqueda;
@@ -90,6 +91,7 @@ public class MainView extends BorderPane {
         this.authService = authService;
         this.onLogout = onLogout;
         this.visualAssistant = new VisualAssistantView();
+        this.iaView = new IAView();
         ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "nav.ayuda"));
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
@@ -216,7 +218,9 @@ public class MainView extends BorderPane {
                 navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "nav.calendario",   CalendarioView::new)
             ),
             navGrupo(t("nav.grupo.asistente"),
-                navBtn(UserPermissions.IA, Icons.robot(), "asistentes.tab.ia", IAView::new),
+                navBtn(UserPermissions.IA, Icons.robot(), "asistentes.tab.ia",
+                    () -> mostrarVista(iaView, "asistentes.tab.ia"),
+                    IAView::new),
                 navBtn(UserPermissions.IA, Icons.settings(), "asistentes.tab.visual", this::visualAssistantConfigScroll)
             )
         );
