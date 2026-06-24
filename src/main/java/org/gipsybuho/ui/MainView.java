@@ -62,7 +62,8 @@ public class MainView extends BorderPane {
         Map.entry("nav.nominas",              "nominas"),
         Map.entry("nav.estadisticas",         "estadisticas"),
         Map.entry("nav.calendario",           "calendario"),
-        Map.entry("nav.asistente",            "ia"),
+        Map.entry("asistentes.tab.ia",        "ia"),
+        Map.entry("asistentes.tab.visual",    "ia"),
         Map.entry("main.footer.backup",       "backups"),
         Map.entry("main.footer.exportar",     "exportacion"),
         Map.entry("main.footer.configuracion","configuracion"),
@@ -77,7 +78,6 @@ public class MainView extends BorderPane {
     private TextField tfBusqueda;
     private Region navPill;
     private StackPane navPillContainer;
-    private final AsistentesView asistentesView;
     private final User loggedInUser;
     private final AuthService authService;
     private final Stage primaryStage;
@@ -90,7 +90,6 @@ public class MainView extends BorderPane {
         this.authService = authService;
         this.onLogout = onLogout;
         this.visualAssistant = new VisualAssistantView();
-        this.asistentesView = new AsistentesView(visualAssistant);
         ToastService.setArticleNavigator(id -> mostrarVista(HelpView.forArticle(id), "nav.ayuda"));
         setLeft(buildSidebar());
         setCenter(new StackPane(contentArea, visualAssistant));
@@ -217,9 +216,8 @@ public class MainView extends BorderPane {
                 navBtn(UserPermissions.CALENDARIO,   Icons.calendar(), "nav.calendario",   CalendarioView::new)
             ),
             navGrupo(t("nav.grupo.asistente"),
-                navBtn(UserPermissions.IA, Icons.robot(), "nav.asistente",
-                    () -> mostrarVista(asistentesView, "nav.asistente"),
-                    () -> new AsistentesView(visualAssistant))
+                navBtn(UserPermissions.IA, Icons.robot(), "asistentes.tab.ia", IAView::new),
+                navBtn(UserPermissions.IA, Icons.settings(), "asistentes.tab.visual", this::visualAssistantConfigScroll)
             )
         );
 
@@ -416,6 +414,13 @@ public class MainView extends BorderPane {
         if (loggedInUser.hasPermission(permiso) && node != null) parent.getChildren().add(node);
     }
 
+    private javafx.scene.Parent visualAssistantConfigScroll() {
+        ScrollPane scroll = new ScrollPane(new VisualAssistantConfigView(visualAssistant));
+        scroll.setFitToWidth(true);
+        scroll.setStyle("-fx-background-color: transparent; -fx-background: transparent;");
+        return scroll;
+    }
+
     private javafx.scene.Parent accesoLimitado() {
         Label label = new Label(t("main.acceso_limitado"));
         label.getStyleClass().add("view-title");
@@ -468,7 +473,7 @@ public class MainView extends BorderPane {
             case "nav.estadisticas" -> t("nav.tooltip.estadisticas");
             case "nav.calendario"   -> t("nav.tooltip.calendario");
             case "nav.importacion"  -> t("nav.tooltip.importacion");
-            case "nav.asistente"    -> t("nav.tooltip.asistente");
+            case "asistentes.tab.ia" -> t("nav.tooltip.asistente");
             default                 -> t(texto);
         };
         Tooltip tip = Tooltips.of(tipDesc + t("main.footer.popup.suffix"));

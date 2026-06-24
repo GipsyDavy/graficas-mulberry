@@ -147,7 +147,7 @@ public class VisualAssistantView extends StackPane {
         personajeActual = PERSONAJES.containsKey(personajeGuardado) ? personajeGuardado : "Vampi";
         tamanoActual = modoEmbebido ? 44 : (int) parseDouble(DatabaseManager.getConfig(KEY_TAMANO), 58);
         vozActiva = !modoEmbebido && "1".equals(DatabaseManager.getConfig(KEY_VOZ));
-        activo.set(modoEmbebido || "1".equals(DatabaseManager.getConfig(KEY_ACTIVO)));
+        activo.set(modoEmbebido);
 
         actualizarVisibilidad();
         actualizarPersonaje();
