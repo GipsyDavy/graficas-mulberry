@@ -162,7 +162,9 @@ public class ImportarClientesService {
                     existentes.add(col.toLowerCase());
                 } catch (SQLException ignored) {}
             }
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("ImportarClientesService: error asegurando columnas dinámicas — " + e.getMessage());
+        }
         return nuevas;
     }
 

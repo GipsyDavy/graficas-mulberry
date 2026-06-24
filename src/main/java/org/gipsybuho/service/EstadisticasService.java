@@ -43,7 +43,9 @@ public class EstadisticasService {
                 int m = rs.getInt(1);
                 if (m >= 1 && m <= 12) result.put(MESES[m - 1], rs.getDouble(2));
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en gastosNominasPorMes — " + e.getMessage());
+        }
         return result;
     }
 
@@ -60,7 +62,9 @@ public class EstadisticasService {
             ps.setInt(1, limite);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) result.put(rs.getString(1), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en materialesMasUsados — " + e.getMessage());
+        }
         return result;
     }
 
@@ -73,7 +77,9 @@ public class EstadisticasService {
                 "SELECT COALESCE(NULLIF(categoria,''),'Sin categoría'), COUNT(*) " +
                 "FROM materiales GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(capitalize(rs.getString(1)), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en materialesPorCategoria — " + e.getMessage());
+        }
         return result;
     }
 
@@ -87,7 +93,9 @@ public class EstadisticasService {
             ps.setInt(1, limite);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) result.put(rs.getString(1), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en stockMateriales — " + e.getMessage());
+        }
         return result;
     }
 
@@ -109,7 +117,9 @@ public class EstadisticasService {
                 "SELECT COALESCE(NULLIF(tipo,''),'Sin tipo'), COUNT(*) " +
                 "FROM clientes GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(capitalize(rs.getString(1)), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en clientesPorTipo — " + e.getMessage());
+        }
         return result;
     }
 
@@ -126,7 +136,9 @@ public class EstadisticasService {
             ps.setInt(1, limite);
             ResultSet rs = ps.executeQuery();
             while (rs.next()) result.put(rs.getString(1), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en topClientesPorFacturacion — " + e.getMessage());
+        }
         return result;
     }
 
@@ -139,7 +151,9 @@ public class EstadisticasService {
                 "SELECT COALESCE(NULLIF(tecnica,''),'Sin técnica'), COALESCE(SUM(total),0) " +
                 "FROM lineas_factura GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(rs.getString(1), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en tecnicasPorIngresos — " + e.getMessage());
+        }
         return result;
     }
 
@@ -152,7 +166,9 @@ public class EstadisticasService {
                 "SELECT COALESCE(NULLIF(tecnica,''),'Sin técnica'), COUNT(*) " +
                 "FROM lineas_factura GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(rs.getString(1), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en tecnicasPorVolumen — " + e.getMessage());
+        }
         return result;
     }
 
@@ -164,7 +180,9 @@ public class EstadisticasService {
              ResultSet rs = st.executeQuery(
                 "SELECT estado, COUNT(*) FROM pedidos GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(capitalize(rs.getString(1)), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en pedidosPorEstado — " + e.getMessage());
+        }
         return result;
     }
 
@@ -176,7 +194,9 @@ public class EstadisticasService {
              ResultSet rs = st.executeQuery(
                 "SELECT estado, COUNT(*) FROM facturas GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(capitalize(rs.getString(1)), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en facturasPorEstado — " + e.getMessage());
+        }
         return result;
     }
 
@@ -188,7 +208,9 @@ public class EstadisticasService {
              ResultSet rs = st.executeQuery(
                 "SELECT estado, COUNT(*) FROM presupuestos GROUP BY 1 ORDER BY 2 DESC")) {
             while (rs.next()) result.put(capitalize(rs.getString(1)), rs.getDouble(2));
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en presupuestosPorEstado — " + e.getMessage());
+        }
         return result;
     }
 
@@ -229,7 +251,10 @@ public class EstadisticasService {
         try (Statement st = DatabaseManager.getConnection().createStatement();
              ResultSet rs = st.executeQuery("SELECT COUNT(*) FROM clientes")) {
             return rs.next() ? rs.getInt(1) : 0;
-        } catch (SQLException e) { return 0; }
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en totalClientesAcumulado — " + e.getMessage());
+            return 0;
+        }
     }
 
     // ── Años con datos en la BD ───────────────────────────────────────────────
@@ -249,9 +274,13 @@ public class EstadisticasService {
                         String s = rs.getString(1);
                         if (s != null && !s.isBlank()) try { set.add(Integer.parseInt(s.trim())); } catch (NumberFormatException ignored) {}
                     }
-                } catch (SQLException ignored) {}
+                } catch (SQLException e) {
+                    System.err.println("EstadisticasService: error consultando años disponibles (" + q + ") — " + e.getMessage());
+                }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en aniosDisponibles — " + e.getMessage());
+        }
         return new ArrayList<>(set);
     }
 
@@ -275,7 +304,9 @@ public class EstadisticasService {
                     if (m >= 1 && m <= 12) result.put(MESES[m - 1], rs.getDouble(2));
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en queryMensualStr (" + sql + ") — " + e.getMessage());
+        }
         return result;
     }
 
@@ -284,7 +315,10 @@ public class EstadisticasService {
             ps.setString(1, String.valueOf(anio));
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble(1) : 0;
-        } catch (SQLException e) { return 0; }
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en scalarStr (" + sql + ") — " + e.getMessage());
+            return 0;
+        }
     }
 
     private static double scalarInt(String sql, int anio) {
@@ -292,7 +326,10 @@ public class EstadisticasService {
             ps.setInt(1, anio);
             ResultSet rs = ps.executeQuery();
             return rs.next() ? rs.getDouble(1) : 0;
-        } catch (SQLException e) { return 0; }
+        } catch (SQLException e) {
+            System.err.println("EstadisticasService: error en scalarInt (" + sql + ") — " + e.getMessage());
+            return 0;
+        }
     }
 
     private static String capitalize(String s) {

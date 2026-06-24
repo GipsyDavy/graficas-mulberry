@@ -381,7 +381,7 @@ public class IAView extends VBox {
                             }
                     );
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    System.err.println("IAView: error exportando historial de chat — " + e.getMessage());
                     Platform.runLater(() -> {
                         SoundService.play(SoundService.Sound.ERROR);
                         Alert alert = new Alert(Alert.AlertType.ERROR);

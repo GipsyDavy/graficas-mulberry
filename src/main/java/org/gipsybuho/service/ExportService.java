@@ -271,7 +271,10 @@ public class ExportService {
                 "SELECT 1 FROM sqlite_master WHERE type='table' AND name=?")) {
             ps.setString(1, tabla);
             return ps.executeQuery().next();
-        } catch (SQLException e) { return false; }
+        } catch (SQLException e) {
+            System.err.println("ExportService: error comprobando existencia de tabla '" + tabla + "' — " + e.getMessage());
+            return false;
+        }
     }
 
     public static File getDbFile() {
@@ -299,7 +302,9 @@ public class ExportService {
                     if (rs.next()) total += rs.getInt(1);
                 }
             }
-        } catch (SQLException ignored) {}
+        } catch (SQLException e) {
+            System.err.println("ExportService: error en contarRegistros — " + e.getMessage());
+        }
         return total;
     }
 

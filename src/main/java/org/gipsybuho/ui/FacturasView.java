@@ -367,7 +367,9 @@ public class FacturasView extends VBox {
                 }
             });
             grid.add(lbl(t("facturas.campo.tarifa")), 0, 0); grid.add(cbTarifa, 1, 0, 3, 1);
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            System.err.println("FacturasView: error montando selector de tarifa — " + e.getMessage());
+        }
 
         grid.addRow(1, lbl(t("facturas.linea.descripcion")), fDesc);
         GridPane.setColumnSpan(fDesc, 3);
