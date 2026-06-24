@@ -3,7 +3,34 @@
 Fuente única de verdad para HEAD, tests y sprint activo.
 Actualizar tras cada sprint cerrado.
 
-**Última actualización:** 2026-06-23 (Sprint ASISTENTES + bump v15.0.0 — 158/158 — instalador generado)
+**Última actualización:** 2026-06-24 (Sprint ASISTENTES-NAV + AUDIT-LOGGING — 158/158 — instalador v15.0.0 reempaquetado)
+
+---
+
+### ESTADO AL CIERRE DE SESIÓN 2026-06-24 (Sprint ASISTENTES-NAV + AUDIT-LOGGING — v15.0.0 reempaquetada)
+
+Agente líder: Claude Code. Multi-IA no invocado en ningún cierre de esta sesión — todos los cambios fueron mecánicos/bajo riesgo (nav UI, logging defensivo) verificables con `mvnw test`/`mvnw clean compile`, sin ambigüedad arquitectónica ni auth/permisos/datos sensibles tocados. VibeSec (skill `BehiSecc/VibeSec-Skill`, instalada esta sesión en `~/.claude/skills/VibeSec-Skill/`) ejecutado al cierre — sin hallazgos explotables.
+
+**1. ASISTENTES: dos subsecciones directas en vez de TabPane (commit `8a5a6f9`):** el grupo lateral "ASISTENTES" abría una única subsección con pestañas ("Asistente IA"/"Asistente Visual"). A petición del usuario, ahora son dos botones de navegación directos bajo el mismo grupo, sin contenedor de pestañas intermedio. `AsistentesView.java` eliminado (quedó obsoleto). `MainView.TITULO_A_MODULO` y el switch de tooltips actualizados a las nuevas claves `asistentes.tab.ia`/`asistentes.tab.visual`. Mismo permiso `UserPermissions.IA` en ambos botones — sin cambio de control de acceso.
+
+**2. Asistente Visual arranca siempre desconectado (mismo commit `8a5a6f9`):** `VisualAssistantView` leía el estado `activo` persistido en SQLite al iniciar, arrastrando la conexión de la sesión anterior. Ahora la instancia principal siempre arranca con `activo=false` (`activo.set(modoEmbebido)`); las instancias embebidas (onboarding/ayuda) no se ven afectadas. `setActivo()` sigue persistiendo el estado para uso intra-sesión, solo deja de leerse al arrancar.
+
+**3. Auditoría honesta de código sucio (a petición explícita del usuario, sin subagentes — los `Agent`/Explore devolvieron respuestas rotas interceptadas por hook, descartados, auditoría rehecha manualmente con Grep/Read directos):** revisión completa de `dao/db/model/service/ui/util` (~39k líneas). Hallazgos relevantes:
+   - **Alto, no remediado:** `ExportService.java` (3445 líneas/99 métodos) — god-class, métodos de exportación repetidos por entidad (CSV/SQL/JSON/PDF/Word). Refactor grande, riesgo medio-alto, fuera de alcance sin autorización explícita.
+   - **Alto, no remediado:** ausencia total de framework de logging (SLF4J/Log4j/`java.util.logging`) en código de aplicación — decisión de arquitectura/nueva dependencia, fuera de alcance sin autorización explícita.
+   - **Medio, remediado (commit `4cbbb46`):** 23 sitios de `catch (Exception/SQLException ignored) {}` que ocultaban fallos reales con valor diagnóstico real — convertidos a `System.err.println` con contexto (método + mensaje, o SQL para los helpers parametrizados): 17 en `EstadisticasService` (KPIs del dashboard), 2 en `ExportService` (`tablaExiste`/`contarRegistros`, backups), 1 en `ImportarClientesService` (columnas dinámicas de import), 1 en `FacturasView` + 1 en `PresupuestosView` (selector de tarifa), 1 en `IAView` (`printStackTrace()` → mensaje acotado en export de chat). Dejados sin tocar ~25 sitios donde el silencio es patrón legítimo (parseo defensivo, UI cosmética, migraciones idempotentes, cleanup en `finally`), con justificación por categoría.
+   - **Bajo, no remediado:** lógica de `quoteIdentifier`/`requireSqlIdentifier` duplicada entre `DatabaseManager` e `ImportBackupService` (DRY, sin riesgo de seguridad — ambas implementaciones son correctas).
+   - Archivos >1000 líneas identificados pero no auditados línea a línea: `VisualAssistantView` (2344), `ImportBackupService` (2216), `ImportService` (1811), `EntityImportService` (1230), `PedidosView` (1288), `ImportView` (1283), `ConfiguracionView` (1209), `MaterialesView` (1152).
+
+**4. VibeSec instalado de verdad esta sesión:** primera comprobación (`~/.claude/plugins/`) dio negativo — corregido tras confirmar con el usuario que es una skill suelta (`BehiSecc/VibeSec-Skill`, clonada a `~/.claude/skills/VibeSec-Skill/`), no un plugin de marketplace. `/security-review` sigue sin existir en ningún sitio conocido. VibeSec aplicado retroactivamente sobre los 2 commits de esta sesión (filtrando secciones web-only que no aplican a app de escritorio): sin hallazgos explotables — SQL siempre parametrizado o con literales hardcoded, mismo permiso de acceso antes/después, único hallazgo cosmético (interpolación de `tabla` —siempre interna, nunca input de usuario— en mensaje de log de `ExportService.tablaExiste()`) sin vector de explotación real.
+
+**5. Empaquetado:** proceso `java.exe` residual (PID 20856) cerrado con autorización explícita antes de `mvn clean`. `.\build-nsis.ps1` regenerado **sin bump de versión** (sigue v15.0.0 — el usuario pidió "el nuevo .exe con las implementaciones nuevas", no una subida de versión) → `output/GraficasMulberry-Instalador-v15.0.0.exe`.
+
+**Push:** `8c05583..4cbbb46` a `origin/master` (2 commits: `8a5a6f9` nav+desconexión, `4cbbb46` logging).
+
+Validación: `mvnw clean compile` limpio + `mvnw test` → 158/158 verdes antes de cada commit.
+
+**Próximo paso recomendado:** definir con el usuario si se ataca el god-class `ExportService`, se introduce un framework de logging, o se sigue auditando el resto de archivos >1000 líneas — ninguno tiene sprint abierto todavía.
 
 ---
 
@@ -1076,18 +1103,18 @@ Estado superado por el handoff vigente al inicio de este archivo (`e7e32ba`, v14
 
 | Campo | Valor |
 |---|---|
-| HEAD | `e7e32ba` |
-| Mensaje | `chore: bump version a v14.0.1 y empaquetar instalador` |
-| Rama | `master` |
-| Tests | 151/151 verdes (`.\mvnw.cmd test`) |
-| Versión app | v14.0.1 (`AppConstants.APP_VERSION`) |
-| Instalador | `output/GraficasMulberry-Instalador-v14.0.1.exe` |
+| HEAD | `4cbbb46` |
+| Mensaje | `fix(logging): registrar excepciones silenciadas en estadisticas y exportacion` |
+| Rama | `master` (pusheado, `8c05583..4cbbb46`) |
+| Tests | 158/158 verdes (`.\mvnw.cmd test`) |
+| Versión app | v15.0.0 (`AppConstants.APP_VERSION`, sin cambio esta sesión) |
+| Instalador | `output/GraficasMulberry-Instalador-v15.0.0.exe` (reempaquetado 2026-06-24) |
 
 ---
 
 ## Sprint activo
 
-**Ninguno.** Último cierre: Sprint OLLAMA-PATH + empaquetado v14.0.1. No hay cola obligatoria abierta; preguntar al usuario por el siguiente foco antes de iniciar cambios.
+**Ninguno.** Último cierre: Sprint ASISTENTES-NAV + AUDIT-LOGGING (ver entrada 2026-06-24 arriba). Candidatos sin sprint abierto: god-class `ExportService` (3445 líneas/99 métodos), ausencia de framework de logging, auditoría línea a línea de archivos >1000 líneas restantes. Preguntar al usuario por el siguiente foco antes de iniciar cambios.
 
 ---
 
