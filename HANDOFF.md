@@ -13,16 +13,19 @@ Para el archivo histórico de sesiones previas, consultar [docs/context/STATE_HI
 
 ## Punto de reanudación
 
-1. **Consenso Triunvirato IA — Rediseño Multi-Interfaz (`ui-redesign-2026-11`, estado `PLANIFICADA`):**
-   - Documentado en [docs/ui/PROPUESTAS_REDESENO_UI.md](file:///C:/Users/Gipsy%20D%C3%A1vy/MAVEN/Graficas%20Mulberry/docs/ui/PROPUESTAS_REDESENO_UI.md) con 14 mockups en [docs/ui/mockups/](file:///C:/Users/Gipsy%20D%C3%A1vy/MAVEN/Graficas%20Mulberry/docs/ui/mockups).
-   - **Pendiente en siguiente sprint:** Dictamen y consenso de **Claude Code** y **Codex** (ver `.agents/review-ledger.yaml`) sobre arquitectura `NavigationShell`, combinaciones híbridas y estrategia de migración sin modificar código todavía.
-2. **Gate SCA Dependency-Check:**
+1. **PRIORIDAD #1 (Próxima sesión — antes de implementar UI): Revisar el sistema multiagente IA y compararlo con otros proyectos:**
+   - Auditar `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.agents/review-ledger.yaml`, `.agents/rules/`, `scripts/agents/governance/` y `docs/operations/MODEL_EFFORT_POLICY.md` frente al estándar utilizado en otros proyectos del usuario.
+   - Regularizar en Git los archivos aún pendientes sin commitear en el workspace local de `gov-2026-09-17` y `Config Dependency-Check Maven 12.2.2` antes de cerrar su verificación `--authorship`.
+2. **PRIORIDAD #2 — Consenso Triunvirato IA sobre Rediseño Multi-Interfaz (`ui-redesign-2026-11`, estado `PLANIFICADA`):**
+   - Documentado en [docs/ui/PROPUESTAS_REDESENO_UI.md](file:///C:/Users/Gipsy%20D%C3%A1vy/MAVEN/Graficas%20Mulberry/docs/ui/PROPUESTAS_REDESENO_UI.md) con 14 mockups de las propuestas 1–7 en [docs/ui/mockups/](file:///C:/Users/Gipsy%20D%C3%A1vy/MAVEN/Graficas%20Mulberry/docs/ui/mockups) y 4 muestras candidatas (8–11) en [docs/ui/mockups/candidatas/](file:///C:/Users/Gipsy%20D%C3%A1vy/MAVEN/Graficas%20Mulberry/docs/ui/mockups/candidatas).
+   - **Pendiente tras la revisión multiagente:** Decidir si se añaden opciones 8–11 al catálogo, recoger dictamen y consenso de **Claude Code** y **Codex** (ver `.agents/review-ledger.yaml`) sobre arquitectura `NavigationShell` y combinaciones híbridas, y planificar la implementación.
+3. **Gate SCA Dependency-Check:**
    - Relanzar `.\mvnw.cmd verify` aislado (sin otro proceso compitiendo por `.m2`) para verificar la descarga completa de la base NVD y generación de `target/dependency-check-report.*`.
-2. **Candidatos de refactorización y arquitectura pendientes:**
+4. **Candidatos de refactorización y arquitectura pendientes:**
    - God-class `ExportService.java` (>3.400 líneas, 99 métodos): desacoplar métodos redundantes de exportación por formato.
    - Evaluación e incorporación de framework de logging estructurado (`SLF4J` / `Log4j2` / `java.util.logging`) para sustituir trazas dispersas en `System.err`.
    - Cifrado en reposo para base de datos SQLite (evaluar SQLCipher para nóminas y clientes).
-3. **Mantenimiento UI / i18n:**
+5. **Mantenimiento UI / i18n:**
    - Ajustar preposición literal en patrón de fecha larga de `CalendarioView`.
 
 ---
