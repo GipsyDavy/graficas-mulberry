@@ -1,0 +1,102 @@
+# .agents/review-ledger.yaml — fuente única del ciclo de auditorías Multi-IA de Gráficas Mulberry
+# Estados de tarea: PLANIFICADA | IMPLEMENTADA | VALIDADA | REVISADA | APROBADA
+# Estados de revisión: PENDIENTE | REVISADA
+# Una tarea H solo puede estar APROBADA con validación ejecutada, todas sus revisiones favorables
+# y blockers_open = 0. STATE.md y HANDOFF.md no duplican esta información.
+# Tareas nuevas (sin `legacy: true`): `owned_paths` y `base_commit` obligatorios; la autoría se
+# contrasta con los trailers `Agent:` de git (`--authorship`). Convocatoria: `requested_by` en la
+# revisión y `--pending "<Agente>"` para consultarla.
+
+version: 2
+updated_at: "2026-09-17"
+
+tasks:
+  - id: "s15-asistentes-nav"
+    name: "Sprint ASISTENTES-NAV y logging defensivo"
+    risk: "M"
+    subsystem: "ui-asistentes"
+    status: "APROBADA"
+    implementer: "Claude Code"
+    blockers_open: 0
+    legacy: true
+    reviews:
+      - agent: "Codex"
+        scope: "revisión de logging defensivo y no regresión"
+        status: "REVISADA"
+        verdict: "APROBADA"
+        report: "docs/security/SECURITY_AUDIT_RUNBOOK.md"
+
+  - id: "s15-dep-check"
+    name: "Config Dependency-Check Maven 12.2.2"
+    risk: "H"
+    subsystem: "seguridad-tooling"
+    status: "APROBADA"
+    implementer: "Codex"
+    blockers_open: 0
+    legacy: true
+    reviews:
+      - agent: "Claude Code"
+        scope: "integración Maven verify y build-nsis"
+        status: "REVISADA"
+        verdict: "APROBADA"
+        report: "docs/security/SECURITY_AUDIT_RUNBOOK.md"
+      - agent: "Google Antigravity"
+        scope: "verificación de TLS, variables de entorno y no inclusión de secretos"
+        status: "REVISADA"
+        verdict: "APROBADA"
+        report: "docs/context/STATE.md"
+
+  - id: "gov-2026-09-17"
+    name: "Gobernanza multiagente formal con ledger canónico y scripts"
+    risk: "H"
+    subsystem: "gobernanza-agentes"
+    status: "VALIDADA"
+    implementer: "Google Antigravity"
+    blockers_open: 0
+    base_commit: "1439325"
+    owned_paths:
+      - ".agents/review-ledger.yaml"
+      - ".agents/rules"
+      - "scripts/agents"
+      - "AGENTS.md"
+      - "CLAUDE.md"
+      - "GEMINI.md"
+      - "HANDOFF.md"
+      - "MACRO-PROMPT-GRAFICAS-MULBERRY.md"
+      - "docs/operations/MODEL_EFFORT_POLICY.md"
+    reviews:
+      - agent: "Claude Code"
+        scope: "integración de gobernanza y flujo operativo de sprint"
+        status: "PENDIENTE"
+        verdict: "PENDIENTE"
+        requested_by: "Google Antigravity"
+      - agent: "Codex"
+        scope: "verificación de scripts Node.js, contratos y trazabilidad git"
+        status: "PENDIENTE"
+        verdict: "PENDIENTE"
+        requested_by: "Google Antigravity"
+
+  - id: "ui-redesign-2026-11"
+    name: "Documentación y consenso de 7 interfaces seleccionables UI/UX"
+    risk: "H"
+    subsystem: "ui-redesign"
+    status: "PLANIFICADA"
+    implementer: "Google Antigravity"
+    blockers_open: 0
+    base_commit: "1439325"
+    owned_paths:
+      - "docs/ui/PROPUESTAS_REDESENO_UI.md"
+      - "docs/ui/mockups"
+      - ".agents/review-ledger.yaml"
+      - "HANDOFF.md"
+    reviews:
+      - agent: "Claude Code"
+        scope: "revisión UI/UX JavaFX, tokens CSS, navegación y consenso sobre combinaciones híbridas"
+        status: "PENDIENTE"
+        verdict: "PENDIENTE"
+        requested_by: "Google Antigravity"
+      - agent: "Codex"
+        scope: "revisión de arquitectura Multi-Shell, rendimiento JavaFX, permisos, PreferenceService y plan de tests"
+        status: "PENDIENTE"
+        verdict: "PENDIENTE"
+        requested_by: "Google Antigravity"
