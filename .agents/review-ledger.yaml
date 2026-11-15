@@ -77,7 +77,7 @@ tasks:
         requested_by: "Google Antigravity"
 
   - id: "ui-redesign-2026-11"
-    name: "Documentación y consenso de 7 interfaces seleccionables UI/UX"
+    name: "Documentación y consenso de 11 interfaces seleccionables UI/UX"
     risk: "H"
     subsystem: "ui-redesign"
     status: "PLANIFICADA"
